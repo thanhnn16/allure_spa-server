@@ -65,8 +65,13 @@ Nếu chạy theo localhost
 php artisan serve
 ```
 
-## Đọc thêm Document
+## Đọc thêm Document (Nên đọc để hiểu rõ hơn về các công nghệ sử dụng)
 - [Laravel](https://laravel.com/docs)
 - [Vuejs](https://vuejs.org/guide/introduction.html)
 - [Tailwindcss](https://tailwindcss.com/docs)
 - [Inertiajs](https://inertiajs.com/)
+- [Sanctum](https://laravel.com/docs/11.x/sanctum#main-content)
+- [Laravel Tinker](https://laravel.com/docs/11.x/artisan#tinker)
+- [Ziggy](https://github.com/tighten/ziggy)
+- [Elqouent](https://laravel.com/docs/11.x/eloquent)
+- [L5-Swagger](https://github.com/DarkaOnLine/L5-Swagger/wiki)
