@@ -1,0 +1,35 @@
+{
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build && vite build --ssr",
+        "serve": "php artisan serve"
+    },
+    "devDependencies": {
+        "@rushstack/eslint-patch": "^1.10.4",
+        "@tailwindcss/forms": "^0.5.7",
+        "@vitejs/plugin-vue": "^5.1.2",
+        "@vue/eslint-config-prettier": "^9.0.0",
+        "autoprefixer": "^10.4.20",
+        "eslint": "^9.9.0",
+        "eslint-plugin-vue": "^9.27.0",
+        "postcss": "^8.4.41",
+        "postcss-import": "^16.1.0",
+        "prettier": "^3.3.3",
+        "tailwindcss": "^3.4.9",
+        "vite": "^5.4.0"
+    },
+    "dependencies": {
+        "@inertiajs/vue3": "^1.0.0",
+        "@mdi/js": "^7.4.47",
+        "@vue/server-renderer": "^3.4.0",
+        "axios": "^1.7.4",
+        "chart.js": "^4.4.3",
+        "laravel-vite-plugin": "^1.0",
+        "numeral": "^2.0.6",
+        "pinia": "^2.2.1",
+        "vue": "^3.4.37",
+        "vue-router": "^4.4.3"
+    }
+}
