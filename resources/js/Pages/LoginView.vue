@@ -12,16 +12,25 @@ import BaseButton from '@/Components/BaseButton.vue'
 import BaseButtons from '@/Components/BaseButtons.vue'
 import LayoutGuest from '@/Layouts/LayoutGuest.vue'
 
+const props = defineProps({
+    errors: Object,
+    auth: Object,
+    ziggy: Object,
+    canResetPassword: Boolean,
+    status: String
+})
+
 const form = reactive({
-    login: 'john.doe',
-    pass: 'highly-secure-password-fYjUw-',
+    phone_number: '0346542636',
+    password: '123456',
     remember: true
 })
 
 const submit = () => {
     console.log('submit with: ', form)
-    router.post('/login', form)
+    router.post('/login', form);
 }
+
 </script>
 
 <template>
@@ -29,16 +38,18 @@ const submit = () => {
         <Head title="Đăng nhập"/>
         <SectionFullScreen v-slot="{ cardClass }" bg="purplePink">
             <CardBox :class="cardClass" is-form @submit.prevent="submit">
-                <FormField label="Login" help="Please enter your login">
+
+
+                <FormField label="Số điện thoại" help="Nhập số điện thoại">
                     <FormControl
                         v-model="form.login"
                         :icon="mdiAccount"
-                        name="login"
+                        name="phone_number"
                         autocomplete="username"
                     />
                 </FormField>
 
-                <FormField label="Password" help="Please enter your password">
+                <FormField label="Mật khẩu" help="Nhập mật khẩu">
                     <FormControl
                         v-model="form.pass"
                         :icon="mdiAsterisk"
@@ -51,14 +62,19 @@ const submit = () => {
                 <FormCheckRadio
                     v-model="form.remember"
                     name="remember"
-                    label="Remember"
+                    label="Ghi nhớ"
                     :input-value="true"
                 />
 
+                <div v-if="Object.keys(props.errors).length" class="alert alert-danger">
+                    <ul>
+                        <li v-for="(error, key) in props.errors" :key="key">{{ error }}</li>
+                    </ul>
+                </div>
+
                 <template #footer>
                     <BaseButtons>
-                        <BaseButton type="submit" color="info" label="Login"/>
-                        <BaseButton color="info" outline label="Back"/>
+                        <BaseButton type="submit" color="info" label="Đăng nhập"/>
                     </BaseButtons>
                 </template>
             </CardBox>

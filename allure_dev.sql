@@ -207,6 +207,71 @@ CREATE TABLE sessions
 );
 
 --
+-- Bảng cache
+--
+CREATE TABLE cache
+(
+    `key`      VARCHAR(255) PRIMARY KEY,
+    `value`    MEDIUMTEXT,
+    expiration INT
+);
+
+--
+-- Bảng cache_locks
+--
+CREATE TABLE cache_locks
+(
+    `key`      VARCHAR(255) PRIMARY KEY,
+    owner      VARCHAR(255),
+    expiration INT
+);
+
+--
+-- Bảng jobs
+--
+CREATE TABLE jobs
+(
+    id           BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    queue        VARCHAR(255)     NOT NULL,
+    payload      LONGTEXT         NOT NULL,
+    attempts     TINYINT UNSIGNED NOT NULL,
+    reserved_at  INT UNSIGNED,
+    available_at INT UNSIGNED     NOT NULL,
+    created_at   INT UNSIGNED     NOT NULL
+);
+
+--
+-- Bảng job_batches
+--
+CREATE TABLE job_batches
+(
+    id             VARCHAR(255) PRIMARY KEY,
+    name           VARCHAR(255),
+    total_jobs     INT UNSIGNED,
+    pending_jobs   INT UNSIGNED,
+    failed_jobs    INT UNSIGNED,
+    failed_job_ids MEDIUMTEXT,
+    options        MEDIUMTEXT,
+    cancelled_at   INT UNSIGNED,
+    created_at     INT UNSIGNED,
+    finished_at    INT UNSIGNED
+);
+
+--
+-- Bảng failed_jobs
+--
+CREATE TABLE failed_jobs
+(
+    id         BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    uuid       VARCHAR(255) UNIQUE,
+    connection TEXT,
+    queue      TEXT,
+    payload    LONGTEXT,
+    exception  LONGTEXT,
+    failed_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+--
 -- Bảng skin_conditions
 --
 CREATE TABLE skin_conditions
