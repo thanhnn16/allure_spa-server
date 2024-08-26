@@ -35,7 +35,7 @@ class RegisteredUserController extends Controller
             'phone_number' => 'required|string|max:15|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
-
+//        "password_confirmation": "your_password"
         $user = User::create([
             'phone_number' => $request->phone_number,
             'password' => Hash::make($request->password),
