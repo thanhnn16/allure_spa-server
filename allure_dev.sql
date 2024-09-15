@@ -45,36 +45,52 @@ CREATE TABLE products
     category_id    INT UNSIGNED              NOT NULL,
     brand_id       INT UNSIGNED              NOT NULL,
     product_name   VARCHAR(255)              NOT NULL,
-    product_line   ENUM ('Celbest', 'Faith') NOT NULL, -- Thêm cột product_line
+    product_line   ENUM ('Celbest', 'Faith') NOT NULL,
     description    TEXT,
     price          DECIMAL(10, 2) UNSIGNED   NOT NULL,
+    volume         VARCHAR(50)                        default 'N/A',
     stock_quantity INT UNSIGNED              NOT NULL DEFAULT 0,
-    image_id       INT UNSIGNED,                       -- Thay đổi image_path thành image_id
+    image_id       INT UNSIGNED,
     created_at     TIMESTAMP                 NULL     DEFAULT NULL,
     updated_at     TIMESTAMP                 NULL     DEFAULT NULL,
     deleted_at     TIMESTAMP                 NULL     DEFAULT NULL,
     FOREIGN KEY (category_id) REFERENCES product_categories (id) ON DELETE CASCADE,
-    FOREIGN KEY (brand_id) REFERENCES brands (id) ON DELETE CASCADE
+    FOREIGN KEY (brand_id) REFERENCES brands (id) ON DELETE CASCADE,
+    CONSTRAINT chk_product_price CHECK (price >= 0)
 );
 
-ALTER TABLE products
-    ADD INDEX idx_products_category_id (category_id),
-    ADD INDEX idx_products_brand_id (brand_id);
+CREATE INDEX idx_products_brand_id ON products (brand_id);
+CREATE INDEX idx_products_category_id ON products (category_id);
+CREATE INDEX idx_products_product_name ON products (product_name);
+
 
 --
 -- Bảng product_details
 --
 CREATE TABLE product_details
 (
-    id          INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    product_id  INT UNSIGNED NOT NULL UNIQUE,
-    `usage`     TEXT, -- Công dụng
-    ingredients TEXT, -- Thành phần
-    directions  TEXT, -- Cách sử dụng
-    created_at  TIMESTAMP    NULL DEFAULT NULL,
-    updated_at  TIMESTAMP    NULL DEFAULT NULL,
-    deleted_at  TIMESTAMP    NULL DEFAULT NULL,
+    id                   INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    product_id           INT UNSIGNED NOT NULL UNIQUE,
+    `usage`              TEXT,
+    benefits             TEXT,
+    key_ingredients      TEXT,
+    ingredients          TEXT,
+    directions           TEXT,
+    storage_instructions TEXT,
+    product_notes        TEXT,
+    created_at           TIMESTAMP    NULL DEFAULT NULL,
+    updated_at           TIMESTAMP    NULL DEFAULT NULL,
+    deleted_at           TIMESTAMP    NULL DEFAULT NULL,
     FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
+);
+
+-- Bảng general_product_notes (mới)
+CREATE TABLE general_product_notes
+(
+    id         INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    note       TEXT      NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL
 );
 
 --
@@ -132,7 +148,7 @@ CREATE TABLE treatments
     description    TEXT,
     duration       INT UNSIGNED            NULL,
     price          DECIMAL(10, 2) UNSIGNED NOT NULL,
-    image_id       INT UNSIGNED, -- Thay đổi image_path thành image_id
+    image_id       INT UNSIGNED,
     created_at     TIMESTAMP               NULL DEFAULT NULL,
     updated_at     TIMESTAMP               NULL DEFAULT NULL,
     deleted_at     TIMESTAMP               NULL DEFAULT NULL,
@@ -147,15 +163,16 @@ ALTER TABLE treatments
 --
 CREATE TABLE treatment_combos
 (
-    id           INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    treatment_id INT UNSIGNED                 NOT NULL,
-    duration     INT UNSIGNED                 NULL,
-    combo_type   ENUM ('5_times', '10_times') NOT NULL,
-    combo_price  DECIMAL(10, 2) UNSIGNED      NULL,
-    is_default   TINYINT(1)                   NOT NULL DEFAULT 0, -- Thêm cột is_default
-    created_at   TIMESTAMP                    NULL     DEFAULT NULL,
-    updated_at   TIMESTAMP                    NULL     DEFAULT NULL,
-    deleted_at   TIMESTAMP                    NULL     DEFAULT NULL,
+    id              INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    treatment_id    INT UNSIGNED                 NOT NULL,
+    duration        INT UNSIGNED                 NULL,
+    combo_type      ENUM ('5_times', '10_times') NOT NULL,
+    combo_price     DECIMAL(10, 2) UNSIGNED      NULL,
+    is_default      TINYINT(1)                   NOT NULL DEFAULT 0,
+    validity_period INT UNSIGNED COMMENT 'Thời hạn gói tính bằng ngày',
+    created_at      TIMESTAMP                    NULL     DEFAULT NULL,
+    updated_at      TIMESTAMP                    NULL     DEFAULT NULL,
+    deleted_at      TIMESTAMP                    NULL     DEFAULT NULL,
     FOREIGN KEY (treatment_id) REFERENCES treatments (id) ON DELETE CASCADE
 );
 
@@ -164,23 +181,47 @@ CREATE TABLE treatment_combos
 --
 CREATE TABLE users
 (
-    id             CHAR(36) PRIMARY KEY,                               -- Sử dụng UUID cho users
+    id             CHAR(36) PRIMARY KEY,
     phone_number   VARCHAR(255)                    NOT NULL UNIQUE,
     email          VARCHAR(255)                    NOT NULL UNIQUE,
     password       TEXT                            NOT NULL,
     role           ENUM ('user', 'admin', 'staff') NOT NULL DEFAULT 'user',
     remember_token VARCHAR(100),
     full_name      VARCHAR(255),
-    gender         VARCHAR(255),
+    gender         ENUM ('male', 'female', 'other')         DEFAULT 'other',
     address        TEXT,
     date_of_birth  TIMESTAMP,
-    image_id       INT UNSIGNED,                                       -- Thay đổi image_path thành image_id
-    point          INT UNSIGNED                             DEFAULT 0, -- Thêm cột point
+    image_id       INT UNSIGNED,
+    point          INT UNSIGNED                             DEFAULT 0,
     note           TEXT,
+    purchase_count INT UNSIGNED                             DEFAULT 0,
     created_at     TIMESTAMP                       NULL     DEFAULT NULL,
     updated_at     TIMESTAMP                       NULL     DEFAULT NULL,
     deleted_at     TIMESTAMP                       NULL     DEFAULT NULL
 );
+
+CREATE INDEX idx_users_email ON users (email);
+CREATE INDEX idx_users_phone_number ON users (phone_number);
+
+-- Bảng user_treatment_packages (mới)
+CREATE TABLE user_treatment_packages
+(
+    id                 INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id            CHAR(36)     NOT NULL,
+    treatment_combo_id INT UNSIGNED NOT NULL,
+    purchase_date      TIMESTAMP    NOT NULL,
+    total_sessions     INT UNSIGNED NOT NULL,
+    remaining_sessions INT UNSIGNED NOT NULL,
+    expiry_date        TIMESTAMP,
+    created_at         TIMESTAMP    NULL DEFAULT NULL,
+    updated_at         TIMESTAMP    NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (treatment_combo_id) REFERENCES treatment_combos (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_user_treatment_packages_user_id ON user_treatment_packages (user_id);
+CREATE INDEX idx_user_treatment_packages_treatment_combo_id ON user_treatment_packages (treatment_combo_id);
+
 
 --
 -- Bảng password_reset_tokens
@@ -198,7 +239,7 @@ CREATE TABLE password_reset_tokens
 CREATE TABLE sessions
 (
     id            VARCHAR(255) PRIMARY KEY,
-    user_id       CHAR(36), -- Cập nhật kiểu dữ liệu user_id
+    user_id       CHAR(36),
     ip_address    VARCHAR(45),
     user_agent    TEXT,
     payload       LONGTEXT,
@@ -322,11 +363,50 @@ CREATE TABLE staffs
 (
     id         INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     staff_name VARCHAR(255)     NOT NULL,
+    position   VARCHAR(100),
+    hire_date  DATE,
     is_active  TINYINT UNSIGNED NOT NULL DEFAULT 1,
     created_at TIMESTAMP        NULL     DEFAULT NULL,
     updated_at TIMESTAMP        NULL     DEFAULT NULL,
     deleted_at TIMESTAMP        NULL     DEFAULT NULL
 );
+
+
+-- Bảng treatment_usage_history (mới)
+CREATE TABLE treatment_usage_history
+(
+    id                        INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_treatment_package_id INT UNSIGNED NOT NULL,
+    treatment_date            TIMESTAMP    NOT NULL,
+    staff_id                  INT UNSIGNED,
+    notes                     TEXT,
+    created_at                TIMESTAMP    NULL DEFAULT NULL,
+    updated_at                TIMESTAMP    NULL DEFAULT NULL,
+    FOREIGN KEY (user_treatment_package_id) REFERENCES user_treatment_packages (id) ON DELETE CASCADE,
+    FOREIGN KEY (staff_id) REFERENCES staffs (id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_treatment_usage_history_user_treatment_package_id ON treatment_usage_history (user_treatment_package_id);
+CREATE INDEX idx_treatment_usage_history_treatment_date ON treatment_usage_history (treatment_date);
+
+
+-- Bảng employee_attendance (mới)
+CREATE TABLE employee_attendance
+(
+    id         INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    staff_id   INT UNSIGNED NOT NULL,
+    check_in   TIMESTAMP    NOT NULL,
+    check_out  TIMESTAMP,
+    date       DATE         NOT NULL,
+    notes      TEXT,
+    created_at TIMESTAMP    NULL DEFAULT NULL,
+    updated_at TIMESTAMP    NULL DEFAULT NULL,
+    FOREIGN KEY (staff_id) REFERENCES staffs (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_employee_attendance_staff_id ON employee_attendance (staff_id);
+CREATE INDEX idx_employee_attendance_date ON employee_attendance (date);
+
 
 --
 -- Bảng payment_methods
@@ -388,11 +468,12 @@ CREATE TABLE carts
 CREATE TABLE invoices
 (
     id                INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id           CHAR(36)     NOT NULL,                                  -- Cập nhật kiểu dữ liệu user_id
+    user_id           CHAR(36)     NOT NULL,
     voucher_id        INT UNSIGNED,
     staff_id          INT UNSIGNED,
     payment_method_id INT UNSIGNED NOT NULL,
-    order_item_id     INT UNSIGNED NOT NULL,                                  -- Thêm khóa ngoại đến order_items
+    order_item_id     INT UNSIGNED NOT NULL,
+    created_by        INT UNSIGNED,
     invoice_number    VARCHAR(255) NOT NULL,
     total_amount      DECIMAL(10, 2) UNSIGNED DEFAULT 0,
     discount_amount   DECIMAL(10, 2) UNSIGNED DEFAULT 0,
@@ -406,9 +487,13 @@ CREATE TABLE invoices
     FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE SET NULL,
     FOREIGN KEY (staff_id) REFERENCES staffs (id) ON DELETE SET NULL,
     FOREIGN KEY (payment_method_id) REFERENCES payment_methods (id) ON DELETE RESTRICT,
-    FOREIGN KEY (order_item_id) REFERENCES order_items (id) ON DELETE CASCADE -- Thêm ràng buộc khóa ngoại
+    FOREIGN KEY (order_item_id) REFERENCES order_items (id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES staffs (id) ON DELETE SET NULL
 );
 
+CREATE INDEX idx_invoices_user_id ON invoices (user_id);
+CREATE INDEX idx_invoices_created_by ON invoices (created_by);
+CREATE INDEX idx_invoices_payment_status ON invoices (payment_status);
 --
 -- Bảng rating_types
 --
@@ -622,145 +707,6 @@ CREATE TABLE images
     updated_at TIMESTAMP    NULL DEFAULT NULL,
     deleted_at TIMESTAMP    NULL DEFAULT NULL
 );
-
--- Chèn dữ liệu vào bảng brands
-INSERT INTO brands (brand_name)
-VALUES ('Celbest'),
-       ('Faith');
-
--- Chèn dữ liệu vào bảng product_categories
-INSERT INTO product_categories (category_name)
-VALUES ('Tẩy trang'),
-       ('Sữa rửa mặt'),
-       ('Toner'),
-       ('Serum/Essence'),
-       ('Kem dưỡng'),
-       ('Kem chống nắng'),
-       ('Mặt nạ'),
-       ('Kem nền'),
-       ('Phấn phủ'),
-       ('Son môi'),
-       ('Chăm sóc tóc'),
-       ('Chăm sóc cơ thể');
-
--- Chèn dữ liệu vào bảng products
-INSERT INTO products (category_id, brand_id, product_name, product_line, price)
-VALUES (1, 2, 'Cleansing - Tẩy trang', 'Faith', 1092000),           -- Tẩy trang - Faith
-       (3, 2, 'Toning - Cân bằng', 'Faith', 1052000),               -- Toner - Faith
-       (5, 2, 'Whitening - Tẩy trắng', 'Faith', 1575000),           -- Kem dưỡng - Faith
-       (5, 2, 'Collagen tươi - Chống lão hoá', 'Faith', 2000000),   -- Kem dưỡng - Faith
-       (4, 2, 'Essence - Chống lão hoá', 'Faith', 1260000),         -- Serum/Essence - Faith
-       (5, 2, 'Lotion - Dưỡng ẩm', 'Faith', 1155000),               -- Kem dưỡng - Faith
-       (5, 2, 'Gel - Khoá ẩm', 'Faith', 1315000),                   -- Kem dưỡng - Faith
-       (8, 2, 'Foundation - Kem nền', 'Faith', 948000),             -- Kem nền - Faith
-       (1, 1, 'Cleansing - Tẩy trang', 'Celbest', 1092000),         -- Tẩy trang - Celbest
-       (3, 1, 'Toning - Cân bằng', 'Celbest', 1052000),             -- Toner - Celbest
-       (5, 1, 'Whitening - Tẩy trắng', 'Celbest', 1575000),         -- Kem dưỡng - Celbest
-       (5, 1, 'Collagen tươi - Chống lão hoá', 'Celbest', 2000000), -- Kem dưỡng - Celbest
-       (4, 1, 'Essence - Chống lão hoá', 'Celbest', 1260000),       -- Serum/Essence - Celbest
-       (5, 1, 'Lotion - Dưỡng ẩm', 'Celbest', 1155000),             -- Kem dưỡng - Celbest
-       (5, 1, 'Gel - Khoá ẩm', 'Celbest', 1315000),                 -- Kem dưỡng - Celbest
-       (8, 1, 'Foundation - Kem nền', 'Celbest', 948000);
--- Kem nền - Celbest
-
--- Chèn dữ liệu vào bảng treatment_categories
-INSERT INTO treatment_categories (category_name)
-VALUES ('Facial - Chăm sóc da mặt'),
-       ('Massage'),
-       ('Giảm béo'),
-       ('Triệt lông');
-
--- Chèn dữ liệu vào bảng treatments
--- Facial - Chăm sóc da mặt
-INSERT INTO treatments (category_id, treatment_name, duration, price)
-VALUES (1, 'Chăm sóc da mặt - Amino - Phủ hợp mọi loại da', 60, 1350000),
-       (1, 'Chăm sóc da mặt - Chống lão hóa - Hifu', 45, 1350000),
-       (1, 'Chăm sóc da mặt - Chống lão hóa - Photo', 80, 550000),
-       (1, 'Chăm sóc da mặt - Dưỡng trắng - Trị nám', 55, 1250000),
-       (1, 'Chăm sóc da mặt - Collagen Tươi', 50, 1800000),
-       (1, 'Chăm sóc da mặt - Peeling da', 70, 2500000),
-       (1, 'Chăm sóc da mặt - Massage body', 30, 1200000);
-
--- Massage
-INSERT INTO treatments (category_id, treatment_name, duration, price)
-VALUES (2, 'Massage body', 60, 390000),
-       (2, 'Thải độc ruột - Massage nội tạng', 60, 750000),
-       (2, 'Massage cổ vai gáy', 60, 350000),
-       (2, 'Massage nâng cơ vùng 1', 60, 950000),
-       (2, 'Đắp mặt (Cổ, Vai, Gáy)', 45, 160000),
-       (2, 'Gội đầu dưỡng sinh kết hợp massage cổ, vai, gáy', 60, 180000),
-       (2, 'Hồng xông mặt ngại cứu', 60, 400000),
-       (2, 'Xăm môi, mí, mày, nghỉ thuật', 45, 3000000),
-       (2, 'Gáy, béo bụng', NULL, 600000);
-
--- Giảm béo
-INSERT INTO treatments (category_id, treatment_name, price)
-VALUES (3, 'Giảm béo bụng', 550000),
-       (3, 'Giảm béo eo', 310000),
-       (3, 'Giảm béo mông', 1000000),
-       (3, 'Giảm béo tay', 550000),
-       (3, 'Giảm béo toàn thân', 2100000),
-       (3, 'Giảm béo chân', 1900000);
-
--- Triệt lông
-INSERT INTO treatments (category_id, treatment_name, price)
-VALUES (4, 'Triệt lông nách', 250000),
-       (4, 'Triệt lông bikini', 800000),
-       (4, 'Triệt lông mép', 220000),
-       (4, 'Triệt lông 1/2 chân', 350000),
-       (4, 'Triệt lông (nguyên chân)', 700000),
-       (4, 'Triệt lông tay (nguyên)', 450000),
-       (4, 'Triệt lông toàn mặt', 2500000);
-
--- Chèn dữ liệu vào bảng treatment_combos
--- Facial - Chăm sóc da mặt
-INSERT INTO treatment_combos (treatment_id, duration, combo_type, combo_price)
-VALUES (1, 60, '5_times', 550000),
-       (1, 60, '10_times', 1000000),
-       (2, 45, '5_times', 550000),
-       (2, 45, '10_times', 1000000),
-       (3, 80, '5_times', 2000000),
-       (3, 80, '10_times', 3800000),
-       (4, 55, '5_times', 500000),
-       (4, 55, '10_times', 900000),
-       (5, 50, '5_times', 700000),
-       (5, 50, '10_times', 1200000),
-       (6, 70, '5_times', 1000000),
-       (6, 70, '10_times', 1800000),
-       (7, 30, '5_times', 500000),
-       (7, 30, '10_times', 900000);
-
--- Giảm béo
-INSERT INTO treatment_combos (treatment_id, combo_type, combo_price)
-VALUES (10, '5_times', NULL),
-       (10, '10_times', NULL),
-       (11, '5_times', NULL),
-       (11, '10_times', NULL),
-       (12, '5_times', NULL),
-       (12, '10_times', NULL),
-       (13, '5_times', NULL),
-       (13, '10_times', NULL),
-       (14, '5_times', NULL),
-       (14, '10_times', NULL),
-       (15, '5_times', NULL),
-       (15, '10_times', NULL);
-
--- Triệt lông
-INSERT INTO treatment_combos (treatment_id, combo_type, combo_price)
-VALUES (16, '5_times', 750000),
-       (16, '10_times', 1400000),
-       (17, '5_times', 2800000),
-       (17, '10_times', 5000000),
-       (18, '5_times', 650000),
-       (18, '10_times', 1200000),
-       (19, '5_times', 1500000),
-       (19, '10_times', 2800000),
-       (20, '5_times', 3000000),
-       (20, '10_times', 5500000),
-       (21, '5_times', 1750000),
-       (21, '10_times', 3300000),
-       (22, '5_times', 700000),
-       (22, '10_times', 1300000);
 
 -- Chèn dữ liệu vào bảng cart_item_types
 INSERT INTO cart_item_types (type_name)
