@@ -40,6 +40,15 @@ Chạy file `allure_dev.sql` trong thư mục gốc để tạo database mẫu.
 ```bash
 cp .env.example .env
 ```
+Trong file `.env` cần chỉnh sửa các thông số sau:
+- DB_USERNAME=`username của MySQL trên máy của bạn` (mặc định là root)
+- DB_PASSWORD=`password của MySQL trên máy của bạn`
+
+**_Ví dụ:_**
+```
+DB_USERNAME=root
+DB_PASSWORD=123456
+```
 
 ### 4. Tạo key cho project
 
