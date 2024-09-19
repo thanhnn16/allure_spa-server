@@ -1,20 +1,13 @@
-## About Laravel
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
 ## Cần cài đặt trước khi chạy project
-- [PHP (>=8.2)](https://www.php.net/manual/en/install.php)
-- [Composer](https://getcomposer.org/download/)
-- [Nodejs](https://nodejs.org/en/download/)
-- [MySQL](https://dev.mysql.com/downloads/)
+
+- [PHP (>=8.2)](https://www.php.net/manual/en/install.php): Tải về và giải nén (thư mục không chứa dấu cách, không chứa ký tự đặc biệt, nên đặt trong ổ C, ví dụ: `C:\php`)
+- [Composer](https://getcomposer.org/download/): Tải về và cài đặt, chọn đường dẫn đến file `php.exe` trong thư mục PHP đã cài đặt ở trên (ví dụ: `C:\php\php.exe`), nhớ tích vào ô `Add PHP to PATH`
+- [Nodejs](https://nodejs.org/en/download/): khuyến khích cài bản `LTS` (Long Term Support)
+- [MySQL](https://dev.mysql.com/downloads/): Tải về và cài đặt, nhớ lưu username và password để kết nối với database. Khuyến khích tải bản `LTS` (Long Term Support)
+- [Git](https://git-scm.com/downloads): Tải về và cài đặt
+- [DataGrip (Khuyên dùng)](https://www.jetbrains.com/datagrip/download/): Tải về và cài đặt, dùng để kết nối với database MySQL.
+- [MySQL Workbench (nếu không dùng DataGrip)](https://dev.mysql.com/downloads/workbench/): Tải về và cài đặt, dùng để kết nối với database MySQL.
+- [Postman](https://www.postman.com/downloads/): Tải về và cài đặt, dùng để test API. Gửi email đăng ký tài khoản cho `Thành` để thêm vào team/workspace.
 
 ## Hướng dẫn dùng Laravel + Vuejs + Tailwindcss + Inertiajs
 
@@ -29,22 +22,48 @@ git clone https://github.com/thanhnn16/allure_spa-server.git
 ```bash
 composer install
 ```
+
 ```bash
 npm install
 ```
 
-Chạy file `allure_dev.sql` trong thư mục gốc để tạo database mẫu.
+Chạy file `allure_dev.sql` trong thư mục gốc để tạo database.
+
+```bash
+mysql -u root -p allure_dev < allure_dev.sql
+```
+
+Chạy file `data.sql` trong thư mục gốc để tạo dữ liệu mẫu cho database.
+
+```bash
+mysql -u root -p allure_dev < data.sql
+```
+
+Chạy lệnh `dump-autoload` để tạo file autoload.php (Công dụng: composer dump-autoload là một lệnh quan trọng để quản lý autoloading trong project PHP sử dụng Composer. Nó đảm bảo PHP có thể tìm và load các class một cách tự động)
+
+```bash
+composer dump-autoload
+```
+
+Chạy lệnh `db:seed` để tạo dữ liệu mẫu cho database (ở đây sẽ tạo ra 2 user mới, xem thêm trong file `database/seeders/DatabaseSeeder.php`)
+
+```bash
+php artisan db:seed
+```
 
 ### 3. Tạo file .env (copy từ file .env.example)
 
 ```bash
 cp .env.example .env
 ```
+
 Trong file `.env` cần chỉnh sửa các thông số sau:
+
 - DB_USERNAME=`username của MySQL trên máy của bạn` (mặc định là root)
 - DB_PASSWORD=`password của MySQL trên máy của bạn`
 
 **_Ví dụ:_**
+
 ```
 DB_USERNAME=root
 DB_PASSWORD=123456
@@ -57,24 +76,29 @@ php artisan key:generate
 ```
 
 ### 5. Chạy dev vite, để compile Vuejs và Tailwindcss
+
 ```bash
 npm run dev
 ```
 
 ### 6. Chạy project (serve project)
+
 Có thể chạy theo IP Wifi (để kết nối với điện thoại chung mạng) hoặc localhost
 
 Nếu chạy theo IP Wifi
+
 ```bash
 php artisan serve --host=`Địa chỉ IP Wifi`
 ```
 
 Nếu chạy theo localhost
+
 ```bash
 php artisan serve
 ```
 
 ## Đọc thêm Document (Nên đọc để hiểu rõ hơn về các công nghệ sử dụng)
+
 - [Laravel](https://laravel.com/docs)
 - [Vuejs](https://vuejs.org/guide/introduction.html)
 - [Tailwindcss](https://tailwindcss.com/docs)
