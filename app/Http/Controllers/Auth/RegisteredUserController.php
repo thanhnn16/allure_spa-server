@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Str;
 
 class RegisteredUserController extends Controller
 {
@@ -35,8 +36,9 @@ class RegisteredUserController extends Controller
             'phone_number' => 'required|string|max:15|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
-//        "password_confirmation": "your_password"
+
         $user = User::create([
+            'id' => Str::uuid(),
             'phone_number' => $request->phone_number,
             'password' => Hash::make($request->password),
         ]);
@@ -61,6 +63,7 @@ class RegisteredUserController extends Controller
         ]);
 
         $user = User::create([
+            'id' => Str::uuid(),
             'phone_number' => $request->phone_number,
             'password' => Hash::make($request->password),
         ]);

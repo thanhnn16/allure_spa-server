@@ -38,8 +38,6 @@ const submit = () => {
         <Head title="Đăng nhập"/>
         <SectionFullScreen v-slot="{ cardClass }" bg="purplePink">
             <CardBox :class="cardClass" is-form @submit.prevent="submit">
-
-
                 <FormField label="Số điện thoại" help="Nhập số điện thoại">
                     <FormControl
                         v-model="form.login"

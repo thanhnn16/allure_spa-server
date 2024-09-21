@@ -9,8 +9,6 @@ Route::get('/', function () {
     return Inertia::render('HomeView', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
     ]);
 })->middleware(['auth', 'verified']);
 
@@ -24,5 +22,5 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
-require __DIR__.'/api.php';
+require __DIR__ . '/auth.php';
+require __DIR__ . '/api.php';
