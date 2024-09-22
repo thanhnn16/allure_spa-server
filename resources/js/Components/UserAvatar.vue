@@ -4,7 +4,6 @@ import { computed } from 'vue'
 const props = defineProps({
   full_name: {
     type: String,
-    default: 'Anonymouse'
   },
   avatar: {
     type: String,
@@ -18,14 +17,14 @@ const props = defineProps({
 
 const avatar = computed(() => {
   if (props.avatar) return props.avatar
-  if (!props.full_name) return '' // Thêm kiểm tra này
   return `https://api.dicebear.com/7.x/${props.api}/svg?seed=${props.full_name.replace(
     /[^a-z0-9]+/gi,
     '-'
   )}.svg`
 })
 
-const username = computed(() => props.full_name || '') // Thêm giá trị mặc định
+const username = computed(() => props.full_name)
+
 </script>
 
 <template>

@@ -14,23 +14,23 @@ import {
 
 export default [
   {
-    icon: mdiMenu,
-    label: 'Sample menu',
+    icon: mdiMenu,  
+    label: 'Menu mẫu',
     menu: [
       {
         icon: mdiClockOutline,
-        label: 'Item One'
+        label: 'Mục Một'
       },
       {
         icon: mdiCloud,
-        label: 'Item Two'
+        label: 'Mục Hai'
       },
       {
         isDivider: true
       },
       {
         icon: mdiCrop,
-        label: 'Item Last'
+        label: 'Mục Cuối'
       }
     ]
   },
@@ -39,30 +39,30 @@ export default [
     menu: [
       {
         icon: mdiAccount,
-        label: 'My Profile',
+        label: 'Hồ sơ',
         route: 'profile'
       },
       {
         icon: mdiCogOutline,
-        label: 'Settings'
+        label: 'Cài đặt'
       },
       {
         icon: mdiEmail,
-        label: 'Messages'
+        label: 'Tin nhắn'
       },
       {
         isDivider: true
       },
       {
         icon: mdiLogout,
-        label: 'Log Out',
+        label: 'Đăng xuất',
         isLogout: true
       }
     ]
   },
   {
     icon: mdiThemeLightDark,
-    label: 'Light/Dark',
+    label: 'Sáng/Tối',
     isDesktopNoLabel: true,
     isToggleLightDark: true
   },
@@ -75,14 +75,14 @@ export default [
   // },
   // {
   //   icon: mdiReact,
-  //   label: 'React version',
+  //   label: 'Phiên bản React',
   //   isDesktopNoLabel: true,
   //   href: 'https://github.com/justboil/admin-one-react-tailwind',
   //   target: '_blank'
   // },
   {
     icon: mdiLogout,
-    label: 'Log out',
+    label: 'Đăng xuất',
     isDesktopNoLabel: true,
     isLogout: true
   }

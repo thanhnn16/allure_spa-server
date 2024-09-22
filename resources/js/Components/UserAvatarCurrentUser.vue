@@ -5,12 +5,12 @@ import UserAvatar from './UserAvatar.vue';
 
 const userName = computed(() => {
   const user = usePage().props.auth.user
-  return user ? user.name : ''
+  return user ? user.full_name : 'Anonymouse'
 })
 </script>
 
 <template>
-    <UserAvatar :username="userName" api="initials">
+    <UserAvatar :full_name="userName" api="initials">
         <slot />
     </UserAvatar>
 </template>

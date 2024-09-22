@@ -60,7 +60,7 @@ const menuClick = (event, item) => {
                     <BaseIcon :path="mdiMenu" size="24"/>
                 </NavBarItemPlain>
                 <NavBarItemPlain use-margin>
-                    <FormControl placeholder="Search (ctrl+k)" ctrl-k-focus transparent borderless/>
+                    <FormControl placeholder="Tìm kiếm (ctrl+k)" ctrl-k-focus transparent borderless/>
                 </NavBarItemPlain>
             </NavBar>
             <AsideMenu
@@ -72,9 +72,9 @@ const menuClick = (event, item) => {
             />
             <slot/>
             <FooterBar>
-                Get more with
-                <a href="https://tailwind-vue.justboil.me/" target="_blank" class="text-blue-600"
-                >Premium version</a
+                Cần hỗ trợ? Gọi ngay: 
+                <a href="tel:0346542636" target="_blank" class="text-blue-600"
+                >0346542636 - Thành</a
                 >
             </FooterBar>
         </div>
