@@ -6,13 +6,20 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
-Route::get('/{path?}', function ($path = null) {
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect('/dashboard');
+    }
+    return redirect()->route('login');
+})->name('index');
+
+Route::get('/dashboard', function () {
     return Inertia::render('HomeView', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'user' => Auth::user(),
     ]);
-})->middleware(['auth', 'verified'])->where('path', 'dashboard|')->name('index');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');

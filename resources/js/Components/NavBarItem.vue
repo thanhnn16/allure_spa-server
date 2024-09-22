@@ -6,8 +6,7 @@ import UserAvatarCurrentUser from '@/Components/UserAvatarCurrentUser.vue'
 import NavBarMenuList from '@/Components/NavBarMenuList.vue'
 import BaseDivider from '@/Components/BaseDivider.vue'
 import { usePage } from '@inertiajs/vue3'
-
-const itemHref = computed(() => (props.item.route ? route(props.item.route) : props.item.href))
+import { mdiChevronDown, mdiChevronUp } from '@mdi/js'
 
 const props = defineProps({
     item: {
@@ -28,6 +27,18 @@ const is = computed(() => {
     }
 
     return 'div'
+})
+
+const itemHref = computed(() => {
+    if (props.item.route) {
+        try {
+            return route(props.item.route);
+        } catch (error) {
+            console.warn(`Route '${props.item.route}' not found. Falling back to href.`);
+            return props.item.href || '#';
+        }
+    }
+    return props.item.href || '#';
 })
 
 const componentClass = computed(() => {

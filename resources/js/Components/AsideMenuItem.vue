@@ -1,12 +1,10 @@
 <script setup>
-import {ref, computed} from 'vue'
-import {mdiMinus, mdiPlus} from '@mdi/js'
-import {getButtonColor} from '@/colors.js'
+import { ref, computed } from 'vue'
+import { mdiMinus, mdiPlus } from '@mdi/js'
+import { getButtonColor } from '@/colors.js'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import AsideMenuList from '@/Components/AsideMenuList.vue'
-import {Link} from '@inertiajs/vue3'
-
-const itemHref = computed(() => (props.item.route ? route(props.item.route) : props.item.href))
+import { Link } from '@inertiajs/vue3'
 
 const props = defineProps({
     item: {
@@ -52,38 +50,17 @@ const menuClick = (event) => {
 
 <template>
     <li>
-        <component
-            :is="item.route ? Link : 'a'"
-            :href="itemHref"
-            :target="item.target ?? null"
-            class="flex cursor-pointer"
-            :class="componentClass"
-            @click="menuClick"
-        >
-            <BaseIcon
-                v-if="item.icon"
-                :path="item.icon"
-                class="flex-none"
-                :class="activeInactiveStyle" w="w-16"
-                :size="18"
-            />
-            <span
-                class="grow text-ellipsis line-clamp-1"
-                :class="[{ 'pr-12': !hasDropdown }, activeInactiveStyle]"
-            >{{ item.label }}</span
-            >
-            <BaseIcon
-                v-if="hasDropdown"
-                :path="isDropdownActive ? mdiMinus : mdiPlus"
-                class="flex-none"
-                :class="activeInactiveStyle" w="w-12"
-            />
+        <component :is="item.route ? Link : 'a'" :href="itemHref" :target="item.target ?? null"
+            class="flex cursor-pointer" :class="componentClass" @click="menuClick">
+            <BaseIcon v-if="item.icon" :path="item.icon" class="flex-none" :class="activeInactiveStyle" w="w-16"
+                :size="18" />
+            <span class="grow text-ellipsis line-clamp-1" :class="[{ 'pr-12': !hasDropdown }, activeInactiveStyle]">{{
+                item.label }}</span>
+            <BaseIcon v-if="hasDropdown" :path="isDropdownActive ? mdiMinus : mdiPlus" class="flex-none"
+                :class="activeInactiveStyle" w="w-12" />
         </component>
-        <AsideMenuList
-            v-if="hasDropdown"
-            :menu="item.menu"
+        <AsideMenuList v-if="hasDropdown" :menu="item.menu"
             :class="['aside-menu-dropdown', isDropdownActive ? 'block dark:bg-slate-800/50' : 'hidden']"
-            is-dropdown-list
-        />
+            is-dropdown-list />
     </li>
 </template>

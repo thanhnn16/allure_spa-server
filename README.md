@@ -97,6 +97,41 @@ Nếu chạy theo localhost
 php artisan serve
 ```
 
+### 7. Một số lệnh thường dùng
+
+**_Lệnh tạo controller:_**
+
+```bash
+php artisan make:controller `TênController`
+```
+
+**_Lệnh tạo model:_**
+
+```bash
+php artisan make:model `TênModel`
+```
+
+```bash
+php artisan ziggy:generate
+```
+
+```bash
+php artisan route:cache
+```
+
+```bash
+php artisan route:clear
+```
+
+```bash
+php artisan config:cache
+```
+
+```bash
+php artisan config:clear
+```
+
+
 ## Đọc thêm Document (Nên đọc để hiểu rõ hơn về các công nghệ sử dụng)
 
 - [Laravel](https://laravel.com/docs)

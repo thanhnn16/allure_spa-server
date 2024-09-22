@@ -9,14 +9,13 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
         './resources/js/**/*.vue',
+        './resources/js/**/*.js',
         './index.html',
-        './src/**/*.{vue,js,ts,jsx,tsx}',
     ],
-
     theme: {
         asideScrollbars: {
             light: "light",
-            gray: "gray",
+            dark: "dark",
         },
         extend: {
             zIndex: {
@@ -50,6 +49,16 @@ export default {
                 "fade-out": "fade-out 250ms ease-in-out",
                 "fade-in": "fade-in 250ms ease-in-out",
             },
+            colors: {
+                'light': {
+                    'background': '#ffffff',
+                    'text': '#000000',
+                },
+                'dark': {
+                    'background': '#1a202c',
+                    'text': '#ffffff',
+                },
+            },
         },
     },
 
@@ -59,9 +68,9 @@ export default {
             matchUtilities(
                 {
                     "aside-scrollbars": (value) => {
-                        const track = value === "light" ? "100" : "900";
+                        const track = value === "light" ? "100" : "800";
                         const thumb = value === "light" ? "300" : "600";
-                        const color = value === "light" ? "gray" : value;
+                        const color = value === "light" ? "gray" : "dark";
 
                         return {
                             scrollbarWidth: "thin",
@@ -86,4 +95,6 @@ export default {
             );
         }),
     ],
+    
+    darkMode: 'class', // Enable dark mode
 };
