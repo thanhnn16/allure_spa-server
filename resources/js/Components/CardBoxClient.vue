@@ -4,7 +4,7 @@ import { mdiTrendingDown, mdiTrendingUp, mdiTrendingNeutral } from '@mdi/js'
 import CardBox from '@/Components/CardBox.vue'
 import BaseLevel from '@/Components/BaseLevel.vue'
 import PillTag from '@/Components/PillTag.vue'
-import UserAvatar from '@/Components/UserAvatar.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 
 const props = defineProps({
   name: {

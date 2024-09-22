@@ -1,10 +1,10 @@
 import {
     mdiAccountCircle,
-    mdiMonirouter,
+    mdiMonitor, // Sửa từ mdiMonirouter thành mdiMonitor
     mdiGithub,
     mdiLock,
     mdiAlertCircle,
-    mdiSquareEdirouteutline,
+    mdiSquareEditOutline, // Sửa từ mdiSquareEdirouteutline thành mdiSquareEditOutline
     mdiTable,
     mdiViewList,
     mdiTelevisionGuide,
@@ -19,7 +19,7 @@ export default [
     },
     {
         route: '/dashboard',
-        icon: mdiMonirouter,
+        icon: mdiMonitor, // Sử dụng mdiMonitor ở đây
         label: 'Dashboard'
     },
     {
@@ -30,7 +30,7 @@ export default [
     {
         route: '/forms',
         label: 'Forms',
-        icon: mdiSquareEdirouteutline
+        icon: mdiSquareEditOutline // Sử dụng mdiSquareEditOutline ở đây
     },
     {
         route: '/ui',
@@ -48,7 +48,7 @@ export default [
         icon: mdiPalette
     },
     {
-        route: '/profile',
+        route: 'profile',  // Thay đổi từ '/profile' thành 'profile'
         label: 'Profile',
         icon: mdiAccountCircle
     },

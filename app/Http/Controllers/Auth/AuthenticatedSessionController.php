@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\JsonResponse;
-
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -36,7 +37,31 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = $request->user();
+        Log::info('User authenticated', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'session_id' => session()->getId()
+        ]);
+
+        return redirect()->intended(route('dashboard'));
+    }
+
+    private function getDetailedErrorMessage(ValidationException $e): string
+    {
+        $user = Auth::getProvider()->retrieveByCredentials([
+            'phone_number' => request('phone_number')
+        ]);
+
+        if (!$user) {
+            return 'Không tìm thấy tài khoản với số điện thoại này.';
+        }
+
+        if (!Auth::getProvider()->validateCredentials($user, ['password' => request('password')])) {
+            return 'Mật khẩu không chính xác.';
+        }
+
+        return 'Đã xảy ra lỗi không xác định trong quá trình đăng nhập.';
     }
 
     public function storeApi(Request $request): JsonResponse
@@ -55,7 +80,7 @@ class AuthenticatedSessionController extends Controller
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-                'message' => 'Đăng nhập thành công',
+                'message' => 'Đ��ng nhập thành công',
                 'status_code' => 200,
                 'data' => [
                     'user' => $user,

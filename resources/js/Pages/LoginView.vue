@@ -1,8 +1,8 @@
 <script setup>
-import {reactive} from 'vue'
-import {Head} from '@inertiajs/vue3'
-import {router} from '@inertiajs/vue3'
-import {mdiAccount, mdiAsterisk} from '@mdi/js'
+import { reactive } from 'vue'
+import { Head } from '@inertiajs/vue3'
+import { router } from '@inertiajs/vue3'
+import { mdiAccount, mdiAsterisk } from '@mdi/js'
 import SectionFullScreen from '@/Components/SectionFullScreen.vue'
 import CardBox from '@/Components/CardBox.vue'
 import FormCheckRadio from '@/Components/FormCheckRadio.vue'
@@ -21,13 +21,12 @@ const props = defineProps({
 })
 
 const form = reactive({
-    phone_number: '0346542636',
-    password: '123456',
+    phone_number: '',
+    password: '',
     remember: true
 })
 
 const submit = () => {
-    console.log('submit with: ', form)
     router.post('/login', form);
 }
 
@@ -35,44 +34,35 @@ const submit = () => {
 
 <template>
     <LayoutGuest>
-        <Head title="Đăng nhập"/>
+
+        <Head title="Đăng nhập" />
         <SectionFullScreen v-slot="{ cardClass }" bg="purplePink">
             <CardBox :class="cardClass" is-form @submit.prevent="submit">
+                <div class="flex justify-center mb-6">
+                    <img src="https://allurespa.com.vn/wp-content/uploads/2024/08/logo_homepage-e1723436204113.png"
+                        alt="Logo" class="h-32">
+                </div>
                 <FormField label="Số điện thoại" help="Nhập số điện thoại">
-                    <FormControl
-                        v-model="form.login"
-                        :icon="mdiAccount"
-                        name="phone_number"
-                        autocomplete="username"
-                    />
+                    <FormControl v-model="form.phone_number" :icon="mdiAccount" name="phone_number"
+                        autocomplete="username" />
                 </FormField>
 
                 <FormField label="Mật khẩu" help="Nhập mật khẩu">
-                    <FormControl
-                        v-model="form.pass"
-                        :icon="mdiAsterisk"
-                        type="password"
-                        name="password"
-                        autocomplete="current-password"
-                    />
+                    <FormControl v-model="form.password" :icon="mdiAsterisk" type="password" name="password"
+                        autocomplete="current-password" />
                 </FormField>
 
-                <FormCheckRadio
-                    v-model="form.remember"
-                    name="remember"
-                    label="Ghi nhớ"
-                    :input-value="true"
-                />
+                <FormCheckRadio v-model="form.remember" name="remember" label="Ghi nhớ" :input-value="true" />
 
-                <div v-if="Object.keys(props.errors).length" class="alert alert-danger">
-                    <ul>
-                        <li v-for="(error, key) in props.errors" :key="key">{{ error }}</li>
-                    </ul>
+                <div v-if="errors.phone_number || errors.details"
+                    class="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    <p v-if="errors.phone_number" class="mb-2">{{ errors.phone_number }}</p>
+                    <p v-if="errors.details">{{ errors.details }}</p>
                 </div>
 
                 <template #footer>
                     <BaseButtons>
-                        <BaseButton type="submit" color="info" label="Đăng nhập"/>
+                        <BaseButton type="submit" color="info" label="Đăng nhập" class="text-black" />
                     </BaseButtons>
                 </template>
             </CardBox>
