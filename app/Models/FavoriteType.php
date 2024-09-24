@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class FavoriteType extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['type_name'];
 }

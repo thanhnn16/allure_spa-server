@@ -8,4 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class EmployeeAttendance extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'staff_id', 'check_in', 'check_out', 'date', 'notes'
+    ];
+
+    public function staff()
+    {
+        return $this->belongsTo(Staff::class, 'staff_id');
+    }
 }

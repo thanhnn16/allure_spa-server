@@ -8,4 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class StockMovement extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'product_id', 'movement_type', 'quantity', 'unit_price', 'note'
+    ];
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
 }

@@ -8,4 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class TreatmentCombo extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'treatment_id', 'duration', 'combo_type', 'combo_price', 'is_default', 'validity_period'
+    ];
+
+    public function treatment()
+    {
+        return $this->belongsTo(Treatment::class, 'treatment_id');
+    }
 }

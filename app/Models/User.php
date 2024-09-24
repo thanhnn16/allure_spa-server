@@ -41,6 +41,13 @@ class User extends Authenticatable
         'role',
         'remember_token',
         'full_name',
+        'gender',
+        'address',
+        'date_of_birth',
+        'image_id',
+        'point',
+        'note',
+        'purchase_count',
     ];
 
     /**
@@ -66,5 +73,17 @@ class User extends Authenticatable
             'date_of_birth' => 'datetime',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    public function treatmentPackages()
+    {
+        return $this->hasMany(UserTreatmentPackage::class, 'user_id');
+    }
+
+    public function vouchers()
+    {
+        return $this->belongsToMany(Voucher::class, 'user_vouchers')
+                    ->withPivot('used_at', 'is_used')
+                    ->withTimestamps();
     }
 }
