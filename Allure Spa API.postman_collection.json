@@ -1,0 +1,128 @@
+{
+	"info": {
+		"_postman_id": "e875d9b9-b270-426a-9ec9-8fd7e1286252",
+		"name": "Allure Spa API",
+		"description": "Tổng hợp API test cho AllureSpa server.\n\nLink chạy trên localhost.  \nSẽ sửa sau khi có domain.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30221145"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"phone_number\": \"0346542636\",\r\n    \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://allure-spa-1139e6106faa.herokuapp.com/api/auth/login",
+							"protocol": "https",
+							"host": [
+								"allure-spa-1139e6106faa",
+								"herokuapp",
+								"com"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"phone_number\": \"0346542636\",\r\n    \"password\": \"12345678\",\r\n    \"password_confirmation\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://allure-spa-1139e6106faa.herokuapp.com/api/auth/register",
+							"protocol": "https",
+							"host": [
+								"allure-spa-1139e6106faa",
+								"herokuapp",
+								"com"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Thư mục chứa các api xác thực"
+		},
+		{
+			"name": "Services",
+			"item": []
+		},
+		{
+			"name": "Products",
+			"item": []
+		},
+		{
+			"name": "Appoitment",
+			"item": []
+		}
+	],
+	"auth": {
+		"type": "inherit"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

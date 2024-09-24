@@ -27,13 +27,13 @@ composer install
 npm install
 ```
 
-Chạy file `allure_dev.sql` trong thư mục gốc để tạo database.
+Chạy file `allure_dev.sql` trong thư mục gốc để tạo database. (**Bỏ comment 8 dòng đầu tiên trước khi chạy, khi commit không thêm file này**).
 
 ```bash
 mysql -u root -p < allure_dev.sql
 ```
 
-Chạy file `data.sql` trong thư mục gốc để tạo dữ liệu mẫu cho database.
+Chạy file `data.sql` trong thư mục gốc để tạo dữ liệu mẫu cho database. (**Bỏ comment dòng đầu tiên trước khi chạy, khi commit không thêm file này**).
 
 ```bash
 mysql -u root -p < data.sql
