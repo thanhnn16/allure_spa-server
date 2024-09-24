@@ -1,16 +1,18 @@
 import {
     mdiAccountCircle,
     mdiMonitor,
-    mdiGithub,
-    mdiLock,
-    mdiAlertCircle,
-    mdiSquareEditOutline,
     mdiTable,
-    mdiViewList,
-    mdiTelevisionGuide,
-    mdiResponsive,
-    mdiPalette,
-    mdiReact
+    mdiAccountGroup,
+    mdiCalendar,
+    mdiFacebook,
+    mdiBallot,
+    mdiCube,
+    mdiListBox,
+    mdiAccountMultiple,
+    mdiBell,
+    mdiChat,
+    mdiFileDocument,
+    mdiCellphone,
 } from '@mdi/js'
 
 export default [
@@ -20,70 +22,137 @@ export default [
     {
         route: '/dashboard',
         icon: mdiMonitor,
-        label: 'Dashboard'
+        label: 'Tổng quan'
     },
     {
-        route: '/tables',
-        label: 'Tables',
-        icon: mdiTable
+        label: 'Lịch hẹn',
+        icon: mdiCalendar,
+        route: '/appointments'
     },
     {
-        route: '/forms',
-        label: 'Forms',
-        icon: mdiSquareEditOutline
+        label: 'Quản lý khách hàng',
+        icon: mdiAccountGroup,
+        route: '/customers'
     },
     {
-        route: '/ui',
-        label: 'UI',
-        icon: mdiTelevisionGuide
-    },
-    {
-        route: '/responsive',
-        label: 'Responsive',
-        icon: mdiResponsive
-    },
-    {
-        route: '/',
-        label: 'Styles',
-        icon: mdiPalette
-    },
-    {
-        route: '/profile',
-        label: 'Profile',
-        icon: mdiAccountCircle
-    },
-    {
-        route: '/login',
-        label: 'Login',
-        icon: mdiLock
-    },
-    {
-        route: '/error',
-        label: 'Error',
-        icon: mdiAlertCircle
-    },
-    {
-        label: 'Dropdown',
-        icon: mdiViewList,
+        label: 'Quản lý đơn hàng',
+        icon: mdiBallot,
         menu: [
             {
-                label: 'Item One'
+                label: 'Đơn hàng mới',
+                route: '/orders/new'
             },
             {
-                label: 'Item Two'
-            }
+                label: 'Danh sách đơn hàng',
+                route: '/orders'
+            },
         ]
     },
     {
-        href: 'https://github.com/justboil/admin-one-vue-tailwind',
-        label: 'GitHub',
-        icon: mdiGithub,
-        target: '_blank'
+        label: 'Quản lý mỹ phẩm',
+        icon: mdiCube,
+        menu: [
+            {
+                label: 'Tất cả',
+                route: '/products'
+            },
+            {
+                label: 'Bộ FAITH',
+                route: '/products/faith'
+            },
+            {
+                label: 'Mỹ phẩm khác',
+                route: '/products/other'
+            },
+        ]
     },
     {
-        href: 'https://github.com/justboil/admin-one-react-tailwind',
-        label: 'React version',
-        icon: mdiReact,
+        label: 'Quản lý liệu trình',
+        icon: mdiListBox,
+        menu: [
+            {
+                label: 'Tất cả',
+                route: '/procedures'
+            },
+            {
+                label: 'Giảm béo',
+                route: '/procedures/reduce-fat'
+            },
+            {
+                label: 'Massage',
+                route: '/procedures/massage'
+            },
+
+        ]
+    },
+    {
+        label: 'Quản lý kho hàng',
+        icon: mdiTable,
+        menu: [
+            {
+                label: 'Nhập hàng',
+                route: '/warehouses/imports'
+            },
+            {
+                label: 'Xuất hàng',
+                route: '/warehouses/exports'
+            },
+        ]
+    },
+    {
+        label: 'Quản lý nhân viên',
+        icon: mdiAccountMultiple,
+        menu: [
+            {
+                label: 'Nhân viên',
+                route: '/employees'
+            },
+            {
+                label: 'Bảng lương',
+                route: '/salaries'
+            },
+            {
+                label: 'Phân quyền',
+                route: '/roles'
+            },
+        ]
+    },
+    {
+        label: 'Mobile App',
+        icon: mdiCellphone,
+        menu: [
+            {
+                label: 'Thông báo',
+                route: '/notifications'
+            },
+            {
+                label: 'Chat',
+                route: '/chat'
+            },
+            {
+                label: 'Banner App',
+                route: '/banners'
+            },
+            {
+                label: 'Hỗ trợ trực tuyến',
+                route: '/support'
+            },
+        ]
+    },
+    {
+        label: 'Tạo báo cáo',
+        icon: mdiFileDocument,
+        route: '/reports'
+    },
+    {
+        label: 'Hồ sơ của tôi',
+        route: '/profile',
+        icon: mdiAccountCircle
+    },
+    {
+        href: 'https://www.facebook.com/AllureJapanEsthetic',
+        label: 'Facebook',
+        icon: mdiFacebook,
         target: '_blank'
-    }
+    },
 ]

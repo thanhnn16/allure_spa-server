@@ -34,7 +34,7 @@ const itemHref = computed(() => {
         try {
             return route(props.item.route);
         } catch (error) {
-            console.warn(`Route '${props.item.route}' not found. Falling back to href.`);
+            console.warn(`Không tìm thấy route '${props.item.route}'. Sử dụng href thay thế.`);
             return props.item.href || '#';
         }
     }

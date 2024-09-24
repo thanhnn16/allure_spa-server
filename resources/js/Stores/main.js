@@ -3,8 +3,8 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 
 export const useMainStore = defineStore('main', () => {
-  const userName = ref('John Doe')
-  const userEmail = ref('doe.doe.doe@example.com')
+  const userName = ref('')
+  const userEmail = ref('')
 
   const userAvatar = computed(
     () =>
@@ -15,13 +15,12 @@ export const useMainStore = defineStore('main', () => {
   )
 
   const isFieldFocusRegistered = ref(false)
-
   const clients = ref([])
   const history = ref([])
 
   function setUser(payload) {
-    if (payload.name) {
-      userName.value = payload.name
+    if (payload.full_name) {
+      userName.value = payload.full_name
     }
     if (payload.email) {
       userEmail.value = payload.email
