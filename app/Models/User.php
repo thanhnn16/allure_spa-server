@@ -42,7 +42,6 @@ class User extends Authenticatable
         'remember_token',
         'full_name',
         'gender',
-        'address',
         'date_of_birth',
         'image_id',
         'point',
@@ -85,5 +84,10 @@ class User extends Authenticatable
         return $this->belongsToMany(Voucher::class, 'user_vouchers')
                     ->withPivot('used_at', 'is_used')
                     ->withTimestamps();
+    }
+
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
     }
 }

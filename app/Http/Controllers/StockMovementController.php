@@ -15,6 +15,16 @@ class StockMovementController extends Controller
         //
     }
 
+    public function imports()
+    {
+        //
+    }
+
+    public function exports()
+    {
+        //
+    }
+
     /**
      * Store a newly created resource in storage.
      */

@@ -17,22 +17,19 @@ import {
 
 export default [
     {
-        route: 'login.store',
-    },
-    {
-        route: '/dashboard',
+        route: 'dashboard',
         icon: mdiMonitor,
         label: 'Tổng quan'
     },
     {
         label: 'Lịch hẹn',
         icon: mdiCalendar,
-        route: '/appointments'
+        route: 'appointments.index'
     },
     {
         label: 'Quản lý khách hàng',
         icon: mdiAccountGroup,
-        route: '/customers'
+        route: 'users.index'
     },
     {
         label: 'Quản lý đơn hàng',
@@ -40,11 +37,11 @@ export default [
         menu: [
             {
                 label: 'Đơn hàng mới',
-                route: '/orders/new'
+                route: 'invoices.create'
             },
             {
                 label: 'Danh sách đơn hàng',
-                route: '/orders'
+                route: 'invoices.index'
             },
         ]
     },
@@ -54,15 +51,11 @@ export default [
         menu: [
             {
                 label: 'Tất cả',
-                route: '/products'
+                route: 'products.index'
             },
             {
                 label: 'Bộ FAITH',
-                route: '/products/faith'
-            },
-            {
-                label: 'Mỹ phẩm khác',
-                route: '/products/other'
+                route: 'products.faith'
             },
         ]
     },
@@ -72,17 +65,24 @@ export default [
         menu: [
             {
                 label: 'Tất cả',
-                route: '/procedures'
+                route: 'treatments.index'
             },
             {
                 label: 'Giảm béo',
-                route: '/procedures/reduce-fat'
+                route: 'treatments.reduceFat'
             },
             {
                 label: 'Massage',
-                route: '/procedures/massage'
+                route: 'treatments.massage'
             },
-
+            {
+                label: 'Facial',
+                route: 'treatments.facial'
+            },
+            {
+                label: 'Triệt lông',
+                route: 'treatments.hairRemoval'
+            },
         ]
     },
     {
@@ -91,11 +91,11 @@ export default [
         menu: [
             {
                 label: 'Nhập hàng',
-                route: '/warehouses/imports'
+                route: 'stock-movements.imports'
             },
             {
                 label: 'Xuất hàng',
-                route: '/warehouses/exports'
+                route: 'stock-movements.exports'
             },
         ]
     },
@@ -105,15 +105,11 @@ export default [
         menu: [
             {
                 label: 'Nhân viên',
-                route: '/employees'
+                route: 'staff.index'
             },
             {
                 label: 'Bảng lương',
-                route: '/salaries'
-            },
-            {
-                label: 'Phân quyền',
-                route: '/roles'
+                route: 'staff.salary'
             },
         ]
     },
@@ -123,30 +119,30 @@ export default [
         menu: [
             {
                 label: 'Thông báo',
-                route: '/notifications'
+                route: 'notifications.index'
             },
             {
                 label: 'Chat',
-                route: '/chat'
+                route: 'mobileapp.chat'
             },
             {
                 label: 'Banner App',
-                route: '/banners'
+                route: 'mobileapp.banners'
             },
             {
                 label: 'Hỗ trợ trực tuyến',
-                route: '/support'
+                route: 'mobileapp.support'
             },
         ]
     },
     {
         label: 'Tạo báo cáo',
         icon: mdiFileDocument,
-        route: '/reports'
+        route: 'reports.index'
     },
     {
         label: 'Hồ sơ của tôi',
-        route: '/profile',
+        route: 'users.profile',
         icon: mdiAccountCircle
     },
     {

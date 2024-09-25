@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
@@ -12,7 +13,20 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
+        $users = User::where('role', 'user')->get();
+        return Inertia::render('Customers/CustomersView', ['users' => $users]);
+    }
+
+    public function profile()
+    {
+        return Inertia::render('Customers/ProfileView');
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = User::find($request->id);
+        $user->update($request->all());
+        return redirect()->route('users.profile')->with('success', 'Profile updated successfully');
     }
 
     /**

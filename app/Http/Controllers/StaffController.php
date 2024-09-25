@@ -15,6 +15,11 @@ class StaffController extends Controller
         //
     }
 
+    public function salary()
+    {
+        //
+    }
+
     /**
      * Store a newly created resource in storage.
      */

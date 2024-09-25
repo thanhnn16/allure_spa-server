@@ -16,6 +16,14 @@ class ProductController extends Controller
     }
 
     /**
+     * Display a listing of the resource, faith product.
+     */
+    public function faith()
+    {
+        //
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)

@@ -15,6 +15,30 @@ class TreatmentController extends Controller
         //
     }
 
+    //reduce-fat
+    public function reduceFat()
+    {
+        //
+    }
+
+    //massage
+    public function massage()
+    {
+        //
+    }
+
+    //facial
+    public function facial()
+    {
+        //
+    }
+
+    //hair-removal
+    public function hairRemoval()
+    {
+        //
+    }
+
     /**
      * Store a newly created resource in storage.
      */

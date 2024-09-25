@@ -1,10 +1,13 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { mdiMinus, mdiPlus } from '@mdi/js'
-import { getButtonColor } from '@/colors.js'
-import BaseIcon from '@/Components/BaseIcon.vue'
-import AsideMenuList from '@/Components/AsideMenuList.vue'
 import { Link } from '@inertiajs/vue3'
+import { getButtonColor } from '@/colors.js'
+import AsideMenuList from '@/Components/AsideMenuList.vue'
+import { useDarkModeStore } from '@/Stores/darkMode'
+import BaseIcon from '@/Components/BaseIcon.vue'
+import { mdiPlus, mdiMinus } from '@mdi/js'
+
+const darkModeStore = useDarkModeStore()
 
 const props = defineProps({
     item: {
@@ -18,10 +21,6 @@ const emit = defineEmits(['menu-click'])
 
 const hasColor = computed(() => props.item && props.item.color)
 
-const asideMenuItemActiveStyle = computed(() =>
-    hasColor.value ? '' : 'aside-menu-item-active font-bold'
-)
-
 const isDropdownActive = ref(false)
 
 const componentClass = computed(() => [
@@ -30,6 +29,9 @@ const componentClass = computed(() => [
         ? getButtonColor(props.item.color, false, true)
         : `aside-menu-item dark:text-slate-300 dark:hover:text-white`
 ])
+
+const itemHref = computed(() => (props.item.route ? route(props.item.route) : props.item.href))
+
 
 const activeInactiveStyle = computed(() =>
     props.item.route && route().current(props.item.route)
@@ -54,8 +56,9 @@ const menuClick = (event) => {
             class="flex cursor-pointer" :class="componentClass" @click="menuClick">
             <BaseIcon v-if="item.icon" :path="item.icon" class="flex-none" :class="activeInactiveStyle" w="w-16"
                 :size="18" />
-            <span class="grow text-ellipsis line-clamp-1" :class="[{ 'pr-12': !hasDropdown }, activeInactiveStyle]">{{
-                item.label }}</span>
+            <span class="grow text-ellipsis line-clamp-1" :class="[{ 'pr-12': !hasDropdown }, activeInactiveStyle]">
+                {{ item.label }}
+            </span>
             <BaseIcon v-if="hasDropdown" :path="isDropdownActive ? mdiMinus : mdiPlus" class="flex-none"
                 :class="activeInactiveStyle" w="w-12" />
         </component>
