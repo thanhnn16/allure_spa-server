@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useMainStore } from '@/Stores/main'
+import { useMainStore } from '@/Stores/main.js'
 import { mdiEye, mdiTrashCan } from '@mdi/js'
 import CardBoxModal from '@/Components/CardBoxModal.vue'
 import TableCheckboxCell from '@/Components/TableCheckboxCell.vue'
@@ -69,11 +69,11 @@ const hasItems = computed(() => items.value.length > 0)
 
 <template>
   <CardBoxModal v-model="isModalActive" title="Chi tiết khách hàng">
-    <p>Họ và tên: {{ client.name }}</p>
-    <p>Số điện thoại: {{ client.company }}</p>
-    <p>Ngày sinh: {{ client.city }}</p>
-    <p>Ghi chú: {{ client.progress }}</p>
-    <p>Ngày gia nhập: {{ client.created }}</p>
+    <!-- <p>Họ và tên: {{ users.full_name }}</p>
+    <p>Số điện thoại: {{ users.phone }}</p>
+    <p>Ngày sinh: {{ users.birthday }}</p>
+    <p>Ghi chú: {{ users.note }}</p>
+    <p>Ngày gia nhập: {{ users.created }}</p> -->
   </CardBoxModal>
 
   <CardBoxModal v-model="isModalDangerActive" title="Xác nhận" button="danger" has-cancel>

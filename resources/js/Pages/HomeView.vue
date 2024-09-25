@@ -18,7 +18,7 @@ import LineChart from '@/Components/Charts/LineChart.vue'
 import SectionMain from '@/Components/SectionMain.vue'
 import CardBoxWidget from '@/Components/CardBoxWidget.vue'
 import CardBox from '@/Components/CardBox.vue'
-import TableSampleClients from '@/Components/TableSampleClients.vue'
+import TableSampleClients from '@/Pages/Customers/Components/AllCustomersTable.vue'
 import NotificationBar from '@/Components/NotificationBar.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import CardBoxTransaction from '@/Components/CardBoxTransaction.vue'
@@ -42,14 +42,13 @@ onMounted(() => {
 
 const mainStore = useMainStore()
 
-const clientBarItems = computed(() => mainStore.clients.slice(0, 4))
+// const clientBarItems = computed(() => mainStore.clients.slice(0, 4))
 
 const transactionBarItems = computed(() => mainStore.history)
 </script>
 
 <template>
     <LayoutAuthenticated>
-
         <Head title="Dashboard" />
         <SectionMain>
             <SectionTitleLineWithButton :icon="mdiChartTimelineVariant" title="Tổng quan" main>

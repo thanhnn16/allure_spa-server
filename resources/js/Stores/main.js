@@ -27,17 +27,6 @@ export const useMainStore = defineStore('main', () => {
     }
   }
 
-  function fetchSampleClients() {
-    axios
-      .get(`data-sources/clients.json?v=3`)
-      .then((result) => {
-        clients.value = result?.data?.data
-      })
-      .catch((error) => {
-        alert(error.message)
-      })
-  }
-
   function fetchSampleHistory() {
     axios
       .get(`data-sources/history.json`)
@@ -54,10 +43,8 @@ export const useMainStore = defineStore('main', () => {
     userEmail,
     userAvatar,
     isFieldFocusRegistered,
-    clients,
     history,
     setUser,
-    fetchSampleClients,
     fetchSampleHistory
   }
 })
