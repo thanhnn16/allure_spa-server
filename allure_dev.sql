@@ -1,11 +1,12 @@
 -- Xóa database nếu tồn tại
-# DROP DATABASE IF EXISTS allure_dev;
-#
+DROP DATABASE IF EXISTS allure_dev;
+
 # -- Tạo database mới
-# CREATE DATABASE allure_dev;
+CREATE DATABASE allure_dev;
+
 #
 # -- Sử dụng database
-# USE allure_dev;
+USE allure_dev;
 
 --
 -- Bảng brands
@@ -188,7 +189,6 @@ CREATE TABLE users (
     remember_token VARCHAR(100),
     full_name VARCHAR(255),
     gender ENUM ('male', 'female', 'other') DEFAULT 'other',
-    address TEXT,
     date_of_birth TIMESTAMP,
     image_id INT UNSIGNED,
     point INT UNSIGNED DEFAULT 0,
@@ -198,6 +198,22 @@ CREATE TABLE users (
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
+
+--
+-- Bảng addresses
+--
+CREATE TABLE addresses (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    address TEXT NOT NULL,
+    address_type ENUM('home', 'work', 'others') NOT NULL DEFAULT 'home',
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_addresses_user_id ON addresses (user_id);
 
 CREATE INDEX idx_users_email ON users (email);
 
@@ -247,18 +263,17 @@ CREATE TABLE sessions (
 --
 -- Bảng personal_access_tokens
 --
-CREATE TABLE personal_access_tokens
-(
-    id             INT PRIMARY KEY AUTO_INCREMENT,
-    tokenable_id   CHAR(36),
+CREATE TABLE personal_access_tokens (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    tokenable_id CHAR(36),
     tokenable_type VARCHAR(255),
-    name           VARCHAR(255),
-    token          VARCHAR(64) UNIQUE,
-    abilities      TEXT,
-    last_used_at   DATETIME,
-    expires_at     DATETIME,
-    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    name VARCHAR(255),
+    token VARCHAR(64) UNIQUE,
+    abilities TEXT,
+    last_used_at DATETIME,
+    expires_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_personal_access_tokens_tokenable_id ON personal_access_tokens (tokenable_id);
