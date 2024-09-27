@@ -2,35 +2,25 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  full_name: {
+  fullName: {
     type: String,
+    default: 'Guest'
   },
-  avatar: {
-    type: String,
-    default: null
-  },
-  api: {
-    type: String,
-    default: 'avataaars'
+})
+
+const avatarUrl = computed(() => {
+  if (!props.fullName) {
+    return 'https://allurespa.com.vn/wp-content/uploads/2024/08/logo_homepage-e1723436204113.png'
   }
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(props.fullName)}`
 })
 
-const avatar = computed(() => {
-  if (props.avatar) return props.avatar
-  return `https://api.dicebear.com/7.x/${props.api}/svg?seed=${props.full_name.replace(
-    /[^a-z0-9]+/gi,
-    '-'
-  )}.svg`
+const userInitial = computed(() => {
+  if (!props.fullName) return '?'
+  return props.fullName.charAt(0).toUpperCase()
 })
-
-const username = computed(() => props.full_name)
-
 </script>
 
 <template>
-  <div>
-    <img v-if="avatar" :src="avatar" :alt="username"
-      class="rounded-full block h-auto w-full max-w-full bg-gray-100 dark:bg-slate-800" />
-    <slot />
-  </div>
+  <img :src="avatarUrl" :alt="fullName" class="rounded-full">
 </template>

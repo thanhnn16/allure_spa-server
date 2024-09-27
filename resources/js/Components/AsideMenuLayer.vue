@@ -1,9 +1,11 @@
 <script setup>
-import { mdiLogout, mdiClose } from '@mdi/js'
 import { computed } from 'vue'
-import AsideMenuList from '@/Components/AsideMenuList.vue'
+import { mdiLogout } from '@mdi/js'
+import { useForm } from '@inertiajs/vue3'
 import AsideMenuItem from '@/Components/AsideMenuItem.vue'
+import AsideMenuList from '@/Components/AsideMenuList.vue'
 import BaseIcon from '@/Components/BaseIcon.vue'
+import { mdiClose } from '@mdi/js'
 
 defineProps({
   menu: {
@@ -21,8 +23,18 @@ const logoutItem = computed(() => ({
   isLogout: true
 }))
 
+const form = useForm({})
+
+const handleLogout = () => {
+  form.post(route('logout'))
+}
+
 const menuClick = (event, item) => {
-  emit('menu-click', event, item)
+  if (item.isLogout) {
+    handleLogout()
+  } else {
+    emit('menu-click', event, item)
+  }
 }
 
 const asideLgCloseClick = (event) => {

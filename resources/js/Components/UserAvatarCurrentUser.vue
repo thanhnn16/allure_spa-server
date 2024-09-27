@@ -11,7 +11,7 @@ const userName = computed(() => {
 </script>
 
 <template>
-  <UserAvatar :full_name="userName" api="initials">
+  <UserAvatar :fullName="userName">
     <slot />
   </UserAvatar>
 </template>

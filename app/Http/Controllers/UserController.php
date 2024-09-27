@@ -5,16 +5,59 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::where('role', 'user')->get();
-        return Inertia::render('Customers/CustomersView', ['users' => $users]);
+        $search = $request->input('search');
+        $perPage = $request->input('per_page', 10);
+        $showUpcomingBirthdays = $request->input('upcoming_birthdays', false);
+        $showDeletedUsers = $request->input('show_deleted', false);
+
+        $query = User::where('role', 'user');
+
+        if ($showDeletedUsers) {
+            $query->withTrashed();
+        }
+
+        if ($showUpcomingBirthdays) {
+            $query->whereRaw('DATE_ADD(date_of_birth, 
+                INTERVAL YEAR(CURDATE())-YEAR(date_of_birth) 
+                    + IF(DAYOFYEAR(CURDATE()) > DAYOFYEAR(date_of_birth), 1, 0) YEAR) 
+                BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 15 DAY)');
+        } else {
+            $query->when($search, function ($q) use ($search) {
+                $q->where(function ($subq) use ($search) {
+                    $subq->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('phone_number', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        Log::info('Show deleted users: ' . ($showDeletedUsers ? 'true' : 'false'));
+        Log::info('Query SQL: ' . $query->toSql());
+
+        $users = $query->paginate($perPage);
+
+        Log::info('Users count: ' . $users->count());
+
+        $upcomingBirthdays = User::whereRaw('DATE_ADD(date_of_birth, 
+            INTERVAL YEAR(CURDATE())-YEAR(date_of_birth) 
+                + IF(DAYOFYEAR(CURDATE()) > DAYOFYEAR(date_of_birth), 1, 0) YEAR) 
+            BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 15 DAY)')
+            ->count();
+
+        return Inertia::render('Customers/CustomersView', [
+            'users' => $users,
+            'filters' => $request->only(['search', 'per_page', 'upcoming_birthdays', 'show_deleted']),
+            'upcomingBirthdays' => $upcomingBirthdays
+        ]);
     }
 
     public function profile()
@@ -34,30 +77,104 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:255',
+            'phone_number' => 'required|string|unique:users,phone_number',
+            'email' => 'nullable|email|unique:users,email',
+            'gender' => 'required|in:male,female,other',
+            'date_of_birth' => 'nullable|date',
+            'password' => 'required|string|min:6',
+        ]);
+
+        $user = User::create($validated);
+
+        return redirect()->route('users.index')->with('success', 'Khách hàng đã được thêm thành công.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(User $user)
+    public function show($id)
     {
-        //
+        $user = User::withTrashed()->with([
+            'addresses',
+            'treatmentPackages.treatmentCombo.treatment',
+            'vouchers',
+            'invoices'  // Đảm bảo rằng tên này khớp với tên mối quan hệ trong model User
+        ])->findOrFail($id);
+
+        $upcomingBirthdays = User::whereMonth('date_of_birth', '=', now()->addDays(15)->month)
+            ->whereDay('date_of_birth', '>=', now()->day)
+            ->whereDay('date_of_birth', '<=', now()->addDays(15)->day)
+            ->count();
+
+        return Inertia::render('Customers/CustomerDetails', [
+            'user' => $user,
+            'upcomingBirthdays' => $upcomingBirthdays
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id)
     {
-        //
+        $user = User::findOrFail($id);
+        try {
+            $validated = $request->validate([
+                'full_name' => 'required|string|max:255',
+                'phone_number' => 'required|string|unique:users,phone_number,' . $user->id,
+                'email' => 'nullable|email|unique:users,email,' . $user->id,
+                'gender' => 'required|in:male,female,other',
+                'date_of_birth' => 'nullable|date',
+                'note' => 'nullable|string',
+            ]);
+
+            $user->update($validated);
+
+            return response()->json([
+                'message' => 'Thông tin khách hàng đã được cập nhật thành công.',
+                'user' => $user
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Dữ liệu không hợp lệ.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (QueryException $e) {
+            return response()->json([
+                'message' => 'Lỗi cơ sở dữ liệu khi cập nhật thông tin khách hàng.',
+                'error' => $e->getMessage()
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi cập nhật thông tin khách hàng.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
+    public function destroy($id)
     {
-        //
+        $user = User::findOrFail($id);
+        try {
+            $user->delete(); // This will perform a soft delete
+            return response()->json([
+                'message' => 'Khách hàng đã được xóa thành công.'
+            ]);
+        } catch (QueryException $e) {
+            return response()->json([
+                'message' => 'Lỗi cơ sở dữ liệu khi xóa khách hàng.',
+                'error' => $e->getMessage()
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi xóa khách hàng.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

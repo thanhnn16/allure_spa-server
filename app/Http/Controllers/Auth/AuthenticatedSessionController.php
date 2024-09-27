@@ -137,18 +137,32 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        try {
+            $request->authenticate();
 
-        $request->session()->regenerate();
+            $user = $request->user();
 
-        $user = $request->user();
-        Log::info('User authenticated', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'session_id' => session()->getId()
-        ]);
+            if ($user->role !== 'admin') {
+                Auth::logout();
+                throw ValidationException::withMessages([
+                    'phone_number' => __('Bạn không có quyền truy cập hệ thống.'),
+                ]);
+            }
 
-        return redirect()->intended(route('dashboard'));
+            $request->session()->regenerate();
+
+            Log::info('User authenticated', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'session_id' => session()->getId()
+            ]);
+
+            return redirect()->intended(route('dashboard'));
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors([
+                'phone_number' => $this->getDetailedErrorMessage($e),
+            ]);
+        }
     }
 
     private function getDetailedErrorMessage(ValidationException $e): string
@@ -163,6 +177,10 @@ class AuthenticatedSessionController extends Controller
 
         if (!Auth::getProvider()->validateCredentials($user, ['password' => request('password')])) {
             return 'Mật khẩu không chính xác.';
+        }
+
+        if ($user->role !== 'admin') {
+            return 'Bạn không có quyền truy cập hệ thống.';
         }
 
         return 'Đã xảy ra lỗi không xác định trong quá trình đăng nhập.';
@@ -181,10 +199,15 @@ class AuthenticatedSessionController extends Controller
                 throw new \Exception('Thông tin đăng nhập không chính xác');
             }
 
+            if ($user->role !== 'admin') {
+                Auth::logout();
+                throw new \Exception('Bạn không có quyền truy cập hệ thống');
+            }
+
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-                'message' => 'Đ��ng nhập thành công',
+                'message' => 'Đăng nhập thành công',
                 'status_code' => 200,
                 'data' => [
                     'user' => $user,

@@ -19,9 +19,16 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
         $middleware->trustProxies(at: '*');
+        $middleware->api(append: [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'throttle:api',
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\HandleInertiaRequests::class,
+            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->renderable(function (NotFoundHttpException $e, Request $request) {
-            return response()->json(['message' => 'Not Found'], 404);
+            return response()->json(['message' => 'Lỗi 404: không tìm thấy. Vui lòng liên hệ Thành (0879.159.499) nếu bạn nghĩ đây là lỗi của chúng tôi.'], 404);
         });
     })->create();

@@ -17,6 +17,7 @@ export const useMainStore = defineStore('main', () => {
   const isFieldFocusRegistered = ref(false)
   const clients = ref([])
   const history = ref([])
+  const users = ref([])
 
   function setUser(payload) {
     if (payload.full_name) {
@@ -38,13 +39,26 @@ export const useMainStore = defineStore('main', () => {
       })
   }
 
+  function fetchUsers() {
+    return axios.get(route('users.index'))
+      .then((response) => {
+        users.value = response.data.users || []
+      })
+      .catch((error) => {
+        console.error('Error fetching users:', error)
+        users.value = []
+      })
+  }
+
   return {
     userName,
     userEmail,
     userAvatar,
     isFieldFocusRegistered,
     history,
+    users,
     setUser,
-    fetchSampleHistory
+    fetchSampleHistory,
+    fetchUsers
   }
 })
