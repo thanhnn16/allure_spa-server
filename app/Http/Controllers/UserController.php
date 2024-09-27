@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
+
 class UserController extends Controller
 {
     /**
@@ -19,11 +20,18 @@ class UserController extends Controller
         $perPage = $request->input('per_page', 10);
         $showUpcomingBirthdays = $request->input('upcoming_birthdays', false);
         $showDeletedUsers = $request->input('show_deleted', false);
+        $gender = $request->input('gender');
+        $ageRange = $request->input('age_range');
+        $pointRange = $request->input('point_range');
+        $purchaseCountRange = $request->input('purchase_count_range');
+        $createdAtRange = $request->input('created_at_range');
 
         $query = User::where('role', 'user');
 
         if ($showDeletedUsers) {
             $query->withTrashed();
+        } else {
+            $query->whereNull('deleted_at');
         }
 
         if ($showUpcomingBirthdays) {
@@ -40,12 +48,31 @@ class UserController extends Controller
             });
         }
 
-        Log::info('Show deleted users: ' . ($showDeletedUsers ? 'true' : 'false'));
-        Log::info('Query SQL: ' . $query->toSql());
+        if ($gender) {
+            $query->where('gender', $gender);
+        }
+
+        if ($ageRange) {
+            list($minAge, $maxAge) = explode('-', $ageRange);
+            $query->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?', [$minAge, $maxAge]);
+        }
+
+        if ($pointRange) {
+            list($minPoint, $maxPoint) = explode('-', $pointRange);
+            $query->whereBetween('point', [$minPoint, $maxPoint]);
+        }
+
+        if ($purchaseCountRange) {
+            list($minPurchase, $maxPurchase) = explode('-', $purchaseCountRange);
+            $query->whereBetween('purchase_count', [$minPurchase, $maxPurchase]);
+        }
+
+        if ($createdAtRange) {
+            list($startDate, $endDate) = explode(' - ', $createdAtRange);
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
 
         $users = $query->paginate($perPage);
-
-        Log::info('Users count: ' . $users->count());
 
         $upcomingBirthdays = User::whereRaw('DATE_ADD(date_of_birth, 
             INTERVAL YEAR(CURDATE())-YEAR(date_of_birth) 
@@ -55,7 +82,7 @@ class UserController extends Controller
 
         return Inertia::render('Customers/CustomersView', [
             'users' => $users,
-            'filters' => $request->only(['search', 'per_page', 'upcoming_birthdays', 'show_deleted']),
+            'filters' => $request->all(),
             'upcomingBirthdays' => $upcomingBirthdays
         ]);
     }
