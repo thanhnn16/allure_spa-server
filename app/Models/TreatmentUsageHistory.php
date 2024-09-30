@@ -10,7 +10,11 @@ class TreatmentUsageHistory extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_treatment_package_id', 'treatment_date', 'staff_id', 'notes'
+        'user_treatment_package_id',
+        'treatment_date',
+        'staff_id',
+        'notes',
+        'session_result'
     ];
 
     public function userTreatmentPackage()

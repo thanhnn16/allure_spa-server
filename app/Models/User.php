@@ -45,7 +45,8 @@ class User extends Authenticatable
         'gender',
         'date_of_birth',
         'image_id',
-        'point',
+        'loyalty_points',
+        'skin_condition',
         'note',
         'purchase_count',
     ];

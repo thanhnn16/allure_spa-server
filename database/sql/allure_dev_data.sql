@@ -8,6 +8,12 @@
 --
 -- Mỹ phẩm Allure Spa
 --
+-- Chèn dữ liệu vào bảng cart_item_types
+INSERT INTO
+    cart_item_types (type_name)
+VALUES
+    ('product'),
+    ('treatment');
 
 -- Chèn dữ liệu vào bảng brands
 INSERT INTO brands (brand_name)

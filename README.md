@@ -27,16 +27,27 @@ composer install
 npm install
 ```
 
-Chạy file `allure_dev.sql` trong thư mục gốc để tạo database. (**Bỏ comment 8 dòng đầu tiên trước khi chạy, khi commit không thêm file này**).
+Chạy file tất cả các file sql trong thư mục `database/sql` để tạo database, dữ liệu mẫu và trigger.
+Thứ tự các file sql để chạy:
+1. allure_dev.sql
+2. allure_dev_data.sql
+3. allure_dev_trigger.sql
+4. allure_dev_view.sql
 
 ```bash
-mysql -u root -p < allure_dev.sql
+mysql -u root -p < database/sql/allure_dev.sql
 ```
 
-Chạy file `data.sql` trong thư mục gốc để tạo dữ liệu mẫu cho database. (**Bỏ comment dòng đầu tiên trước khi chạy, khi commit không thêm file này**).
+```bash
+mysql -u root -p < database/sql/allure_dev_data.sql
+```
 
 ```bash
-mysql -u root -p < data.sql
+mysql -u root -p < database/sql/allure_dev_trigger.sql
+```
+
+```bash
+mysql -u root -p < database/sql/allure_dev_view.sql
 ```
 
 Chạy lệnh `dump-autoload` để tạo file autoload.php (Công dụng: composer dump-autoload là một lệnh quan trọng để quản lý autoloading trong project PHP sử dụng Composer. Nó đảm bảo PHP có thể tìm và load các class một cách tự động)

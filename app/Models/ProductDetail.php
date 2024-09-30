@@ -10,8 +10,14 @@ class ProductDetail extends Model
     use HasFactory;
 
     protected $fillable = [
-        'product_id', 'usage', 'benefits', 'key_ingredients', 'ingredients', 
-        'directions', 'storage_instructions', 'product_notes'
+        'product_id',
+        'usage',
+        'benefits',
+        'key_ingredients',
+        'ingredients',
+        'directions',
+        'storage_instructions',
+        'product_notes'
     ];
 
     public function product()

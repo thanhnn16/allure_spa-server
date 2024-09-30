@@ -46,7 +46,6 @@ CREATE TABLE products (
     brand_id INT UNSIGNED NOT NULL,
     product_name VARCHAR(255) NOT NULL,
     product_line ENUM ('Celbest', 'Faith') NOT NULL,
-    language ENUM ('vi', 'en', 'ja') NOT NULL DEFAULT 'vi',
     description TEXT,
     price DECIMAL(10, 2) UNSIGNED NOT NULL,
     volume VARCHAR(50) default 'N/A',
@@ -65,8 +64,6 @@ CREATE INDEX idx_products_brand_id ON products (brand_id);
 CREATE INDEX idx_products_category_id ON products (category_id);
 
 CREATE INDEX idx_products_product_name ON products (product_name);
-
-CREATE INDEX idx_language_code ON products(language);
 
 --
 -- Bảng product_details
@@ -191,7 +188,8 @@ CREATE TABLE users (
     gender ENUM ('male', 'female', 'other') DEFAULT 'other',
     date_of_birth TIMESTAMP,
     image_id INT UNSIGNED,
-    point INT UNSIGNED DEFAULT 0,
+    loyalty_points INT UNSIGNED DEFAULT 0,
+    skin_condition TEXT,
     note TEXT,
     purchase_count INT UNSIGNED DEFAULT 0,
     created_at TIMESTAMP NULL DEFAULT NULL,
@@ -341,29 +339,6 @@ CREATE TABLE failed_jobs (
 );
 
 --
--- Bảng skin_conditions
---
-CREATE TABLE skin_conditions (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL UNIQUE,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
-
---
--- Bảng user_skin_conditions
---
-CREATE TABLE user_skin_conditions (
-    user_id CHAR(36) NOT NULL,
-    -- Cập nhật kiểu dữ liệu user_id
-    skin_condition_id INT UNSIGNED NOT NULL,
-    PRIMARY KEY (user_id, skin_condition_id),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (skin_condition_id) REFERENCES skin_conditions (id) ON DELETE CASCADE
-);
-
---
 -- Bảng vouchers
 --
 CREATE TABLE vouchers (
@@ -403,6 +378,7 @@ CREATE TABLE treatment_usage_history (
     treatment_date TIMESTAMP NOT NULL,
     staff_id INT UNSIGNED,
     notes TEXT,
+    session_result TEXT,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_treatment_package_id) REFERENCES user_treatment_packages (id) ON DELETE CASCADE,
@@ -542,10 +518,8 @@ CREATE TABLE ratings (
     rating_type_id INT UNSIGNED NOT NULL,
     item_id INT UNSIGNED NOT NULL,
     user_id CHAR(36) NOT NULL,
-    -- Cập nhật kiểu dữ liệu user_id
     comment TEXT,
     image_id INT UNSIGNED,
-    -- Thay đổi image thành image_id
     stars INT UNSIGNED NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
@@ -572,7 +546,6 @@ CREATE TABLE favorites (
     favorite_type_id INT UNSIGNED NOT NULL,
     item_id INT UNSIGNED NOT NULL,
     user_id CHAR(36) NOT NULL,
-    -- Cập nhật kiểu dữ liệu user_id
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
@@ -585,9 +558,7 @@ CREATE TABLE favorites (
 CREATE TABLE notifications (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
-    -- Cập nhật kiểu dữ liệu user_id
     image_id INT UNSIGNED,
-    -- Thay đổi image_path thành image_id
     content TEXT NOT NULL,
     status VARCHAR(255) NOT NULL DEFAULT 'unseen',
     created_at TIMESTAMP NULL DEFAULT NULL,
@@ -737,262 +708,48 @@ CREATE TABLE images (
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
 
--- Chèn dữ liệu vào bảng cart_item_types
-INSERT INTO
-    cart_item_types (type_name)
-VALUES
-    ('product'),
-    ('treatment');
+CREATE TABLE reward_items (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    item_type ENUM('product', 'treatment_combo') NOT NULL,
+    item_id INT UNSIGNED NOT NULL,
+    points_required INT UNSIGNED NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL
+);
 
-#
-# -- Trigger cho INSERT vào bảng products
-# DELIMITER //
-# CREATE TRIGGER products_after_insert
-#     AFTER INSERT
-#     ON products
-#     FOR EACH ROW
-# BEGIN
-#     INSERT INTO histories (user_id, table_name, row_id, action, changes, action_timestamp)
-#     VALUES (
-#                IF(NEW.updated_at IS NULL, NULL, CURRENT_USER()),
-#                'products',
-#                NEW.id,
-#                'INSERT',
-#                JSON_OBJECT(
-#                    'id', NEW.id,
-#                    'category_id', NEW.category_id,
-#                    'brand_id', NEW.brand_id,
-#                    'product_name', NEW.product_name,
-#                    'product_line', NEW.product_line,
-#                    'language', NEW.language,
-#                    'description', NEW.description,
-#                    'price', NEW.price,
-#                    'volume', NEW.volume,
-#                    'stock_quantity', NEW.stock_quantity,
-#                    'image_id', NEW.image_id,
-#                    'created_at', NEW.created_at,
-#                    'updated_at', NEW.updated_at,
-#                    'deleted_at', NEW.deleted_at
-#                ),
-#                NOW()
-#            );
-# END //
-# DELIMITER ;
-#
-# -- Trigger cho UPDATE bảng products
-# DELIMITER //
-# CREATE TRIGGER products_after_update
-#     AFTER UPDATE
-#     ON products
-#     FOR EACH ROW
-# BEGIN
-#     IF ROW_COUNT() > 0 THEN
-#         INSERT INTO histories (user_id, table_name, row_id, action, changes, action_timestamp)
-#         VALUES (
-#                    CURRENT_USER(),
-#                    'products',
-#                    NEW.id,
-#                    'UPDATE',
-#                    JSON_OBJECT(
-#                        'id', NEW.id,
-#                        'category_id', NEW.category_id,
-#                        'brand_id', NEW.brand_id,
-#                        'product_name', NEW.product_name,
-#                        'product_line', NEW.product_line,
-#                        'language', NEW.language,
-#                        'description', NEW.description,
-#                        'price', NEW.price,
-#                        'volume', NEW.volume,
-#                        'stock_quantity', NEW.stock_quantity,
-#                        'image_id', NEW.image_id,
-#                        'created_at', NEW.created_at,
-#                        'updated_at', NEW.updated_at,
-#                        'deleted_at', NEW.deleted_at
-#                    ),
-#                    NOW()
-#                );
-#     END IF;
-# END //
-# DELIMITER ;
-#
-# -- Trigger cho DELETE bảng products
-# DELIMITER //
-# CREATE TRIGGER products_after_delete
-#     AFTER DELETE
-#     ON products
-#     FOR EACH ROW
-# BEGIN
-#     INSERT INTO histories (user_id, table_name, row_id, action, changes, action_timestamp)
-#     VALUES (
-#                CURRENT_USER(),
-#                'products',
-#                OLD.id,
-#                'DELETE',
-#                NULL,
-#                NOW()
-#            );
-# END //
-# DELIMITER ;
-#
-# -- Trigger cho INSERT vào bảng treatments
-# DELIMITER //
-# CREATE TRIGGER treatments_after_insert
-#     AFTER INSERT
-#     ON treatments
-#     FOR EACH ROW
-# BEGIN
-#     INSERT INTO histories (user_id, table_name, row_id, action, changes, action_timestamp)
-#     VALUES (
-#                IF(NEW.updated_at IS NULL, NULL, CURRENT_USER()),
-#                'treatments',
-#                NEW.id,
-#                'INSERT',
-#                JSON_OBJECT(
-#                    'id', NEW.id,
-#                    'category_id', NEW.category_id,
-#                    'treatment_name', NEW.treatment_name,
-#                    'description', NEW.description,
-#                    'duration', NEW.duration,
-#                    'price', NEW.price,
-#                    'image_id', NEW.image_id,
-#                    'created_at', NEW.created_at,
-#                    'updated_at', NEW.updated_at,
-#                    'deleted_at', NEW.deleted_at
-#                ),
-#                NOW()
-#            );
-# END //
-# DELIMITER ;
-#
-# -- Trigger cho UPDATE bảng treatments
-# DELIMITER //
-# CREATE TRIGGER treatments_after_update
-#     AFTER UPDATE
-#     ON treatments
-#     FOR EACH ROW
-# BEGIN
-#     IF ROW_COUNT() > 0 THEN
-#         INSERT INTO histories (user_id, table_name, row_id, action, changes, action_timestamp)
-#         VALUES (
-#                    CURRENT_USER(),
-#                    'treatments',
-#                    NEW.id,
-#                    'UPDATE',
-#                    JSON_OBJECT(
-#                        'id', NEW.id,
-#                        'category_id', NEW.category_id,
-#                        'treatment_name', NEW.treatment_name,
-#                        'description', NEW.description,
-#                        'duration', NEW.duration,
-#                        'price', NEW.price,
-#                        'image_id', NEW.image_id,
-#                        'created_at', NEW.created_at,
-#                        'updated_at', NEW.updated_at,
-#                        'deleted_at', NEW.deleted_at
-#                    ),
-#                    NOW()
-#                );
-#     END IF;
-# END //
-# DELIMITER ;
-#
-# -- Trigger cho DELETE bảng treatments
-# DELIMITER //
-# CREATE TRIGGER treatments_after_delete
-#     AFTER DELETE
-#     ON treatments
-#     FOR EACH ROW
-# BEGIN
-#     INSERT INTO histories (user_id, table_name, row_id, action, changes, action_timestamp)
-#     VALUES (
-#                CURRENT_USER(),
-#                'treatments',
-#                OLD.id,
-#                'DELETE',
-#                NULL,
-#                NOW()
-#            );
-# END //
-# DELIMITER ;
-#
-# -- Trigger cho INSERT vào bảng treatment_combos
-# DELIMITER //
-# CREATE TRIGGER treatment_combos_after_insert
-#     AFTER INSERT
-#     ON treatment_combos
-#     FOR EACH ROW
-# BEGIN
-#     INSERT INTO histories (user_id, table_name, row_id, action, changes, action_timestamp)
-#     VALUES (
-#                IF(NEW.updated_at IS NULL, NULL, CURRENT_USER()),
-#                'treatment_combos',
-#                NEW.id,
-#                'INSERT',
-#                JSON_OBJECT(
-#                    'id', NEW.id,
-#                    'treatment_id', NEW.treatment_id,
-#                    'duration', NEW.duration,
-#                    'combo_type', NEW.combo_type,
-#                    'combo_price', NEW.combo_price,
-#                    'is_default', NEW.is_default,
-#                    'validity_period', NEW.validity_period,
-#                    'created_at', NEW.created_at,
-#                    'updated_at', NEW.updated_at,
-#                    'deleted_at', NEW.deleted_at
-#                ),
-#                NOW()
-#            );
-# END //
-# DELIMITER ;
-#
-# -- Trigger cho UPDATE bảng treatment_combos
-# DELIMITER //
-# CREATE TRIGGER treatment_combos_after_update
-#     AFTER UPDATE
-#     ON treatment_combos
-#     FOR EACH ROW
-# BEGIN
-#     IF ROW_COUNT() > 0 THEN
-#         INSERT INTO histories (user_id, table_name, row_id, action, changes, action_timestamp)
-#         VALUES (
-#                    CURRENT_USER(),
-#                    'treatment_combos',
-#                    NEW.id,
-#                    'UPDATE',
-#                    JSON_OBJECT(
-#                        'id', NEW.id,
-#                        'treatment_id', NEW.treatment_id,
-#                        'duration', NEW.duration,
-#                        'combo_type', NEW.combo_type,
-#                        'combo_price', NEW.combo_price,
-#                        'is_default', NEW.is_default,
-#                        'validity_period', NEW.validity_period,
-#                        'created_at', NEW.created_at,
-#                        'updated_at', NEW.updated_at,
-#                        'deleted_at', NEW.deleted_at
-#                    ),
-#                    NOW()
-#                );
-#     END IF;
-# END //
-# DELIMITER ;
-#
-# -- Trigger cho DELETE bảng treatment_combos
-# DELIMITER //
-# CREATE TRIGGER treatment_combos_after_delete
-#     AFTER DELETE
-#     ON treatment_combos
-#     FOR EACH ROW
-# BEGIN
-#     INSERT INTO histories (user_id, table_name, row_id, action, changes, action_timestamp)
-#     VALUES (
-#                CURRENT_USER(),
-#                'treatment_combos',
-#                OLD.id,
-#                'DELETE',
-#                NULL,
-#                NOW()
-#            );
-# END //
-# DELIMITER ;
-#
+CREATE TABLE point_redemption_history (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    reward_item_id INT UNSIGNED NOT NULL,
+    points_used INT UNSIGNED NOT NULL,
+    redeemed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reward_item_id) REFERENCES reward_items(id) ON DELETE CASCADE
+);
+
+-- Tạo bảng dịch cho sản phẩm
+CREATE TABLE product_translations (
+    product_id INT UNSIGNED NOT NULL,
+    language CHAR(2) NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    PRIMARY KEY (product_id, language),
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_product_translations_language ON product_translations(language);
+
+-- Tạo bảng dịch cho liệu trình
+CREATE TABLE treatment_translations (
+    treatment_id INT UNSIGNED NOT NULL,
+    language CHAR(2) NOT NULL,
+    treatment_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    PRIMARY KEY (treatment_id, language),
+    FOREIGN KEY (treatment_id) REFERENCES treatments(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_treatment_translations_language ON treatment_translations(language);
