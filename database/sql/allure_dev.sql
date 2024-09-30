@@ -733,7 +733,7 @@ CREATE TABLE point_redemption_history (
 -- Tạo bảng dịch cho sản phẩm
 CREATE TABLE product_translations (
     product_id INT UNSIGNED NOT NULL,
-    language CHAR(2) NOT NULL,
+    language CHAR(2) DEFAULT 'vi' NOT NULL,
     product_name VARCHAR(255) NOT NULL,
     description TEXT,
     PRIMARY KEY (product_id, language),
@@ -745,7 +745,7 @@ CREATE INDEX idx_product_translations_language ON product_translations(language)
 -- Tạo bảng dịch cho liệu trình
 CREATE TABLE treatment_translations (
     treatment_id INT UNSIGNED NOT NULL,
-    language CHAR(2) NOT NULL,
+    language CHAR(2) DEFAULT 'vi' NOT NULL,
     treatment_name VARCHAR(255) NOT NULL,
     description TEXT,
     PRIMARY KEY (treatment_id, language),
