@@ -6,11 +6,18 @@ import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
-import { Head, useForm } from "@inertiajs/vue3";
-import { ref, onMounted } from 'vue'
+import { Head, useForm } from "@inertiajs/vue3"
+import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
+import AppointmentModal from './Components/AppointmentModal.vue'
+import { usePage } from '@inertiajs/vue3'
 
-const appointments = ref([])
+const props = defineProps({
+    appointments: Array
+})
+
+const appointments = ref(props.appointments)
+
 const calendarOptions = ref({
     plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
@@ -52,6 +59,9 @@ const form = useForm({
     note: '',
 })
 
+const showModal = ref(false)
+const selectedAppointment = ref(null)
+
 onMounted(() => {
     fetchAppointments()
 })
@@ -69,20 +79,23 @@ function fetchAppointments() {
 }
 
 function handleDateSelect(selectInfo) {
-    form.reset()
-    form.start_date = selectInfo.startStr
-    form.end_date = selectInfo.endStr
-    form.is_all_day = selectInfo.allDay
-    // Hiển thị modal tạo lịch hẹn mới, cho phép chọn user_id
+    selectedAppointment.value = {
+        start_date: selectInfo.startStr,
+        end_date: selectInfo.endStr,
+        is_all_day: selectInfo.allDay,
+    }
+    showModal.value = true
 }
 
 function handleEventClick(clickInfo) {
-    form.id = clickInfo.event.id
-    form.title = clickInfo.event.title
-    form.start = clickInfo.event.startStr
-    form.end = clickInfo.event.endStr
-    form.allDay = clickInfo.event.allDay
-    // Hiển thị modal chỉnh sửa lịch hẹn
+    selectedAppointment.value = {
+        id: clickInfo.event.id,
+        title: clickInfo.event.title,
+        start_date: clickInfo.event.startStr,
+        end_date: clickInfo.event.endStr,
+        is_all_day: clickInfo.event.allDay,
+    }
+    showModal.value = true
 }
 
 function handleEventDrop(dropInfo) {
@@ -112,32 +125,50 @@ function submitForm() {
     if (form.id) {
         form.put(`/api/appointments/${form.id}`).then(() => {
             fetchAppointments()
-            // Đóng modal
         })
     } else {
         form.post('/api/appointments').then(() => {
             fetchAppointments()
-            // Đóng modal
         })
     }
 }
 
-function deleteAppointment() {
-    if (form.id) {
-        axios.delete(`/api/appointments/${form.id}`).then(() => {
-            fetchAppointments()
-            // Đóng modal
-        })
+function deleteAppointment(id) {
+    axios.delete(`/api/appointments/${id}`).then(() => {
+        fetchAppointments()
+    })
+}
+
+function closeModal() {
+    showModal.value = false
+    selectedAppointment.value = null
+}
+
+function saveAppointment(appointmentData) {
+    if (appointmentData.id) {
+        updateAppointment(appointmentData)
+    } else {
+        createAppointment(appointmentData)
     }
+    closeModal()
+}
+
+function createAppointment(data) {
+    axios.post('/api/appointments', data).then(() => {
+        fetchAppointments()
+    })
 }
 </script>
 
 <template>
     <LayoutAuthenticated>
+
         <Head title="Lịch hẹn" />
         <SectionMain>
             <FullCalendar :options="calendarOptions" />
         </SectionMain>
+        <AppointmentModal :show="showModal" :appointment="selectedAppointment" @close="closeModal"
+            @save="saveAppointment" />
         <!-- Thêm modal cho việc tạo/chỉnh sửa lịch hẹn -->
     </LayoutAuthenticated>
 </template>

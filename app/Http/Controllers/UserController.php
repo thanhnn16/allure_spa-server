@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
 
 class UserController extends Controller
 {
@@ -203,5 +204,16 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $query = $request->input('query');
+        $users = User::where('full_name', 'like', "%{$query}%")
+            ->orWhere('phone_number', 'like', "%{$query}%")
+            ->limit(10)
+            ->get(['id', 'full_name', 'phone_number']);
+
+        return response()->json($users);
     }
 }

@@ -3,15 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class AppointmentController extends Controller
 {
     public function index()
     {
-        return Appointment::all();
+        $appointments = Appointment::with(['user', 'appointmentType', 'staff', 'orderItem'])->get();
+        return Inertia::render('Calendar/CalendarView', [
+            'appointments' => $appointments
+        ]);
+    }
+
+    public function apiIndex()
+    {
+        $appointments = Appointment::all();
+        return response()->json($appointments);
     }
 
     public function store(Request $request)
