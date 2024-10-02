@@ -129,11 +129,22 @@ const modalTitle = computed(() => {
 
 watch(() => props.appointment, (newAppointment) => {
     if (newAppointment) {
-        appointmentData.value = { ...newAppointment }
+        appointmentData.value = {
+            ...appointmentData.value,
+            ...newAppointment,
+            start_date: formatDateTimeForInput(newAppointment.start_date),
+            end_date: formatDateTimeForInput(newAppointment.end_date),
+        }
     } else {
         resetForm()
     }
 }, { immediate: true })
+
+function formatDateTimeForInput(dateTimeString) {
+    if (!dateTimeString) return ''
+    const date = new Date(dateTimeString)
+    return date.toISOString().slice(0, 16)
+}
 
 function resetForm() {
     userSearch.value = ''

@@ -9,6 +9,8 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
+use App\Imports\UsersImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
@@ -215,5 +217,25 @@ class UserController extends Controller
             ->get(['id', 'full_name', 'phone_number']);
 
         return response()->json($users);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv',
+        ]);
+
+        try {
+            Excel::import(new UsersImport, $request->file('file'));
+
+            return response()->json([
+                'message' => 'Khách hàng đã được nhập thành công.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi nhập khách hàng.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

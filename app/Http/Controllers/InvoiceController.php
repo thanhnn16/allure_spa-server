@@ -3,47 +3,49 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Models\User;
+use App\Models\Voucher;
+use App\Models\PaymentMethod;
+use App\Models\CartItemType;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class InvoiceController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $invoices = Invoice::with('user')->orderBy('created_at', 'desc')->get();
+        return Inertia::render('Invoice/InvoiceView', [
+            'invoices' => $invoices,
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function create()
+    {
+        $users = User::all();
+        $vouchers = Voucher::where('status', 'active')->get();
+        $paymentMethods = PaymentMethod::all();
+        $cartItemTypes = CartItemType::all();
+
+        return Inertia::render('Invoice/InvoiceCreate', [
+            'users' => $users,
+            'vouchers' => $vouchers,
+            'paymentMethods' => $paymentMethods,
+            'cartItemTypes' => $cartItemTypes,
+        ]);
+    }
+
     public function store(Request $request)
     {
-        //
+        // Xử lý lưu hóa đơn vào database
+        // Validation và lưu dữ liệu
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Invoice $invoice)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Invoice $invoice)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Invoice $invoice)
-    {
-        //
+        $invoice->load(['user', 'voucher', 'paymentMethod', 'orderItems']);
+        return Inertia::render('Invoice/InvoiceDetail', [
+            'invoice' => $invoice,
+        ]);
     }
 }

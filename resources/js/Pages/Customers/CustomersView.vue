@@ -16,6 +16,7 @@ import { useMainStore } from '@/Stores/main'
 import { storeToRefs } from 'pinia'
 import TablePagination from '@/Pages/Customers/Components/TablePagination.vue'
 import { mdiFilter, mdiAccountMultiple, mdiCalendarRange, mdiCake, mdiStar, mdiCartOutline, mdiCalendarClock } from '@mdi/js'
+import ImportCustomersModal from '@/Pages/Customers/Components/ImportCustomersModal.vue'
 
 const mainStore = useMainStore()
 const { users } = storeToRefs(mainStore)
@@ -109,6 +110,12 @@ const birthdayNotification = computed(() => {
         return `Có ${props.upcomingBirthdays} khách hàng có sinh nhật trong 15 ngày tới`
     }
 })
+
+const showImportCustomersModal = ref(false)
+
+const handleCustomersImported = () => {
+    mainStore.fetchUsers()
+}
 </script>
 
 <template>
@@ -119,6 +126,8 @@ const birthdayNotification = computed(() => {
             <SectionTitleLineWithButton :icon="mdiTableAccount" title="Danh sách khách hàng" main>
                 <BaseButton :icon="mdiAccountPlus" label="Thêm khách hàng mới" rounded-full small
                     @click="showAddCustomerModal = true" />
+                <BaseButton :icon="mdiTableBorder" label="Nhập từ Excel" rounded-full small
+                    @click="showImportCustomersModal = true" />
             </SectionTitleLineWithButton>
             <NotificationBar color="info" :icon="mdiCalendarAccount">
                 {{ birthdayNotification }}
@@ -209,6 +218,8 @@ const birthdayNotification = computed(() => {
             </div>
 
             <AddCustomerModal v-model="showAddCustomerModal" @customer-added="handleCustomerAdded" />
+            <ImportCustomersModal :show="showImportCustomersModal" @close="showImportCustomersModal = false"
+                @imported="handleCustomersImported" />
         </SectionMain>
     </LayoutAuthenticated>
 </template>

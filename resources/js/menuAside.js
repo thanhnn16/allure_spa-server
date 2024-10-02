@@ -32,15 +32,15 @@ export default [
         route: 'users.index'
     },
     {
-        label: 'Quản lý đơn hàng',
+        label: 'Quản lý hoá đơn',
         icon: mdiBallot,
         menu: [
             {
-                label: 'Đơn hàng mới',
+                label: 'Tạo hoá đơn mới',
                 route: 'invoices.create'
             },
             {
-                label: 'Danh sách đơn hàng',
+                label: 'Danh sách hoá đơn',
                 route: 'invoices.index'
             },
         ]
