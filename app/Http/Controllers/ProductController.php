@@ -28,6 +28,12 @@ class ProductController extends Controller
             $query->where('product_name', 'like', '%' . $request->search . '%');
         }
 
+        // Áp dụng sắp xếp
+        if ($request->filled('sort')) {
+            $direction = $request->input('direction', 'asc');
+            $query->orderBy($request->input('sort'), $direction);
+        }
+
         // Phân trang
         $perPage = $request->input('per_page', 10);
         $products = $query->paginate($perPage);
@@ -39,7 +45,7 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => $categories,
             'brands' => $brands,
-            'filters' => $request->only(['category', 'brand', 'search', 'per_page']),
+            'filters' => $request->only(['category', 'brand', 'search', 'per_page', 'sort', 'direction']),
         ]);
     }
 

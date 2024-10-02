@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AppointmentController;
 use App\Models\Appointment;
+use App\Http\Controllers\InvoiceController;
 
 // Test route '/' return 'Hello World'
 Route::get('/api/hello-world', function () {
@@ -25,5 +26,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
 
     // Thêm route mới cho tìm kiếm người dùng
-    Route::get('/users/search', [UserController::class, 'search']);
+    Route::get('/users/search', [UserController::class, 'searchUsers']);
+    Route::get('/products/search', [InvoiceController::class, 'searchProducts']);
+    Route::get('/treatments/search', [InvoiceController::class, 'searchTreatments']);
 });

@@ -1,7 +1,7 @@
 <script setup>
 import { containerMaxW } from '@/config.js'
 import BaseLevel from '@/Components/BaseLevel.vue'
-import JustboilLogo from '@/Components/JustboilLogo.vue'
+import AllureLogo from '@/Components/AllureLogo.vue';
 
 const year = new Date().getFullYear()
 </script>
@@ -10,12 +10,12 @@ const year = new Date().getFullYear()
   <footer class="py-2 px-6" :class="containerMaxW">
     <BaseLevel>
       <div class="text-center md:text-left">
-        <b>&copy;{{ year }}, Allure Spa.</b>
+        <b>Copyright &copy; {{ year }} by Allure Spa.</b>
         <slot />
       </div>
       <div class="md:py-2">
-        <a href="https://justboil.me">
-          <JustboilLogo class="w-auto h-8 md:h-6" />
+        <a href="https://allurespa.com.vn" target="_blank">
+          <AllureLogo class="w-auto h-8 md:h-6" />
         </a>
       </div>
     </BaseLevel>

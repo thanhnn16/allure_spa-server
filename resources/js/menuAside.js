@@ -48,42 +48,12 @@ export default [
     {
         label: 'Quản lý mỹ phẩm',
         icon: mdiCube,
-        menu: [
-            {
-                label: 'Tất cả',
-                route: 'products.index'
-            },
-            {
-                label: 'Bộ FAITH',
-                route: 'products.faith'
-            },
-        ]
+        route: 'products.index'
     },
     {
         label: 'Quản lý liệu trình',
         icon: mdiListBox,
-        menu: [
-            {
-                label: 'Tất cả',
-                route: 'treatments.index'
-            },
-            {
-                label: 'Giảm béo',
-                route: 'treatments.reduceFat'
-            },
-            {
-                label: 'Massage',
-                route: 'treatments.massage'
-            },
-            {
-                label: 'Facial',
-                route: 'treatments.facial'
-            },
-            {
-                label: 'Triệt lông',
-                route: 'treatments.hairRemoval'
-            },
-        ]
+        route: 'treatments.index'
     },
     {
         label: 'Quản lý kho hàng',

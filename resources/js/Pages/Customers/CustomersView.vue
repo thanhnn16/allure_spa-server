@@ -14,7 +14,7 @@ import { useForm, router } from '@inertiajs/vue3'
 import AddCustomerModal from '@/Pages/Customers/Components/AddCustomerModal.vue'
 import { useMainStore } from '@/Stores/main'
 import { storeToRefs } from 'pinia'
-import TablePagination from '@/Pages/Customers/Components/TablePagination.vue'
+import TablePagination from '@/Components/TablePagination.vue'
 import { mdiFilter, mdiAccountMultiple, mdiCalendarRange, mdiCake, mdiStar, mdiCartOutline, mdiCalendarClock } from '@mdi/js'
 import ImportCustomersModal from '@/Pages/Customers/Components/ImportCustomersModal.vue'
 

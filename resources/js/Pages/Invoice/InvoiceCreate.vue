@@ -6,7 +6,6 @@
             <div class="container mx-auto px-4 py-8">
                 <h1 class="text-3xl font-bold mb-6">Tạo hóa đơn mới</h1>
                 <form @submit.prevent="submitForm" class="space-y-6">
-                    <!-- Tìm kiếm khách hàng -->
                     <div>
                         <label for="user" class="block text-sm font-medium text-gray-700">Khách hàng:</label>
                         <div class="mt-1 relative">
@@ -174,13 +173,18 @@
 
 <script>
 import { Head } from "@inertiajs/vue3";
-import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
+import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import { ref, computed } from 'vue'
 import axios from 'axios'
 
 
 export default {
+    components: {
+        Head,
+        SectionMain,
+        LayoutAuthenticated
+    },
     props: {
         vouchers: Array,
         paymentMethods: Array,
@@ -203,7 +207,9 @@ export default {
         const searchUsers = async () => {
             if (userSearch.value.length < 2) return
             try {
-                const response = await axios.get(`/api/users/search?query=${userSearch.value}`)
+                const response = await axios.get('/api/users/search', {
+                    params: { query: userSearch.value }
+                })
                 userResults.value = response.data
             } catch (error) {
                 console.error('Error searching users:', error)
@@ -237,7 +243,8 @@ export default {
             const item = form.value.order_items[index]
             if (item.search.length < 2) return
             try {
-                const response = await axios.get(`/api/${item.item_type}s/search`, {
+                const endpoint = item.item_type === 'product' ? '/api/products/search' : '/api/treatments/search'
+                const response = await axios.get(endpoint, {
                     params: {
                         query: item.search,
                         category_id: item.category_id,

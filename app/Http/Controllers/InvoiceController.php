@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
-use App\Models\User;
 use App\Models\Voucher;
 use App\Models\PaymentMethod;
-use App\Models\CartItemType;
+use App\Models\ProductCategory;
+use App\Models\TreatmentCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\User;
+use App\Models\Product;
+use App\Models\Treatment;
 
 class InvoiceController extends Controller
 {
@@ -22,16 +25,16 @@ class InvoiceController extends Controller
 
     public function create()
     {
-        $users = User::all();
         $vouchers = Voucher::where('status', 'active')->get();
         $paymentMethods = PaymentMethod::all();
-        $cartItemTypes = CartItemType::all();
+        $productCategories = ProductCategory::all();
+        $treatmentCategories = TreatmentCategory::all();
 
         return Inertia::render('Invoice/InvoiceCreate', [
-            'users' => $users,
             'vouchers' => $vouchers,
             'paymentMethods' => $paymentMethods,
-            'cartItemTypes' => $cartItemTypes,
+            'productCategories' => $productCategories,
+            'treatmentCategories' => $treatmentCategories,
         ]);
     }
 
@@ -47,5 +50,34 @@ class InvoiceController extends Controller
         return Inertia::render('Invoice/InvoiceDetail', [
             'invoice' => $invoice,
         ]);
+    }
+
+
+    public function searchProducts(Request $request)
+    {
+        $query = $request->input('query');
+        $categoryId = $request->input('category_id');
+
+        $products = Product::where('name', 'LIKE', "%{$query}%")
+            ->when($categoryId, function ($q) use ($categoryId) {
+                return $q->where('category_id', $categoryId);
+            })
+            ->limit(10)
+            ->get(['id', 'name', 'price']);
+        return response()->json($products);
+    }
+
+    public function searchTreatments(Request $request)
+    {
+        $query = $request->input('query');
+        $categoryId = $request->input('category_id');
+
+        $treatments = Treatment::where('name', 'LIKE', "%{$query}%")
+            ->when($categoryId, function ($q) use ($categoryId) {
+                return $q->where('category_id', $categoryId);
+            })
+            ->limit(10)
+            ->get(['id', 'name', 'price']);
+        return response()->json($treatments);
     }
 }
