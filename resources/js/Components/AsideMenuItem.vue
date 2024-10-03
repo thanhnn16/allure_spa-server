@@ -7,8 +7,6 @@ import { useDarkModeStore } from '@/Stores/darkMode'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import { mdiPlus, mdiMinus } from '@mdi/js'
 
-const darkModeStore = useDarkModeStore()
-
 const props = defineProps({
     item: {
         type: Object,
@@ -35,7 +33,7 @@ const itemHref = computed(() => (props.item.route ? route(props.item.route) : pr
 
 const activeInactiveStyle = computed(() =>
     props.item.route && route().current(props.item.route)
-        ? darkModeStore.asideMenuItemActiveStyle
+        ? 'text-blue-600 dark:text-blue-400'
         : ''
 )
 

@@ -62,10 +62,6 @@ Route::middleware('auth')->group(function () {
 
     // Treatment routes
     Route::resource('treatments', TreatmentController::class);
-    Route::get('treatments/reduce-fat', [TreatmentController::class, 'reduceFat'])->name('treatments.reduceFat');
-    Route::get('treatments/massage', [TreatmentController::class, 'massage'])->name('treatments.massage');
-    Route::get('treatments/facial', [TreatmentController::class, 'facial'])->name('treatments.facial');
-    Route::get('treatments/hair-removal', [TreatmentController::class, 'hairRemoval'])->name('treatments.hairRemoval');
 
     // Treatment Category routes
     Route::resource('treatment-categories', TreatmentCategoryController::class);

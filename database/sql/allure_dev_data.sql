@@ -1,4 +1,4 @@
-# USE allure_dev;
+USE allure_dev;
 
 --
 -- Dữ liệu mẫu cho Allure Spa

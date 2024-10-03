@@ -21,13 +21,7 @@ class ProductController extends Controller
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
-        if ($request->filled('brand')) {
-            $query->where('brand_id', $request->brand);
-        }
-        if ($request->filled('search')) {
-            $query->where('product_name', 'like', '%' . $request->search . '%');
-        }
-
+        
         // Áp dụng sắp xếp
         if ($request->filled('sort')) {
             $direction = $request->input('direction', 'asc');

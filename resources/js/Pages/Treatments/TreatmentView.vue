@@ -1,10 +1,10 @@
 <template>
     <LayoutAuthenticated>
 
-        <Head title="Quản lý mỹ phẩm" />
+        <Head title="Quản lý liệu trình" />
         <SectionMain>
-            <SectionTitleLineWithButton :icon="mdiPackageVariantClosed" title="Danh sách mỹ phẩm" main>
-                <BaseButton :icon="mdiPlus" label="Tạo mỹ phẩm" color="info" rounded-full small />
+            <SectionTitleLineWithButton :icon="mdiPackageVariantClosed" title="Danh sách liệu trình" main>
+                <BaseButton :icon="mdiPlus" label="Tạo liệu trình" color="info" rounded-full small />
                 <BaseButton :icon="mdiTableBorder" label="Nhập từ Excel" color="success" rounded-full small />
             </SectionTitleLineWithButton>
 
@@ -16,14 +16,19 @@
                     </div>
                 </div>
                 <div v-if="showFilters" class="mb-4">
-                    <div class="mb-4">
-                        <label class="block mb-2">Danh mục</label>
-                        <select v-model="form.category" class="w-full px-4 py-2 border rounded-md">
-                            <option value="">Tất cả danh mục</option>
-                            <option v-for="category in categories" :key="category.id" :value="category.id">
-                                {{ category.category_name }}
-                            </option>
-                        </select>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block mb-2">Danh mục</label>
+                            <select v-model="form.category" class="w-full px-4 py-2 border rounded-md">
+                                <option value="">Tất cả danh mục</option>
+                                <template v-for="category in categories" :key="category.id">
+                                    <option :value="category.id">{{ category.category_name }}</option>
+                                    <option v-for="child in category.children" :key="child.id" :value="child.id">
+                                        -- {{ child.category_name }}
+                                    </option>
+                                </template>
+                            </select>
+                        </div>
                     </div>
                     <BaseButton :icon="mdiFilter" label="Áp dụng bộ lọc" @click="applyFilters" />
                 </div>
@@ -41,11 +46,11 @@
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                             <tr>
                                 <th scope="col" class="px-6 py-3 w-24">Ảnh</th>
-                                <th @click="sort('product_name')" scope="col" class="px-6 py-3 cursor-pointer">
+                                <th @click="sort('treatment_name')" scope="col" class="px-6 py-3 cursor-pointer">
                                     <div class="flex items-center justify-between h-full">
-                                        <span class="mr-2">Tên sản phẩm</span>
-                                        <BaseIcon :path="sortIcon('product_name')" size="18" class="flex-shrink-0"
-                                            :class="{ 'text-gray-900': form.sort === 'product_name', 'text-gray-400': form.sort !== 'product_name' }" />
+                                        <span class="mr-2">Tên liệu trình</span>
+                                        <BaseIcon :path="sortIcon('treatment_name')" size="18" class="flex-shrink-0"
+                                            :class="{ 'text-gray-900': form.sort === 'treatment_name', 'text-gray-400': form.sort !== 'treatment_name' }" />
                                     </div>
                                 </th>
                                 <th @click="sort('category_id')" scope="col" class="px-6 py-3 cursor-pointer">
@@ -53,6 +58,13 @@
                                         <span class="mr-2">Danh mục</span>
                                         <BaseIcon :path="sortIcon('category_id')" size="18" class="flex-shrink-0"
                                             :class="{ 'text-gray-900': form.sort === 'category_id', 'text-gray-400': form.sort !== 'category_id' }" />
+                                    </div>
+                                </th>
+                                <th @click="sort('duration')" scope="col" class="px-6 py-3 cursor-pointer">
+                                    <div class="flex items-center justify-between h-full">
+                                        <span class="mr-2">Thời gian</span>
+                                        <BaseIcon :path="sortIcon('duration')" size="18" class="flex-shrink-0"
+                                            :class="{ 'text-gray-900': form.sort === 'duration', 'text-gray-400': form.sort !== 'duration' }" />
                                     </div>
                                 </th>
                                 <th @click="sort('price')" scope="col" class="px-6 py-3 cursor-pointer">
@@ -66,20 +78,23 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="product in products.data" :key="product.id"
+                            <tr v-for="treatment in treatments.data" :key="treatment.id"
                                 class="bg-white border-b hover:bg-gray-50">
                                 <td class="px-6 py-4">
-                                    <img :src="product.image_url" alt="Product image"
+                                    <img :src="treatment.image_url" alt="Treatment image"
                                         class="w-16 h-16 object-cover rounded-md">
                                 </td>
                                 <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                    {{ product.product_name }}
+                                    {{ treatment.treatment_name }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    {{ product.category.category_name }}
+                                    {{ getCategoryPath(treatment.category) }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    {{ formatPrice(product.price) }}
+                                    {{ formatDuration(treatment.duration) }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ formatPrice(treatment.price) }}
                                 </td>
                                 <td class="px-6 py-4">
                                     <BaseButton label="Xem chi tiết" color="info" small />
@@ -90,8 +105,8 @@
                 </div>
             </CardBox>
 
-            <div v-if="products.links" class="mt-6">
-                <TablePagination :links="products.links" />
+            <div v-if="treatments.links" class="mt-6">
+                <TablePagination :links="treatments.links" />
             </div>
         </SectionMain>
     </LayoutAuthenticated>
@@ -106,17 +121,17 @@ import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.
 import BaseButton from '@/Components/BaseButton.vue'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import { Head } from "@inertiajs/vue3"
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import TablePagination from '@/Components/TablePagination.vue'
 
 const props = defineProps({
-    products: Object,
+    treatments: Object,
     categories: Array,
     filters: Object,
 })
 
-const showFilters = ref(false)  // Add this line
+const showFilters = ref(false)
 
 const form = useForm({
     search: props.filters?.search || '',
@@ -140,7 +155,7 @@ const toggleFilters = () => {
 }
 
 const applyFilters = () => {
-    router.get(route('products.index'), form, { preserveState: true })
+    router.get(route('treatments.index'), form, { preserveState: true })
 }
 
 const resetFilters = () => {
@@ -173,24 +188,27 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
 }
 
-const loadChildCategories = () => {
-    if (form.parent_category) {
-        childCategories.value = props.categories.filter(category => category.parent_id == form.parent_category)
-    } else {
-        childCategories.value = []
+const formatDuration = (duration) => {
+    if (duration === null || duration === undefined) return 'Chưa cập nhật';
+    
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
+    
+    let result = '';
+    if (hours > 0) {
+        result += `${hours}h `;
     }
-    form.category = ''
-}
-
-if (form.parent_category) {
-    loadChildCategories()
+    if (minutes > 0 || hours === 0) {
+        result += `${minutes}m`;
+    }
+    return result.trim();
 }
 
 const getCategoryPath = (category) => {
     if (category.parent) {
-        return `${category.parent.category_name} > ${category.category_name}`
+        return `${category.parent.category_name} > ${category.category_name}`;
     }
-    return category.category_name
+    return category.category_name;
 }
 </script>
 
