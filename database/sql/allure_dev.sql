@@ -4,7 +4,6 @@ DROP DATABASE IF EXISTS allure_dev;
 # -- Tạo database mới
 CREATE DATABASE allure_dev;
 
-
 -- Sử dụng database
 USE allure_dev;
 
@@ -53,7 +52,6 @@ CREATE TABLE products (
     FOREIGN KEY (category_id) REFERENCES product_categories (id) ON DELETE CASCADE,
     CONSTRAINT chk_product_price CHECK (price >= 0)
 );
-
 
 CREATE INDEX idx_products_category_id ON products (category_id);
 
@@ -188,7 +186,6 @@ CREATE TABLE user_treatment_packages (
 );
 
 CREATE INDEX idx_user_treatment_packages_user_id ON user_treatment_packages (user_id);
-
 
 --
 -- Bảng password_reset_tokens
@@ -750,3 +747,52 @@ CREATE TABLE reward_item_translations (
 );
 
 CREATE INDEX idx_reward_item_translations_language ON reward_item_translations(language);
+
+-- Tạo bảng banners
+CREATE TABLE banners (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    image_url VARCHAR(255) NOT NULL,
+    link VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    `order` INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tạo bảng ai_chat_configs
+CREATE TABLE ai_chat_configs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    ai_name VARCHAR(255) NOT NULL,
+    context TEXT NOT NULL,
+    language VARCHAR(50) NOT NULL,
+    gemini_settings JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tạo bảng chats
+CREATE TABLE chats (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    staff_id BIGINT UNSIGNED,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (staff_id) REFERENCES users(id) ON DELETE
+    SET
+        NULL
+);
+
+-- Tạo bảng chat_messages
+CREATE TABLE chat_messages (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    chat_id BIGINT UNSIGNED NOT NULL,
+    sender_id BIGINT UNSIGNED NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);

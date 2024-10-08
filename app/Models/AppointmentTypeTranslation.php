@@ -8,4 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class AppointmentTypeTranslation extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'appointment_type_id',
+        'language',
+        'type_name',
+        'description'
+    ];
+
+    public function appointmentType()
+    {
+        return $this->belongsTo(AppointmentType::class);
+    }
 }
