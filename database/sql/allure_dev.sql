@@ -1,23 +1,12 @@
 -- Xóa database nếu tồn tại
-DROP DATABASE IF EXISTS allure_dev;
-
-# -- Tạo database mới
-CREATE DATABASE allure_dev;
+# DROP DATABASE IF EXISTS allure_dev;
+#
+# # -- Tạo database mới
+# CREATE DATABASE allure_dev;
 
 #
 # -- Sử dụng database
-USE allure_dev;
-
---
--- Bảng brands
---
-CREATE TABLE brands (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    brand_name VARCHAR(255) NOT NULL UNIQUE,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
+# USE allure_dev;
 
 --
 -- Bảng product_categories
@@ -43,34 +32,14 @@ ADD
 CREATE TABLE products (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     category_id INT UNSIGNED NOT NULL,
-    brand_id INT UNSIGNED NOT NULL,
     product_name VARCHAR(255) NOT NULL,
-    product_line ENUM ('Celbest', 'Faith') NOT NULL,
+    product_line ENUM ('Celbest', 'Faith', 'Other') NOT NULL DEFAULT 'Other',
+    brand_description TEXT,
     description TEXT,
     price DECIMAL(10, 2) UNSIGNED NOT NULL,
     volume VARCHAR(50) default 'N/A',
     stock_quantity INT UNSIGNED NOT NULL DEFAULT 0,
     image_id INT UNSIGNED,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (category_id) REFERENCES product_categories (id) ON DELETE CASCADE,
-    FOREIGN KEY (brand_id) REFERENCES brands (id) ON DELETE CASCADE,
-    CONSTRAINT chk_product_price CHECK (price >= 0)
-);
-
-CREATE INDEX idx_products_brand_id ON products (brand_id);
-
-CREATE INDEX idx_products_category_id ON products (category_id);
-
-CREATE INDEX idx_products_product_name ON products (product_name);
-
---
--- Bảng product_details
---
-CREATE TABLE product_details (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    product_id INT UNSIGNED NOT NULL UNIQUE,
     `usage` TEXT,
     benefits TEXT,
     key_ingredients TEXT,
@@ -81,16 +50,14 @@ CREATE TABLE product_details (
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
+    FOREIGN KEY (category_id) REFERENCES product_categories (id) ON DELETE CASCADE,
+    CONSTRAINT chk_product_price CHECK (price >= 0)
 );
 
--- Bảng general_product_notes (mới)
-CREATE TABLE general_product_notes (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    note TEXT NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL
-);
+
+CREATE INDEX idx_products_category_id ON products (category_id);
+
+CREATE INDEX idx_products_product_name ON products (product_name);
 
 --
 -- Bảng attributes
@@ -146,6 +113,10 @@ CREATE TABLE treatments (
     duration INT UNSIGNED NULL,
     price DECIMAL(10, 2) UNSIGNED NOT NULL,
     image_id INT UNSIGNED,
+    combo_type ENUM ('single', '5_times', '10_times') NOT NULL DEFAULT 'single',
+    combo_price DECIMAL(10, 2) UNSIGNED NULL,
+    is_default TINYINT(1) NOT NULL DEFAULT 0,
+    validity_period INT UNSIGNED COMMENT 'Thời hạn gói tính bằng ngày',
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
@@ -158,28 +129,11 @@ ADD
     INDEX idx_treatments_category_id (category_id);
 
 --
--- Bảng treatment_combos
---
-CREATE TABLE treatment_combos (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    treatment_id INT UNSIGNED NOT NULL,
-    duration INT UNSIGNED NULL,
-    combo_type ENUM ('5_times', '10_times') NOT NULL,
-    combo_price DECIMAL(10, 2) UNSIGNED NULL,
-    is_default TINYINT(1) NOT NULL DEFAULT 0,
-    validity_period INT UNSIGNED COMMENT 'Thời hạn gói tính bằng ngày',
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (treatment_id) REFERENCES treatments (id) ON DELETE CASCADE
-);
-
---
 -- Bảng users
 --
 CREATE TABLE users (
     id CHAR(36) PRIMARY KEY,
-    phone_number VARCHAR(255) NOT NULL UNIQUE,
+    phone_number VARCHAR(255) NULL UNIQUE,
     email VARCHAR(255) NULL UNIQUE,
     password TEXT NOT NULL,
     role ENUM ('user', 'admin', 'staff') NOT NULL DEFAULT 'user',
@@ -217,11 +171,12 @@ CREATE INDEX idx_users_email ON users (email);
 
 CREATE INDEX idx_users_phone_number ON users (phone_number);
 
--- Bảng user_treatment_packages (mới)
+-- Bảng user_treatment_packages
 CREATE TABLE user_treatment_packages (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
-    treatment_combo_id INT UNSIGNED NOT NULL,
+    treatment_id INT UNSIGNED NOT NULL,
+    combo_type ENUM ('single', '5_times', '10_times') NOT NULL,
     purchase_date TIMESTAMP NOT NULL,
     total_sessions INT UNSIGNED NOT NULL,
     remaining_sessions INT UNSIGNED NOT NULL,
@@ -229,12 +184,11 @@ CREATE TABLE user_treatment_packages (
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (treatment_combo_id) REFERENCES treatment_combos (id) ON DELETE CASCADE
+    FOREIGN KEY (treatment_id) REFERENCES treatments (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_user_treatment_packages_user_id ON user_treatment_packages (user_id);
 
-CREATE INDEX idx_user_treatment_packages_treatment_combo_id ON user_treatment_packages (treatment_combo_id);
 
 --
 -- Bảng password_reset_tokens
@@ -500,22 +454,11 @@ CREATE INDEX idx_invoices_created_by ON invoices (created_by);
 CREATE INDEX idx_invoices_payment_status ON invoices (payment_status);
 
 --
--- Bảng rating_types
---
-CREATE TABLE rating_types (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    type_name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
-
---
 -- Bảng ratings
 --
 CREATE TABLE ratings (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    rating_type_id INT UNSIGNED NOT NULL,
+    rating_type ENUM('product', 'treatment', 'staff') NOT NULL,
     item_id INT UNSIGNED NOT NULL,
     user_id CHAR(36) NOT NULL,
     comment TEXT,
@@ -523,19 +466,7 @@ CREATE TABLE ratings (
     stars INT UNSIGNED NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (rating_type_id) REFERENCES rating_types (id) ON DELETE CASCADE
-);
-
---
--- Bảng favorite_types
---
-CREATE TABLE favorite_types (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    type_name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 --
@@ -543,13 +474,12 @@ CREATE TABLE favorite_types (
 --
 CREATE TABLE favorites (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    favorite_type_id INT UNSIGNED NOT NULL,
+    favorite_type ENUM('product', 'treatment') NOT NULL,
     item_id INT UNSIGNED NOT NULL,
     user_id CHAR(36) NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (favorite_type_id) REFERENCES favorite_types (id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 --
