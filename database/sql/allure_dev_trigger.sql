@@ -1,3 +1,5 @@
+SET GLOBAL log_bin_trust_function_creators = 1;
+
 -- Trigger để cập nhật số lượng tồn kho sau khi thêm hoặc cập nhật stock_movements
 DELIMITER / / CREATE TRIGGER after_stock_movement_insert_update
 AFTER

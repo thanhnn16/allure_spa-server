@@ -8,6 +8,4 @@ use Illuminate\Database\Eloquent\Model;
 class AppointmentType extends Model
 {
     use HasFactory;
-
-    protected $fillable = ['type_name'];
 }

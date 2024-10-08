@@ -8,11 +8,4 @@ use Illuminate\Database\Eloquent\Model;
 class ProductTranslation extends Model
 {
     use HasFactory;
-
-    protected $fillable = ['product_id', 'language', 'product_name', 'description'];
-
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
-    }
 }

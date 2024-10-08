@@ -1,4 +1,4 @@
-USE allure_dev;
+# USE allure_dev;
 
 -- View cho tiến độ gói liệu trình
 CREATE VIEW treatment_package_progress AS

@@ -1,4 +1,4 @@
-USE allure_dev;
+# USE allure_dev;
 
 --
 -- Dữ liệu mẫu cho Allure Spa
@@ -15,15 +15,15 @@ VALUES
 
 -- Chèn dữ liệu vào bảng product_categories
 INSERT INTO
-        product_categories (category_name)
+        product_categories (id, category_name)
 VALUES
-        ('Làm sạch'),
-        ('Rửa mặt'),
-        ('Tinh chất'),
-        ('Nước hoa hồng'),
-        ('Gel'),
-        ('Kem chống nắng'),
-        ('Kem nền');
+        (1,'Làm sạch'),
+        (2,'Rửa mặt'),
+        (3,'Tinh chất'),
+        (4,'Nước hoa hồng'),
+        (5,'Gel'),
+        (6,'Kem chống nắng'),
+        (7,'Kem nền');
 
 -- Chèn dữ liệu vào bảng products
 INSERT INTO
@@ -173,12 +173,12 @@ WHERE
 
 -- Chèn dữ liệu vào bảng treatment_categories
 INSERT INTO
-        treatment_categories (category_name)
+        treatment_categories (id, category_name)
 VALUES
-        ('Chăm sóc da mặt'),
-        ('Massage'),
-        ('Tắm trắng'),
-        ('Triệt lông');
+        (1, 'Chăm sóc da mặt'),
+        (2,'Massage'),
+        (3, 'Giảm béo'),
+        (4, 'Triệt lông');
 
 -- Chèn dữ liệu vào bảng treatments
 INSERT INTO
@@ -240,8 +240,8 @@ VALUES
         ),
         (
                 3,
-                'Tắm trắng toàn thân',
-                'Liệu trình làm trắng da toàn thân',
+                'Giảm béo',
+                'Liệu trình giảm béo toàn thân',
                 120,
                 1500000,
                 '5_times',
@@ -296,7 +296,6 @@ INSERT INTO
                 id,
                 phone_number,
                 email,
-                password,
                 role,
                 full_name,
                 gender,
@@ -307,7 +306,6 @@ VALUES
                 UUID(),
                 '0123456789',
                 'user1@example.com',
-                '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
                 'user',
                 'Nguyễn Văn A',
                 'male',
@@ -317,7 +315,6 @@ VALUES
                 UUID(),
                 '0987654321',
                 'user2@example.com',
-                '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
                 'user',
                 'Trần Thị B',
                 'female',
@@ -327,7 +324,6 @@ VALUES
                 UUID(),
                 '0369852147',
                 'admin@example.com',
-                '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
                 'admin',
                 'Admin',
                 'other',
