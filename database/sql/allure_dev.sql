@@ -1,12 +1,12 @@
--- Xóa database nếu tồn tại
-# DROP DATABASE IF EXISTS allure_dev;
-#
-# # -- Tạo database mới
-# CREATE DATABASE allure_dev;
+# -- Xóa database nếu tồn tại
+DROP DATABASE IF EXISTS allure_dev;
 
-#
-# -- Sử dụng database
-# USE allure_dev;
+# -- Tạo database mới
+CREATE DATABASE allure_dev;
+
+
+-- Sử dụng database
+USE allure_dev;
 
 --
 -- Bảng product_categories
@@ -135,7 +135,7 @@ CREATE TABLE users (
     id CHAR(36) PRIMARY KEY,
     phone_number VARCHAR(255) NULL UNIQUE,
     email VARCHAR(255) NULL UNIQUE,
-    password TEXT NOT NULL,
+    password TEXT NULL,
     role ENUM ('user', 'admin', 'staff') NOT NULL DEFAULT 'user',
     remember_token VARCHAR(100),
     full_name VARCHAR(255),
@@ -683,3 +683,70 @@ CREATE TABLE treatment_translations (
 );
 
 CREATE INDEX idx_treatment_translations_language ON treatment_translations(language);
+
+-- Bảng dịch cho danh mục sản phẩm
+CREATE TABLE product_category_translations (
+    category_id INT UNSIGNED NOT NULL,
+    language CHAR(2) DEFAULT 'vi' NOT NULL,
+    category_name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (category_id, language),
+    FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_product_category_translations_language ON product_category_translations(language);
+
+-- Bảng dịch cho thuộc tính
+CREATE TABLE attribute_translations (
+    attribute_id INT UNSIGNED NOT NULL,
+    language CHAR(2) DEFAULT 'vi' NOT NULL,
+    attribute_name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (attribute_id, language),
+    FOREIGN KEY (attribute_id) REFERENCES attributes(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_attribute_translations_language ON attribute_translations(language);
+
+-- Bảng dịch cho danh mục liệu trình
+CREATE TABLE treatment_category_translations (
+    category_id INT UNSIGNED NOT NULL,
+    language CHAR(2) DEFAULT 'vi' NOT NULL,
+    category_name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (category_id, language),
+    FOREIGN KEY (category_id) REFERENCES treatment_categories(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_treatment_category_translations_language ON treatment_category_translations(language);
+
+-- Bảng dịch cho phiếu giảm giá
+CREATE TABLE voucher_translations (
+    voucher_id INT UNSIGNED NOT NULL,
+    language CHAR(2) DEFAULT 'vi' NOT NULL,
+    description TEXT,
+    PRIMARY KEY (voucher_id, language),
+    FOREIGN KEY (voucher_id) REFERENCES vouchers(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_voucher_translations_language ON voucher_translations(language);
+
+-- Bảng dịch cho loại cuộc hẹn
+CREATE TABLE appointment_type_translations (
+    appointment_type_id INT UNSIGNED NOT NULL,
+    language CHAR(2) DEFAULT 'vi' NOT NULL,
+    type_name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (appointment_type_id, language),
+    FOREIGN KEY (appointment_type_id) REFERENCES appointment_types(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_appointment_type_translations_language ON appointment_type_translations(language);
+
+-- Bảng dịch cho phần thưởng
+CREATE TABLE reward_item_translations (
+    reward_item_id INT UNSIGNED NOT NULL,
+    language CHAR(2) DEFAULT 'vi' NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    PRIMARY KEY (reward_item_id, language),
+    FOREIGN KEY (reward_item_id) REFERENCES reward_items(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_reward_item_translations_language ON reward_item_translations(language);
