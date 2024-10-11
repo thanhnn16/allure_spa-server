@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Voucher;
 
 class User extends Authenticatable
 {
@@ -40,6 +41,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'date_of_birth' => 'datetime',
     ];
 
     public function addresses()
@@ -70,5 +72,16 @@ class User extends Authenticatable
     public function sentMessages()
     {
         return $this->hasMany(ChatMessage::class, 'sender_id');
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function vouchers()
+    {
+        return $this->belongsToMany(Voucher::class, 'user_vouchers')
+            ->withPivot('used_at', 'is_used');
     }
 }

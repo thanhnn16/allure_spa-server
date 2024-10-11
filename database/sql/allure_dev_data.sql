@@ -290,46 +290,6 @@ VALUES
         ('Chuyển khoản ngân hàng'),
         ('Ví điện tử');
 
--- Chèn dữ liệu vào bảng users
-INSERT INTO
-        users (
-                id,
-                phone_number,
-                email,
-                role,
-                full_name,
-                gender,
-                date_of_birth
-        )
-VALUES
-        (
-                UUID(),
-                '0123456789',
-                'user1@example.com',
-                'user',
-                'Nguyễn Văn A',
-                'male',
-                '1990-01-01'
-        ),
-        (
-                UUID(),
-                '0987654321',
-                'user2@example.com',
-                'user',
-                'Trần Thị B',
-                'female',
-                '1995-05-15'
-        ),
-        (
-                UUID(),
-                '0369852147',
-                'admin@example.com',
-                'admin',
-                'Admin',
-                'other',
-                '1985-12-31'
-        );
-
 -- Chèn dữ liệu vào bảng addresses
 INSERT INTO
         addresses (user_id, address, address_type)
@@ -340,7 +300,7 @@ SELECT
 FROM
         users
 WHERE
-        email = 'user1@example.com'
+        email = 'admin@example.com'
 UNION
 ALL
 SELECT
@@ -350,7 +310,7 @@ SELECT
 FROM
         users
 WHERE
-        email = 'user2@example.com';
+        email = 'user@example.com';
 
 -- Chèn dữ liệu vào bảng vouchers
 INSERT INTO
@@ -390,7 +350,7 @@ FROM
         users u,
         vouchers v
 WHERE
-        u.email = 'user1@example.com'
+        u.email = 'user@example.com'
         AND v.code = 'WELCOME10';
 
 -- Chèn dữ liệu vào bảng order_items
@@ -448,7 +408,7 @@ FROM
         order_items oi,
         staffs s
 WHERE
-        u.email = 'user1@example.com'
+        u.email = 'user@example.com'
         AND pm.method_name = 'Tiền mặt'
         AND oi.id = 1
         AND s.staff_name = 'Nguyễn Thị A';
@@ -478,7 +438,7 @@ FROM
         staffs s,
         order_items oi
 WHERE
-        u.email = 'user1@example.com'
+        u.email = 'user@example.com'
         AND at.type_name = 'Chăm sóc da'
         AND s.staff_name = 'Nguyễn Thị A'
         AND oi.id = 2;
@@ -497,7 +457,7 @@ FROM
         users u
 WHERE
         p.product_name = 'FAITH Members Club Face Lamela Veil EX Cleansing'
-        AND u.email = 'user1@example.com';
+        AND u.email = 'user@example.com';
 
 -- Chèn dữ liệu vào bảng favorites
 INSERT INTO
@@ -511,7 +471,7 @@ FROM
         users u
 WHERE
         p.product_name = 'FAITH Members Club Face Lamela Veil EX Cleansing'
-        AND u.email = 'user1@example.com';
+        AND u.email = 'user@example.com';
 
 -- Chèn dữ liệu vào bảng notifications
 INSERT INTO
@@ -522,7 +482,7 @@ SELECT
 FROM
         users
 WHERE
-        email = 'user1@example.com';
+        email = 'user@example.com';
 
 -- Chèn dữ liệu vào bảng histories
 INSERT INTO
@@ -590,7 +550,7 @@ FROM
         treatments t,
         staffs s
 WHERE
-        u.email = 'user1@example.com'
+        u.email = 'user@example.com'
         AND t.treatment_name = 'Chăm sóc da cơ bản'
         AND s.staff_name = 'Nguyễn Thị A';
 
@@ -622,7 +582,7 @@ UPDATE
 SET
         image_id = 3
 WHERE
-        email = 'user1@example.com';
+        email = 'user@example.com';
 
 -- Chèn dữ liệu vào bảng reward_items
 INSERT INTO
@@ -667,7 +627,7 @@ FROM
         users u,
         reward_items ri
 WHERE
-        u.email = 'user1@example.com'
+        u.email = 'user@example.com'
         AND ri.name = 'Giảm giá 10% cho sản phẩm FAITH Cleansing';
 
 -- Chèn dữ liệu vào bảng product_translations
@@ -707,7 +667,7 @@ UPDATE
 SET
         loyalty_points = 100
 WHERE
-        email = 'user1@example.com';
+        email = 'user@example.com';
 
 -- Chèn dữ liệu vào bảng employee_attendance
 INSERT INTO
@@ -746,7 +706,7 @@ FROM
         users u,
         treatments t
 WHERE
-        u.email = 'user1@example.com'
+        u.email = 'user@example.com'
         AND t.treatment_name = 'Chăm sóc da cơ bản';
 
 -- Chèn dữ liệu vào bảng treatment_usage_history
@@ -770,7 +730,7 @@ FROM
         JOIN treatments t ON utp.treatment_id = t.id
         JOIN staffs s ON s.staff_name = 'Nguyễn Thị A'
 WHERE
-        u.email = 'user1@example.com'
+        u.email = 'user@example.com'
         AND t.treatment_name = 'Chăm sóc da cơ bản';
 
 -- Cập nhật remaining_sessions trong user_treatment_packages
@@ -781,7 +741,7 @@ UPDATE
 SET
         utp.remaining_sessions = utp.remaining_sessions - 1
 WHERE
-        u.email = 'user1@example.com'
+        u.email = 'user@example.com'
         AND t.treatment_name = 'Chăm sóc da cơ bản';
 
 -- Chèn dữ liệu vào bảng payment_histories
@@ -809,4 +769,4 @@ SELECT
 FROM
         users
 WHERE
-        email = 'user1@example.com';
+        email = 'user@example.com';

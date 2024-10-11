@@ -10,16 +10,17 @@ class OrderItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'cart_id',
+        'order_id',
         'item_type_id',
         'item_id',
         'quantity',
-        'price'
+        'price',
+        'discount_amount',
     ];
 
-    public function cart()
+    public function order()
     {
-        return $this->belongsTo(Cart::class);
+        return $this->belongsTo(Order::class);
     }
 
     public function itemType()
