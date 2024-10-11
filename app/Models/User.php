@@ -2,86 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Voucher;
+use Illuminate\Database\Eloquent\Model;
 
-class User extends Authenticatable
+class User extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, HasUuids;
-
-    protected $primaryKey = 'id';
-    protected $keyType = 'string';
-    public $incrementing = false;
-
-    protected $fillable = [
-        'phone_number',
-        'email',
-        'password',
-        'role',
-        'full_name',
-        'gender',
-        'date_of_birth',
-        'image_id',
-        'loyalty_points',
-        'skin_condition',
-        'note',
-        'purchase_count'
-    ];
-
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'date_of_birth' => 'datetime',
-    ];
-
-    public function addresses()
-    {
-        return $this->hasMany(Address::class);
-    }
-
-    public function treatmentPackages()
-    {
-        return $this->hasMany(UserTreatmentPackage::class);
-    }
-
-    public function image()
-    {
-        return $this->belongsTo(Image::class);
-    }
-
-    public function chats()
-    {
-        return $this->hasMany(Chat::class, 'user_id');
-    }
-
-    public function staffChats()
-    {
-        return $this->hasMany(Chat::class, 'staff_id');
-    }
-
-    public function sentMessages()
-    {
-        return $this->hasMany(ChatMessage::class, 'sender_id');
-    }
-
-    public function invoices()
-    {
-        return $this->hasMany(Invoice::class);
-    }
-
-    public function vouchers()
-    {
-        return $this->belongsToMany(Voucher::class, 'user_vouchers')
-            ->withPivot('used_at', 'is_used');
-    }
+    use HasFactory;
 }

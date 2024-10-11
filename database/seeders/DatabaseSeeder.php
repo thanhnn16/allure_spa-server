@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Staff;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -30,6 +31,15 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('12345678'),
             'role' => 'user',
             'full_name' => 'Normal User',
+        ]);
+
+        User::create([
+            'id' => Str::uuid(),
+            'phone_number' => '0369852741',
+            'email' => 'staff@example.com',
+            'password' => Hash::make('12345678'),
+            'role' => 'staff',
+            'full_name' => 'Staff User',
         ]);
     }
 }
