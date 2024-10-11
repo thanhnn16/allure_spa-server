@@ -27,6 +27,8 @@ const props = defineProps({
     upcomingBirthdays: Number
 })
 
+console.log('CustomersView - Users prop:', props.users)
+
 const showingUpcomingBirthdays = ref(props.filters?.upcoming_birthdays || false)
 const showingDeletedUsers = ref(props.filters?.show_deleted || false)
 const showFilters = ref(false)
@@ -38,7 +40,7 @@ const form = useForm({
     show_deleted: showingDeletedUsers.value,
     gender: props.filters?.gender || '',
     age_range: props.filters?.age_range || '',
-    point_range: props.filters?.point_range || '',
+    loyalty_points_range: props.filters?.loyalty_points_range || '',
     purchase_count_range: props.filters?.purchase_count_range || '',
     created_at_range: props.filters?.created_at_range || ''
 })
@@ -63,9 +65,11 @@ const handlePerPageChange = () => {
 }
 
 const hasUsers = computed(() => {
-    console.log('hasUsers:', props.users?.data?.length > 0)
+    console.log('CustomersView - hasUsers:', props.users?.data?.length > 0)
     return props.users?.data?.length > 0
 })
+
+const usersData = computed(() => props.users?.data || [])
 
 const showAddCustomerModal = ref(false)
 
@@ -97,7 +101,7 @@ const applyFilters = () => {
 const resetFilters = () => {
     form.gender = ''
     form.age_range = ''
-    form.point_range = ''
+    form.loyalty_points_range = ''
     form.purchase_count_range = ''
     form.created_at_range = ''
     applyFilters()
@@ -176,7 +180,7 @@ const handleCustomersImported = () => {
                         </div>
                         <div>
                             <label class="block mb-2">Điểm tích lũy</label>
-                            <select v-model="form.point_range" class="w-full px-4 py-2 border rounded-md">
+                            <select v-model="form.loyalty_points_range" class="w-full px-4 py-2 border rounded-md">
                                 <option value="">Tất cả</option>
                                 <option value="0-100">0-100</option>
                                 <option value="101-500">101-500</option>
@@ -210,7 +214,10 @@ const handleCustomersImported = () => {
                         <option :value="50">Xem 50 mỗi trang</option>
                     </select>
                 </div>
-                <AllCustomersTable :users="users.data" :checkable="true" />
+                <div v-if="!hasUsers" class="text-center py-5">
+                    <p>Không có dữ liệu</p>
+                </div>
+                <AllCustomersTable v-else :users="usersData" :checkable="true" />
             </CardBox>
 
             <div v-if="props.users?.links" class="mt-6">

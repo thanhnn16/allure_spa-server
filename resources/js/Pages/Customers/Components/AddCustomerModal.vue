@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';``
+import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import NotificationBar from '@/Components/NotificationBar.vue';
 import { mdiAlertCircle } from '@mdi/js';
