@@ -371,21 +371,11 @@ CREATE TABLE payment_methods (
 );
 
 --
--- Bảng cart_item_types
---
-CREATE TABLE cart_item_types (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    type_name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
-
---
 -- Bảng order_items
 --
 CREATE TABLE order_items (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    order_id INT UNSIGNED NOT NULL,
     item_type_id INT UNSIGNED NOT NULL,
     item_id INT UNSIGNED NOT NULL,
     quantity INT UNSIGNED NOT NULL,
@@ -393,6 +383,7 @@ CREATE TABLE order_items (
     discount_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE,
     FOREIGN KEY (item_type_id) REFERENCES cart_item_types (id) ON DELETE CASCADE
 );
 
@@ -402,12 +393,31 @@ CREATE TABLE order_items (
 CREATE TABLE carts (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
-    -- Cập nhật kiểu dữ liệu user_id
-    order_item_id INT UNSIGNED NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (order_item_id) REFERENCES order_items (id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE TABLE cart_items (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    cart_id INT UNSIGNED NOT NULL,
+    item_type_id INT UNSIGNED NOT NULL,
+    item_id INT UNSIGNED NOT NULL,
+    quantity INT UNSIGNED NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (cart_id) REFERENCES carts (id) ON DELETE CASCADE,
+    FOREIGN KEY (item_type_id) REFERENCES cart_item_types (id) ON DELETE CASCADE
+);
+
+CREATE TABLE orders (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    total_amount DECIMAL(10, 2) UNSIGNED NOT NULL,
+    status VARCHAR(255) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 --
@@ -416,10 +426,10 @@ CREATE TABLE carts (
 CREATE TABLE invoices (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
+    order_id INT UNSIGNED NOT NULL,
     voucher_id INT UNSIGNED,
     staff_id INT UNSIGNED,
     payment_method_id INT UNSIGNED NOT NULL,
-    order_item_id INT UNSIGNED NOT NULL,
     created_by INT UNSIGNED,
     invoice_number VARCHAR(255) NOT NULL,
     total_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
@@ -431,17 +441,11 @@ CREATE TABLE invoices (
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE
-    SET
-        NULL,
-        FOREIGN KEY (staff_id) REFERENCES staffs (id) ON DELETE
-    SET
-        NULL,
-        FOREIGN KEY (payment_method_id) REFERENCES payment_methods (id) ON DELETE RESTRICT,
-        FOREIGN KEY (order_item_id) REFERENCES order_items (id) ON DELETE CASCADE,
-        FOREIGN KEY (created_by) REFERENCES staffs (id) ON DELETE
-    SET
-        NULL
+    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE,
+    FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE SET NULL,
+    FOREIGN KEY (staff_id) REFERENCES staffs (id) ON DELETE SET NULL,
+    FOREIGN KEY (payment_method_id) REFERENCES payment_methods (id) ON DELETE RESTRICT,
+    FOREIGN KEY (created_by) REFERENCES staffs (id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_invoices_user_id ON invoices (user_id);
@@ -494,27 +498,14 @@ CREATE TABLE notifications (
 );
 
 --
--- Bảng appointment_types
---
-CREATE TABLE appointment_types (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    type_name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
-
---
 -- Bảng appointments
 --
 CREATE TABLE appointments (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
-    -- Cập nhật kiểu dữ liệu user_id
-    appointment_type_id INT UNSIGNED NOT NULL,
+    appointment_type ENUM('facial', 'massage', 'hair_removal', 'consultation', 'weight_loss', 'other') NOT NULL,
     staff_id INT UNSIGNED,
     order_item_id INT UNSIGNED NOT NULL,
-    -- Thêm khóa ngoại đến order_items
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NOT NULL,
     is_all_day TINYINT UNSIGNED NOT NULL DEFAULT 0,
@@ -524,12 +515,12 @@ CREATE TABLE appointments (
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (staff_id) REFERENCES staffs (id) ON DELETE
-    SET
-        NULL,
-        FOREIGN KEY (appointment_type_id) REFERENCES appointment_types (id) ON DELETE RESTRICT,
-        FOREIGN KEY (order_item_id) REFERENCES order_items (id) ON DELETE CASCADE -- Thêm ràng buộc khóa ngoại
+    FOREIGN KEY (staff_id) REFERENCES staffs (id) ON DELETE SET NULL,
+    FOREIGN KEY (order_item_id) REFERENCES order_items (id) ON DELETE CASCADE
 );
+
+-- Tạo index cho cột appointment_type để tối ưu hiệu suất truy vấn
+CREATE INDEX idx_appointments_appointment_type ON appointments (appointment_type);
 
 --
 -- Bảng user_vouchers
@@ -725,17 +716,6 @@ CREATE TABLE voucher_translations (
 
 CREATE INDEX idx_voucher_translations_language ON voucher_translations(language);
 
--- Bảng dịch cho loại cuộc hẹn
-CREATE TABLE appointment_type_translations (
-    appointment_type_id INT UNSIGNED NOT NULL,
-    language CHAR(2) DEFAULT 'vi' NOT NULL,
-    type_name VARCHAR(255) NOT NULL,
-    PRIMARY KEY (appointment_type_id, language),
-    FOREIGN KEY (appointment_type_id) REFERENCES appointment_types(id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_appointment_type_translations_language ON appointment_type_translations(language);
-
 -- Bảng dịch cho phần thưởng
 CREATE TABLE reward_item_translations (
     reward_item_id INT UNSIGNED NOT NULL,
@@ -773,8 +753,8 @@ CREATE TABLE ai_chat_configs (
 -- Tạo bảng chats
 CREATE TABLE chats (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT UNSIGNED NOT NULL,
-    staff_id BIGINT UNSIGNED,
+    user_id CHAR(36) NOT NULL,
+    staff_id CHAR(36),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -788,7 +768,7 @@ CREATE TABLE chats (
 CREATE TABLE chat_messages (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     chat_id BIGINT UNSIGNED NOT NULL,
-    sender_id BIGINT UNSIGNED NOT NULL,
+    sender_id CHAR(36) NOT NULL,
     message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

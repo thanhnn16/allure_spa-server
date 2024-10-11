@@ -1,25 +1,26 @@
 <?php
 
+use App\Http\Controllers\AiChatConfigController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
 use App\Models\ProductCategory;
-use App\Http\Controllers\BrandController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\TreatmentController;
 use App\Http\Controllers\TreatmentCategoryController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\BannerController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\StaffController;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\MobileAppController;
+use App\Http\Controllers\ReportController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -51,9 +52,6 @@ Route::middleware('auth')->group(function () {
     // Category routes
     Route::resource('categories', ProductCategory::class);
 
-    // Brand routes
-    Route::resource('brands', BrandController::class);
-
     // Invoice routes
     Route::resource('invoices', InvoiceController::class);
 
@@ -82,8 +80,6 @@ Route::middleware('auth')->group(function () {
     Route::resource('staff', StaffController::class);
     Route::get('staff/salary', [StaffController::class, 'salary'])->name('staff.salary');
 
-    // Report routes
-    Route::resource('reports', ReportController::class);
 
     // Stock Movement routes
     Route::resource('stock-movements', StockMovementController::class);
@@ -94,9 +90,21 @@ Route::middleware('auth')->group(function () {
     Route::resource('notifications', NotificationController::class);
 
     // Mobile App routes
-    Route::get('mobileapp/chat', [MobileAppController::class, 'chat'])->name('mobileapp.chat');
-    Route::get('mobileapp/banners', [MobileAppController::class, 'banners'])->name('mobileapp.banners');
-    Route::get('mobileapp/support', [MobileAppController::class, 'support'])->name('mobileapp.support');
+    Route::get('mobileapp/chat', [ChatController::class, 'chat'])->name('mobileapp.chat');
+    Route::get('mobileapp/banners', [BannerController::class, 'banners'])->name('mobileapp.banners');
+    Route::get('mobileapp/ai-config', [AiChatConfigController::class, 'index'])->name('mobileapp.ai-config');
+
+    // Report routes
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/revenue', [ReportController::class, 'revenue'])->name('reports.revenue');
+    Route::get('reports/profit', [ReportController::class, 'profit'])->name('reports.profit');
+    Route::get('reports/customers', [ReportController::class, 'customers'])->name('reports.customers');
+    Route::get('reports/staff', [ReportController::class, 'staff'])->name('reports.staff');
+    Route::get('reports/stock', [ReportController::class, 'stock'])->name('reports.stock');
+    Route::get('reports/appointments', [ReportController::class, 'appointments'])->name('reports.appointments');
+    Route::get('reports/invoices', [ReportController::class, 'invoices'])->name('reports.invoices');
+    Route::get('reports/ai', [ReportController::class, 'ai'])->name('reports.ai');
+
 });
 
 require __DIR__ . '/auth.php';

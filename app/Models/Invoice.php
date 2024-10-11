@@ -10,28 +10,47 @@ class Invoice extends Model
     use HasFactory;
 
     protected $fillable = [
-        'cart_id',
         'user_id',
+        'order_id',
+        'voucher_id',
+        'staff_id',
         'payment_method_id',
+        'created_by',
+        'invoice_number',
         'total_amount',
         'discount_amount',
-        'final_amount',
+        'payment_status',
+        'note',
         'status',
-        'note'
     ];
-
-    public function cart()
-    {
-        return $this->belongsTo(Cart::class);
-    }
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class);
+    }
+
+    public function staff()
+    {
+        return $this->belongsTo(Staff::class);
+    }
+
     public function paymentMethod()
     {
         return $this->belongsTo(PaymentMethod::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(Staff::class, 'created_by');
     }
 }

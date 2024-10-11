@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed, onErrorCaptured } from 'vue';
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
 import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.vue'
@@ -12,6 +12,11 @@ import axios from 'axios'
 import { usePage } from '@inertiajs/vue3';
 const page = usePage();
 axios.defaults.headers.common['X-CSRF-TOKEN'] = page.props.csrf_token;
+
+onErrorCaptured((err, instance, info) => {
+  console.error('Captured an error:', err, instance, info);
+  return false; // prevents the error from propagating further
+});
 
 const props = defineProps({
     user: Object,
@@ -89,6 +94,8 @@ const formatGender = computed(() => {
             return 'Khác';
     }
 });
+
+const safeUser = computed(() => props.user || {});
 </script>
 
 <template>
@@ -96,7 +103,7 @@ const formatGender = computed(() => {
 
         <Head title="Chi tiết khách hàng" />
         <SectionMain>
-            <SectionTitleLineWithButton :icon="mdiAccount" :title="user.full_name" main>
+            <SectionTitleLineWithButton :icon="mdiAccount" :title="safeUser.full_name" main>
                 <div class="flex justify-end">
                     <BaseButton label="Chỉnh sửa" color="info" @click="openEditModal" class="mr-2" />
                     <BaseButton label="Xóa" color="danger" @click="openDeleteModal" :icon="mdiDelete" />
@@ -124,27 +131,27 @@ const formatGender = computed(() => {
                 <h3 class="text-lg font-semibold mb-4">Thông tin cá nhân</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <p><strong>Họ và tên:</strong> {{ user.full_name }}</p>
-                        <p><strong>Số điện thoại:</strong> {{ user.phone_number }}</p>
-                        <p><strong>Email:</strong> {{ user.email }}</p>
+                        <p><strong>Họ và tên:</strong> {{ safeUser.full_name }}</p>
+                        <p><strong>Số điện thoại:</strong> {{ safeUser.phone_number }}</p>
+                        <p><strong>Email:</strong> {{ safeUser.email }}</p>
                         <p><strong>Giới tính:</strong> {{ formatGender }}</p>
-                        <p><strong>Trạng thái:</strong> {{ user.deleted_at ? 'Đã bị xóa' : 'Đang hoạt động' }}</p>
+                        <p><strong>Trạng thái:</strong> {{ safeUser.deleted_at ? 'Đã bị xóa' : 'Đang hoạt động' }}</p>
                     </div>
                     <div>
-                        <p><strong>Ngày sinh:</strong> {{ formattedDate(user.date_of_birth) }}</p>
-                        <p><strong>Điểm tích lũy:</strong> {{ user.point }}</p>
-                        <p><strong>Số lần mua hàng:</strong> {{ user.purchase_count }}</p>
-                        <p><strong>Ghi chú:</strong> {{ user.note }}</p>
-                        <p><strong>Ngày tạo:</strong> {{ formattedDate(user.created_at) }}</p>
-                        <p><strong>Ngày chỉnh sửa:</strong> {{ formattedDate(user.updated_at) }}</p>
+                        <p><strong>Ngày sinh:</strong> {{ formattedDate(safeUser.date_of_birth) }}</p>
+                        <p><strong>Điểm tích lũy:</strong> {{ safeUser.point }}</p>
+                        <p><strong>Số lần mua hàng:</strong> {{ safeUser.purchase_count }}</p>
+                        <p><strong>Ghi chú:</strong> {{ safeUser.note }}</p>
+                        <p><strong>Ngày tạo:</strong> {{ formattedDate(safeUser.created_at) }}</p>
+                        <p><strong>Ngày chỉnh sửa:</strong> {{ formattedDate(safeUser.updated_at) }}</p>
                     </div>
                 </div>
             </CardBox>
 
             <CardBox v-if="activeTab === 'personal'" class="mb-6">
                 <h3 class="text-lg font-semibold mb-4">Địa chỉ</h3>
-                <div v-if="user.addresses && user.addresses.length > 0">
-                    <div v-for="address in user.addresses" :key="address.id" class="mb-2">
+                <div v-if="safeUser.addresses && safeUser.addresses.length > 0">
+                    <div v-for="address in safeUser.addresses" :key="address.id" class="mb-2">
                         <p><strong>{{ address.address_type }}:</strong> {{ address.address }}</p>
                     </div>
                 </div>
@@ -153,17 +160,12 @@ const formatGender = computed(() => {
 
             <CardBox v-if="activeTab === 'treatments'" class="mb-6">
                 <h3 class="text-lg font-semibold mb-4">Liệu trình đang sử dụng</h3>
-                <div v-if="user.treatment_packages && user.treatment_packages.length > 0">
-                    <div v-for="treatmentPackage in user.treatment_packages" :key="treatmentPackage.id" class="mb-4">
-                        <p><strong>Tên liệu trình:</strong> {{ treatmentPackage.treatment_combo.treatment.treatment_name
-                            }}
-                        </p>
-                        <p><strong>Loại combo:</strong> {{ treatmentPackage.treatment_combo.combo_type }}</p>
-                        <p><strong>Số buổi còn lại:</strong> {{ treatmentPackage.remaining_sessions }}/{{
-                            treatmentPackage.total_sessions }}</p>
-                        <p><strong>Ngày hết hạn:</strong> {{ new Date(treatmentPackage.expiry_date).toLocaleDateString()
-                            }}
-                        </p>
+                <div v-if="safeUser.treatment_packages && safeUser.treatment_packages.length > 0">
+                    <div v-for="treatmentPackage in safeUser.treatment_packages" :key="treatmentPackage.id" class="mb-4">
+                        <p><strong>Tên liệu trình:</strong> {{ treatmentPackage.treatment_combo?.treatment?.treatment_name || 'N/A' }}</p>
+                        <p><strong>Loại combo:</strong> {{ treatmentPackage.treatment_combo?.combo_type || 'N/A' }}</p>
+                        <p><strong>Số buổi còn lại:</strong> {{ treatmentPackage.remaining_sessions }}/{{ treatmentPackage.total_sessions }}</p>
+                        <p><strong>Ngày hết hạn:</strong> {{ new Date(treatmentPackage.expiry_date).toLocaleDateString() }}</p>
                     </div>
                 </div>
                 <p v-else>Không có dữ liệu liệu trình.</p>
@@ -171,8 +173,8 @@ const formatGender = computed(() => {
 
             <CardBox v-if="activeTab === 'invoices'" class="mb-6">
                 <h3 class="text-lg font-semibold mb-4">Đơn hàng gần đây</h3>
-                <div v-if="user.invoices && user.invoices.length > 0">
-                    <div v-for="invoice in user.invoices" :key="invoice.id" class="mb-4">
+                <div v-if="safeUser.invoices && safeUser.invoices.length > 0">
+                    <div v-for="invoice in safeUser.invoices" :key="invoice.id" class="mb-4">
                         <p><strong>Mã đơn hàng:</strong> {{ invoice.invoice_number }}</p>
                         <p><strong>Ngày tạo:</strong> {{ new Date(invoice.created_at).toLocaleDateString() }}</p>
                         <p><strong>Tổng tiền:</strong> {{ invoice.total_amount }}</p>
@@ -184,12 +186,12 @@ const formatGender = computed(() => {
 
             <CardBox v-if="activeTab === 'vouchers'" class="mb-6">
                 <h3 class="text-lg font-semibold mb-4">Vouchers</h3>
-                <div v-if="user.vouchers && user.vouchers.length > 0">
-                    <div v-for="voucher in user.vouchers" :key="voucher.id" class="mb-4">
+                <div v-if="safeUser.vouchers && safeUser.vouchers.length > 0">
+                    <div v-for="voucher in safeUser.vouchers" :key="voucher.id" class="mb-4">
                         <p><strong>Mã voucher:</strong> {{ voucher.code }}</p>
                         <p><strong>Mô tả:</strong> {{ voucher.description }}</p>
                         <p><strong>Giá trị giảm:</strong> {{ voucher.discount_value }}</p>
-                        <p><strong>Trạng thái:</strong> {{ voucher.pivot.is_used ? 'Đã sử dụng' : 'Chưa sử dụng' }}</p>
+                        <p><strong>Trạng thái:</strong> {{ voucher.pivot?.is_used ? 'Đã sử dụng' : 'Chưa sử dụng' }}</p>
                     </div>
                 </div>
                 <p v-else>Không có dữ liệu voucher.</p>

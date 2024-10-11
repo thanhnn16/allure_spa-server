@@ -22,7 +22,13 @@ const calendarOptions = ref({
     plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
     weekends: true,
-    events: appointments,
+    events: computed(() => appointments.value.map(appointment => ({
+        id: appointment.id,
+        title: `${appointment.user.name} - ${appointment.appointmentType.type_name}`,
+        start: appointment.start_date,
+        end: appointment.end_date,
+        allDay: appointment.is_all_day,
+    }))),
     locale: 'vi',
     firstDay: 1,
     headerToolbar: {
@@ -68,13 +74,7 @@ onMounted(() => {
 
 function fetchAppointments() {
     axios.get('/api/appointments').then(response => {
-        appointments.value = response.data.map(appointment => ({
-            id: appointment.id,
-            title: appointment.title,
-            start: appointment.start_date,
-            end: appointment.end_date,
-            allDay: appointment.is_all_day,
-        }))
+        appointments.value = response.data
     })
 }
 
@@ -116,7 +116,11 @@ function handleEventResize(resizeInfo) {
 }
 
 function updateAppointment(data) {
-    axios.put(`/api/appointments/${data.id}`, data).then(() => {
+    axios.put(`/api/appointments/${data.id}`, {
+        start_date: data.start,
+        end_date: data.end,
+        is_all_day: data.allDay,
+    }).then(() => {
         fetchAppointments()
     })
 }

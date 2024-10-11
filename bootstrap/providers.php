@@ -2,5 +2,5 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-    App\Providers\FolioServiceProvider::class,
+    // Các providers khác nếu có
 ];

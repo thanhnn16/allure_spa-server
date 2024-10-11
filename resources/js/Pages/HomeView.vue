@@ -42,7 +42,8 @@ onMounted(() => {
 
 const mainStore = useMainStore()
 
-// const clientBarItems = computed(() => mainStore.clients.slice(0, 4))
+// Modify this line to handle potential undefined clients
+const clientBarItems = computed(() => mainStore.clients?.slice(0, 4) || [])
 
 const transactionBarItems = computed(() => mainStore.history)
 </script>
@@ -70,8 +71,14 @@ const transactionBarItems = computed(() => mainStore.history)
                         :type="transaction.type" :name="transaction.name" :account="transaction.account" />
                 </div>
                 <div class="flex flex-col justify-between">
-                    <CardBoxClient v-for="client in clientBarItems" :key="client.id" :name="client.name"
-                        :login="client.login" :date="client.created" :progress="client.progress" />
+                    <CardBoxClient 
+                        v-for="client in clientBarItems" 
+                        :key="client.id" 
+                        :name="client.name"
+                        :login="client.login" 
+                        :date="client.created" 
+                        :progress="client.progress" 
+                    />
                 </div>
             </div>
 

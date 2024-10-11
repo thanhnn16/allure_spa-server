@@ -21,16 +21,20 @@ const props = defineProps({
   }
 })
 
-const isModalDangerActive = ref(false)
+console.log('AllCustomersTable - Users:', props.users)
 
 onMounted(() => {
-  console.log('AllCustomersTable - Users:', props.users)
+  console.log('AllCustomersTable - Users (mounted):', props.users)
 })
 
 const hasItems = computed(() => {
   console.log('AllCustomersTable - hasItems:', props.users.length > 0)
   return props.users.length > 0
 })
+
+const usersData = computed(() => props.users || [])
+
+const isModalDangerActive = ref(false)
 
 const checked = (isChecked, user) => {
   // Xử lý logic khi checkbox được chọn
@@ -50,7 +54,7 @@ const formatStatus = (user) => {
     <p>Không có dữ liệu</p>
   </div>
 
-  <table v-if="hasItems">
+  <table v-else>
     <thead>
       <tr>
         <th v-if="checkable" />

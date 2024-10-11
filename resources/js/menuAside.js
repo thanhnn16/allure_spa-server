@@ -92,23 +92,52 @@ export default [
                 route: 'notifications.index'
             },
             {
-                label: 'Chat',
+                label: 'Chat - Hỗ trợ trực tuyến',
                 route: 'mobileapp.chat'
             },
             {
                 label: 'Banner App',
                 route: 'mobileapp.banners'
             },
-            {
-                label: 'Hỗ trợ trực tuyến',
-                route: 'mobileapp.support'
-            },
         ]
     },
     {
         label: 'Tạo báo cáo',
         icon: mdiFileDocument,
-        route: 'reports.index'
+        menu: [
+            {
+                label: 'Báo cáo doanh thu',
+                route: 'reports.revenue'
+            },
+            {
+                label: 'Báo cáo lợi nhuận',
+                route: 'reports.profit'
+            },
+            {
+                label: 'Báo cáo khách hàng',
+                route: 'reports.customers'
+            },
+            {
+                label: 'Báo cáo hàng tồn kho',
+                route: 'reports.stock'
+            },
+            {
+                label: 'Báo cáo nhân viên',
+                route: 'reports.staff'
+            },
+            {
+                label: 'Báo cáo lịch hẹn',
+                route: 'reports.appointments'
+            },
+            {
+                label: 'Báo cáo hoá đơn',
+                route: 'reports.invoices'
+            },
+            {
+                label: 'Báo cáo sử dụng AI',
+                route: 'reports.ai'
+            },
+        ]
     },
     {
         label: 'Hồ sơ của tôi',
