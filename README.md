@@ -65,7 +65,7 @@ php artisan db:seed
 ### 3. Tạo file .env (copy từ file .env.example)
 
 ```bash
-cp .env.example .env
+cp .env.example .env 
 ```
 
 Trong file `.env` cần chỉnh sửa các thông số sau:
