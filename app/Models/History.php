@@ -8,4 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 class History extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'user_id', 'action', 'description', 'model_type', 'model_id'
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function model()
+    {
+        return $this->morphTo();
+    }
 }

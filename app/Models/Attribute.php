@@ -8,4 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class Attribute extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['name'];
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'product_attributes')
+            ->withPivot('attribute_value');
+    }
+
+    public function translations()
+    {
+        return $this->hasMany(AttributeTranslation::class);
+    }
 }

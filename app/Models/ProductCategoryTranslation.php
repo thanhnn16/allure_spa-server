@@ -8,4 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class ProductCategoryTranslation extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['product_category_id', 'language', 'name'];
+
+    public function productCategory()
+    {
+        return $this->belongsTo(ProductCategory::class);
+    }
 }

@@ -8,4 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class AttributeTranslation extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['attribute_id', 'language', 'name'];
+
+    public function attribute()
+    {
+        return $this->belongsTo(Attribute::class);
+    }
 }
