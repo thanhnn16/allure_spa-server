@@ -14,17 +14,19 @@ class Appointment extends Model
         'user_id',
         'treatment_id',
         'staff_user_id',
-        'appointment_date',
         'start_time',
         'end_time',
+        'actual_start_time',
+        'actual_end_time',
+        'appointment_type',
         'status',
-        'note'
     ];
 
     protected $casts = [
-        'appointment_date' => 'date',
         'start_time' => 'datetime',
         'end_time' => 'datetime',
+        'actual_start_time' => 'datetime',
+        'actual_end_time' => 'datetime',
     ];
 
     public function user()
@@ -42,8 +44,28 @@ class Appointment extends Model
         return $this->belongsTo(User::class, 'staff_user_id');
     }
 
-    public function treatmentCombo()
+    protected $attributes = [
+        'appointment_type' => 'others',
+        'status' => 'pending',
+    ];
+
+    public function getAppointmentTypeAttribute($value)
     {
-        return $this->belongsTo(TreatmentCombo::class);
+        return ucfirst(str_replace('_', ' ', $value));
+    }
+
+    public function setAppointmentTypeAttribute($value)
+    {
+        $this->attributes['appointment_type'] = strtolower(str_replace(' ', '_', $value));
+    }
+
+    public function getStatusAttribute($value)
+    {
+        return ucfirst($value);
+    }
+
+    public function setStatusAttribute($value)
+    {
+        $this->attributes['status'] = strtolower($value);
     }
 }

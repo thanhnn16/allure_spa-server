@@ -74,12 +74,7 @@ export default [
         icon: mdiAccountMultiple,
         menu: [
             {
-                label: 'Nhân viên',
-                route: 'staff.index'
-            },
-            {
-                label: 'Bảng lương',
-                route: 'staff.salary'
+                label: 'Đang xây dựng...',
             },
         ]
     },

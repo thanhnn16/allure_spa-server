@@ -3,10 +3,13 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\ApiUserController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\TreatmentController;
-use App\Http\Controllers\Api\UserTreatmentPackageController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ImportController;
+use App\Http\Controllers\Api\DashboardController;
+
 
 Route::middleware('throttle:api')->group(function () {
     // Test route '/' return 'Hello World'
@@ -29,11 +32,16 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/products/search', [ProductController::class, 'searchProducts']);
         Route::get('/treatments/search', [TreatmentController::class, 'searchTreatments']);
 
-        Route::get('/user-treatment-packages/{user}', [UserTreatmentPackageController::class, 'index']);
+        Route::get('/users/get-staff-list', [UserController::class, 'getStaffList']);
+        Route::get('/user-treatment-packages/{user}', [UserController::class, 'getUserTreatmentPackages']);
 
 
         Route::get('/treatments', [TreatmentController::class, 'index']);
+        Route::get('/treatment-categories', [TreatmentController::class, 'categories']);
 
-        Route::get('/users/get-staff-list', [UserController::class, 'getStaffList']);
     });
+
+    Route::post('/import', [ImportController::class, 'importAll']);
+
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 });

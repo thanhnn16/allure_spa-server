@@ -1,6 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useMainStore } from '@/Stores/main.js'
+import { ref, computed, onMounted, defineProps, watch } from 'vue'
 import { mdiEye, mdiTrashCan } from '@mdi/js'
 import CardBoxModal from '@/Components/CardBoxModal.vue'
 import TableCheckboxCell from '@/Components/TableCheckboxCell.vue'
@@ -11,7 +10,7 @@ import UserAvatar from '@/Components/UserAvatar.vue'
 import { Link } from '@inertiajs/vue3'
 
 const props = defineProps({
-  users: {
+  items: {
     type: Array,
     default: () => []
   },
@@ -21,27 +20,38 @@ const props = defineProps({
   }
 })
 
-console.log('AllCustomersTable - Users:', props.users)
+const items = ref([])
+
+watch(() => props.items, (newItems) => {
+  items.value = newItems
+  console.log('CustomerTable - Items updated:', items.value)
+}, { immediate: true, deep: true })
+
+console.log('CustomerTable - Items:', items.value)
 
 onMounted(() => {
-  console.log('AllCustomersTable - Users (mounted):', props.users)
+  console.log('CustomerTable - Items (mounted):', items.value)
 })
 
 const hasItems = computed(() => {
-  console.log('AllCustomersTable - hasItems:', props.users.length > 0)
-  return props.users.length > 0
+  console.log('CustomerTable - hasItems:', items.value.length > 0)
+  return items.value.length > 0
 })
-
-const usersData = computed(() => props.users || [])
 
 const isModalDangerActive = ref(false)
 
-const checked = (isChecked, user) => {
+const checked = (isChecked, item) => {
   // Xử lý logic khi checkbox được chọn
 }
 
-const formatStatus = (user) => {
-  return user.deleted_at ? 'Đã xóa' : 'Hoạt động'
+const formatStatus = (item) => {
+  return item.deleted_at ? 'Đã xóa' : 'Hoạt động'
+}
+
+const emit = defineEmits(['viewDetails'])
+
+const viewDetails = (itemId) => {
+  emit('viewDetails', itemId)
 }
 </script>
 
@@ -69,31 +79,39 @@ const formatStatus = (user) => {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="user in users" :key="user.id">
-        <TableCheckboxCell v-if="checkable" @checked="checked($event, user)" />
+      <tr v-for="item in items" :key="item.id">
+        <td v-if="checkable">
+          <TableCheckboxCell @checked="checked($event, item)" />
+        </td>
         <td class="border-b-0 lg:w-6 before:hidden">
-          <UserAvatar :fullName="user.full_name || ''" class="w-24 h-24 mx-auto lg:w-6 lg:h-6" />
+          <UserAvatar :fullName="item.full_name || ''" class="w-24 h-24 mx-auto lg:w-6 lg:h-6" />
         </td>
         <td data-label="Họ và tên">
-          {{ user.full_name }}
+          {{ item.full_name }}
         </td>
         <td data-label="Số điện thoại">
-          {{ user.phone_number }}
+          {{ item.phone_number }}
         </td>
         <td data-label="Ngày sinh">
-          {{ user.date_of_birth || 'Chưa cập nhật' }}
+          {{ item.date_of_birth || 'Chưa cập nhật' }}
         </td>
         <td data-label="Ghi chú" class="lg:w-32">
-          {{ user.note || 'Không có ghi chú' }}
+          {{ item.note || 'Không có ghi chú' }}
         </td>
         <td data-label="Trạng thái">
-          {{ formatStatus(user) }}
+          {{ formatStatus(item) }}
         </td>
         <td data-label="Hành động" class="lg:w-1 whitespace-nowrap">
           <div class="flex items-center justify-start lg:justify-end">
-            <Link :href="route('users.show', user.id)">
-              <BaseButton color="info" :icon="mdiEye" small />
-            </Link>
+            <BaseButtons type="justify-start lg:justify-end" no-wrap>
+              <Link :href="route('users.show', item.id)" class="inline-flex">
+                <BaseButton
+                  color="info"
+                  :icon="mdiEye"
+                  small
+                />
+              </Link>
+            </BaseButtons>
           </div>
         </td>
       </tr>

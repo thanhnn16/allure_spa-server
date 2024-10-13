@@ -7,6 +7,7 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Support\Facades\Hash;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use Illuminate\Support\Str;
 
 class UsersImport implements ToModel, WithHeadingRow
 {
@@ -18,15 +19,16 @@ class UsersImport implements ToModel, WithHeadingRow
     public function model(array $row)
     {
         return new User([
-            'phone_number'  => $row['phone_number'],
-            'email'         => $row['email'],
+            'id'            => Str::uuid(),
+            'phone_number'  => $row['phone_number'] ?? null,
+            'email'         => $row['email'] ?? null,
             'password'      => Hash::make('allurespa'),
             'role'          => $row['role'] ?? 'user',
             'full_name'     => $row['full_name'],
             'gender'        => $row['gender'] ?? 'other',
-            'date_of_birth' => Date::excelToDateTimeObject($row['date_of_birth']),
-            'loyalty_points'         => $row['loyalty_points'] ?? 0,
-            'skin_condition'         => $row['skin_condition'] ?? null,
+            'date_of_birth' => isset($row['date_of_birth']) ? Date::excelToDateTimeObject($row['date_of_birth']) : null,
+            'loyalty_points' => $row['loyalty_points'] ?? 0,
+            'skin_condition' => $row['skin_condition'] ?? null,
             'note'          => $row['note'] ?? null,
             'purchase_count' => $row['purchase_count'] ?? 0,
         ]);

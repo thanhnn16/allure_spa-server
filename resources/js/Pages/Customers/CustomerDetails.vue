@@ -96,6 +96,35 @@ const formatGender = computed(() => {
 });
 
 const safeUser = computed(() => props.user || {});
+
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('vi-VN');
+};
+
+const formatVoucherType = (type) => {
+    switch (type) {
+        case 'percentage':
+            return 'Phần trăm';
+        case 'fixed':
+            return 'Giá trị cố định';
+        default:
+            return 'Không xác định';
+    }
+};
+
+const formatVoucherValue = (type, value) => {
+    if (type === 'percentage') {
+        return `${value}%`;
+    } else if (type === 'fixed') {
+        return formatCurrency(value);
+    }
+    return value;
+};
 </script>
 
 <template>
@@ -160,12 +189,12 @@ const safeUser = computed(() => props.user || {});
 
             <CardBox v-if="activeTab === 'treatments'" class="mb-6">
                 <h3 class="text-lg font-semibold mb-4">Liệu trình đang sử dụng</h3>
-                <div v-if="safeUser.treatment_packages && safeUser.treatment_packages.length > 0">
-                    <div v-for="treatmentPackage in safeUser.treatment_packages" :key="treatmentPackage.id" class="mb-4">
-                        <p><strong>Tên liệu trình:</strong> {{ treatmentPackage.treatment_combo?.treatment?.treatment_name || 'N/A' }}</p>
-                        <p><strong>Loại combo:</strong> {{ treatmentPackage.treatment_combo?.combo_type || 'N/A' }}</p>
+                <div v-if="safeUser.user_treatment_packages && safeUser.user_treatment_packages.length > 0">
+                    <div v-for="treatmentPackage in safeUser.user_treatment_packages" :key="treatmentPackage.id" class="mb-4">
+                        <p><strong>Tên liệu trình:</strong> {{ treatmentPackage.treatment_combo?.treatment?.name || 'N/A' }}</p>
+                        <p><strong>Loại combo:</strong> {{ treatmentPackage.treatment_combo?.name || 'N/A' }}</p>
                         <p><strong>Số buổi còn lại:</strong> {{ treatmentPackage.remaining_sessions }}/{{ treatmentPackage.total_sessions }}</p>
-                        <p><strong>Ngày hết hạn:</strong> {{ new Date(treatmentPackage.expiry_date).toLocaleDateString() }}</p>
+                        <p><strong>Ngày hết hạn:</strong> {{ formatDate(treatmentPackage.expiry_date) }}</p>
                     </div>
                 </div>
                 <p v-else>Không có dữ liệu liệu trình.</p>
@@ -175,10 +204,10 @@ const safeUser = computed(() => props.user || {});
                 <h3 class="text-lg font-semibold mb-4">Đơn hàng gần đây</h3>
                 <div v-if="safeUser.invoices && safeUser.invoices.length > 0">
                     <div v-for="invoice in safeUser.invoices" :key="invoice.id" class="mb-4">
-                        <p><strong>Mã đơn hàng:</strong> {{ invoice.invoice_number }}</p>
-                        <p><strong>Ngày tạo:</strong> {{ new Date(invoice.created_at).toLocaleDateString() }}</p>
-                        <p><strong>Tổng tiền:</strong> {{ invoice.total_amount }}</p>
-                        <p><strong>Trạng thái thanh toán:</strong> {{ invoice.payment_status }}</p>
+                        <p><strong>Mã đơn hàng:</strong> {{ invoice.id }}</p>
+                        <p><strong>Ngày tạo:</strong> {{ formatDate(invoice.created_at) }}</p>
+                        <p><strong>Tổng tiền:</strong> {{ formatCurrency(invoice.total_amount) }}</p>
+                        <p><strong>Trạng thái thanh toán:</strong> {{ invoice.status }}</p>
                     </div>
                 </div>
                 <p v-else>Không có dữ liệu đơn hàng.</p>
@@ -189,9 +218,11 @@ const safeUser = computed(() => props.user || {});
                 <div v-if="safeUser.vouchers && safeUser.vouchers.length > 0">
                     <div v-for="voucher in safeUser.vouchers" :key="voucher.id" class="mb-4">
                         <p><strong>Mã voucher:</strong> {{ voucher.code }}</p>
-                        <p><strong>Mô tả:</strong> {{ voucher.description }}</p>
-                        <p><strong>Giá trị giảm:</strong> {{ voucher.discount_value }}</p>
-                        <p><strong>Trạng thái:</strong> {{ voucher.pivot?.is_used ? 'Đã sử dụng' : 'Chưa sử dụng' }}</p>
+                        <p><strong>Loại:</strong> {{ formatVoucherType(voucher.type) }}</p>
+                        <p><strong>Giá trị:</strong> {{ formatVoucherValue(voucher.type, voucher.value) }}</p>
+                        <p><strong>Ngày bắt đầu:</strong> {{ formatDate(voucher.start_date) }}</p>
+                        <p><strong>Ngày kết thúc:</strong> {{ formatDate(voucher.end_date) }}</p>
+                        <p><strong>Trạng thái:</strong> {{ voucher.pivot.is_used ? 'Đã sử dụng' : 'Chưa sử dụng' }}</p>
                     </div>
                 </div>
                 <p v-else>Không có dữ liệu voucher.</p>

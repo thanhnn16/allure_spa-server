@@ -34,13 +34,12 @@ const submit = () => {
 
 <template>
     <LayoutGuest>
-
         <Head title="Đăng nhập" />
-        <SectionFullScreen v-slot="{ cardClass }" bg="purplePink">
-            <CardBox :class="cardClass" is-form @submit.prevent="submit">
+        <SectionFullScreen v-slot="{ cardClass }" bgImg="/bg.jpg">
+            <CardBox :class="cardClass" is-form @submit.prevent="submit" class="p-6">
                 <div class="flex justify-center mb-6">
                     <img src="https://allurespa.com.vn/wp-content/uploads/2024/08/logo_homepage-e1723436204113.png"
-                        alt="Logo" class="h-32">
+                        alt="Logo" class="h-20">
                 </div>
                 <FormField label="Số điện thoại" help="Nhập số điện thoại">
                     <FormControl v-model="form.phone_number" :icon="mdiAccount" name="phone_number"

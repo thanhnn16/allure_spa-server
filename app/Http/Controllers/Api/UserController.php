@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Models\UserTreatmentPackage;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -45,5 +47,35 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function searchUsers(Request $request)
+    {
+        $query = $request->get('query');
+        $users = User::where('role', 'user')
+            ->where(function ($q) use ($query) {
+                $q->where('full_name', 'like', "%{$query}%")
+                    ->orWhere('phone_number', 'like', "%{$query}%");
+            })
+            ->limit(10)
+            ->get(['id', 'full_name', 'phone_number']);
+
+        return response()->json($users);
+    }
+
+    public function getStaffList()
+    {
+        $staff = User::where('role', 'staff')->get(['id', 'full_name']);
+        return response()->json(['staff' => $staff]);
+    }
+
+    public function getUserTreatmentPackages($userId)
+    {
+        $userTreatmentPackages = UserTreatmentPackage::where('user_id', $userId)
+            ->where('remaining_sessions', '>', 0)
+            ->with('treatment')
+            ->get();
+
+        return response()->json($userTreatmentPackages);
     }
 }

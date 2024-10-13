@@ -2,12 +2,11 @@
 import { mdiMonitorCellphone, mdiTableBorder, mdiTableOff, mdiGithub, mdiAccountPlus, mdiCalendarAccount, mdiTableAccount } from '@mdi/js'
 import SectionMain from '@/Components/SectionMain.vue'
 import NotificationBar from '@/Components/NotificationBar.vue'
-import AllCustomersTable from '@/Pages/Customers/Components/AllCustomersTable.vue'
 import CardBox from '@/Components/CardBox.vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.vue'
 import BaseButton from '@/Components/BaseButton.vue'
-import CardBoxComponentEmpty from '@/Components/CardBoxComponentEmpty.vue'
+import CardBoxModal from '@/Components/CardBoxModal.vue'
 import { Head } from "@inertiajs/vue3";
 import { computed, ref, watch, onMounted } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
@@ -17,6 +16,7 @@ import { storeToRefs } from 'pinia'
 import TablePagination from '@/Components/TablePagination.vue'
 import { mdiFilter, mdiAccountMultiple, mdiCalendarRange, mdiCake, mdiStar, mdiCartOutline, mdiCalendarClock } from '@mdi/js'
 import ImportCustomersModal from '@/Pages/Customers/Components/ImportCustomersModal.vue'
+import CustomerTable from '@/Pages/Customers/Components/CustomerTable.vue'
 
 const mainStore = useMainStore()
 const { users } = storeToRefs(mainStore)
@@ -215,9 +215,9 @@ const handleCustomersImported = () => {
                     </select>
                 </div>
                 <div v-if="!hasUsers" class="text-center py-5">
-                    <p>Không có dữ liệu</p>
+                    <p>Không có khách hàng</p>
                 </div>
-                <AllCustomersTable v-else :users="usersData" :checkable="true" />
+                <CustomerTable v-if="hasUsers" :items="usersData" :checkable="true" />
             </CardBox>
 
             <div v-if="props.users?.links" class="mt-6">

@@ -2,7 +2,7 @@
 import { mdiMonitorCellphone, mdiTableBorder, mdiTableOff, mdiGithub } from '@mdi/js'
 import SectionMain from '@/Components/SectionMain.vue'
 import NotificationBar from '@/Components/NotificationBar.vue'
-import TableSampleClients from '@/Pages/Customers/Components/AllCustomersTable.vue'
+import TableSampleClients from '@/Pages/Customers/Components/CustomerTable.vue'
 import CardBox from '@/Components/CardBox.vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.vue'

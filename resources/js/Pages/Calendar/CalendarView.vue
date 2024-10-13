@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { usePage } from '@inertiajs/vue3'
+import { ref, computed, onMounted } from 'vue'
+import { usePage, router } from '@inertiajs/vue3'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -9,8 +9,11 @@ import interactionPlugin from '@fullcalendar/interaction'
 import { Head } from '@inertiajs/vue3'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
-import AppointmentModal from '@/Pages/Calendar/Components/AppointmentModal.vue'
+import AppointmentModal from '@/Pages/Calendar/Components/AddAppointmentModal.vue'
 import { useForm } from '@inertiajs/vue3'
+import { formatISO } from 'date-fns'
+import axios from 'axios'
+import ViewAppointmentModal from './Components/ViewAppointmentModal.vue'
 
 const props = defineProps({
     appointments: {
@@ -23,18 +26,24 @@ const page = usePage()
 
 const showModal = ref(false)
 const selectedAppointment = ref(null)
+const showViewModal = ref(false)
 
-const calendarOptions = ref({
+function toLocalTime(utcTimeString) {
+    // Xóa hàm này vì chúng ta không cần chuyển đổi thời gian nữa
+}
+
+const calendarRef = ref(null)
+
+const calendarOptions = computed(() => ({
     plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
     initialView: 'timeGridWeek', // Changed to week view
     weekends: true,
     events: computed(() => {
         return props.appointments.map(appointment => ({
             id: appointment.id,
-            title: `${appointment.user?.name || 'Không xác định'} - ${appointment.appointment_type || 'Không xác định'}`,
-            start: appointment.start_date,
-            end: appointment.end_date,
-            allDay: appointment.is_all_day,
+            title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.appointment_type || 'Không xác định'}`,
+            start: appointment.start_time, // Sử dụng trực tiếp start_time
+            end: appointment.end_time, // Sử dụng trực tiếp end_time
         }))
     }),
     locale: 'vi',
@@ -74,7 +83,7 @@ const calendarOptions = ref({
     eventClick: handleEventClick,
     eventDrop: handleEventDrop,
     eventResize: handleEventResize,
-})
+}))
 
 function handleDateSelect(selectInfo) {
     showModal.value = true
@@ -86,18 +95,39 @@ function handleDateSelect(selectInfo) {
 }
 
 function handleEventClick(clickInfo) {
-    showModal.value = true
-    selectedAppointment.value = {
-        ...clickInfo.event.extendedProps,
-        id: clickInfo.event.id,
-        start: clickInfo.event.startStr,
-        end: clickInfo.event.endStr,
-        allDay: clickInfo.event.allDay
-    }
+    selectedAppointment.value = props.appointments.find(apt => apt.id == clickInfo.event.id);
+    showViewModal.value = true;
 }
 
 function handleEventDrop(dropInfo) {
-    // Implement this function
+    const updatedAppointment = {
+        id: dropInfo.event.id,
+        start_time: dropInfo.event.start.toISOString(),
+        end_time: dropInfo.event.end.toISOString(),
+    };
+    updateAppointment(updatedAppointment);
+}
+
+function updateAppointment(appointmentData) {
+    axios.put(`/api/appointments/${appointmentData.id}`, appointmentData)
+        .then(response => {
+            // Update the local appointments array
+            const index = props.appointments.findIndex(apt => apt.id === appointmentData.id);
+            if (index !== -1) {
+                props.appointments[index] = response.data.appointment;
+            }
+            // Refresh the calendar
+            if (calendarRef.value) {
+                calendarRef.value.getApi().refetchEvents();
+            }
+        })
+        .catch(error => {
+            console.error('Error updating appointment:', error);
+            // Revert the event if the update fails
+            if (calendarRef.value) {
+                calendarRef.value.getApi().refetchEvents();
+            }
+        });
 }
 
 function handleEventResize(resizeInfo) {
@@ -114,7 +144,8 @@ function saveAppointment(appointmentData) {
         user_id: appointmentData.user_id,
         appointment_type: appointmentData.appointment_type,
         staff_id: appointmentData.staff_id,
-        order_item_id: appointmentData.order_item_id,
+        treatment_id: appointmentData.treatment_id,
+        user_treatment_package_id: appointmentData.user_treatment_package_id,
         start_date: appointmentData.start,
         end_date: appointmentData.end,
         is_all_day: appointmentData.allDay,
@@ -127,7 +158,7 @@ function saveAppointment(appointmentData) {
         preserveScroll: true,
         onSuccess: () => {
             closeModal();
-            // Có thể thêm logic để cập nhật danh sách lịch hẹn ở đây
+            router.reload();
         },
     });
 }
@@ -136,13 +167,34 @@ function handleAppointmentAdded() {
     // Reload the page to reflect the new appointment
     window.location.reload();
 }
+
+// Hàm để định dạng ngày giờ
+function formatDateTime(dateTimeString) {
+    const date = new Date(dateTimeString)
+    return date.toLocaleString() // Hoặc sử dụng bất kỳ định dạng nào bạn muốn
+}
+
+const appointments = ref(page.props.appointments || [])
+
+onMounted(() => {
+    console.log('Appointments in CalendarView:', appointments.value)
+})
+
+function closeViewModal() {
+    showViewModal.value = false;
+    selectedAppointment.value = null;
+}
+
+function handleAppointmentUpdate(updatedAppointment) {
+    updateAppointment(updatedAppointment);
+}
 </script>
 
 <template>
     <LayoutAuthenticated>
         <Head title="Lịch hẹn" />
         <SectionMain>
-            <FullCalendar :options="calendarOptions" class="custom-calendar" />
+            <FullCalendar ref="calendarRef" :options="calendarOptions" class="custom-calendar" />
         </SectionMain>
         <AppointmentModal 
             :show="showModal" 
@@ -150,6 +202,13 @@ function handleAppointmentAdded() {
             @close="closeModal"
             @save="saveAppointment" 
             @appointmentAdded="handleAppointmentAdded"
+            :closeModal="closeModal"
+        />
+        <ViewAppointmentModal
+            :show="showViewModal"
+            :appointment="selectedAppointment"
+            @close="closeViewModal"
+            @update="handleAppointmentUpdate"
         />
     </LayoutAuthenticated>
 </template>

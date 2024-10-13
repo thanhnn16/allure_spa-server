@@ -14,110 +14,7 @@ use Inertia\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
-
-use OpenApi\Annotations as OA;
-
-/**
- * @OA\Info(title="API Documentation", version="1.0.0")
- */
-
-/**
- * @OA\Post(
- *     path="/login",
- *     summary="Login",
- *     description="Authenticates a user and returns a token",
- *     @OA\RequestBody(
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="phone_number", type="string", example="1234567890"),
- *             @OA\Property(property="password", type="string", example="password123")
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Login successful",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="Login successful"),
- *             @OA\Property(property="status_code", type="integer", example=200),
- *             @OA\Property(property="data", type="object",
- *                 @OA\Property(property="user", type="object",
- *                     @OA\Property(property="id", type="integer", example=1),
- *                     @OA\Property(property="name", type="string", example="John Doe"),
- *                     @OA\Property(property="email", type="string", example="john@example.com")
- *                 ),
- *                 @OA\Property(property="token", type="string", example="1234567890")
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Unauthorized",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="Unauthorized"),
- *             @OA\Property(property="status_code", type="integer", example=401),
- *             @OA\Property(property="errors", type="array",
- *                 @OA\Items(type="string", example="Invalid credentials")
- *             )
- *         )
- *     )
- * )
- */
-
-/**
- * @OA\Post(
- *     path="/logout",
- *     summary="Logout",
- *     description="Logs out the authenticated user",
- *     @OA\Response(
- *         response=200,
- *         description="Logout successful",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="Logout successful"),
- *             @OA\Property(property="status_code", type="integer", example=200)
- *         )
- *     )
- * )
- */
-
-/**
- * @OA\Get(
- *     path="/user",
- *     summary="Get user details",
- *     description="Retrieves the details of the authenticated user",
- *     @OA\Response(
- *         response=200,
- *         description="User details retrieved successfully",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="User details retrieved successfully"),
- *             @OA\Property(property="status_code", type="integer", example=200),
- *             @OA\Property(property="data", type="object",
- *                 @OA\Property(property="user", type="object",
- *                     @OA\Property(property="id", type="integer", example=1),
- *                     @OA\Property(property="name", type="string", example="John Doe"),
- *                     @OA\Property(property="email", type="string", example="john@example.com")
- *                 )
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="Unauthorized",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="Unauthorized"),
- *             @OA\Property(property="status_code", type="integer", example=401),
- *             @OA\Property(property="errors", type="array",
- *                 @OA\Items(type="string", example="Unauthenticated")
- *             )
- *         )
- *     )
- * )
- */
-
+use Illuminate\Support\Facades\Hash;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -186,40 +83,94 @@ class AuthenticatedSessionController extends Controller
         return 'Đã xảy ra lỗi không xác định trong quá trình đăng nhập.';
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/auth/login",
+     *     summary="User login",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             required={"phone_number", "password"},
+     *             @OA\Property(property="phone_number", type="string", example="0123456789"),
+     *             @OA\Property(property="password", type="string", example="password123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful login",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Đăng nhập thành công"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="user", type="object",
+     *                     @OA\Property(property="id", type="string", example="01234567-89ab-cdef-0123-456789abcdef"),
+     *                     @OA\Property(property="full_name", type="string", example="John Doe"),
+     *                     @OA\Property(property="phone_number", type="string", example="0123456789"),
+     *                     @OA\Property(property="email", type="string", example="john@example.com"),
+     *                     @OA\Property(property="role", type="string", example="admin"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2023-04-15T09:00:00Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2023-04-15T09:00:00Z")
+     *                 ),
+     *                 @OA\Property(property="token", type="string", example="2|zyxwvutsrqponmlkjihgfedcba654321")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Thông tin đăng nhập không chính xác"),
+     *             @OA\Property(property="status_code", type="integer", example=401),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="data", type="null", example=null)
+     *         )
+     *     )
+     * )
+     */
     public function storeApi(Request $request): JsonResponse
     {
         try {
-            $user = User::where('phone_number', $request->phone_number)->first();
+            $request->validate([
+                'phone_number' => 'required|string',
+                'password' => 'required|string',
+            ]);
 
-            if (!$user) {
-                throw new \Exception('Không tìm thấy người dùng');
+            if (Auth::attempt($request->only('phone_number', 'password'))) {
+                $user = Auth::user();
+                $token = $user->createToken('auth_token')->plainTextToken;
+
+                return response()->json([
+                    'message' => 'Đăng nhập thành công',
+                    'status_code' => 200,
+                    'success' => true,
+                    'data' => [
+                        'user' => $user,
+                        'token' => $token
+                    ]
+                ], 200);
             }
-
-            if (!Auth::attempt(['phone_number' => $request->phone_number, 'password' => $request->password])) {
-                throw new \Exception('Thông tin đăng nhập không chính xác');
-            }
-
-            if ($user->role !== 'admin') {
-                Auth::logout();
-                throw new \Exception('Bạn không có quyền truy cập hệ thống');
-            }
-
-            $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-                'message' => 'Đăng nhập thành công',
-                'status_code' => 200,
-                'data' => [
-                    'user' => $user,
-                    'token' => $token
-                ]
-            ]);
+                'message' => 'Thông tin đăng nhập không chính xác',
+                'status_code' => 401,
+                'success' => false,
+                'data' => null
+            ], 401);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => $e->errors()[array_key_first($e->errors())][0], // Get the first error message
+                'status_code' => 422,
+                'success' => false,
+                'data' => null
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Đăng nhập thất bại',
-                'status_code' => 401,
-                'errors' => [$e->getMessage()]
-            ], 401);
+                'status_code' => 500,
+                'success' => false,
+                'data' => null
+            ], 500);
         }
     }
 

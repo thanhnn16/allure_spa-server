@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AiChatConfigController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -10,14 +9,11 @@ use App\Models\ProductCategory;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\TreatmentController;
-use App\Http\Controllers\TreatmentCategoryController;
 use App\Http\Controllers\AppointmentController;
-use App\Http\Controllers\BannerController;
-use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\MobileAppController;
 use App\Http\Controllers\RatingController;
-use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
@@ -62,23 +58,17 @@ Route::middleware('auth')->group(function () {
     Route::resource('treatments', TreatmentController::class);
 
     // Treatment Category routes
-    Route::resource('treatment-categories', TreatmentCategoryController::class);
 
     // Appointment routes
     Route::resource('appointments', AppointmentController::class);
 
     // Favorite routes
-    Route::resource('favorites', FavoriteController::class);
 
     // Cart routes
     Route::resource('carts', CartController::class);
 
     // Rating routes
     Route::resource('ratings', RatingController::class);
-
-    // Staff routes
-    Route::resource('staff', StaffController::class);
-    Route::get('staff/salary', [StaffController::class, 'salary'])->name('staff.salary');
 
 
     // Stock Movement routes
@@ -91,8 +81,8 @@ Route::middleware('auth')->group(function () {
 
     // Mobile App routes
     Route::get('mobileapp/chat', [ChatController::class, 'chat'])->name('mobileapp.chat');
-    Route::get('mobileapp/banners', [BannerController::class, 'banners'])->name('mobileapp.banners');
-    Route::get('mobileapp/ai-config', [AiChatConfigController::class, 'index'])->name('mobileapp.ai-config');
+    Route::get('mobileapp/banners', [MobileAppController::class, 'banners'])->name('mobileapp.banners');
+    Route::get('mobileapp/ai-config', [MobileAppController::class, 'index'])->name('mobileapp.ai-config');
 
     // Report routes
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

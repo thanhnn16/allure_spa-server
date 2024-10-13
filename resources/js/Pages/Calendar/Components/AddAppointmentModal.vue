@@ -6,7 +6,7 @@
             <div class="p-6">
                 <h2 class="text-xl font-semibold mb-4">{{ modalTitle }}</h2>
 
-                <form @submit.prevent="submitAppointment">
+                <form @submit.prevent="validateAndSubmit">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="mb-4">
                             <label for="user" class="block text-sm font-medium text-gray-700 mb-1">Khách hàng</label>
@@ -54,7 +54,7 @@
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="">Chọn liệu trình</option>
                                 <option v-for="treatment in treatments" :key="treatment.id" :value="treatment.id">
-                                    {{ treatment.treatment_name }} - {{ formatPrice(treatment.price) }}
+                                    {{ treatment.name }} - {{ formatPrice(treatment.price) }}
                                 </option>
                             </select>
                         </div>
@@ -64,13 +64,9 @@
                                 hẹn</label>
                             <select v-model="form.appointment_type" id="appointment_type"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="">Chọn loại lịch hẹn</option>
-                                <option value="facial">Facial</option>
-                                <option value="massage">Massage</option>
-                                <option value="hair_removal">Hair Removal</option>
-                                <option value="consultation">Tư vấn</option>
-                                <option value="weight_loss">Giảm béo</option>
-                                <option value="other">Khác</option>
+                                <option v-for="type in appointmentTypes" :key="type.value" :value="type.value">
+                                    {{ type.label }}
+                                </option>
                             </select>
                         </div>
 
@@ -102,13 +98,6 @@
                                 :max="`${form.end_date.split('T')[0]}T18:00`"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
-                        <div class="w-full md:w-1/5 pl-2 flex items-center">
-                            <label class="flex items-center">
-                                <input type="checkbox" v-model="form.is_all_day"
-                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                <span class="ml-2 text-sm text-gray-600">Cả ngày</span>
-                            </label>
-                        </div>
                     </div>
                     <div class="mb-4">
                         <label for="note" class="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
@@ -116,8 +105,8 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                     </div>
 
-                    <div v-if="errorMessage" class="text-red-500 mt-2">
-                        {{ errorMessage }}
+                    <div v-if="errors" class="text-red-500 mt-2">
+                        <p v-for="(error, field) in errors" :key="field">{{ error[0] }}</p>
                     </div>
 
                     <div class="mt-6 flex justify-end space-x-3">
@@ -140,10 +129,18 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { router, useForm } from '@inertiajs/vue3'
+import { parseISO, format } from 'date-fns'
 
 const props = defineProps({
     show: Boolean,
-    appointment: Object,
+    appointments: {
+        type: Array,
+        default: () => []
+    },
+    closeModal: {
+        type: Function,
+        required: true
+    }
 })
 
 const emit = defineEmits(['close', 'save', 'appointmentAdded'])
@@ -151,21 +148,22 @@ const emit = defineEmits(['close', 'save', 'appointmentAdded'])
 const userSearch = ref('')
 const userResults = ref([])
 const selectedUser = ref(null)
+const errors = ref({})
+
 const form = useForm({
     user_id: '',
-    appointment_type: '',
-    staff_id: null,
+    staff_id: '',
     treatment_id: '',
+    user_treatment_package_id: null,
     start_date: '',
     end_date: '',
-    is_all_day: false,
     status: 'pending',
     note: '',
-    user_treatment_package_id: null,
+    appointment_type: '',
 })
 
 const modalTitle = computed(() => {
-    return props.appointment && props.appointment.id ? 'Chỉnh sửa lịch hẹn' : 'Thêm lịch hẹn mới'
+    return props.appointments && props.appointments.length > 0 ? 'Chỉnh sửa lịch hẹn' : 'Thêm lịch hẹn mới'
 })
 
 const treatments = ref([])
@@ -179,28 +177,35 @@ const errorMessage = ref('')
 
 const staffList = ref([])
 
-watch(() => props.appointment, (newAppointment) => {
-    if (newAppointment) {
-        let startDate = new Date(newAppointment.start)
-        let endDate = new Date(newAppointment.end)
+const appointmentTypes = [
+    { value: 'facial', label: 'Chăm sóc da mặt' },
+    { value: 'massage', label: 'Massage' },
+    { value: 'weight_loss', label: 'Giảm cân' },
+    { value: 'hair_removal', label: 'Triệt lông' },
+    { value: 'consultation', label: 'Tư vấn' },
+    { value: 'others', label: 'Khác' },
+];
 
-        startDate = adjustTimeToBusinessHours(startDate)
-        endDate = adjustTimeToBusinessHours(endDate)
+const appointments = ref(props.appointments)
 
+// Log appointments for debugging
+console.log('Appointments:', appointments.value)
+
+watch(() => props.appointments, (newAppointments) => {
+    if (newAppointments && newAppointments.length > 0) {
         // Reset the form
         form.reset()
 
         // Update form values individually
-        Object.keys(newAppointment).forEach(key => {
+        Object.keys(newAppointments[0]).forEach(key => {
             if (form[key] !== undefined) {
-                form[key] = newAppointment[key]
+                form[key] = newAppointments[0][key]
             }
         })
 
         // Set date fields separately
-        form.start_date = formatDateTimeForInput(startDate)
-        form.end_date = formatDateTimeForInput(endDate)
-        form.is_all_day = newAppointment.allDay
+        form.start_date = formatDateTimeForInput(newAppointments[0].start)
+        form.end_date = formatDateTimeForInput(newAppointments[0].end)
     } else {
         resetForm()
     }
@@ -208,25 +213,14 @@ watch(() => props.appointment, (newAppointment) => {
 
 function formatDateTimeForInput(dateTimeString) {
     if (!dateTimeString) return ''
-    const date = new Date(dateTimeString)
-    date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
-    return date.toISOString().slice(0, 16)
+    const date = parseISO(dateTimeString)
+    return format(date, "yyyy-MM-dd'T'HH:mm")
 }
 
 function formatDateForAPI(dateTimeString) {
     if (!dateTimeString) return ''
-    const date = new Date(dateTimeString)
+    const date = parseISO(dateTimeString)
     return date.toISOString()
-}
-
-function adjustTimeToBusinessHours(date) {
-    let hours = date.getHours()
-    if (hours < 8) {
-        date.setHours(8, 0, 0, 0)
-    } else if (hours >= 18) {
-        date.setHours(17, 59, 0, 0)
-    }
-    return date
 }
 
 function resetForm() {
@@ -278,6 +272,7 @@ onMounted(() => {
     fetchTreatments()
     fetchStaffList()
     document.addEventListener('keydown', handleKeyDown)
+    console.log('Appointments in AppointmentModal:', appointments.value)
 })
 
 function fetchTreatments() {
@@ -306,38 +301,66 @@ function handleKeyDown(e) {
     }
 }
 
-watch(() => form.is_all_day, (newValue) => {
-    if (newValue) {
-        const startDate = new Date(form.start_date)
-        const endDate = new Date(form.end_date)
-        startDate.setHours(0, 0, 0, 0)
-        endDate.setHours(23, 59, 59, 999)
-        form.start_date = formatDateTimeForInput(startDate)
-        form.end_date = formatDateTimeForInput(endDate)
-    }
-})
-
 onUnmounted(() => {
     document.removeEventListener('keydown', handleKeyDown)
 })
 
+function validateForm() {
+    errors.value = {}
+    
+    if (!form.user_id) {
+        errors.value.user_id = ['Vui lòng chọn khách hàng.']
+    }
+    
+    if (!form.staff_id) {
+        errors.value.staff_id = ['Vui lòng chọn nhân viên phụ trách.']
+    }
+    
+    if (!form.treatment_id && !form.user_treatment_package_id) {
+        errors.value.treatment = ['Vui lòng chọn liệu trình hoặc gói điều trị.']
+    }
+    
+    if (!form.start_date) {
+        errors.value.start_date = ['Ngày bắt đầu là bắt buộc.']
+    }
+    
+    if (!form.end_date) {
+        errors.value.end_date = ['Ngày kết thúc là bắt buộc.']
+    } else if (new Date(form.end_date) <= new Date(form.start_date)) {
+        errors.value.end_date = ['Ngày kết thúc phải sau ngày bắt đầu.']
+    }
+    
+    if (!form.appointment_type) {
+        errors.value.appointment_type = ['Vui lòng chọn loại lịch hẹn.']
+    }
+    
+    return Object.keys(errors.value).length === 0
+}
+
+function validateAndSubmit() {
+    if (validateForm()) {
+        submitAppointment()
+    }
+}
+
 function submitAppointment() {
-    errorMessage.value = '' // Reset error message
-    form.post(route('appointments.store'), {
+    const formData = {
+        ...form,
+        start_date: formatDateForAPI(form.start_date),
+        end_date: formatDateForAPI(form.end_date),
+    };
+
+    router.post(route('appointments.store'), formData, {
         preserveState: true,
         preserveScroll: true,
-        onSuccess: (page) => {
-            if (page.props.flash.success) {
-                alert(page.props.flash.success)
-                emit('close')
-                emit('appointmentAdded')
-            } else if (page.props.errors) {
-                errorMessage.value = Object.values(page.props.errors).join(', ')
-            }
-        },
         onError: (errors) => {
-            errorMessage.value = Object.values(errors).join(', ')
-        }
+            console.error(errors)
+            errors.value = errors.error || {}
+        },
+        onSuccess: () => {
+            props.closeModal()
+            emit('appointmentAdded')
+        },
     })
 }
 </script>
