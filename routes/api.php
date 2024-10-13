@@ -21,6 +21,13 @@ Route::middleware('throttle:api')->group(function () {
     Route::post('/auth/register', [RegisteredUserController::class, 'storeApi']);
     Route::post('/auth/login', [AuthenticatedSessionController::class, 'storeApi']);
 
+    Route::get('/products/search', [ProductController::class, 'searchProducts']);
+    Route::get('/treatments/search', [TreatmentController::class, 'searchTreatments']);
+
+    // Treatment routes
+    Route::get('/treatments', [TreatmentController::class, 'index']);
+    Route::get('/treatment-categories', [TreatmentController::class, 'categories']);
+
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/appointments', [AppointmentController::class, 'index']);
         Route::post('/appointments', [AppointmentController::class, 'store']);
@@ -29,16 +36,9 @@ Route::middleware('throttle:api')->group(function () {
 
         // Thêm route mới cho tìm kiếm người dùng
         Route::get('/users/search', [UserController::class, 'searchUsers']);
-        Route::get('/products/search', [ProductController::class, 'searchProducts']);
-        Route::get('/treatments/search', [TreatmentController::class, 'searchTreatments']);
 
         Route::get('/users/get-staff-list', [UserController::class, 'getStaffList']);
         Route::get('/user-treatment-packages/{user}', [UserController::class, 'getUserTreatmentPackages']);
-
-
-        Route::get('/treatments', [TreatmentController::class, 'index']);
-        Route::get('/treatment-categories', [TreatmentController::class, 'categories']);
-
     });
 
     Route::post('/import', [ImportController::class, 'importAll']);
