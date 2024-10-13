@@ -9,7 +9,7 @@ INSERT INTO images (image_path) VALUES
 ('/images/products/gel.jpg'),
 ('/images/products/sunscreen.jpg'),
 ('/images/products/foundation.jpg'),
-('/images/users/default.jpg');
+('/images/users/default.png');
 
 -- Chèn dữ liệu vào bảng product_categories
 INSERT INTO product_categories (category_name) VALUES
@@ -38,76 +38,50 @@ INSERT INTO product_details (product_id, brand_description, `usage`, benefits, k
 (3, 'FAITH', 'Lấy 2-3 lần bơm ra lòng bàn tay, thoa đều lên mặt sau khi đã làm sạch và cân bằng da. Thoa thêm sản phẩm lên những vùng da cần chăm sóc đặc biệt.', 'Cung cấp độ ẩm sâu, cho làn da căng mọng và đàn hồi. Giúp cải thiện tình trạng da khô, nếp nhăn, chảy xệ.', 'Face Gelatin Collagen*2, Sodium Hyaluronate, Hydrolyzed Elastin', 'Water, BG, Glycerin, Pentylene Glycol, Squalane, Water-Soluble Collagen, Hydrolyzed Collagen, Sodium Hyaluronate, Hydrolyzed Elastin, Hydrogenated Lecithin, Phytosterols, Sodium ẞ-Sitosterol Sulfate, Leontopodium Alpinum Flower Extract, Glycine Soja (Soybean) Seed Extract, Acetyl Hydroxyproline, Ceramide NG, Acetyl Decapeptide-3, Glucosyl Ceramide, Punica Granatum Fruit Extract, Magnesium Ascorbyl Phosphate, RNA-Na, Ectoin, Sodium Lauroyl Glutamate Lysine, Arginine, Trehalose, Aloe Barbadensis Leaf Extract, Houttuynia Cordata Extract, Eugenia Caryophyllus (Clove) Flower Extract, Pyrus Cydonia Seed Extract, Sea Salt, Mannitol, Sodium Carboxymethyl Dextran, Oleic Acid, Sphingomyelin, Sitosterol, α-Glucan, Polyglyceryl-5 Trioleate, Polyglyceryl-10 Diisostearate, (Acrylates/Alkyl Acrylate (C10-30)) Crosspolymer, Carbomer, Sodium Citrate, Citric Acid, Potassium Hydroxide', 'Sử dụng hàng ngày, sáng và tối', 'Bảo quản nơi khô ráo, thoáng mát, tránh ánh nắng trực tiếp', 'Phù hợp cho mọi loại da'),
 (4, 'FAITH', 'Lấy một lượng vừa đủ (3-4 lần bơm) ra lòng bàn tay, thoa đều lên mặt sau khi đã sử dụng tinh chất.', 'Nước hoa hồng dạng lotion mỏng nhẹ, thẩm thấu nhanh, cung cấp độ ẩm lâu dài cho làn da mềm mại, mịn màng và rạng rỡ. Sản phẩm giúp cải thiện kết cấu và độ trong suốt của da, mang đến làn da khỏe mạnh và tươi sáng. Sử dụng sau bước làm sạch, cân bằng da và tinh chất để đạt hiệu quả tối ưu.', 'Biophospholipids (Hydrogenated Lecithin), Gelatin Collagen (Water-Soluble Collagen), Hydrolyzed Collagen, Phytosterols, ẞ-Sitosterol Sodium Sulfate', 'Water, BG, Pentylene Glycol, Glycerin, Trehalose, Water-Soluble Collagen, Hydrolyzed Collagen, Sodium Hyaluronate, Hydrolyzed Elastin, Hydrogenated Lecithin, Phytosterols, β-Sitosterol Sodium Sulfate, Acetyl Hydroxyproline, Glucosyl Ceramide, Prunus Domestica Fruit Extract, Punica Granatum Fruit Extract, Magnesium Ascorbyl Phosphate, RNA-Na, Ectoin, Sodium Lauroyl Glutamate Lysine, Aloe Barbadensis Leaf Extract, Eugenia Caryophyllus (Clove) Flower Extract, Arginine, Rosa Damascena Flower Water, Pyrus Cydonia Seed Extract, Houttuynia Cordata Extract, Sea Salt, Mannitol, Sodium Carboxymethyl Dextran, Oleic Acid, Sphingomyelin, Sitosterol, a-Glucan, Polyglyceryl-5 Trioleate, Polyglyceryl-10 Diisostearate, (Acrylates/Alkyl Acrylate (C10-30)) Crosspolymer, Sodium Citrate, Citric Acid, Potassium Hydroxide', 'Sử dụng hàng ngày, sáng và tối', 'Bảo quản nơi khô ráo, thoáng mát', 'Phù hợp cho mọi loại da'),
 (5, 'FAITH', 'Sau khi thoa nước hoa hồng, lấy một lượng vừa đủ (2-3 lần bơm) ra lòng bàn tay, thoa đều lên mặt. Thoa thêm sản phẩm lên những vùng da cần chăm sóc đặc biệt.', 'Kem dưỡng ẩm dạng gel thẩm thấu nhanh, cung cấp độ ẩm chuyên sâu, ngăn ngừa khô da và sần sùi. Sản phẩm mang đến làn da căng mọng, ẩm mịn và rạng rỡ.', 'Face Gelatin Collagen*, Sodium Hyaluronate, Hydrolyzed Elastin', 'Water, BG, Glycerin, Squalane, Behenyl Alcohol, Sorbitan Stearate, Polyglyceryl-10 Stearate, Glyceryl Stearate, Water-soluble Collagen, Hydrolyzed Collagen, Sodium Hyaluronate, Hydrolyzed Elastin, Hydrogenated Lecithin, Phytosterols, ẞ-Sitosterol Sodium Sulfate, Potentilla Erecta Root Extract, Acetyl Hydroxyproline, Ceramide NG, Caffeoyl Tetrapeptide-3, Acetyl Decapeptide-3, Centella Asiatica Extract, Magnesium Ascorbyl Phosphate, Ectoin, RNA-Na, Glucosyl Ceramide, Sodium Lauroyl Glutamate Lysine, Punica Granatum Fruit Extract, Trehalose, Arginine, α- Glucan, Mannitol, Sodium Carboxymethyl Dextran, Oleic Acid, Sphingomyelin, Sitosterol, Stearic Acid, Butyrospermum Parkii (Shea) Butter, Tocopheryl Acetate, Dextran, Diisostearyl Malate, Dimethicone, Ethylhexylglycerin, (Methyl Vinyl Ether/Maleic Acid) Crosspolymer, Sodium Citrate, Citric Acid, Potassium Hydroxide', 'Sử dụng hàng ngày, sáng và tối', 'Bảo quản nơi khô ráo, thoáng mát, tránh ánh nắng trực tiếp', 'Phù hợp cho mọi loại da'),
-(6, 'FAITH', 'Lắc đều trước khi sử dụng. Thoa đều lên mặt và cơ thể 15 phút trước khi tiếp xúc với ánh nắng mặt trời. Thoa lại sau mỗi hai giờ, đặc biệt là sau khi bơi, đổ mồ hôi hoặc lau bằng khăn.', 'Cung cấp khả năng chống nắng phổ rộng SPF 40 PA+++, bảo vệ da khỏi tác hại của tia UVA và UVB. Kết cấu nhẹ nhàng, thấm nhanh, không gây nhờn rít, phù hợp cho mọi loại da.', 'Octinoxate, Zinc Oxide, Titanium Dioxide', 'Water, Cyclopentasiloxane, Ethylhexyl Methoxycinnamate, Zinc Oxide, Titanium Dioxide, Butylene Glycol, Dimethicone, Glycerin, Isononyl Isononanoate, Pentylene Glycol, Silica, Cetyl PEG/PPG-10/1 Dimethicone, Niacinamide, Sodium Chloride, Caprylyl Methicone, Phenoxyethanol, Disteardimonium Hectorite, Tocopheryl Acetate, Hydrogen Dimethicone, Magnesium Sulfate, Triethoxycaprylylsilane, Aluminum Hydroxide, Fragrance, Dipropylene Glycol, Ethylhexylglycerin, Adenosine, Disodium EDTA, Hydrolyzed Collagen, Morus Alba Root Extract, Sodium Hyaluronate', 'Sử dụng hàng ngày, 15-30 phút trước khi ra nắng', 'Bảo quản nơi khô ráo, tho��ng mát, tránh ánh n���ng trực tiếp', 'Phù hợp cho mọi loại da'),
+(6, 'FAITH', 'Lắc đều trước khi sử dụng. Thoa đều lên mặt và cơ thể 15 phút trước khi tiếp xúc với ánh nắng mặt trời. Thoa lại sau mỗi hai giờ, đặc biệt là sau khi bơi, đổ mồ hôi hoặc lau bằng khăn.', 'Cung cấp khả năng chống nắng phổ rộng SPF 40 PA+++, bảo vệ da khỏi tác hại của tia UVA và UVB. Kết cấu nhẹ nhàng, thấm nhanh, không gây nhờn rít, phù hợp cho mọi loại da.', 'Octinoxate, Zinc Oxide, Titanium Dioxide', 'Water, Cyclopentasiloxane, Ethylhexyl Methoxycinnamate, Zinc Oxide, Titanium Dioxide, Butylene Glycol, Dimethicone, Glycerin, Isononyl Isononanoate, Pentylene Glycol, Silica, Cetyl PEG/PPG-10/1 Dimethicone, Niacinamide, Sodium Chloride, Caprylyl Methicone, Phenoxyethanol, Disteardimonium Hectorite, Tocopheryl Acetate, Hydrogen Dimethicone, Magnesium Sulfate, Triethoxycaprylylsilane, Aluminum Hydroxide, Fragrance, Dipropylene Glycol, Ethylhexylglycerin, Adenosine, Disodium EDTA, Hydrolyzed Collagen, Morus Alba Root Extract, Sodium Hyaluronate', 'Sử dụng hàng ngày, 15-30 phút trước khi ra nắng', 'Bảo quản nơi khô ráo, thong mát, tránh ánh nng trực tiếp', 'Phù hợp cho mọi loại da'),
 (7, 'FAITH', 'Lấy một lượng vừa đủ, chấm 5 điểm lên mặt (trán, mũi, cằm và hai má). Dùng ngón tay hoặc mút tán đều từ trong ra ngoài và từ trên xuống dưới.', 'Kem nền dạng gel với độ che phủ tự nhiên, mang lại làn da mịn màng, rạng rỡ. Công thức nhẹ nhàng, không gây bít lỗ chân lông, phù hợp cho mọi loại da.', 'Titanium Dioxide, Dimethicone, Silica', 'Water, Cyclopentasiloxane, Titanium Dioxide, Ethylhexyl Methoxycinnamate, Butylene Glycol, Dimethicone, Glycerin, Pentylene Glycol, Niacinamide, PEG-10 Dimethicone, Silica, Cetyl PEG/PPG-10/1 Dimethicone, Sodium Chloride, Zinc Oxide, Phenoxyethanol, Disteardimonium Hectorite, Hydrogen Dimethicone, Triethoxycaprylylsilane, Aluminum Hydroxide, Fragrance, Dipropylene Glycol, Ethylhexylglycerin, Adenosine, Disodium EDTA, Hydrolyzed Collagen, Morus Alba Root Extract, Sodium Hyaluronate', 'Sử dụng hàng ngày, sau bước dưỡng da', 'Bảo quản nơi khô ráo, thoáng mát', 'Phù hợp cho mọi loại da');
 
--- Chèn dữ liệu vào bảng treatment_categories
+-- Update treatment_categories
 INSERT INTO treatment_categories (category_name) VALUES
 ('Chăm sóc da mặt'),
-('Chăm sóc body'),
-('Triệt lông'),
+('Massage'),
 ('Giảm béo'),
-('Trị liệu');
+('Triệt lông'),
+('Xăm thẩm mỹ');
 
--- Chèn dữ liệu vào bảng treatments
+-- Update treatments
 INSERT INTO treatments (category_id, name, description, duration, price) VALUES
-(1, 'Chăm sóc da cơ bản', 'Liệu trình làm sạch và dưỡng ẩm cho da', 60, 500000),
-(1, 'Chăm sóc da chuyên sâu', 'Liệu trình đặc trị các vấn đề về da', 90, 800000),
-(1, 'Trẻ hóa da', 'Liệu trình giúp làn da trẻ hóa, săn chắc', 90, 1000000),
-(1, 'Trị mụn', 'Liệu trình điều trị mụn chuyên sâu', 90, 800000),
-(1, 'Trị nám', 'Liệu trình điều trị nám và đốm nâu', 90, 1200000),
-(2, 'Tắm trắng', 'Liệu trình làm trắng da toàn thân', 90, 800000),
-(2, 'Massage body', 'Massage toàn thân thư giãn', 60, 400000),
-(2, 'Tẩy da chết toàn thân', 'Loại bỏ tế bào chết trên toàn cơ thể', 60, 500000),
-(3, 'Triệt lông nách', 'Triệt lông vùng nách', 30, 200000),
-(3, 'Triệt lông chân', 'Triệt lông vùng chân', 60, 500000),
-(3, 'Triệt lông tay', 'Triệt lông vùng tay', 45, 400000),
-(3, 'Triệt lông mặt', 'Triệt lông vùng mặt', 30, 300000),
-(4, 'Giảm béo toàn thân', 'Liệu trình giảm béo toàn thân', 120, 1500000),
-(4, 'Giảm béo bụng', 'Liệu trình giảm béo vùng bụng', 60, 800000),
-(4, 'Giảm béo đùi', 'Liệu trình giảm béo vùng đùi', 60, 800000),
-(5, 'Massage mặt', 'Massage mặt trẻ hóa làn da', 30, 300000),
-(5, 'Massage đầu', 'Massage đầu giảm stress', 30, 200000),
-(5, 'Massage chân', 'Massage chân thư giãn', 30, 200000);
+(1, 'Chăm da Amino - Phù hợp mọi loại da', 'Liệu trình chăm sóc da mặt phù hợp cho mọi loại da', 60, 1350000),
+(1, 'Chống lão hoá - Photo', 'Liệu trình chống lão hóa sử dụng công nghệ Photo Facial kết hợp với Tế bào gốc', 45, 1350000),
+(1, 'Dưỡng trắng - Trị nám', 'Liệu trình dưỡng trắng và trị nám theo phương pháp FluorOxygen+C', 90, 1800000),
+(1, 'Collagen Tươi', 'Liệu trình chăm sóc da mặt với collagen tươi', 55, 1250000),
+(1, 'Peeling da', 'Liệu trình peeling da chuyên sâu', 70, 2500000),
+(2, 'Massage body', 'Massage toàn thân thư giãn', 60, 390000),
+(2, 'Thải độc ruột - Massage nội tạng', 'Liệu trình thải độc ruột kết hợp massage nội tạng', 60, 750000),
+(2, 'Massage Nâng cơ vòng 1', 'Liệu trình massage nâng cơ vùng ngực', 60, 950000),
+(2, 'Massage Cổ, Vai, Gáy', 'Massage tập trung vào vùng cổ, vai, gáy', 60, 350000),
+(2, 'Gội đầu chống rụng tóc kết hợp massage cổ, vai, gáy', 'Liệu trình gội đầu và massage', 45, 160000),
+(2, 'Xông hơi ngải cứu', 'Liệu trình xông hơi với ngải cứu', 60, 400000),
+(3, 'Giảm béo bụng', 'Liệu trình giảm béo vùng bụng', NULL, 600000),
+(3, 'Giảm béo eo', 'Liệu trình giảm béo vùng eo', NULL, 400000),
+(3, 'Giảm béo mông', 'Liệu trình giảm béo vùng mông', NULL, 400000),
+(3, 'Giảm béo tay', 'Liệu trình giảm béo vùng tay', NULL, 400000),
+(3, 'Giảm béo chân', 'Liệu trình giảm béo vùng chân', NULL, 600000),
+(3, 'Giảm béo toàn thân', 'Liệu trình giảm béo toàn thân', NULL, 2400000),
+(4, 'Triệt lông Bikini', 'Liệu trình triệt lông vùng bikini', NULL, 800000),
+(4, 'Triệt lông nách', 'Liệu trình triệt lông vùng nách', NULL, 250000),
+(4, 'Triệt lông chân (nửa chân)', 'Liệu trình triệt lông nửa chân', NULL, 350000),
+(4, 'Triệt lông chân (nguyên chân)', 'Liệu trình triệt lông toàn bộ chân', NULL, 700000),
+(4, 'Triệt lông tay', 'Liệu trình triệt lông vùng tay', NULL, 450000),
+(4, 'Triệt lông mặt, ria mép', 'Liệu trình triệt lông vùng mặt và ria mép', NULL, 250000),
+(4, 'Triệt lông toàn thân', 'Liệu trình triệt lông toàn thân', NULL, 2200000),
+(5, 'Xăm mày, môi nghệ thuật', 'Dịch vụ xăm mày và môi nghệ thuật', NULL, 4000000);
 
--- Chèn dữ liệu vào bảng treatment_combos
-INSERT INTO treatment_combos (treatment_id, combo_type, combo_price, validity_period) VALUES
-(1, '5_times', 2250000, 180),  -- Chăm sóc da cơ bản
-(1, '10_times', 4000000, 365),
-(2, '5_times', 3600000, 180),  -- Chăm sóc da chuyên sâu
-(2, '10_times', 6400000, 365),
-(3, '5_times', 4500000, 180),  -- Trẻ hóa da
-(3, '10_times', 8000000, 365),
-(4, '5_times', 3600000, 180),  -- Trị mụn
-(4, '10_times', 6400000, 365),
-(5, '5_times', 5400000, 180),  -- Trị nám
-(5, '10_times', 9600000, 365),
-(6, '5_times', 3600000, 180),  -- Tắm trắng
-(6, '10_times', 6400000, 365),
-(7, '5_times', 1800000, 180),  -- Massage body
-(7, '10_times', 3200000, 365),
-(8, '5_times', 2250000, 180),  -- Tẩy da chết toàn thân
-(8, '10_times', 4000000, 365),
-(9, '5_times', 900000, 180),   -- Triệt lông nách
-(9, '10_times', 1600000, 365),
-(10, '5_times', 2250000, 180), -- Triệt lông chân
-(10, '10_times', 4000000, 365),
-(11, '5_times', 1800000, 180), -- Triệt lông tay
-(11, '10_times', 3200000, 365),
-(12, '5_times', 1350000, 180), -- Triệt lông mặt
-(12, '10_times', 2400000, 365),
-(13, '5_times', 6750000, 180), -- Giảm béo toàn thân
-(13, '10_times', 12000000, 365),
-(14, '5_times', 3600000, 180), -- Giảm béo bụng
-(14, '10_times', 6400000, 365),
-(15, '5_times', 3600000, 180), -- Giảm béo đùi
-(15, '10_times', 6400000, 365),
-(16, '5_times', 1350000, 180), -- Massage mặt
-(16, '10_times', 2400000, 365),
-(17, '5_times', 900000, 180),  -- Massage đầu
-(17, '10_times', 1600000, 365),
-(18, '5_times', 900000, 180),  -- Massage chân
-(18, '10_times', 1600000, 365);
+-- Update treatment_combos
+INSERT INTO treatment_combos (treatment_id, combo_type, combo_price, validity_period)
+SELECT id, '5_times', price * 4, 180 FROM treatments
+UNION ALL
+SELECT id, '10_times', price * 7, 365 FROM treatments;
 
 -- Chèn dữ liệu vào bảng payment_methods
 INSERT INTO payment_methods (method_name) VALUES

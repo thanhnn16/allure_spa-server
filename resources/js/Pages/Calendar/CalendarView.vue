@@ -67,7 +67,7 @@ const calendarOptions = computed(() => ({
     },
     allDayText: 'Cả ngày',
     moreLinkText: 'Xem thêm',
-    noEventsText: 'Không có sự kiện để hiển thị',
+    noEventsText: 'Không có lịch hẹn nào',
     slotLabelFormat: {
         hour: 'numeric',
         minute: '2-digit',
@@ -75,11 +75,11 @@ const calendarOptions = computed(() => ({
         meridiem: 'short'
     },
     slotMinTime: '08:00:00',
-    slotMaxTime: '18:00:00',
+    slotMaxTime: '18:30:00',
     businessHours: {
         daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
         startTime: '08:00',
-        endTime: '18:00',
+        endTime: '18:30',
     },
     nowIndicator: true,
     editable: true,
@@ -191,28 +191,14 @@ function handleAppointmentUpdate(updatedAppointment) {
 
 <template>
     <LayoutAuthenticated>
+
         <Head title="Lịch hẹn" />
         <SectionMain>
-            <div v-if="appointments.length > 0">
-                <FullCalendar 
-                    ref="calendarRef" 
-                    :options="calendarOptions" 
-                    class="custom-calendar" 
-                />
-            </div>
-            <div v-else>
-                Không có cuộc hẹn nào.
-            </div>
+            <FullCalendar ref="calendarRef" :options="calendarOptions" class="custom-calendar" />
         </SectionMain>
-        <AddAppointmentModal 
-            :show="showModal" 
-            :appointments="appointments" 
-            :selectedTimeSlot="selectedTimeSlot"
-            @close="closeModal"
-            @save="saveAppointment" 
-            @appointmentAdded="handleAppointmentAdded" 
-            :closeModal="closeModal" 
-        />
+        <AddAppointmentModal :show="showModal" :appointments="appointments" :selectedTimeSlot="selectedTimeSlot"
+            @close="closeModal" @save="saveAppointment" @appointmentAdded="handleAppointmentAdded"
+            :closeModal="closeModal" />
         <ViewAppointmentModal :show="showViewModal" :appointment="selectedAppointment" @close="closeViewModal"
             @update="handleAppointmentUpdate" />
     </LayoutAuthenticated>

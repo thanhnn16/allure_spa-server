@@ -155,7 +155,7 @@ CREATE TABLE treatments
     name        VARCHAR(255)            NOT NULL,
     price       DECIMAL(10, 2) UNSIGNED NOT NULL,
     description TEXT,
-    duration    INT UNSIGNED            NOT NULL COMMENT 'Duration in minutes',
+    duration    INT UNSIGNED            NULL COMMENT 'Duration in minutes',
     image_id    INT UNSIGNED,
     category_id INT UNSIGNED            NOT NULL,
     created_at  TIMESTAMP               NULL DEFAULT NULL,
