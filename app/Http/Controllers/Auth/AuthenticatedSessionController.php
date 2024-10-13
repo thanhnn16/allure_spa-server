@@ -14,7 +14,6 @@ use Inertia\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Hash;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -38,8 +37,17 @@ class AuthenticatedSessionController extends Controller
             $request->authenticate();
 
             $user = $request->user();
+            Log::info('User authenticated', [
+                'user_id' => $user->id,
+                'role' => $user->role,
+                'email' => $user->email,
+            ]);
 
             if ($user->role !== 'admin') {
+                Log::warning('Non-admin user attempted to log in', [
+                    'user_id' => $user->id,
+                    'role' => $user->role,
+                ]);
                 Auth::logout();
                 throw ValidationException::withMessages([
                     'phone_number' => __('Bạn không có quyền truy cập hệ thống.'),
@@ -48,14 +56,16 @@ class AuthenticatedSessionController extends Controller
 
             $request->session()->regenerate();
 
-            Log::info('User authenticated', [
+            Log::info('User session regenerated', [
                 'user_id' => $user->id,
-                'email' => $user->email,
                 'session_id' => session()->getId()
             ]);
 
-            return redirect()->intended(route('dashboard'));
+            return redirect()->intended(route('dashboard'))->with('auth_check', true);
         } catch (ValidationException $e) {
+            Log::error('Login validation failed', [
+                'errors' => $e->errors(),
+            ]);
             return redirect()->back()->withErrors([
                 'phone_number' => $this->getDetailedErrorMessage($e),
             ]);
@@ -92,7 +102,7 @@ class AuthenticatedSessionController extends Controller
      *         @OA\JsonContent(
      *             required={"phone_number", "password"},
      *             @OA\Property(property="phone_number", type="string", example="0123456789"),
-     *             @OA\Property(property="password", type="string", example="password123")
+     *             @OA\Property(property="password", type="string", example="12345678")
      *         )
      *     ),
      *     @OA\Response(
@@ -131,33 +141,28 @@ class AuthenticatedSessionController extends Controller
     public function storeApi(Request $request): JsonResponse
     {
         try {
-            $request->validate([
-                'phone_number' => 'required|string',
-                'password' => 'required|string',
-            ]);
-
-            if (Auth::attempt($request->only('phone_number', 'password'))) {
-                $user = Auth::user();
-                $token = $user->createToken('auth_token')->plainTextToken;
-
-                return response()->json([
-                    'message' => 'Đăng nhập thành công',
-                    'status_code' => 200,
-                    'success' => true,
-                    'data' => [
-                        'user' => $user,
-                        'token' => $token
-                    ]
-                ], 200);
+            $user = User::where('phone_number', $request->phone_number)->first();
+            if (!$user) {
+                throw new \Exception('Không tìm thấy người dùng');
             }
+            if (!Auth::attempt(['phone_number' => $request->phone_number, 'password' => $request->password])) {
+                throw new \Exception('Thông tin đăng nhập không chính xác');
+            }
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            Log::info('API token created', ['user_id' => $user->id]);
 
             return response()->json([
-                'message' => 'Thông tin đăng nhập không chính xác',
-                'status_code' => 401,
-                'success' => false,
-                'data' => null
-            ], 401);
+                'message' => 'Đăng nhập thành công',
+                'status_code' => 200,
+                'success' => true,
+                'data' => [
+                    'user' => $user,
+                    'token' => $token
+                ]
+            ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('API login validation failed', ['errors' => $e->errors()]);
             return response()->json([
                 'message' => $e->errors()[array_key_first($e->errors())][0], // Get the first error message
                 'status_code' => 422,
@@ -165,6 +170,7 @@ class AuthenticatedSessionController extends Controller
                 'data' => null
             ], 422);
         } catch (\Exception $e) {
+            Log::error('API login unexpected error', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Đăng nhập thất bại',
                 'status_code' => 500,
@@ -186,5 +192,20 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    public function destroyApi(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        Log::info('API logout attempt', ['user_id' => $user->id]);
+
+        $user->tokens()->delete();
+        Log::info('API tokens revoked', ['user_id' => $user->id]);
+
+        return response()->json([
+            'message' => 'Đăng xuất thành công',
+            'status_code' => 200,
+            'success' => true,
+        ]);
     }
 }

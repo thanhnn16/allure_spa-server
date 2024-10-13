@@ -2,63 +2,44 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\TreatmentService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
-class TreatmentController extends Controller
+class TreatmentController extends BaseController
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    protected $treatmentService;
+
+    public function __construct(TreatmentService $treatmentService)
     {
-        //
+        $this->treatmentService = $treatmentService;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function index(Request $request)
     {
-        //
+        $treatments = $this->treatmentService->getPaginatedTreatments($request->input('per_page', 15));
+
+        if ($request->expectsJson()) {
+            return $this->respondWithJson($treatments, 'Treatments retrieved successfully');
+        }
+
+        return $this->respondWithInertia('Treatments/Index', [
+            'treatments' => $treatments
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function categories(Request $request)
     {
-        //
+        $categories = $this->treatmentService->getAllCategories();
+
+        if ($request->expectsJson()) {
+            return $this->respondWithJson($categories, 'Treatment categories retrieved successfully');
+        }
+
+        return $this->respondWithInertia('Treatments/Categories', [
+            'categories' => $categories
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
+    // Implement other methods (store, update, show, destroy) similarly...
 }

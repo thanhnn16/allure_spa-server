@@ -8,12 +8,12 @@
 
                 <form @submit.prevent="validateAndSubmit">
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="mb-4">
+                        <div class="mb-4 relative">
                             <label for="user" class="block text-sm font-medium text-gray-700 mb-1">Khách hàng</label>
                             <input type="text" v-model="userSearch" @input="searchUsers" placeholder="Tìm kiếm khách hàng"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                             <ul v-if="userResults.length > 0"
-                                class="mt-1 bg-white border border-gray-300 rounded-md shadow-sm max-h-40 overflow-y-auto">
+                                class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-40 overflow-y-auto">
                                 <li v-for="user in userResults" :key="user.id" @click="selectUser(user)"
                                     class="px-3 py-2 hover:bg-gray-100 cursor-pointer">
                                     {{ user.full_name }} ({{ user.phone_number }})
@@ -41,7 +41,7 @@
                                 <option value="">Chọn gói điều trị</option>
                                 <option v-for="treatmentPackage in userTreatmentPackages" :key="treatmentPackage.id"
                                     :value="treatmentPackage.id">
-                                    {{ treatmentPackage.treatment.treatment_name }} - Còn lại: {{
+                                    {{ treatmentPackage.treatment ? treatmentPackage.treatment.name : 'Unknown Treatment' }} - Còn lại: {{
                                         treatmentPackage.remaining_sessions }} buổi
                                 </option>
                             </select>
@@ -54,7 +54,7 @@
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="">Chọn liệu trình</option>
                                 <option v-for="treatment in treatments" :key="treatment.id" :value="treatment.id">
-                                    {{ treatment.name }} - {{ formatPrice(treatment.price) }}
+                                    {{ treatment.name }} - {{ formatPrice(treatment.price) }} - {{ treatment.duration }} phút
                                 </option>
                             </select>
                         </div>
@@ -81,21 +81,17 @@
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center justify-between mb-4 space-y-4 md:space-y-0">
-                        <div class="w-full md:w-2/5 pr-2">
+                        <div class="w-full md:w-1/2 pr-2">
                             <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Ngày bắt
                                 đầu</label>
                             <input type="datetime-local" v-model="form.start_date" id="start_date"
                                 :disabled="form.is_all_day"
-                                :min="`${form.start_date.split('T')[0]}T08:00`"
-                                :max="`${form.start_date.split('T')[0]}T18:00`"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
-                        <div class="w-full md:w-2/5 px-2">
+                        <div class="w-full md:w-1/2 pl-2">
                             <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">Ngày kết thúc</label>
                             <input type="datetime-local" v-model="form.end_date" id="end_date"
                                 :disabled="form.is_all_day"
-                                :min="`${form.end_date.split('T')[0]}T08:00`"
-                                :max="`${form.end_date.split('T')[0]}T18:00`"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
                     </div>
@@ -129,7 +125,6 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { router, useForm } from '@inertiajs/vue3'
-import { parseISO, format } from 'date-fns'
 
 const props = defineProps({
     show: Boolean,
@@ -140,6 +135,10 @@ const props = defineProps({
     closeModal: {
         type: Function,
         required: true
+    },
+    selectedTimeSlot: {
+        type: Object,
+        default: () => ({})
     }
 })
 
@@ -211,16 +210,34 @@ watch(() => props.appointments, (newAppointments) => {
     }
 }, { immediate: true })
 
-function formatDateTimeForInput(dateTimeString) {
-    if (!dateTimeString) return ''
-    const date = parseISO(dateTimeString)
-    return format(date, "yyyy-MM-dd'T'HH:mm")
+// Add a new watch for selectedTimeSlot
+watch(() => props.selectedTimeSlot, (newTimeSlot) => {
+    if (newTimeSlot && newTimeSlot.start && newTimeSlot.end) {
+        form.start_date = formatDateTimeForInput(newTimeSlot.start)
+        form.end_date = formatDateTimeForInput(newTimeSlot.end)
+    }
+}, { immediate: true })
+
+function formatDateTimeForInput(dateTime) {
+    if (!dateTime) return ''
+    let date = new Date(dateTime)
+    
+    // Format to YYYY-MM-DDTHH:mm
+    return date.getFullYear() +
+        '-' + pad(date.getMonth() + 1) +
+        '-' + pad(date.getDate()) +
+        'T' + pad(date.getHours()) +
+        ':' + pad(date.getMinutes())
 }
 
 function formatDateForAPI(dateTimeString) {
     if (!dateTimeString) return ''
-    const date = parseISO(dateTimeString)
+    let date = new Date(dateTimeString)
     return date.toISOString()
+}
+
+function pad(number) {
+    return number < 10 ? '0' + number : number
 }
 
 function resetForm() {
@@ -234,10 +251,19 @@ function searchUsers() {
     if (userSearch.value.length > 2) {
         axios.get(`/api/users/search?query=${userSearch.value}`)
             .then(response => {
-                userResults.value = response.data
+                if (response.data && response.data.data) {
+                    userResults.value = response.data.data;
+                } else {
+                    userResults.value = [];
+                    console.warn('Unexpected response format:', response.data);
+                }
             })
+            .catch(error => {
+                console.error('Error searching users:', error.response ? error.response.data : error.message);
+                userResults.value = [];
+            });
     } else {
-        userResults.value = []
+        userResults.value = [];
     }
 }
 
@@ -252,12 +278,12 @@ function selectUser(user) {
 function fetchUserTreatmentPackages(userId) {
     axios.get(`/api/user-treatment-packages/${userId}`)
         .then(response => {
-            userTreatmentPackages.value = response.data
+            userTreatmentPackages.value = response.data.data || [];
         })
         .catch(error => {
-            console.error('Error fetching user treatment packages:', error)
-            userTreatmentPackages.value = [] // Set to empty array if there's an error
-        })
+            console.error('Error fetching user treatment packages:', error);
+            userTreatmentPackages.value = []; // Set to empty array if there's an error
+        });
 }
 
 function close() {
@@ -278,21 +304,34 @@ onMounted(() => {
 function fetchTreatments() {
     axios.get('/api/treatments')
         .then(response => {
-            treatments.value = response.data
+            if (response.data && response.data.data && response.data.data.data) {
+                treatments.value = response.data.data.data
+                console.log('Treatments data:', treatments.value)
+            } else {
+                console.error('Unexpected treatments data structure:', response.data)
+                treatments.value = []
+            }
         })
         .catch(error => {
             console.error('Error fetching treatments:', error)
+            treatments.value = []
         })
 }
 
 function fetchStaffList() {
     axios.get('/api/users/get-staff-list')
         .then(response => {
-            staffList.value = response.data.staff
+            if (response.data && response.data.data) {
+                staffList.value = response.data.data;
+            } else {
+                staffList.value = [];
+                console.warn('Unexpected response format:', response.data);
+            }
         })
         .catch(error => {
-            console.error('Error fetching staff list:', error)
-        })
+            console.error('Error fetching staff list:', error.response ? error.response.data : error.message);
+            staffList.value = [];
+        });
 }
 
 function handleKeyDown(e) {
@@ -339,28 +378,43 @@ function validateForm() {
 
 function validateAndSubmit() {
     if (validateForm()) {
-        submitAppointment()
+        const formData = {
+            ...form,
+            start_date: formatDateForAPI(form.start_date),
+            end_date: formatDateForAPI(form.end_date),
+            status: form.status.toLowerCase(),
+        };
+        console.log('Form data before submission:', formData);
+        submitAppointment(formData);
     }
 }
 
-function submitAppointment() {
-    const formData = {
-        ...form,
-        start_date: formatDateForAPI(form.start_date),
-        end_date: formatDateForAPI(form.end_date),
-    };
+function submitAppointment(formData) {
+    console.log('Submitting appointment data:', formData);
 
-    router.post(route('appointments.store'), formData, {
-        preserveState: true,
-        preserveScroll: true,
-        onError: (errors) => {
-            console.error(errors)
-            errors.value = errors.error || {}
-        },
-        onSuccess: () => {
-            props.closeModal()
-            emit('appointmentAdded')
-        },
-    })
+    axios.post(route('appointments.store'), formData)
+        .then(response => {
+            console.log('Appointment creation response:', response.data);
+            props.closeModal();
+            emit('appointmentAdded');
+        })
+        .catch(error => {
+            console.error('Error creating appointment:', error.response ? error.response.data : error);
+        });
 }
+
 </script>
+
+<style scoped>
+.relative {
+    position: relative;
+}
+
+.absolute {
+    position: absolute;
+}
+
+.z-10 {
+    z-index: 10;
+}
+</style>

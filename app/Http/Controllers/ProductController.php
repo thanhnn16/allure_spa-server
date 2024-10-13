@@ -2,16 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ProductService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
-class ProductController extends Controller
+class ProductController extends BaseController
 {
+    protected $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $products = $this->productService->getProducts($request);
+
+        if ($request->expectsJson()) {
+            return $this->respondWithJson($products, 'Products retrieved successfully');
+        }
+
+        return $this->respondWithInertia('Products/Index', [
+            'products' => $products
+        ]);
     }
 
     /**
@@ -60,5 +77,12 @@ class ProductController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function searchProducts(Request $request)
+    {
+        $products = $this->productService->searchProducts($request->input('query'));
+
+        return $this->respondWithJson($products, 'Products searched successfully');
     }
 }

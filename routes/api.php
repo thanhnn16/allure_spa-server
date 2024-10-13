@@ -3,12 +3,12 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\AppointmentController;
-use App\Http\Controllers\Api\TreatmentController;
-use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\Api\ImportController;
-use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\TreatmentController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ImportController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -34,14 +34,15 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/appointments/{appointment}', [AppointmentController::class, 'update']);
         Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
 
-        // Thêm route mới cho tìm kiếm người dùng
+        // Add these routes inside the authenticated group
         Route::get('/users/search', [UserController::class, 'searchUsers']);
-
         Route::get('/users/get-staff-list', [UserController::class, 'getStaffList']);
+        Route::get('/users/{userId}/treatment-packages', [UserController::class, 'getUserTreatmentPackages']);
+
         Route::get('/user-treatment-packages/{user}', [UserController::class, 'getUserTreatmentPackages']);
+
+        Route::post('/import', [ImportController::class, 'importAll']);
+
+        Route::get('/dashboard', [DashboardController::class, 'index']);
     });
-
-    Route::post('/import', [ImportController::class, 'importAll']);
-
-    Route::get('/dashboard', [DashboardController::class, 'index']);
 });

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -9,11 +9,11 @@ import interactionPlugin from '@fullcalendar/interaction'
 import { Head } from '@inertiajs/vue3'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
-import AppointmentModal from '@/Pages/Calendar/Components/AddAppointmentModal.vue'
+import AddAppointmentModal from '@/Pages/Calendar/Components/AddAppointmentModal.vue'
 import { useForm } from '@inertiajs/vue3'
-import { formatISO } from 'date-fns'
 import axios from 'axios'
 import ViewAppointmentModal from './Components/ViewAppointmentModal.vue'
+import { parseISO } from 'date-fns'
 
 const props = defineProps({
     appointments: {
@@ -28,24 +28,29 @@ const showModal = ref(false)
 const selectedAppointment = ref(null)
 const showViewModal = ref(false)
 
-function toLocalTime(utcTimeString) {
-    // Xóa hàm này vì chúng ta không cần chuyển đổi thời gian nữa
-}
-
 const calendarRef = ref(null)
+
+const appointments = ref(props.appointments)
+
+// Watch for changes in props.appointments
+watch(() => props.appointments, (newAppointments) => {
+    appointments.value = newAppointments
+}, { deep: true })
+
+const events = computed(() => {
+    return appointments.value.map(appointment => ({
+        id: appointment.id,
+        title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.appointment_type || 'Không xác định'}`,
+        start: appointment.formatted_start_time,
+        end: appointment.formatted_end_time,
+    }))
+})
 
 const calendarOptions = computed(() => ({
     plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
     initialView: 'timeGridWeek', // Changed to week view
     weekends: true,
-    events: computed(() => {
-        return props.appointments.map(appointment => ({
-            id: appointment.id,
-            title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.appointment_type || 'Không xác định'}`,
-            start: appointment.start_time, // Sử dụng trực tiếp start_time
-            end: appointment.end_time, // Sử dụng trực tiếp end_time
-        }))
-    }),
+    events: events.value,
     locale: 'vi',
     firstDay: 1,
     headerToolbar: {
@@ -85,13 +90,14 @@ const calendarOptions = computed(() => ({
     eventResize: handleEventResize,
 }))
 
+const selectedTimeSlot = ref(null)
+
 function handleDateSelect(selectInfo) {
-    showModal.value = true
-    selectedAppointment.value = {
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
-        allDay: selectInfo.allDay
+    selectedTimeSlot.value = {
+        start: selectInfo.start,
+        end: selectInfo.end
     }
+    showModal.value = true
 }
 
 function handleEventClick(clickInfo) {
@@ -122,7 +128,6 @@ function updateAppointment(appointmentData) {
             }
         })
         .catch(error => {
-            console.error('Error updating appointment:', error);
             // Revert the event if the update fails
             if (calendarRef.value) {
                 calendarRef.value.getApi().refetchEvents();
@@ -174,12 +179,6 @@ function formatDateTime(dateTimeString) {
     return date.toLocaleString() // Hoặc sử dụng bất kỳ định dạng nào bạn muốn
 }
 
-const appointments = ref(page.props.appointments || [])
-
-onMounted(() => {
-    console.log('Appointments in CalendarView:', appointments.value)
-})
-
 function closeViewModal() {
     showViewModal.value = false;
     selectedAppointment.value = null;
@@ -194,36 +193,45 @@ function handleAppointmentUpdate(updatedAppointment) {
     <LayoutAuthenticated>
         <Head title="Lịch hẹn" />
         <SectionMain>
-            <FullCalendar ref="calendarRef" :options="calendarOptions" class="custom-calendar" />
+            <div v-if="appointments.length > 0">
+                <FullCalendar 
+                    ref="calendarRef" 
+                    :options="calendarOptions" 
+                    class="custom-calendar" 
+                />
+            </div>
+            <div v-else>
+                Không có cuộc hẹn nào.
+            </div>
         </SectionMain>
-        <AppointmentModal 
+        <AddAppointmentModal 
             :show="showModal" 
-            :appointment="selectedAppointment" 
+            :appointments="appointments" 
+            :selectedTimeSlot="selectedTimeSlot"
             @close="closeModal"
             @save="saveAppointment" 
-            @appointmentAdded="handleAppointmentAdded"
-            :closeModal="closeModal"
+            @appointmentAdded="handleAppointmentAdded" 
+            :closeModal="closeModal" 
         />
-        <ViewAppointmentModal
-            :show="showViewModal"
-            :appointment="selectedAppointment"
-            @close="closeViewModal"
-            @update="handleAppointmentUpdate"
-        />
+        <ViewAppointmentModal :show="showViewModal" :appointment="selectedAppointment" @close="closeViewModal"
+            @update="handleAppointmentUpdate" />
     </LayoutAuthenticated>
 </template>
 
 <style scoped>
 .custom-calendar {
-    height: calc(100vh - 200px); /* Điều chỉnh chiều cao tùy theo layout của bạn */
+    height: calc(100vh - 200px);
+    /* Điều chỉnh chiều cao tùy theo layout của bạn */
 }
 
 :deep(.fc-timegrid-slot) {
-    height: 3em !important; /* Đặt chiều cao cố định cho mỗi ô thời gian */
+    height: 3em !important;
+    /* Đặt chiều cao cố định cho mỗi ô thời gian */
 }
 
 :deep(.fc-timegrid-axis-cushion) {
-    max-width: none; /* Cho phép nhãn thời gian hiển thị đầy đủ */
+    max-width: none;
+    /* Cho phép nhãn thời gian hiển thị đầy đủ */
     white-space: nowrap;
 }
 
@@ -233,7 +241,8 @@ function handleAppointmentUpdate(updatedAppointment) {
 }
 
 :deep(.fc-timegrid-now-indicator-line) {
-    border-color: #ff0000; /* Màu đỏ cho đường chỉ thời gian hiện tại */
+    border-color: #ff0000;
+    /* Màu đỏ cho đường chỉ thời gian hiện tại */
 }
 
 :deep(.fc-event) {

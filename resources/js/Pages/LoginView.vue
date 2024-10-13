@@ -1,7 +1,5 @@
 <script setup>
-import { reactive } from 'vue'
-import { Head } from '@inertiajs/vue3'
-import { router } from '@inertiajs/vue3'
+import { Head, useForm } from '@inertiajs/vue3'
 import { mdiAccount, mdiAsterisk } from '@mdi/js'
 import SectionFullScreen from '@/Components/SectionFullScreen.vue'
 import CardBox from '@/Components/CardBox.vue'
@@ -13,23 +11,21 @@ import BaseButtons from '@/Components/BaseButtons.vue'
 import LayoutGuest from '@/Layouts/LayoutGuest.vue'
 
 const props = defineProps({
-    errors: Object,
-    auth: Object,
-    ziggy: Object,
     canResetPassword: Boolean,
     status: String
 })
 
-const form = reactive({
+const form = useForm({
     phone_number: '',
     password: '',
     remember: true
 })
 
 const submit = () => {
-    router.post('/login', form);
+    form.post(route('login'), {
+        onFinish: () => form.reset('password'),
+    })
 }
-
 </script>
 
 <template>
@@ -53,15 +49,16 @@ const submit = () => {
 
                 <FormCheckRadio v-model="form.remember" name="remember" label="Ghi nhớ" :input-value="true" />
 
-                <div v-if="errors.phone_number || errors.details"
+                <div v-if="form.errors.phone_number || form.errors.password"
                     class="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-                    <p v-if="errors.phone_number" class="mb-2">{{ errors.phone_number }}</p>
-                    <p v-if="errors.details">{{ errors.details }}</p>
+                    <p v-if="form.errors.phone_number" class="mb-2">{{ form.errors.phone_number }}</p>
+                    <p v-if="form.errors.password">{{ form.errors.password }}</p>
                 </div>
 
                 <template #footer>
                     <BaseButtons>
-                        <BaseButton type="submit" color="info" label="Đăng nhập" class="text-black" />
+                        <BaseButton type="submit" color="info" label="Đăng nhập" class="text-black" 
+                            :class="{ 'opacity-25': form.processing }" :disabled="form.processing" />
                     </BaseButtons>
                 </template>
             </CardBox>

@@ -3,69 +3,32 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\User;
+use App\Services\UserService;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
-class UserController extends Controller
+class UserController extends BaseController
 {
+    protected $userService;
+
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $query = User::where('role', 'user');
+        $users = $this->userService->getFilteredUsers($request)->paginate($request->input('per_page', 10));
+        $upcomingBirthdays = $this->userService->getUpcomingBirthdays();
 
-        // Apply filters
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('full_name', 'like', '%' . $request->search . '%')
-                  ->orWhere('phone_number', 'like', '%' . $request->search . '%');
-            });
+        if ($request->expectsJson()) {
+            return $this->respondWithJson($users, 'Users retrieved successfully');
         }
 
-        if ($request->filled('gender')) {
-            $query->where('gender', $request->gender);
-        }
-
-        if ($request->filled('age_range')) {
-            // Implement age range filter
-        }
-
-        if ($request->filled('loyalty_points_range')) {
-            // Implement loyalty points range filter
-        }
-
-        if ($request->filled('purchase_count_range')) {
-            // Implement purchase count range filter
-        }
-
-        if ($request->filled('created_at_range')) {
-            // Implement created at range filter
-        }
-
-        if ($request->boolean('upcoming_birthdays')) {
-            $query->whereRaw('DATE_ADD(date_of_birth, 
-                INTERVAL YEAR(CURDATE())-YEAR(date_of_birth) 
-                         + IF(DAYOFYEAR(CURDATE()) > DAYOFYEAR(date_of_birth),1,0)
-                YEAR) 
-                BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 15 DAY)');
-        }
-
-        if ($request->boolean('show_deleted')) {
-            $query->withTrashed();
-        }
-
-        $users = $query->paginate($request->input('per_page', 10));
-
-        $upcomingBirthdays = User::where('role', 'user')
-            ->whereRaw('DATE_ADD(date_of_birth, 
-                INTERVAL YEAR(CURDATE())-YEAR(date_of_birth) 
-                         + IF(DAYOFYEAR(CURDATE()) > DAYOFYEAR(date_of_birth),1,0)
-                YEAR) 
-                BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 15 DAY)')
-            ->count();
-
-        return Inertia::render('Customers/CustomersView', [
+        return $this->respondWithInertia('Customers/CustomersView', [
             'users' => $users,
             'filters' => $request->all(),
             'upcomingBirthdays' => $upcomingBirthdays,
@@ -93,22 +56,14 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $user = User::with([
-            'addresses',
-            'userTreatmentPackages.treatment_combo.treatment',
-            'invoices',
-            'vouchers'
-        ])->findOrFail($id);
+        $user = $this->userService->getUserDetails($id);
+        $upcomingBirthdays = $this->userService->getUpcomingBirthdays();
 
-        $upcomingBirthdays = User::where('role', 'user')
-            ->whereRaw('DATE_ADD(date_of_birth, 
-                INTERVAL YEAR(CURDATE())-YEAR(date_of_birth) 
-                         + IF(DAYOFYEAR(CURDATE()) > DAYOFYEAR(date_of_birth),1,0)
-                YEAR) 
-                BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 15 DAY)')
-            ->count();
+        if (request()->expectsJson()) {
+            return $this->respondWithJson($user, 'User details retrieved successfully');
+        }
 
-        return Inertia::render('Customers/CustomerDetails', [
+        return $this->respondWithInertia('Customers/CustomerDetails', [
             'user' => $user,
             'upcomingBirthdays' => $upcomingBirthdays,
         ]);
@@ -136,5 +91,34 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function searchUsers(Request $request)
+    {
+        $query = $request->get('query');
+        $limit = $request->get('limit', 10);
+        $result = $this->userService->searchUsers($query, $limit);
+        return $this->respondWithJson($result['data'], $result['message'], $result['status_code']);
+    }
+
+    public function getStaffList()
+    {
+        $result = $this->userService->getStaffList();
+        return $this->respondWithJson($result['data'], $result['message'], $result['status_code']);
+    }
+
+    public function getUserTreatmentPackages($userId)
+    {
+        $userTreatmentPackages = $this->userService->getUserTreatmentPackages($userId);
+        return $this->respondWithJson($userTreatmentPackages, 'User treatment packages retrieved successfully');
+    }
+
+    public function debugAuth(Request $request)
+    {
+        return $this->respondWithJson([
+            'user' => Auth::user(),
+            'authenticated' => Auth::check(),
+            'token' => $request->bearerToken(),
+        ], 'Debug auth information');
     }
 }

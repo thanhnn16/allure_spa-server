@@ -13,8 +13,13 @@ use Illuminate\Http\Request;
  * 
  * @OA\Server(
  *     description="Local API server",
- *     url="http://localhost:8000/api"
- * )
+ *     url="http://localhost:8000"
+ * ),
+ * @OA\Server(
+ *     description="Production API server",
+ *     url="https://allurespa.io.vn"
+ * ),
+ * 
  * 
  * @OA\SecurityScheme(
  *     securityScheme="bearerAuth",

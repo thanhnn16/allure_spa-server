@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Carbon\Carbon;
 
 class Appointment extends Model
 {
@@ -28,6 +29,8 @@ class Appointment extends Model
         'actual_start_time' => 'datetime',
         'actual_end_time' => 'datetime',
     ];
+
+    protected $appends = ['formatted_start_time', 'formatted_end_time'];
 
     public function user()
     {
@@ -67,5 +70,20 @@ class Appointment extends Model
     public function setStatusAttribute($value)
     {
         $this->attributes['status'] = strtolower($value);
+    }
+
+    public function getFormattedStartTimeAttribute()
+    {
+        return $this->start_time->toIso8601String();
+    }
+
+    public function getFormattedEndTimeAttribute()
+    {
+        return $this->end_time->toIso8601String();
+    }
+
+    protected function serializeDate(\DateTimeInterface $date)
+    {
+        return Carbon::instance($date)->toIso8601String();
     }
 }
