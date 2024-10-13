@@ -133,7 +133,7 @@ const handleCustomersImported = () => {
                 <BaseButton :icon="mdiTableBorder" label="Nhập từ Excel" rounded-full small
                     @click="showImportCustomersModal = true" />
             </SectionTitleLineWithButton>
-            <NotificationBar color="info" :icon="mdiCalendarAccount">
+            <NotificationBar v-if="props.upcomingBirthdays > 0" color="info" :icon="mdiCalendarAccount">
                 {{ birthdayNotification }}
                 <BaseButton v-if="!showingUpcomingBirthdays" label="Xem ngay" small @click="toggleUpcomingBirthdays" />
                 <BaseButton v-else label="Hiển thị tất cả" small @click="toggleUpcomingBirthdays" />
