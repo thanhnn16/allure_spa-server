@@ -33,6 +33,8 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/appointments', [AppointmentController::class, 'store']);
         Route::put('/appointments/{appointment}', [AppointmentController::class, 'update']);
         Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
+        
+        Route::get('/appointments/{appointment}', [AppointmentController::class, 'show']);
 
         // Add these routes inside the authenticated group
         Route::get('/users/search', [UserController::class, 'searchUsers']);

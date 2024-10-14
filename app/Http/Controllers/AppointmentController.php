@@ -6,6 +6,7 @@ use App\Services\AppointmentService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Models\Appointment;
 
 class AppointmentController extends BaseController
 {
@@ -20,10 +21,9 @@ class AppointmentController extends BaseController
     {
         $appointments = $this->appointmentService->getAppointments($request);
 
-        // Đảm bảo rằng $appointments không rỗng
         Log::info('Appointments:', $appointments->toArray());
 
-        // Convert timezone for each appointment
+        // Chuyển đổi múi giờ cho mỗi cuộc hẹn
         $appointments = $appointments->map(function ($appointment) {
             $appointment->start_time = Carbon::parse($appointment->start_time)->setTimezone('Asia/Ho_Chi_Minh');
             $appointment->end_time = Carbon::parse($appointment->end_time)->setTimezone('Asia/Ho_Chi_Minh');
@@ -31,7 +31,7 @@ class AppointmentController extends BaseController
         });
 
         if ($request->expectsJson()) {
-            return $this->respondWithJson($appointments, 'Appointments retrieved successfully');
+            return $this->respondWithJson($appointments, 'Lấy danh sách cuộc hẹn thành công');
         }
 
         return $this->respondWithInertia('Calendar/CalendarView', [
@@ -41,11 +41,11 @@ class AppointmentController extends BaseController
 
     public function store(Request $request)
     {
-        Log::info('Received appointment creation request', $request->all());
+        Log::info('Nhận yêu cầu tạo cuộc hẹn', $request->all());
 
         $result = $this->appointmentService->createAppointment($request->all());
 
-        Log::info('Appointment creation result', $result);
+        Log::info('Kết quả tạo cuộc hẹn', $result);
 
         if ($result['status'] === 422) {
             return response()->json(['errors' => $result['data']], 422);
@@ -67,6 +67,12 @@ class AppointmentController extends BaseController
         }
 
         return redirect()->route('appointments.index')->with('success', $result['message']);
+    }
+
+    public function show($id)
+    {
+        $result = $this->appointmentService->getAppointmentDetails($id);
+        return response()->json($result);
     }
 
     // Implement other methods (show, destroy) similarly...

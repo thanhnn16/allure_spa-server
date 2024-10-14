@@ -1,11 +1,11 @@
--- Xóa database nếu tồn tại
-DROP DATABASE IF EXISTS allure_dev;
-
--- Tạo database mới
-CREATE DATABASE allure_dev;
-
--- Sử dụng database
-USE allure_dev;
+# -- Xóa database nếu tồn tại
+# DROP DATABASE IF EXISTS allure_dev;
+#
+# -- Tạo database mới
+# CREATE DATABASE allure_dev;
+#
+# -- Sử dụng database
+# USE allure_dev;
 
 -- 1. Bảng images
 CREATE TABLE images

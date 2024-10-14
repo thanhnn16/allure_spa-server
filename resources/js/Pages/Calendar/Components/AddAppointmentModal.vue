@@ -25,7 +25,6 @@
                             <label for="staff" class="block text-sm font-medium text-gray-700 mb-1">Nhân viên phụ trách</label>
                             <select v-model="form.staff_id" id="staff"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="">Chọn nhân viên</option>
                                 <option v-for="staffMember in staffList" :key="staffMember.id" :value="staffMember.id">
                                     {{ staffMember.full_name }}
                                 </option>
@@ -47,21 +46,21 @@
                             </select>
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-4 relative">
                             <label for="treatment" class="block text-sm font-medium text-gray-700 mb-1">Liệu trình</label>
-                            <select v-model="form.treatment_id" id="treatment"
-                                :disabled="isUserTreatmentPackageSelected"
+                            <input type="text" v-model="treatmentSearch" @input="searchTreatments" placeholder="Tìm kiếm liệu trình"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="">Chọn liệu trình</option>
-                                <option v-for="treatment in treatments" :key="treatment.id" :value="treatment.id">
-                                    {{ treatment.name }} - {{ formatPrice(treatment.price) }} - {{ treatment.duration }} phút
-                                </option>
-                            </select>
+                            <ul v-if="treatmentResults.length > 0"
+                                class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-40 overflow-y-auto">
+                                <li v-for="treatment in treatmentResults" :key="treatment.id" @click="selectTreatment(treatment)"
+                                    class="px-3 py-2 hover:bg-gray-100 cursor-pointer">
+                                    {{ treatment.name }} - {{ formatPrice(treatment.price) }}
+                                </li>
+                            </ul>
                         </div>
 
                         <div class="mb-4">
-                            <label for="appointment_type" class="block text-sm font-medium text-gray-700 mb-1">Loại lịch
-                                hẹn</label>
+                            <label for="appointment_type" class="block text-sm font-medium text-gray-700 mb-1">Loại lịch hẹn</label>
                             <select v-model="form.appointment_type" id="appointment_type"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                 <option v-for="type in appointmentTypes" :key="type.value" :value="type.value">
@@ -148,6 +147,10 @@ const userSearch = ref('')
 const userResults = ref([])
 const selectedUser = ref(null)
 const errors = ref({})
+
+const treatmentSearch = ref('')
+const treatmentResults = ref([])
+const selectedTreatment = ref(null)
 
 const form = useForm({
     user_id: '',
@@ -299,6 +302,9 @@ onMounted(() => {
     fetchStaffList()
     document.addEventListener('keydown', handleKeyDown)
     console.log('Appointments in AppointmentModal:', appointments.value)
+    if (staffList.value.length > 0) {
+        form.staff_id = staffList.value[0].id
+    }
 })
 
 function fetchTreatments() {
@@ -323,6 +329,9 @@ function fetchStaffList() {
         .then(response => {
             if (response.data && response.data.data) {
                 staffList.value = response.data.data;
+                if (staffList.value.length > 0) {
+                    form.staff_id = staffList.value[0].id
+                }
             } else {
                 staffList.value = [];
                 console.warn('Unexpected response format:', response.data);
@@ -401,6 +410,34 @@ function submitAppointment(formData) {
         .catch(error => {
             console.error('Error creating appointment:', error.response ? error.response.data : error);
         });
+}
+
+function searchTreatments() {
+    if (treatmentSearch.value.length > 2) {
+        axios.get(`/api/treatments/search?query=${treatmentSearch.value}`)
+            .then(response => {
+                if (response.data && response.data.data) {
+                    treatmentResults.value = response.data.data;
+                } else {
+                    treatmentResults.value = [];
+                    console.warn('Unexpected response format:', response.data);
+                }
+            })
+            .catch(error => {
+                console.error('Error searching treatments:', error.response ? error.response.data : error.message);
+                treatmentResults.value = [];
+            });
+    } else {
+        treatmentResults.value = [];
+    }
+}
+
+function selectTreatment(treatment) {
+    selectedTreatment.value = treatment
+    form.treatment_id = treatment.id
+    treatmentSearch.value = `${treatment.name} - ${formatPrice(treatment.price)}`
+    treatmentResults.value = []
+    form.appointment_type = treatment.category ? treatment.category.name.toLowerCase() : 'others'
 }
 
 </script>

@@ -40,9 +40,16 @@ watch(() => props.appointments, (newAppointments) => {
 const events = computed(() => {
     return appointments.value.map(appointment => ({
         id: appointment.id,
-        title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.appointment_type || 'Không xác định'}`,
-        start: appointment.formatted_start_time,
-        end: appointment.formatted_end_time,
+        title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.treatment?.name || 'Không xác định'}`,
+        start: appointment.start_time,
+        end: appointment.end_time,
+        extendedProps: {
+            userId: appointment.user_id,
+            treatmentId: appointment.treatment_id,
+            staffId: appointment.staff_user_id,
+            appointmentType: appointment.appointment_type,
+            status: appointment.status
+        }
     }))
 })
 
@@ -100,9 +107,15 @@ function handleDateSelect(selectInfo) {
     showModal.value = true
 }
 
-function handleEventClick(clickInfo) {
-    selectedAppointment.value = props.appointments.find(apt => apt.id == clickInfo.event.id);
-    showViewModal.value = true;
+function handleEventClick(info) {
+    try {
+        const appointmentId = info.event.id;
+        showViewModal.value = true;
+        selectedAppointmentId.value = appointmentId;
+    } catch (error) {
+        console.error('Lỗi khi xử lý sự kiện click:', error);
+        // Hiển thị thông báo lỗi cho người dùng nếu cần
+    }
 }
 
 function handleEventDrop(dropInfo) {
@@ -181,12 +194,30 @@ function formatDateTime(dateTimeString) {
 
 function closeViewModal() {
     showViewModal.value = false;
-    selectedAppointment.value = null;
+    selectedAppointmentId.value = null;
 }
 
 function handleAppointmentUpdate(updatedAppointment) {
     updateAppointment(updatedAppointment);
+    closeViewModal();
 }
+
+const selectedAppointmentId = ref(null)
+
+const fetchAppointmentDetails = async (id) => {
+    try {
+        const response = await axios.get(`/api/appointments/${id}`);
+        if (response.data.status === 200 && response.data.data) {
+            return response.data.data;
+        } else {
+            console.error('Lỗi khi fetch thông tin cuộc hẹn:', response.data.message);
+            return null;
+        }
+    } catch (error) {
+        console.error('Lỗi khi fetch thông tin cuộc hẹn:', error.response?.data?.message || error.message);
+        return null;
+    }
+};
 </script>
 
 <template>
@@ -199,8 +230,9 @@ function handleAppointmentUpdate(updatedAppointment) {
         <AddAppointmentModal :show="showModal" :appointments="appointments" :selectedTimeSlot="selectedTimeSlot"
             @close="closeModal" @save="saveAppointment" @appointmentAdded="handleAppointmentAdded"
             :closeModal="closeModal" />
-        <ViewAppointmentModal :show="showViewModal" :appointment="selectedAppointment" @close="closeViewModal"
-            @update="handleAppointmentUpdate" />
+        <ViewAppointmentModal :show="showViewModal" :appointmentId="Number(selectedAppointmentId)"
+            @close="closeViewModal" @update="handleAppointmentUpdate"
+            :fetchAppointmentDetails="fetchAppointmentDetails" />
     </LayoutAuthenticated>
 </template>
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\TreatmentService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Treatment;
 
 class TreatmentController extends BaseController
 {
@@ -39,6 +40,18 @@ class TreatmentController extends BaseController
         return $this->respondWithInertia('Treatments/Categories', [
             'categories' => $categories
         ]);
+    }
+
+    public function searchTreatments(Request $request)
+    {
+        $query = $request->get('query');
+        $treatments = Treatment::with('category')
+            ->where('name', 'like', "%{$query}%")
+            ->orWhere('description', 'like', "%{$query}%")
+            ->select('id', 'name', 'price', 'duration', 'category_id')
+            ->get();
+
+        return response()->json(['data' => $treatments]);
     }
 
     // Implement other methods (store, update, show, destroy) similarly...

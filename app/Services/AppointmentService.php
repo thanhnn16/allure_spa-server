@@ -71,7 +71,7 @@ class AppointmentService
 
         try {
             $appointment = Appointment::findOrFail($id);
-            
+
             $updateData = [
                 'staff_user_id' => $data['staff_id'] ?? $appointment->staff_user_id,
                 'start_time' => isset($data['start_time']) ? Carbon::parse($data['start_time'])->setTimezone(config('app.timezone')) : $appointment->start_time,
@@ -86,6 +86,27 @@ class AppointmentService
             return ['status' => 200, 'message' => 'Appointment updated successfully', 'data' => $appointment];
         } catch (\Exception $e) {
             return ['status' => 500, 'message' => 'An error occurred while updating the appointment', 'data' => null];
+        }
+    }
+
+    public function getAppointmentDetails($id)
+    {
+        try {
+            $appointment = Appointment::with(['user', 'treatment', 'staff'])
+                ->findOrFail($id);
+
+            return [
+                'status' => 200,
+                'message' => 'Lấy thông tin cuộc hẹn thành công',
+                'data' => $appointment
+            ];
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi lấy thông tin cuộc hẹn: ' . $e->getMessage());
+            return [
+                'status' => 500,
+                'message' => 'Đã xảy ra lỗi khi lấy thông tin cuộc hẹn',
+                'data' => null
+            ];
         }
     }
 
