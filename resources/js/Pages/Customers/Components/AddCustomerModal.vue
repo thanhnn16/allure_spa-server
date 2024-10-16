@@ -25,9 +25,9 @@
             </div>
             <div class="mb-4">
               <label for="phone_number" class="block text-sm font-medium text-gray-700">
-                Số điện thoại <span class="text-red-500">*</span>
+                Số điện thoại
               </label>
-              <input type="tel" id="phone_number" v-model="form.phone_number" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <input type="tel" id="phone_number" v-model="form.phone_number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
             </div>
             <div class="mb-4">
               <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
@@ -82,7 +82,6 @@ const form = useForm({
   email: '',
   gender: 'other',
   date_of_birth: '',
-  password: 'allure beauty',
 });
 
 const errorMessage = ref('');

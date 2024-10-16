@@ -7,6 +7,7 @@ use App\Models\UserTreatmentPackage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
 class UserService
 {
@@ -123,5 +124,25 @@ class UserService
                 ];
             })
             ->toArray();
+    }
+
+    public function createUser(array $data): User
+    {
+        try {
+            $user = User::create([
+                'full_name' => $data['full_name'],
+                'phone_number' => $data['phone_number'] ?? null,
+                'email' => $data['email'] ?? null,
+                'gender' => $data['gender'] ?? 'other',
+                'date_of_birth' => $data['date_of_birth'] ?? null,
+                'password' => $data['password'],
+                'role' => 'user',
+            ]);
+
+            return $user;
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi tạo khách hàng: ' . $e->getMessage());
+            throw $e;
+        }
     }
 }

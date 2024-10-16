@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\UserService;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\Hash;
 class UserController extends BaseController
 {
     protected $userService;
@@ -48,7 +48,23 @@ class UserController extends BaseController
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:255',
+            'phone_number' => 'nullable|string|max:255|unique:users,phone_number',
+            'email' => 'nullable|email|max:255|unique:users,email',
+            'gender' => 'nullable|in:male,female,other',
+            'date_of_birth' => 'nullable|date',
+        ]);
+
+        $validated['password'] = Hash::make('allurespa');
+
+        $user = $this->userService->createUser($validated);
+
+        if ($request->expectsJson()) {
+            return $this->respondWithJson($user, 'Đã thêm khách hàng thành công', 201);
+        }
+
+        return redirect()->route('users.index')->with('success', 'Đã thêm khách hàng thành công');
     }
 
     /**
