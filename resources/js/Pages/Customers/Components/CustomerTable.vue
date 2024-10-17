@@ -68,14 +68,13 @@ const viewDetails = (itemId) => {
     <thead>
       <tr>
         <th v-if="checkable" />
-        <th />
+        <th>Ảnh</th>
         <th>Họ và tên</th>
         <th>Số điện thoại</th>
         <th>Ngày sinh</th>
         <th>Ghi chú</th>
         <th>Trạng thái</th>
         <th>Hành động</th>
-        <th />
       </tr>
     </thead>
     <tbody>
@@ -84,7 +83,7 @@ const viewDetails = (itemId) => {
           <TableCheckboxCell @checked="checked($event, item)" />
         </td>
         <td class="border-b-0 lg:w-6 before:hidden">
-          <UserAvatar :fullName="item.full_name || ''" class="w-24 h-24 mx-auto lg:w-6 lg:h-6" />
+          <UserAvatar :fullName="item.full_name || ''" class="w-12 h-12 mx-auto" />
         </td>
         <td data-label="Họ và tên">
           {{ item.full_name }}

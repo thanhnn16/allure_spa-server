@@ -1,7 +1,7 @@
 @layer components {
   .style-white:not(.dark) {
-    .aside {
-      @apply bg-white;
+    .aside, .aside-menu-layer {
+      @apply bg-white bg-opacity-100;
     }
     .aside-scrollbars {
       @apply aside-scrollbars-light;

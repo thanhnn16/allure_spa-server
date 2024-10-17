@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\UsersImport;
 
 class UserService
 {
@@ -142,6 +145,32 @@ class UserService
             return $user;
         } catch (\Exception $e) {
             Log::error('Lỗi khi tạo khách hàng: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function importUsers($file)
+    {
+        DB::beginTransaction();
+        try {
+            Log::info('Starting import process');
+            $import = new UsersImport();
+            Excel::import($import, $file);
+
+            $results = [
+                'total' => $import->getRowCount(),
+                'successful' => $import->getSuccessCount(),
+                'failed' => $import->getFailureCount(),
+                'failures' => $import->failures(),
+            ];
+
+            Log::info('Import completed', $results);
+
+            DB::commit();
+            return $results;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error during import: ' . $e->getMessage());
             throw $e;
         }
     }

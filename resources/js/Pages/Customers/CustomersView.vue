@@ -6,7 +6,6 @@ import CardBox from '@/Components/CardBox.vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.vue'
 import BaseButton from '@/Components/BaseButton.vue'
-import CardBoxModal from '@/Components/CardBoxModal.vue'
 import { Head } from "@inertiajs/vue3";
 import { computed, ref, watch, onMounted } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
@@ -14,9 +13,10 @@ import AddCustomerModal from '@/Pages/Customers/Components/AddCustomerModal.vue'
 import { useMainStore } from '@/Stores/main'
 import { storeToRefs } from 'pinia'
 import TablePagination from '@/Components/TablePagination.vue'
-import { mdiFilter, mdiAccountMultiple, mdiCalendarRange, mdiCake, mdiStar, mdiCartOutline, mdiCalendarClock } from '@mdi/js'
+import { mdiFilter, mdiAccountMultiple, mdiCalendarRange, mdiCake, mdiStar, mdiCartOutline, mdiCalendarClock, mdiCheckCircle, mdiAlert, mdiAlertCircle } from '@mdi/js'
 import ImportCustomersModal from '@/Pages/Customers/Components/ImportCustomersModal.vue'
 import CustomerTable from '@/Pages/Customers/Components/CustomerTable.vue'
+import { usePage } from '@inertiajs/vue3'
 
 const mainStore = useMainStore()
 const { users } = storeToRefs(mainStore)
@@ -120,6 +120,27 @@ const showImportCustomersModal = ref(false)
 const handleCustomersImported = () => {
     mainStore.fetchUsers()
 }
+
+const page = usePage()
+const showImportErrors = ref(false)
+const showImportSuccess = ref(false)
+const importErrors = ref([])
+const importStats = ref(null)
+
+onMounted(() => {
+    console.log('Page props:', page.props)
+    console.log('Flash messages:', page.props.flash)
+
+    if (page.props.flash.importErrors) {
+        showImportErrors.value = true
+        importErrors.value = page.props.flash.importErrors
+        importStats.value = page.props.flash.importStats
+    }
+    if (page.props.flash.importSuccess) {
+        showImportSuccess.value = true
+        importStats.value = page.props.flash.importStats
+    }
+})
 </script>
 
 <template>
@@ -208,7 +229,7 @@ const handleCustomersImported = () => {
                 <div class="mt-4">
                     <input v-model="form.search" type="text" placeholder="Tìm kiếm theo tên hoặc số điện thoại"
                         class="w-full px-4 py-2 mb-4 border rounded-md">
-                    <select v-model="form.per_page" @change="handlePerPageChange" class="px-8 py-2 border rounded-md">
+                    <select v-model="form.per_page" @change="handlePerPageChange" class="px-4 py-2 border rounded-md">
                         <option :value="10">Xem 10 mỗi trang</option>
                         <option :value="25">Xem 25 mỗi trang</option>
                         <option :value="50">Xem 50 mỗi trang</option>
@@ -225,8 +246,40 @@ const handleCustomersImported = () => {
             </div>
 
             <AddCustomerModal v-model="showAddCustomerModal" @customer-added="handleCustomerAdded" />
-            <ImportCustomersModal :show="showImportCustomersModal" @close="showImportCustomersModal = false"
-                @imported="handleCustomersImported" />
+            <ImportCustomersModal
+                v-model="showImportCustomersModal"
+                @imported="handleCustomersImported"
+            />
+            <NotificationBar v-if="showImportSuccess" color="success" :icon="mdiCheckCircle">
+                Nhập từ Excel thành công
+                <div v-if="importStats">
+                    Tổng số: {{ importStats.total }}, 
+                    Thành công: {{ importStats.successful }}, 
+                    Thất bại: {{ importStats.failed }}
+                </div>
+                <BaseButton label="Đóng" small @click="showImportSuccess = false" />
+            </NotificationBar>
+
+            <NotificationBar v-if="showImportErrors" color="danger" :icon="mdiAlertCircle">
+                Có lỗi xảy ra khi nhập dữ liệu
+                <BaseButton label="Xem chi tiết" small @click="showImportErrors = true" />
+            </NotificationBar>
+
+            <CardBox v-if="showImportErrors" title="Lỗi nhập dữ liệu" is-modal>
+                <template #footer>
+                    <BaseButton label="Đóng" color="info" @click="showImportErrors = false" />
+                </template>
+                <div v-if="importStats" class="mb-4">
+                    <p>Tổng số dòng: {{ importStats.total }}</p>
+                    <p>Số dòng thành công: {{ importStats.successful }}</p>
+                    <p>Số dòng thất bại: {{ importStats.failed }}</p>
+                </div>
+                <ul class="list-disc list-inside">
+                    <li v-for="(error, index) in importErrors" :key="index" class="mb-2">
+                        {{ error }}
+                    </li>
+                </ul>
+            </CardBox>
         </SectionMain>
     </LayoutAuthenticated>
 </template>

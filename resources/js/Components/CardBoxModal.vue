@@ -24,6 +24,10 @@ const props = defineProps({
   modelValue: {
     type: [String, Number, Boolean],
     default: null
+  },
+  hasButton: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -73,10 +77,11 @@ window.addEventListener('keydown', (e) => {
       </div>
 
       <template #footer>
-        <BaseButtons>
+        <BaseButtons v-if="hasButton">
           <BaseButton :label="buttonLabel" :color="button" @click="confirm" />
           <BaseButton v-if="hasCancel" label="Cancel" :color="button" outline @click="cancel" />
         </BaseButtons>
+        <slot name="footer"></slot>
       </template>
     </CardBox>
   </OverlayLayer>

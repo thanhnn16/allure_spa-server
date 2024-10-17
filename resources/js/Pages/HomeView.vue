@@ -243,7 +243,7 @@ const viewCustomerDetails = (userId) => {
                 />
             </SectionTitleLineWithButton>
 
-            <CardBox has-table>
+            <CardBox has-table px-4 py-2 mx-2>
                 <CustomerTable 
                   :items="newUsers" 
                   @view-details="viewCustomerDetails"
