@@ -1,11 +1,11 @@
 # -- Xóa database nếu tồn tại
-# DROP DATABASE IF EXISTS allure_dev;
+DROP DATABASE IF EXISTS allure_dev;
 #
 # -- Tạo database mới
-# CREATE DATABASE allure_dev;
+CREATE DATABASE allure_dev;
 #
 # -- Sử dụng database
-# USE allure_dev;
+USE allure_dev;
 -- 1. Bảng images
 CREATE TABLE images (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -526,6 +526,8 @@ CREATE TABLE ratings (
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (item_id) REFERENCES treatments (id),
     FOREIGN KEY (item_id) REFERENCES products (id),
+    FOREIGN KEY (image_id) REFERENCES images (id),
+    FOREIGN KEY (video_id) REFERENCES videos (id),
     CONSTRAINT chk_stars CHECK (
         stars BETWEEN 1
         AND 5
@@ -586,11 +588,6 @@ CREATE TABLE appointments (
     FOREIGN KEY (treatment_id) REFERENCES treatments (id),
     FOREIGN KEY (staff_user_id) REFERENCES users (id)
 );
-
-ALTER TABLE
-    appointments
-ADD
-    COLUMN note TEXT;
 
 CREATE INDEX idx_appointments_appointment_type ON appointments (appointment_type);
 

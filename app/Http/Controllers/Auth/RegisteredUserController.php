@@ -130,7 +130,7 @@ class RegisteredUserController extends Controller
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
-                'message' => $e->errors()[array_key_first($e->errors())][0], // Get the first error message
+                'message' => 'Số điện thoại đã được sử dụng',
                 'status_code' => 422,
                 'success' => false,
                 'data' => null
