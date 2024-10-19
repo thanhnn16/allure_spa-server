@@ -1,11 +1,14 @@
 # -- Xóa database nếu tồn tại
 DROP DATABASE IF EXISTS allure_dev;
+
 #
 # -- Tạo database mới
 CREATE DATABASE allure_dev;
+
 #
 # -- Sử dụng database
 USE allure_dev;
+
 -- 1. Bảng images
 CREATE TABLE images (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -269,7 +272,7 @@ CREATE TABLE invoices (
     paid_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
     remaining_amount DECIMAL(10, 2) UNSIGNED GENERATED ALWAYS AS (total_amount - paid_amount) STORED,
     status ENUM ('pending', 'partial', 'paid', 'cancelled') NOT NULL DEFAULT 'pending',
-    payment_method VARCHAR(50),
+    order_id INT UNSIGNED,
     note TEXT,
     created_by_user_id CHAR(36),
     created_at TIMESTAMP NULL DEFAULT NULL,
@@ -278,12 +281,15 @@ CREATE TABLE invoices (
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (staff_user_id) REFERENCES users (id),
     FOREIGN KEY (created_by_user_id) REFERENCES users (id),
+    FOREIGN KEY (order_id) REFERENCES orders (id),
     CONSTRAINT chk_paid_amount CHECK (paid_amount <= total_amount)
 );
 
 CREATE INDEX idx_invoices_user_id ON invoices (user_id);
 
 CREATE INDEX idx_invoices_staff_user_id ON invoices (staff_user_id);
+
+CREATE INDEX idx_invoices_order_id ON invoices (order_id);
 
 CREATE INDEX idx_invoices_created_at ON invoices (created_at);
 
@@ -293,8 +299,6 @@ CREATE INDEX idx_invoices_status ON invoices (status);
 CREATE TABLE treatment_usage_history (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_treatment_package_id INT UNSIGNED,
-    user_id CHAR(36) NOT NULL,
-    treatment_id INT UNSIGNED NOT NULL,
     staff_user_id CHAR(36),
     treatment_date TIMESTAMP NOT NULL,
     invoice_id CHAR(36),
@@ -305,8 +309,6 @@ CREATE TABLE treatment_usage_history (
     FOREIGN KEY (user_treatment_package_id) REFERENCES user_treatment_packages (id) ON DELETE
     SET
         NULL,
-        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-        FOREIGN KEY (treatment_id) REFERENCES treatments (id) ON DELETE CASCADE,
         FOREIGN KEY (staff_user_id) REFERENCES users (id) ON DELETE
     SET
         NULL,
@@ -411,6 +413,9 @@ CREATE TABLE vouchers (
     status VARCHAR(255) NOT NULL DEFAULT 'active',
     used_times INT UNSIGNED NOT NULL DEFAULT 0,
     discount_value DECIMAL(10, 2) UNSIGNED NOT NULL,
+    min_order_value DECIMAL(10, 2) UNSIGNED,
+    max_discount_amount DECIMAL(10, 2) UNSIGNED,
+    usage_limit INT UNSIGNED,
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
@@ -449,21 +454,31 @@ CREATE TABLE orders (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
     total_amount DECIMAL(10, 2) UNSIGNED NOT NULL,
+    shipping_address_id INT UNSIGNED NOT NULL,
+    payment_method_id INT UNSIGNED NOT NULL,
+    voucher_id INT UNSIGNED,
+    discount_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
     status VARCHAR(255) NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (shipping_address_id) REFERENCES addresses (id) ON DELETE CASCADE,
+    FOREIGN KEY (payment_method_id) REFERENCES payment_methods (id) ON DELETE CASCADE,
+        FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE
+    SET
+        NULL
 );
 
 -- 31. Bảng order_items
 CREATE TABLE order_items (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     order_id INT UNSIGNED NOT NULL,
-    item_type_id INT UNSIGNED NOT NULL,
+    item_type ENUM ('product', 'treatment') NOT NULL,
     item_id INT UNSIGNED NOT NULL,
     quantity INT UNSIGNED NOT NULL,
     price DECIMAL(10, 2) UNSIGNED NOT NULL,
     discount_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
+    discount_type ENUM('percentage', 'fixed_amount'),
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
@@ -482,7 +497,7 @@ CREATE TABLE carts (
 CREATE TABLE cart_items (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     cart_id INT UNSIGNED NOT NULL,
-    item_type_id INT UNSIGNED NOT NULL,
+    item_type ENUM ('product', 'treatment') NOT NULL,
     item_id INT UNSIGNED NOT NULL,
     quantity INT UNSIGNED NOT NULL DEFAULT 1,
     created_at TIMESTAMP NULL DEFAULT NULL,
@@ -490,26 +505,7 @@ CREATE TABLE cart_items (
     FOREIGN KEY (cart_id) REFERENCES carts (id) ON DELETE CASCADE
 );
 
--- 34. Bảng invoice_payments
-CREATE TABLE invoice_payments (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    invoice_id CHAR(36) NOT NULL,
-    amount DECIMAL(10, 2) UNSIGNED NOT NULL,
-    payment_method VARCHAR(50) NOT NULL,
-    payment_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    note TEXT,
-    created_by_user_id CHAR(36),
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (invoice_id) REFERENCES invoices (id),
-    FOREIGN KEY (created_by_user_id) REFERENCES users (id)
-);
-
-CREATE INDEX idx_invoice_payments_invoice_id ON invoice_payments (invoice_id);
-
-CREATE INDEX idx_invoice_payments_payment_date ON invoice_payments (payment_date);
-
--- 35. Bảng ratings
+-- 34. Bảng ratings
 CREATE TABLE ratings (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
@@ -538,7 +534,7 @@ CREATE INDEX idx_ratings_user_id ON ratings (user_id);
 
 CREATE INDEX idx_ratings_item_id ON ratings (item_id);
 
--- 36. Bảng favorites
+-- 35. Bảng favorites
 CREATE TABLE favorites (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     favorite_type ENUM ('product', 'treatment') NOT NULL,
@@ -549,7 +545,7 @@ CREATE TABLE favorites (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- 37. Bảng notifications
+-- 36. Bảng notifications
 CREATE TABLE notifications (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
@@ -561,7 +557,7 @@ CREATE TABLE notifications (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- 38. Bảng appointments
+-- 37. Bảng appointments
 CREATE TABLE appointments (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
