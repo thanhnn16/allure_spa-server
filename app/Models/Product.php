@@ -6,6 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @OA\Schema(
+ *     schema="Product",
+ *     required={"name", "price", "category_id", "quantity"},
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="name", type="string"),
+ *     @OA\Property(property="price", type="number", format="float"),
+ *     @OA\Property(property="category_id", type="integer"),
+ *     @OA\Property(property="image_id", type="integer", nullable=true),
+ *     @OA\Property(property="quantity", type="integer"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
+ * )
+ */
 class Product extends Model
 {
     use HasFactory, SoftDeletes;
@@ -63,5 +78,15 @@ class Product extends Model
     public function favorites()
     {
         return $this->hasMany(Favorite::class);
+    }
+
+    public function ratings()
+    {
+        return $this->hasMany(Rating::class);
+    }
+
+    public function video()
+    {
+        return $this->belongsTo(Video::class);
     }
 }

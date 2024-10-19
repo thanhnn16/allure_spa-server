@@ -122,21 +122,36 @@ php artisan make:controller `TênController`
 php artisan make:model `TênModel`
 ```
 
+**_Lệnh tạo API document:_**
+
+```bash
+php artisan l5-swagger:generate
+```
+
+**_Lệnh tạo Ziggy:_**
 ```bash
 php artisan ziggy:generate
 ```
+
+**_Lệnh cache route:_**
 
 ```bash
 php artisan route:cache
 ```
 
+**_Lệnh clear route:_**
+
 ```bash
 php artisan route:clear
 ```
 
+**_Lệnh cache config:_**
+
 ```bash
 php artisan config:cache
 ```
+
+**_Lệnh clear config:_**
 
 ```bash
 php artisan config:clear

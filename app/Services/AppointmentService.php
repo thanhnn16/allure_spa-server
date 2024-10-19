@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class AppointmentService
 {
@@ -106,6 +107,74 @@ class AppointmentService
                 'status' => 500,
                 'message' => 'Đã xảy ra lỗi khi lấy thông tin cuộc hẹn',
                 'data' => null
+            ];
+        }
+    }
+
+    public function deleteAppointment($id)
+    {
+        try {
+            $appointment = Appointment::findOrFail($id);
+            $appointment->delete();
+
+            return [
+                'status' => 200,
+                'message' => 'Xóa cuộc hẹn thành công',
+                'data' => null
+            ];
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi xóa cuộc hẹn: ' . $e->getMessage());
+            return [
+                'status' => 500,
+                'message' => 'Đã xảy ra lỗi khi xóa cuộc hẹn',
+                'data' => null
+            ];
+        }
+    }
+
+    public function cancelAppointment($id, $note)
+    {
+        try {
+            $appointment = Appointment::findOrFail($id);
+
+            // Kiểm tra xem người dùng có quyền hủy cuộc hẹn không
+            if ($appointment->user_id !== Auth::id()) {
+                return [
+                    'status' => 403,
+                    'message' => 'Bạn không có quyền hủy cuộc hẹn này',
+                    'data' => null,
+                    'success' => false
+                ];
+            }
+
+            // Kiểm tra xem cuộc hẹn có thể hủy không (ví dụ: chưa bắt đầu)
+            if ($appointment->start_time <= now()) {
+                return [
+                    'status' => 422,
+                    'message' => 'Không thể hủy cuộc hẹn đã bắt đầu hoặc đã kết thúc',
+                    'data' => null,
+                    'success' => false
+                ];
+            }
+
+            $appointment->update([
+                'status' => 'cancelled',
+                'note' => $note,
+            ]);
+
+            return [
+                'status' => 200,
+                'message' => 'Hủy cuộc hẹn thành công',
+                'data' => $appointment,
+                'success' => true
+            ];
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi hủy cuộc hẹn: ' . $e->getMessage());
+            return [
+                'status' => 500,
+                'message' => 'Đã xảy ra lỗi khi hủy cuộc hẹn',
+                'data' => null,
+                'success' => false
             ];
         }
     }

@@ -174,4 +174,11 @@ class UserService
             throw $e;
         }
     }
+
+    public function updateUser(string $id, array $data): User
+    {
+        $user = User::findOrFail($id);
+        $user->update($data);
+        return $user->fresh();
+    }
 }

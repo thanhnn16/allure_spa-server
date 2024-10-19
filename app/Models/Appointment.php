@@ -7,6 +7,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 
+/**
+ * @OA\Schema(
+ *     schema="Appointment",
+ *     title="Appointment",
+ *     description="Appointment model",
+ *     @OA\Property(property="id", type="integer", format="int64", description="Appointment ID"),
+ *     @OA\Property(property="user_id", type="integer", format="int64", description="User ID"),
+ *     @OA\Property(property="treatment_id", type="integer", format="int64", description="Treatment ID"),
+ *     @OA\Property(property="staff_user_id", type="integer", format="int64", description="Staff User ID"),
+ *     @OA\Property(property="start_time", type="string", format="date-time", description="Appointment start time"),
+ *     @OA\Property(property="end_time", type="string", format="date-time", description="Appointment end time"),
+ *     @OA\Property(property="actual_start_time", type="string", format="date-time", nullable=true, description="Actual start time"),
+ *     @OA\Property(property="actual_end_time", type="string", format="date-time", nullable=true, description="Actual end time"),
+ *     @OA\Property(property="appointment_type", type="string", description="Type of appointment"),
+ *     @OA\Property(property="status", type="string", description="Appointment status"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="Creation date"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", description="Last update date"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Deletion date"),
+ *     @OA\Property(property="note", type="string", description="Appointment note")
+ * )
+ */
 class Appointment extends Model
 {
     use HasFactory, SoftDeletes;
@@ -21,6 +42,7 @@ class Appointment extends Model
         'actual_end_time',
         'appointment_type',
         'status',
+        'note',
     ];
 
     protected $casts = [

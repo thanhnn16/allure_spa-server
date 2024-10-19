@@ -9,6 +9,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\RatingController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -29,12 +30,16 @@ Route::middleware('throttle:api')->group(function () {
     Route::get('/treatment-categories', [TreatmentController::class, 'categories']);
 
     Route::middleware(['auth:sanctum'])->group(function () {
+        // Appointment routes
         Route::get('/appointments', [AppointmentController::class, 'index']);
         Route::post('/appointments', [AppointmentController::class, 'store']);
+        Route::get('/appointments/{appointment}', [AppointmentController::class, 'show']);
         Route::put('/appointments/{appointment}', [AppointmentController::class, 'update']);
         Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
-        
-        Route::get('/appointments/{appointment}', [AppointmentController::class, 'show']);
+
+        // Thêm các route mới cho cập nhật và hủy cuộc hẹn
+        Route::put('/appointments/{appointment}/update', [AppointmentController::class, 'update']);
+        Route::put('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel']);
 
         // Add these routes inside the authenticated group
         Route::get('/users/search', [UserController::class, 'searchUsers']);
@@ -46,5 +51,13 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/import', [ImportController::class, 'importAll']);
 
         Route::get('/dashboard', [DashboardController::class, 'index']);
+
+        Route::get('/user/info', [UserController::class, 'getUserInfo']);
+
+        // Rating routes
+        Route::get('/ratings', [RatingController::class, 'index']);
+        Route::get('/products/{productId}/ratings', [RatingController::class, 'getProductRatings']);
+        Route::get('/treatments/{treatmentId}/ratings', [RatingController::class, 'getTreatmentRatings']);
+        Route::post('/ratings', [RatingController::class, 'store']);
     });
 });

@@ -8,7 +8,31 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OpenApi\Annotations as OA;
 
+/**
+ * @OA\Schema(
+ *     schema="User",
+ *     title="User",
+ *     description="User model",
+ *     @OA\Property(property="id", type="string", format="uuid", description="User ID"),
+ *     @OA\Property(property="phone_number", type="string", description="User's phone number"),
+ *     @OA\Property(property="email", type="string", format="email", description="User's email address"),
+ *     @OA\Property(property="role", type="string", description="User's role"),
+ *     @OA\Property(property="full_name", type="string", description="User's full name"),
+ *     @OA\Property(property="gender", type="string", description="User's gender"),
+ *     @OA\Property(property="date_of_birth", type="string", format="date", description="User's date of birth"),
+ *     @OA\Property(property="image_id", type="integer", description="ID of the user's profile image"),
+ *     @OA\Property(property="loyalty_points", type="integer", description="User's loyalty points"),
+ *     @OA\Property(property="skin_condition", type="string", description="User's skin condition"),
+ *     @OA\Property(property="note", type="string", description="Additional notes about the user"),
+ *     @OA\Property(property="purchase_count", type="integer", description="Number of purchases made by the user"),
+ *     @OA\Property(property="email_verified_at", type="string", format="date-time", description="Timestamp of email verification"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="Timestamp of user creation"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", description="Timestamp of last update"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Timestamp of soft deletion")
+ * )
+ */
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes, HasUlids;

@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\ImportUsersRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Http\JsonResponse;
+use OpenApi\Annotations as OA;
+use App\Http\Requests\UpdateUserRequest;
 
 class UserController extends BaseController
 {
@@ -99,10 +102,88 @@ class UserController extends BaseController
 
     /**
      * Update the specified resource in storage.
+     *
+     * @param UpdateUserRequest $request
+     * @param string $id
+     * @return \Illuminate\Http\JsonResponse|\Inertia\Response
+     *
+     * @OA\Put(
+     *     path="/api/users/{id}",
+     *     summary="Cập nhật thông tin người dùng",
+     *     description="Cập nhật thông tin chi tiết của người dùng",
+     *     operationId="updateUser",
+     *     tags={"User"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID của người dùng",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="full_name", type="string", example="Nguyễn Văn B"),
+     *             @OA\Property(property="phone_number", type="string", example="0987654321"),
+     *             @OA\Property(property="email", type="string", example="nguyenvanb@example.com"),
+     *             @OA\Property(property="gender", type="string", example="female"),
+     *             @OA\Property(property="date_of_birth", type="string", format="date", example="1995-05-15"),
+     *             @OA\Property(property="skin_condition", type="string", example="dry")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Thông tin người dùng đã được cập nhật thành công"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 ref="#/components/schemas/User"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Không tìm thấy người dùng",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status_code", type="integer", example=404),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Không tìm thấy người dùng")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Dữ liệu không hợp lệ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status_code", type="integer", example=422),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Dữ liệu không hợp lệ"),
+     *         )
+     *     )
+     * )
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateUserRequest $request, string $id)
     {
-        //
+        try {
+            $user = $this->userService->updateUser($id, $request->validated());
+
+            if ($request->expectsJson()) {
+                return $this->respondWithJson($user, 'Thông tin người dùng đã được cập nhật thành công');
+            }
+
+            return $this->respondWithInertia('Customers/CustomerDetails', [
+                'user' => $user,
+                'message' => 'Thông tin người dùng đã được cập nhật thành công'
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->respondWithJson(null, 'Không tìm thấy người dùng', 404);
+        } catch (\Exception $e) {
+            return $this->respondWithJson(null, 'Có lỗi xảy ra khi cập nhật thông tin người dùng', 500);
+        }
     }
 
     /**
@@ -211,5 +292,67 @@ class UserController extends BaseController
             $errorMessages[] = $errorMessage;
         }
         return $errorMessages;
+    }
+
+    /**
+     * Get user information for mobile app.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     *
+     * @OA\Get(
+     *     path="/api/user/info",
+     *     summary="Lấy thông tin người dùng",
+     *     description="Truy xuất thông tin chi tiết của người dùng đã xác thực",
+     *     operationId="getUserInfo",
+     *     tags={"User"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Thông tin người dùng được truy xuất thành công"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", example="123e4567-e89b-12d3-a456-426614174000"),
+     *                 @OA\Property(property="full_name", type="string", example="Nguyễn Văn A"),
+     *                 @OA\Property(property="phone_number", type="string", example="0123456789"),
+     *                 @OA\Property(property="email", type="string", example="nguyenvana@example.com"),
+     *                 @OA\Property(property="gender", type="string", example="male"),
+     *                 @OA\Property(property="date_of_birth", type="string", format="date", example="1990-01-01"),
+     *                 @OA\Property(property="loyalty_points", type="integer", example=100),
+     *                 @OA\Property(property="skin_condition", type="string", example="normal"),
+     *                 @OA\Property(property="purchase_count", type="integer", example=5)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Chưa xác thực",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
+     */
+    public function getUserInfo(Request $request)
+    {
+        $user = $request->user();
+        $userInfo = [
+            'id' => $user->id,
+            'full_name' => $user->full_name,
+            'phone_number' => $user->phone_number,
+            'email' => $user->email,
+            'gender' => $user->gender,
+            'date_of_birth' => $user->date_of_birth,
+            'loyalty_points' => $user->loyalty_points,
+            'skin_condition' => $user->skin_condition,
+            'purchase_count' => $user->purchase_count,
+        ];
+
+        return $this->respondWithJson($userInfo, 'Thông tin người dùng được truy xuất thành công');
     }
 }

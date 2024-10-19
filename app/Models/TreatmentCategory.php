@@ -5,7 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OpenApi\Annotations as OA;
 
+/**
+ * @OA\Schema(
+ *     schema="TreatmentCategory",
+ *     title="Treatment Category",
+ *     description="Model representing a treatment category",
+ *     @OA\Property(property="id", type="integer", description="The unique identifier of the treatment category"),
+ *     @OA\Property(property="name", type="string", description="The name of the treatment category"),
+ *     @OA\Property(property="parent_id", type="integer", nullable=true, description="The ID of the parent category, if any"),
+ *     @OA\Property(property="image_id", type="integer", nullable=true, description="The ID of the associated image, if any"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="The creation timestamp"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", description="The last update timestamp"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="The deletion timestamp, if soft deleted")
+ * )
+ */
 class TreatmentCategory extends Model
 {
     use HasFactory, SoftDeletes;
