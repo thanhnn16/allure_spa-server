@@ -20,11 +20,11 @@ class RatingService
             ->paginate($params['per_page'] ?? 15);
     }
 
-    public function getRatingsByTreatment($treatmentId, array $params = [])
+    public function getRatingsByService($serviceId, array $params = [])
     {
         return $this->getRatingsQuery($params)
-            ->where('rating_type', 'treatment')
-            ->where('item_id', $treatmentId)
+            ->where('rating_type', 'service')
+            ->where('item_id', $serviceId)
             ->paginate($params['per_page'] ?? 15);
     }
 

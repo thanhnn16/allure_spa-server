@@ -13,7 +13,7 @@ use OpenApi\Annotations as OA;
  *     description="Model đại diện cho đánh giá",
  *     @OA\Property(property="id", type="integer", description="ID của đánh giá"),
  *     @OA\Property(property="user_id", type="string", description="ID của người dùng đánh giá"),
- *     @OA\Property(property="rating_type", type="string", enum={"treatment", "product"}, description="Loại đánh giá"),
+ *     @OA\Property(property="rating_type", type="string", enum={"service", "product"}, description="Loại đánh giá"),
  *     @OA\Property(property="item_id", type="integer", description="ID của mục được đánh giá"),
  *     @OA\Property(property="stars", type="integer", description="Số sao đánh giá"),
  *     @OA\Property(property="comment", type="string", description="Bình luận đánh giá"),
@@ -50,9 +50,9 @@ class Rating extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function treatment()
+    public function service()
     {
-        return $this->belongsTo(Treatment::class);
+        return $this->belongsTo(Service::class);
     }
 
     public function image()

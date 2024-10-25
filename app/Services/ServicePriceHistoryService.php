@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Image;
+use App\Models\ServicePriceHistory;
 
-class ImageService
+class ServicePriceHistoryService
 {
     // Add your service methods here
 }

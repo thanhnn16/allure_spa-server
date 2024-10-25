@@ -8,7 +8,7 @@ use App\Http\Controllers\ProductController;
 use App\Models\ProductCategory;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\VoucherController;
-use App\Http\Controllers\TreatmentController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChatController;
@@ -54,10 +54,10 @@ Route::middleware('auth')->group(function () {
     // Voucher routes
     Route::resource('vouchers', VoucherController::class);
 
-    // Treatment routes
-    Route::resource('treatments', TreatmentController::class);
+    // Service routes
+    Route::resource('services', ServiceController::class);
 
-    // Treatment Category routes
+    // Service Category routes
 
     // Appointment routes
     Route::resource('appointments', AppointmentController::class);

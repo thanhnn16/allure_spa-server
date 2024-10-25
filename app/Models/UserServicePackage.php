@@ -7,12 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @OA\Schema(
- *     schema="UserTreatmentPackage",
- *     title="User Treatment Package",
- *     description="Model representing a user's treatment package",
+ *     schema="UserServicePackage",
+ *     title="User Service Package",
+ *     description="Model representing a user's service package",
  *     @OA\Property(property="id", type="integer", description="The unique identifier of the package"),
  *     @OA\Property(property="user_id", type="integer", description="The ID of the user who owns this package"),
- *     @OA\Property(property="treatment_id", type="integer", description="The ID of the treatment associated with this package"),
+ *     @OA\Property(property="service_id", type="integer", description="The ID of the service associated with this package"),
  *     @OA\Property(property="total_sessions", type="integer", description="The total number of sessions in this package"),
  *     @OA\Property(property="remaining_sessions", type="integer", description="The number of remaining sessions in this package"),
  *     @OA\Property(property="expiry_date", type="string", format="date", description="The expiration date of the package"),
@@ -20,12 +20,12 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="price", type="number", format="float", description="The price of the package")
  * )
  */
-class UserTreatmentPackage extends Model
+class UserServicePackage extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'treatment_id', 'total_sessions', 'remaining_sessions',
+        'user_id', 'service_id', 'total_sessions', 'remaining_sessions',
         'expiry_date', 'purchase_date', 'price'
     ];
 
@@ -39,13 +39,13 @@ class UserTreatmentPackage extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function treatment()
+    public function service()
     {
-        return $this->belongsTo(Treatment::class);
+        return $this->belongsTo(Service::class);
     }
 
     public function usageHistories()
     {
-        return $this->hasMany(TreatmentUsageHistory::class);
+        return $this->hasMany(ServiceUsageHistory::class);
     }
 }

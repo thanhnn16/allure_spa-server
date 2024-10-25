@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\TreatmentPriceHistory;
+use App\Models\ServiceTranslation;
 
-class TreatmentPriceHistoryService
+class ServiceTranslationService
 {
     // Add your service methods here
 }

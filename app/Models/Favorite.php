@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="id", type="integer", description="ID của mục yêu thích"),
  *     @OA\Property(property="user_id", type="integer", description="ID của người dùng"),
  *     @OA\Property(property="product_id", type="integer", description="ID của sản phẩm (nếu có)"),
- *     @OA\Property(property="treatment_id", type="integer", description="ID của liệu trình (nếu có)"),
+ *     @OA\Property(property="service_id", type="integer", description="ID của dịch vụ (nếu có)"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Thời gian tạo"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Thời gian cập nhật cuối cùng")
  * )
@@ -23,7 +23,7 @@ class Favorite extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'product_id', 'treatment_id'
+        'user_id', 'product_id', 'service_id'
     ];
 
     public function user()
@@ -36,8 +36,8 @@ class Favorite extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function treatment()
+    public function service()
     {
-        return $this->belongsTo(Treatment::class);
+        return $this->belongsTo(Service::class);
     }
 }

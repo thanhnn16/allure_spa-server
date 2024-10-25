@@ -14,7 +14,7 @@ use Carbon\Carbon;
  *     description="Appointment model",
  *     @OA\Property(property="id", type="integer", format="int64", description="Appointment ID"),
  *     @OA\Property(property="user_id", type="integer", format="int64", description="User ID"),
- *     @OA\Property(property="treatment_id", type="integer", format="int64", description="Treatment ID"),
+ *     @OA\Property(property="service_id", type="integer", format="int64", description="Service ID"),
  *     @OA\Property(property="staff_user_id", type="integer", format="int64", description="Staff User ID"),
  *     @OA\Property(property="start_time", type="string", format="date-time", description="Appointment start time"),
  *     @OA\Property(property="end_time", type="string", format="date-time", description="Appointment end time"),
@@ -34,7 +34,7 @@ class Appointment extends Model
 
     protected $fillable = [
         'user_id',
-        'treatment_id',
+        'service_id',
         'staff_user_id',
         'start_time',
         'end_time',
@@ -59,11 +59,11 @@ class Appointment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function treatment()
+    public function service()
     {
-        return $this->belongsTo(Treatment::class);
+        return $this->belongsTo(Service::class);
     }
-
+    
     public function staff()
     {
         return $this->belongsTo(User::class, 'staff_user_id');

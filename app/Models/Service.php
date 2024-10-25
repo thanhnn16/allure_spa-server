@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @OA\Schema(
- *     schema="Treatment",
- *     title="Treatment",
- *     description="Treatment model",
- *     @OA\Property(property="id", type="integer", format="int64", description="Treatment ID"),
- *     @OA\Property(property="name", type="string", description="Treatment name"),
- *     @OA\Property(property="price", type="number", format="float", description="Treatment price"),
- *     @OA\Property(property="description", type="string", description="Treatment description"),
- *     @OA\Property(property="duration", type="integer", description="Treatment duration in minutes"),
+ *     schema="Service",
+ *     title="Service",
+ *     description="Service model",
+ *     @OA\Property(property="id", type="integer", format="int64", description="Service ID"),
+ *     @OA\Property(property="name", type="string", description="Service name"),
+ *     @OA\Property(property="price", type="number", format="float", description="Service price"),
+ *     @OA\Property(property="description", type="string", description="Service description"),
+ *     @OA\Property(property="duration", type="integer", description="Service duration in minutes"),
  *     @OA\Property(property="image_id", type="integer", format="int64", description="Image ID"),
  *     @OA\Property(property="category_id", type="integer", format="int64", description="Category ID"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Creation date"),
@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Deletion date")
  * )
  */
-class Treatment extends Model
+class Service extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -32,7 +32,8 @@ class Treatment extends Model
         'price',
         'description',
         'duration',
-        'image_id'
+        'image_id',
+        'category_id'
     ];
 
     public function image()
@@ -42,12 +43,12 @@ class Treatment extends Model
 
     public function priceHistory()
     {
-        return $this->hasMany(TreatmentPriceHistory::class);
+        return $this->hasMany(ServicePriceHistory::class);
     }
 
     public function combos()
     {
-        return $this->hasMany(TreatmentCombo::class);
+        return $this->hasMany(ServiceCombo::class);
     }
 
     public function appointments()
@@ -62,12 +63,12 @@ class Treatment extends Model
 
     public function translations()
     {
-        return $this->hasMany(TreatmentTranslation::class);
+        return $this->hasMany(ServiceTranslation::class);
     }
 
     public function category()
     {
-        return $this->belongsTo(TreatmentCategory::class, 'category_id');
+        return $this->belongsTo(ServiceCategory::class, 'category_id');
     }
 
     public function favorites()
@@ -75,9 +76,9 @@ class Treatment extends Model
         return $this->hasMany(Favorite::class);
     }
 
-    public function userTreatmentPackages()
+    public function userServicePackages()
     {
-        return $this->hasMany(UserTreatmentPackage::class);
+        return $this->hasMany(UserServicePackage::class);
     }
 
     public function video()

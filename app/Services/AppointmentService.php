@@ -12,7 +12,7 @@ class AppointmentService
 {
     public function getAppointments($request)
     {
-        return Appointment::with(['user', 'treatment', 'staff'])->get();
+        return Appointment::with(['user', 'service', 'staff'])->get();
     }
 
     public function createAppointment($data)
@@ -22,7 +22,7 @@ class AppointmentService
         $validator = Validator::make($data, [
             'user_id' => 'required|exists:users,id',
             'staff_id' => 'required|exists:users,id',
-            'treatment_id' => 'required|exists:treatments,id',
+            'service_id' => 'required|exists:services,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'appointment_type' => 'required|string',
@@ -39,7 +39,7 @@ class AppointmentService
             $appointment = Appointment::create([
                 'user_id' => $data['user_id'],
                 'staff_user_id' => $data['staff_id'],
-                'treatment_id' => $data['treatment_id'],
+                'service_id' => $data['service_id'],
                 'start_time' => Carbon::parse($data['start_date'])->setTimezone(config('app.timezone')),
                 'end_time' => Carbon::parse($data['end_date'])->setTimezone(config('app.timezone')),
                 'appointment_type' => $data['appointment_type'],
@@ -93,7 +93,7 @@ class AppointmentService
     public function getAppointmentDetails($id)
     {
         try {
-            $appointment = Appointment::with(['user', 'treatment', 'staff'])
+            $appointment = Appointment::with(['user', 'service', 'staff'])
                 ->findOrFail($id);
 
             return [

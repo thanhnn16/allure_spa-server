@@ -67,7 +67,7 @@
                                 "required": [
                                     "user_id",
                                     "staff_id",
-                                    "treatment_id",
+                                    "service_id",
                                     "start_date",
                                     "end_date",
                                     "appointment_type",
@@ -82,7 +82,7 @@
                                         "type": "integer",
                                         "example": 2
                                     },
-                                    "treatment_id": {
+                                    "service_id": {
                                         "type": "integer",
                                         "example": 3
                                     },
@@ -1025,7 +1025,7 @@
                                     "rating_type": {
                                         "type": "string",
                                         "enum": [
-                                            "treatment",
+                                            "service",
                                             "product"
                                         ],
                                         "example": "product"
@@ -1249,17 +1249,17 @@
                 }
             }
         },
-        "/api/treatments/{treatmentId}/ratings": {
+        "/api/services/{serviceId}/ratings": {
             "get": {
                 "tags": [
                     "Ratings"
                 ],
                 "summary": "Lấy danh sách đánh giá cho một liệu trình",
                 "description": "Trả về danh sách đánh giá cho một liệu trình cụ thể với phân trang",
-                "operationId": "getTreatmentRatings",
+                "operationId": "getServiceRatings",
                 "parameters": [
                     {
-                        "name": "treatmentId",
+                        "name": "serviceId",
                         "in": "path",
                         "description": "ID của liệu trình",
                         "required": true,
@@ -1333,7 +1333,7 @@
                                                 },
                                                 "first_page_url": {
                                                     "type": "string",
-                                                    "example": "http://localhost/api/treatments/1/ratings?page=1"
+                                                    "example": "http://localhost/api/services/1/ratings?page=1"
                                                 },
                                                 "from": {
                                                     "type": "integer",
@@ -1345,7 +1345,7 @@
                                                 },
                                                 "last_page_url": {
                                                     "type": "string",
-                                                    "example": "http://localhost/api/treatments/1/ratings?page=1"
+                                                    "example": "http://localhost/api/services/1/ratings?page=1"
                                                 },
                                                 "next_page_url": {
                                                     "type": "string",
@@ -1353,7 +1353,7 @@
                                                 },
                                                 "path": {
                                                     "type": "string",
-                                                    "example": "http://localhost/api/treatments/1/ratings"
+                                                    "example": "http://localhost/api/services/1/ratings"
                                                 },
                                                 "per_page": {
                                                     "type": "integer",
@@ -1383,25 +1383,13 @@
                 }
             }
         },
-        "/api/treatments": {
+        "/api/services": {
             "get": {
                 "tags": [
-                    "Treatments"
+                    "Services"
                 ],
-                "summary": "Lấy danh sách các treatment",
-                "operationId": "44221bf51fcb8386d991b9bb1fdecebb",
-                "parameters": [
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Số lượng item trên mỗi trang",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 10
-                        }
-                    }
-                ],
+                "summary": "Lấy danh sách dịch vụ",
+                "operationId": "4c175c5d6594b4a5112bbe15a46e2bb4",
                 "responses": {
                     "200": {
                         "description": "Successful operation",
@@ -1411,7 +1399,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Treatments retrieved successfully"
+                                            "example": "Services retrieved successfully"
                                         },
                                         "status_code": {
                                             "type": "integer",
@@ -1430,51 +1418,12 @@
                                                 "data": {
                                                     "type": "array",
                                                     "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "Massage cổ vai gáy"
-                                                            },
-                                                            "price": {
-                                                                "type": "number",
-                                                                "example": 500000
-                                                            },
-                                                            "duration": {
-                                                                "type": "integer",
-                                                                "example": 60
-                                                            },
-                                                            "description": {
-                                                                "type": "string",
-                                                                "example": "Massage giúp giảm đau nhức cổ vai gáy"
-                                                            },
-                                                            "category_id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "category": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 1
-                                                                    },
-                                                                    "name": {
-                                                                        "type": "string",
-                                                                        "example": "Massage"
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            }
-                                                        },
-                                                        "type": "object"
+                                                        "$ref": "#/components/schemas/Service"
                                                     }
                                                 },
                                                 "first_page_url": {
                                                     "type": "string",
-                                                    "example": "http://example.com/api/treatments?page=1"
+                                                    "example": "http://example.com/api/services?page=1"
                                                 },
                                                 "from": {
                                                     "type": "integer",
@@ -1486,15 +1435,15 @@
                                                 },
                                                 "last_page_url": {
                                                     "type": "string",
-                                                    "example": "http://example.com/api/treatments?page=5"
+                                                    "example": "http://example.com/api/services?page=5"
                                                 },
                                                 "next_page_url": {
                                                     "type": "string",
-                                                    "example": "http://example.com/api/treatments?page=2"
+                                                    "example": "http://example.com/api/services?page=2"
                                                 },
                                                 "path": {
                                                     "type": "string",
-                                                    "example": "http://example.com/api/treatments"
+                                                    "example": "http://example.com/api/services"
                                                 },
                                                 "per_page": {
                                                     "type": "integer",
@@ -1524,13 +1473,13 @@
                 }
             }
         },
-        "/api/treatments/categories": {
+        "/api/services/categories": {
             "get": {
                 "tags": [
-                    "Treatments"
+                    "Services"
                 ],
-                "summary": "Lấy danh sách các danh mục treatment",
-                "operationId": "d052f2f1aba6b911e1ece09bb2aaa66d",
+                "summary": "Lấy danh sách các danh mục service",
+                "operationId": "38f9c8c172b4d9aa4790ad64834e220d",
                 "responses": {
                     "200": {
                         "description": "Successful operation",
@@ -1540,7 +1489,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Treatment categories retrieved successfully"
+                                            "example": "Service categories retrieved successfully"
                                         },
                                         "status_code": {
                                             "type": "integer",
@@ -1594,7 +1543,7 @@
                                                             "type": "object"
                                                         }
                                                     },
-                                                    "treatments": {
+                                                    "services": {
                                                         "type": "array",
                                                         "items": {
                                                             "properties": {
@@ -1643,7 +1592,7 @@
                                                                     "type": "integer",
                                                                     "example": 1
                                                                 },
-                                                                "treatment_category_id": {
+                                                                "service_category_id": {
                                                                     "type": "integer",
                                                                     "example": 1
                                                                 },
@@ -1672,18 +1621,18 @@
                 }
             }
         },
-        "/api/treatments/{id}": {
+        "/api/services/{id}": {
             "get": {
                 "tags": [
-                    "Treatments"
+                    "Services"
                 ],
-                "summary": "Lấy chi tiết một treatment",
-                "operationId": "28c01ee67e8569b929a5920d07aeaad4",
+                "summary": "Lấy chi tiết một service",
+                "operationId": "42775b582b563bc36a9e06ae850100bf",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID của treatment",
+                        "description": "ID của service",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -1699,7 +1648,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Treatment retrieved successfully"
+                                            "example": "Service retrieved successfully"
                                         },
                                         "status_code": {
                                             "type": "integer",
@@ -1710,46 +1659,7 @@
                                             "example": true
                                         },
                                         "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "Massage cổ vai gáy"
-                                                },
-                                                "price": {
-                                                    "type": "number",
-                                                    "example": 500000
-                                                },
-                                                "duration": {
-                                                    "type": "integer",
-                                                    "example": 60
-                                                },
-                                                "description": {
-                                                    "type": "string",
-                                                    "example": "Massage giúp giảm đau nhức cổ vai gáy"
-                                                },
-                                                "category_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "category": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Massage"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/Service"
                                         }
                                     },
                                     "type": "object"
@@ -1758,23 +1668,23 @@
                         }
                     },
                     "404": {
-                        "description": "Treatment not found"
+                        "description": "Service not found"
                     }
                 }
             }
         },
-        "/api/treatment-combos/{id}": {
+        "/api/service-combos/{id}": {
             "get": {
                 "tags": [
-                    "Treatments"
+                    "Services"
                 ],
-                "summary": "Lấy chi tiết một liệu trình",
-                "operationId": "474f67af152f2a205cbd173eada9ccd3",
+                "summary": "Lấy chi tiết một combo dịch vụ",
+                "operationId": "61e5f0e88d5416e2884d362f48e04695",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID của liệu trình",
+                        "description": "ID của combo dịch vụ",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -1790,7 +1700,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Treatment combo retrieved successfully"
+                                            "example": "Service combo retrieved successfully"
                                         },
                                         "status_code": {
                                             "type": "integer",
@@ -1801,71 +1711,7 @@
                                             "example": true
                                         },
                                         "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "Gói trị liệu toàn diện"
-                                                },
-                                                "price": {
-                                                    "type": "number",
-                                                    "example": 1500000
-                                                },
-                                                "description": {
-                                                    "type": "string",
-                                                    "example": "Gói trị liệu toàn diện bao gồm nhiều liệu pháp"
-                                                },
-                                                "treatments": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "Massage cổ vai gáy"
-                                                            },
-                                                            "price": {
-                                                                "type": "number",
-                                                                "example": 500000
-                                                            },
-                                                            "duration": {
-                                                                "type": "integer",
-                                                                "example": 60
-                                                            },
-                                                            "pivot": {
-                                                                "properties": {
-                                                                    "quantity": {
-                                                                        "type": "integer",
-                                                                        "example": 1
-                                                                    }
-                                                                },
-                                                                "type": "object"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "image": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "url": {
-                                                            "type": "string",
-                                                            "example": "http://example.com/images/treatment-combo.jpg"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/ServiceCombo"
                                         }
                                     },
                                     "type": "object"
@@ -1874,7 +1720,7 @@
                         }
                     },
                     "404": {
-                        "description": "Treatment combo not found"
+                        "description": "Service combo not found"
                     }
                 }
             }
@@ -2153,7 +1999,7 @@
                         "description": "Loại đánh giá",
                         "type": "string",
                         "enum": [
-                            "treatment",
+                            "service",
                             "product"
                         ]
                     },
@@ -2361,8 +2207,8 @@
                         "type": "integer",
                         "format": "int64"
                     },
-                    "treatment_id": {
-                        "description": "Treatment ID",
+                    "service_id": {
+                        "description": "Service ID",
                         "type": "integer",
                         "format": "int64"
                     },
@@ -2732,8 +2578,8 @@
                         "description": "ID của sản phẩm (nếu có)",
                         "type": "integer"
                     },
-                    "treatment_id": {
-                        "description": "ID của liệu trình (nếu có)",
+                    "service_id": {
+                        "description": "ID của dịch vụ (nếu có)",
                         "type": "integer"
                     },
                     "created_at": {
@@ -3473,7 +3319,7 @@
                         "description": "Loại đánh giá",
                         "type": "string",
                         "enum": [
-                            "treatment",
+                            "service",
                             "product"
                         ]
                     },
@@ -3603,6 +3449,328 @@
                 },
                 "type": "object"
             },
+            "Service": {
+                "title": "Service",
+                "description": "Service model",
+                "properties": {
+                    "id": {
+                        "description": "Service ID",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "description": "Service name",
+                        "type": "string"
+                    },
+                    "price": {
+                        "description": "Service price",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "description": {
+                        "description": "Service description",
+                        "type": "string"
+                    },
+                    "duration": {
+                        "description": "Service duration in minutes",
+                        "type": "integer"
+                    },
+                    "image_id": {
+                        "description": "Image ID",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "category_id": {
+                        "description": "Category ID",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "created_at": {
+                        "description": "Creation date",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Last update date",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "description": "Deletion date",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ServiceCategory": {
+                "title": "Service Category",
+                "description": "Model representing a service category",
+                "properties": {
+                    "id": {
+                        "description": "The unique identifier of the service category",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "The name of the service category",
+                        "type": "string"
+                    },
+                    "parent_id": {
+                        "description": "The ID of the parent category, if any",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "image_id": {
+                        "description": "The ID of the associated image, if any",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "The creation timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "The last update timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "description": "The deletion timestamp, if soft deleted",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ServiceCategoryTranslation": {
+                "title": "Service Category Translation",
+                "description": "Model representing a translation of a service category",
+                "properties": {
+                    "id": {
+                        "description": "The ID of the translation",
+                        "type": "integer"
+                    },
+                    "service_category_id": {
+                        "description": "The ID of the related service category",
+                        "type": "integer"
+                    },
+                    "language": {
+                        "description": "The language code of the translation",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "The translated name of the service category",
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "description": "Timestamp of creation",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Timestamp of last update",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ServiceCombo": {
+                "title": "Service Combo",
+                "description": "Service Combo model",
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "description": "Name of the service combo",
+                        "type": "string"
+                    },
+                    "price": {
+                        "description": "Price of the service combo",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "description": {
+                        "description": "Description of the service combo",
+                        "type": "string"
+                    },
+                    "image_id": {
+                        "description": "ID of the associated image",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "description": "Deletion timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ServiceComboPriceHistory": {
+                "title": "Service Combo Price History",
+                "description": "Model representing the price history of a service combo",
+                "properties": {
+                    "id": {
+                        "description": "The ID of the price history record",
+                        "type": "integer"
+                    },
+                    "service_combo_id": {
+                        "description": "The ID of the associated service combo",
+                        "type": "integer"
+                    },
+                    "price": {
+                        "description": "The price of the service combo",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "effective_date": {
+                        "description": "The date and time when the price becomes effective",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "created_at": {
+                        "description": "The creation timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "The last update timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ServicePriceHistory": {
+                "title": "Service Price History",
+                "description": "Model representing the price history of a service",
+                "properties": {
+                    "id": {
+                        "description": "The unique identifier of the price history record",
+                        "type": "integer"
+                    },
+                    "service_id": {
+                        "description": "The ID of the associated service",
+                        "type": "integer"
+                    },
+                    "price": {
+                        "description": "The price of the service",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "effective_date": {
+                        "description": "The date and time when the price becomes effective",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "created_at": {
+                        "description": "Timestamp of when the record was created",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Timestamp of when the record was last updated",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ServiceTranslation": {
+                "title": "Service Translation",
+                "description": "Model for service translations",
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "service_id": {
+                        "description": "ID of the related service",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "language": {
+                        "description": "Language code of the translation",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Translated name of the service",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "Translated description of the service",
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ServiceUsageHistory": {
+                "title": "Service Usage History",
+                "description": "Model representing a service usage history",
+                "properties": {
+                    "id": {
+                        "description": "The unique identifier of the service usage history",
+                        "type": "integer"
+                    },
+                    "user_service_package_id": {
+                        "description": "The ID of the associated user service package",
+                        "type": "integer"
+                    },
+                    "used_date": {
+                        "description": "The date and time when the service was used",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "staff_user_id": {
+                        "description": "The ID of the staff user who performed the service",
+                        "type": "integer"
+                    },
+                    "note": {
+                        "description": "Additional notes about the service usage",
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "description": "Timestamp of when the record was created",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Timestamp of when the record was last updated",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "StaffDetail": {
                 "title": "Staff Detail",
                 "description": "Staff detail model",
@@ -3695,328 +3863,6 @@
                 },
                 "type": "object"
             },
-            "Treatment": {
-                "title": "Treatment",
-                "description": "Treatment model",
-                "properties": {
-                    "id": {
-                        "description": "Treatment ID",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "name": {
-                        "description": "Treatment name",
-                        "type": "string"
-                    },
-                    "price": {
-                        "description": "Treatment price",
-                        "type": "number",
-                        "format": "float"
-                    },
-                    "description": {
-                        "description": "Treatment description",
-                        "type": "string"
-                    },
-                    "duration": {
-                        "description": "Treatment duration in minutes",
-                        "type": "integer"
-                    },
-                    "image_id": {
-                        "description": "Image ID",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "category_id": {
-                        "description": "Category ID",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "created_at": {
-                        "description": "Creation date",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Last update date",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "deleted_at": {
-                        "description": "Deletion date",
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "TreatmentCategory": {
-                "title": "Treatment Category",
-                "description": "Model representing a treatment category",
-                "properties": {
-                    "id": {
-                        "description": "The unique identifier of the treatment category",
-                        "type": "integer"
-                    },
-                    "name": {
-                        "description": "The name of the treatment category",
-                        "type": "string"
-                    },
-                    "parent_id": {
-                        "description": "The ID of the parent category, if any",
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "image_id": {
-                        "description": "The ID of the associated image, if any",
-                        "type": "integer",
-                        "nullable": true
-                    },
-                    "created_at": {
-                        "description": "The creation timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "The last update timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "deleted_at": {
-                        "description": "The deletion timestamp, if soft deleted",
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "TreatmentCategoryTranslation": {
-                "title": "Treatment Category Translation",
-                "description": "Model representing a translation of a treatment category",
-                "properties": {
-                    "id": {
-                        "description": "The ID of the translation",
-                        "type": "integer"
-                    },
-                    "treatment_category_id": {
-                        "description": "The ID of the related treatment category",
-                        "type": "integer"
-                    },
-                    "language": {
-                        "description": "The language code of the translation",
-                        "type": "string"
-                    },
-                    "name": {
-                        "description": "The translated name of the treatment category",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Timestamp of creation",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Timestamp of last update",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
-            "TreatmentCombo": {
-                "title": "Treatment Combo",
-                "description": "Treatment Combo model",
-                "properties": {
-                    "id": {
-                        "description": "Unique identifier",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "name": {
-                        "description": "Name of the treatment combo",
-                        "type": "string"
-                    },
-                    "price": {
-                        "description": "Price of the treatment combo",
-                        "type": "number",
-                        "format": "float"
-                    },
-                    "description": {
-                        "description": "Description of the treatment combo",
-                        "type": "string"
-                    },
-                    "image_id": {
-                        "description": "ID of the associated image",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "created_at": {
-                        "description": "Creation timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Last update timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "deleted_at": {
-                        "description": "Deletion timestamp",
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "TreatmentComboPriceHistory": {
-                "title": "Treatment Combo Price History",
-                "description": "Model representing the price history of a treatment combo",
-                "properties": {
-                    "id": {
-                        "description": "The ID of the price history record",
-                        "type": "integer"
-                    },
-                    "treatment_combo_id": {
-                        "description": "The ID of the associated treatment combo",
-                        "type": "integer"
-                    },
-                    "price": {
-                        "description": "The price of the treatment combo",
-                        "type": "number",
-                        "format": "float"
-                    },
-                    "effective_date": {
-                        "description": "The date and time when the price becomes effective",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "created_at": {
-                        "description": "The creation timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "The last update timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
-            "TreatmentPriceHistory": {
-                "title": "Treatment Price History",
-                "description": "Model representing the price history of a treatment",
-                "properties": {
-                    "id": {
-                        "description": "The unique identifier of the price history record",
-                        "type": "integer"
-                    },
-                    "treatment_id": {
-                        "description": "The ID of the associated treatment",
-                        "type": "integer"
-                    },
-                    "price": {
-                        "description": "The price of the treatment",
-                        "type": "number",
-                        "format": "float"
-                    },
-                    "effective_date": {
-                        "description": "The date and time when the price becomes effective",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "created_at": {
-                        "description": "Timestamp of when the record was created",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Timestamp of when the record was last updated",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
-            "TreatmentTranslation": {
-                "title": "Treatment Translation",
-                "description": "Model for treatment translations",
-                "properties": {
-                    "id": {
-                        "description": "Unique identifier",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "treatment_id": {
-                        "description": "ID of the related treatment",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "language": {
-                        "description": "Language code of the translation",
-                        "type": "string"
-                    },
-                    "name": {
-                        "description": "Translated name of the treatment",
-                        "type": "string"
-                    },
-                    "description": {
-                        "description": "Translated description of the treatment",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Creation timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Last update timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
-            "TreatmentUsageHistory": {
-                "title": "Treatment Usage History",
-                "description": "Model representing a treatment usage history",
-                "properties": {
-                    "id": {
-                        "description": "The unique identifier of the treatment usage history",
-                        "type": "integer"
-                    },
-                    "user_treatment_package_id": {
-                        "description": "The ID of the associated user treatment package",
-                        "type": "integer"
-                    },
-                    "used_date": {
-                        "description": "The date and time when the treatment was used",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "staff_user_id": {
-                        "description": "The ID of the staff user who performed the treatment",
-                        "type": "integer"
-                    },
-                    "note": {
-                        "description": "Additional notes about the treatment usage",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Timestamp of when the record was created",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Timestamp of when the record was last updated",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
             "User": {
                 "title": "User",
                 "description": "User model",
@@ -4096,9 +3942,9 @@
                 },
                 "type": "object"
             },
-            "UserTreatmentPackage": {
-                "title": "User Treatment Package",
-                "description": "Model representing a user's treatment package",
+            "UserServicePackage": {
+                "title": "User Service Package",
+                "description": "Model representing a user's service package",
                 "properties": {
                     "id": {
                         "description": "The unique identifier of the package",
@@ -4108,8 +3954,8 @@
                         "description": "The ID of the user who owns this package",
                         "type": "integer"
                     },
-                    "treatment_id": {
-                        "description": "The ID of the treatment associated with this package",
+                    "service_id": {
+                        "description": "The ID of the service associated with this package",
                         "type": "integer"
                     },
                     "total_sessions": {
@@ -4336,8 +4182,8 @@
             "description": "API Endpoints để quản lý đánh giá"
         },
         {
-            "name": "Treatments",
-            "description": "API Endpoints của Treatment"
+            "name": "Services",
+            "description": "API Endpoints của Service"
         },
         {
             "name": "Authentication",

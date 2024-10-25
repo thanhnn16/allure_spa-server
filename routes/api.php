@@ -4,7 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppointmentController;
-use App\Http\Controllers\TreatmentController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
@@ -23,11 +23,11 @@ Route::middleware('throttle:api')->group(function () {
     Route::post('/auth/login', [AuthenticatedSessionController::class, 'storeApi']);
 
     Route::get('/products/search', [ProductController::class, 'searchProducts']);
-    Route::get('/treatments/search', [TreatmentController::class, 'searchTreatments']);
+    Route::get('/services/search', [ServiceController::class, 'searchServices']);
 
-    // Treatment routes
-    Route::get('/treatments', [TreatmentController::class, 'index']);
-    Route::get('/treatment-categories', [TreatmentController::class, 'categories']);
+    // Service routes
+    Route::get('/services', [ServiceController::class, 'index']);
+    Route::get('/service-categories', [ServiceController::class, 'categories']);
 
     Route::middleware(['auth:sanctum'])->group(function () {
         // Appointment routes
@@ -44,9 +44,9 @@ Route::middleware('throttle:api')->group(function () {
         // Add these routes inside the authenticated group
         Route::get('/users/search', [UserController::class, 'searchUsers']);
         Route::get('/users/get-staff-list', [UserController::class, 'getStaffList']);
-        Route::get('/users/{userId}/treatment-packages', [UserController::class, 'getUserTreatmentPackages']);
+        Route::get('/users/{userId}/service-packages', [UserController::class, 'getUserServicePackages']);
 
-        Route::get('/user-treatment-packages/{user}', [UserController::class, 'getUserTreatmentPackages']);
+        Route::get('/user-service-packages/{user}', [UserController::class, 'getUserServicePackages']);
 
         Route::post('/import', [ImportController::class, 'importAll']);
 
@@ -57,7 +57,7 @@ Route::middleware('throttle:api')->group(function () {
         // Rating routes
         Route::get('/ratings', [RatingController::class, 'index']);
         Route::get('/products/{productId}/ratings', [RatingController::class, 'getProductRatings']);
-        Route::get('/treatments/{treatmentId}/ratings', [RatingController::class, 'getTreatmentRatings']);
+        Route::get('/services/{serviceId}/ratings', [RatingController::class, 'getServiceRatings']);
         Route::post('/ratings', [RatingController::class, 'store']);
     });
 });

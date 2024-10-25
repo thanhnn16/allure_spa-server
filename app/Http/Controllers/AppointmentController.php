@@ -71,10 +71,10 @@ class AppointmentController extends BaseController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"user_id", "staff_id", "treatment_id", "start_date", "end_date", "appointment_type", "status"},
+     *             required={"user_id", "staff_id", "service_id", "start_date", "end_date", "appointment_type", "status"},
      *             @OA\Property(property="user_id", type="integer", example=1),
      *             @OA\Property(property="staff_id", type="integer", example=2),
-     *             @OA\Property(property="treatment_id", type="integer", example=3),
+     *             @OA\Property(property="service_id", type="integer", example=3),
      *             @OA\Property(property="start_date", type="string", format="date-time", example="2023-05-01T09:00:00+07:00"),
      *             @OA\Property(property="end_date", type="string", format="date-time", example="2023-05-01T10:00:00+07:00"),
      *             @OA\Property(property="appointment_type", type="string", example="consultation"),

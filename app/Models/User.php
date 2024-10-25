@@ -81,9 +81,9 @@ class User extends Authenticatable
         return $this->hasMany(Appointment::class);
     }
 
-    public function userTreatmentPackages()
+    public function userServicePackages()
     {
-        return $this->hasMany(UserTreatmentPackage::class);
+        return $this->hasMany(UserServicePackage::class);
     }
 
     public function ratings()
@@ -106,9 +106,9 @@ class User extends Authenticatable
         return $this->hasMany(FcmToken::class);
     }
 
-    public function image()
+    public function media()
     {
-        return $this->belongsTo(Image::class);
+        return $this->belongsTo(Media::class);
     }
 
     public function cart()

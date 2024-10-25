@@ -9,19 +9,12 @@ CREATE DATABASE allure_dev;
 # -- Sử dụng database
 USE allure_dev;
 
--- 1. Bảng images
-CREATE TABLE images (
+CREATE TABLE media (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    image_path VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
-
--- 1.1 Bảng videos
-CREATE TABLE videos (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    video_path VARCHAR(255) NOT NULL,
+    type ENUM('image', 'video') NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    mediable_type ENUM('product', 'service', 'user', 'notification', 'banner') NOT NULL,
+    mediable_id INT UNSIGNED NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL
@@ -38,11 +31,12 @@ CREATE TABLE users (
     full_name VARCHAR(255),
     gender ENUM ('male', 'female', 'other') DEFAULT 'other',
     date_of_birth TIMESTAMP,
-    image_id INT UNSIGNED,
+    media_id INT UNSIGNED,
     loyalty_points INT UNSIGNED DEFAULT 0,
     skin_condition TEXT,
     note TEXT,
     purchase_count INT UNSIGNED DEFAULT 0 COMMENT 'Tổng số lần mua hàng (bao gồm cả sản phẩm và liệu trình)',
+    FOREIGN KEY (media_id) REFERENCES media (id),
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL
@@ -70,24 +64,7 @@ CREATE TABLE products (
     name VARCHAR(255) NOT NULL,
     price DECIMAL(10, 2) UNSIGNED NOT NULL,
     category_id INT UNSIGNED NOT NULL,
-    image_id INT UNSIGNED,
-    video_id INT UNSIGNED,
     quantity INT UNSIGNED NOT NULL DEFAULT 0,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (category_id) REFERENCES product_categories (id),
-    FOREIGN KEY (image_id) REFERENCES images (id),
-    FOREIGN KEY (video_id) REFERENCES videos (id)
-);
-
-CREATE INDEX idx_products_category_id ON products (category_id);
-
-CREATE INDEX idx_products_name ON products (name);
-
--- 5. Bảng product_details
-CREATE TABLE product_details (
-    product_id INT UNSIGNED PRIMARY KEY,
     brand_description TEXT,
     `usage` TEXT,
     benefits TEXT,
@@ -96,10 +73,17 @@ CREATE TABLE product_details (
     directions TEXT,
     storage_instructions TEXT,
     product_notes TEXT,
-    FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (category_id) REFERENCES product_categories (id)
 );
 
--- 6. Bảng product_price_history
+CREATE INDEX idx_products_category_id ON products (category_id);
+
+CREATE INDEX idx_products_name ON products (name);
+
+-- 5. Bảng product_price_history
 CREATE TABLE product_price_history (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     product_id INT UNSIGNED NOT NULL,
@@ -136,81 +120,58 @@ CREATE TABLE product_attributes (
     FOREIGN KEY (attribute_id) REFERENCES attributes (id) ON DELETE CASCADE
 );
 
--- 9. Bảng treatment_categories
-CREATE TABLE treatment_categories (
+-- 9. Bảng service_categories
+CREATE TABLE service_categories (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    category_name VARCHAR(255) NOT NULL,
+    service_category_name VARCHAR(255) NOT NULL,
     parent_id INT UNSIGNED,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (parent_id) REFERENCES treatment_categories (id) ON DELETE CASCADE
+    FOREIGN KEY (parent_id) REFERENCES service_categories (id) ON DELETE CASCADE
 );
 
 ALTER TABLE
-    treatment_categories
+    service_categories
 ADD
-    INDEX idx_treatment_categories_parent_id (parent_id);
+    INDEX idx_service_categories_parent_id (parent_id);
 
--- 10. Bảng treatments
-CREATE TABLE treatments (
+-- 10. Bảng services
+CREATE TABLE services (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    price DECIMAL(10, 2) UNSIGNED NOT NULL,
+    service_name VARCHAR(255) NOT NULL,
     description TEXT,
     duration INT UNSIGNED NULL COMMENT 'Duration in minutes',
-    image_id INT UNSIGNED,
-    video_id INT UNSIGNED,
     category_id INT UNSIGNED NOT NULL,
+    single_price DECIMAL(10, 2) UNSIGNED NOT NULL,
+    combo_5_price DECIMAL(10, 2) UNSIGNED,
+    combo_10_price DECIMAL(10, 2) UNSIGNED,
+    validity_period INT UNSIGNED COMMENT 'Thời hạn gói tính bằng ngày',
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (category_id) REFERENCES treatment_categories (id),
-    FOREIGN KEY (image_id) REFERENCES images (id),
-    FOREIGN KEY (video_id) REFERENCES videos (id)
+    FOREIGN KEY (category_id) REFERENCES service_categories (id)
 );
 
-CREATE INDEX idx_treatments_name ON treatments (name);
 
-CREATE INDEX idx_treatments_category_id ON treatments (category_id);
+CREATE INDEX idx_services_name ON services (service_name);
 
--- 11. Bảng treatment_price_history
-CREATE TABLE treatment_price_history (
+CREATE INDEX idx_services_category_id ON services (category_id);
+
+-- 11. Bảng service_price_history
+CREATE TABLE service_price_history (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    treatment_id INT UNSIGNED NOT NULL,
+    service_id INT UNSIGNED NOT NULL,
     price DECIMAL(10, 2) UNSIGNED NOT NULL,
     effective_from TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     effective_to TIMESTAMP NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (treatment_id) REFERENCES treatments (id) ON DELETE CASCADE
+    FOREIGN KEY (service_id) REFERENCES services (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_treatment_price_history_treatment_id_effective_from ON treatment_price_history (treatment_id, effective_from);
+CREATE INDEX idx_service_price_history_service_id_effective_from ON service_price_history (service_id, effective_from);
 
--- 12. Bảng treatment_combos
-CREATE TABLE treatment_combos (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    treatment_id INT UNSIGNED NOT NULL,
-    combo_type ENUM ('5_times', '10_times') NOT NULL,
-    combo_price DECIMAL(10, 2) UNSIGNED NOT NULL,
-    validity_period INT UNSIGNED COMMENT 'Thời hạn gói tính bằng ngày',
-    FOREIGN KEY (treatment_id) REFERENCES treatments (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_treatment_combos_treatment_id ON treatment_combos (treatment_id);
-
--- 13. Bảng treatment_combo_price_history
-CREATE TABLE treatment_combo_price_history (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    treatment_combo_id INT UNSIGNED NOT NULL,
-    combo_price DECIMAL(10, 2) UNSIGNED NOT NULL,
-    effective_from TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    effective_to TIMESTAMP NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (treatment_combo_id) REFERENCES treatment_combos (id) ON DELETE CASCADE
-);
 
 -- 14. Bảng staff_details
 CREATE TABLE staff_details (
@@ -229,9 +190,10 @@ CREATE INDEX idx_staff_details_hire_date ON staff_details (hire_date);
 -- 15. Bảng addresses
 CREATE TABLE addresses (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NULL,
     address TEXT NOT NULL,
-    address_type ENUM ('home', 'work', 'others') NOT NULL DEFAULT 'home',
+    address_type ENUM ('home', 'work', 'shipping', 'others') NOT NULL DEFAULT 'home',
+    is_temporary BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
@@ -244,24 +206,75 @@ CREATE INDEX idx_users_phone_number ON users (phone_number);
 
 CREATE INDEX idx_users_role ON users (role);
 
--- 16. Bảng user_treatment_packages
-CREATE TABLE user_treatment_packages (
+
+
+-- 29. Bảng payment_methods
+CREATE TABLE payment_methods (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
-    treatment_id INT UNSIGNED NOT NULL,
-    total_sessions INT UNSIGNED NOT NULL,
-    used_sessions INT UNSIGNED NOT NULL DEFAULT 0,
-    remaining_sessions INT UNSIGNED GENERATED ALWAYS AS (total_sessions - used_sessions) STORED,
-    expiry_date DATE,
-    is_combo BOOLEAN NOT NULL DEFAULT FALSE,
-    combo_type ENUM ('5_times', '10_times') NULL,
+    method_name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (treatment_id) REFERENCES treatments (id),
-    CONSTRAINT chk_sessions CHECK (used_sessions <= total_sessions)
+    deleted_at TIMESTAMP NULL DEFAULT NULL
 );
+
+
+-- 27. Bảng vouchers
+CREATE TABLE vouchers (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    code VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    discount_type VARCHAR(255) NOT NULL DEFAULT 'percentage',
+    is_unlimited TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    status VARCHAR(255) NOT NULL DEFAULT 'active',
+    used_times INT UNSIGNED NOT NULL DEFAULT 0,
+    discount_value DECIMAL(10, 2) UNSIGNED NOT NULL,
+    min_order_value DECIMAL(10, 2) UNSIGNED,
+    max_discount_amount DECIMAL(10, 2) UNSIGNED,
+    usage_limit INT UNSIGNED,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+    
+-- 30. Bảng orders
+CREATE TABLE orders (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    total_amount DECIMAL(10, 2) UNSIGNED NOT NULL,
+    shipping_address_id INT UNSIGNED NULL,
+    payment_method_id INT UNSIGNED NOT NULL,
+    voucher_id INT UNSIGNED,
+    discount_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
+    status VARCHAR(255) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (shipping_address_id) REFERENCES addresses (id) ON DELETE CASCADE,
+    FOREIGN KEY (payment_method_id) REFERENCES payment_methods (id) ON DELETE CASCADE,
+        FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE
+    SET
+        NULL
+);
+
+-- 31. Bảng order_items
+CREATE TABLE order_items (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    order_id INT UNSIGNED NOT NULL,
+    item_type ENUM ('product', 'service') NOT NULL,
+    item_id INT UNSIGNED NOT NULL,
+    service_type ENUM('single', 'combo_5', 'combo_10') NULL,
+    quantity INT UNSIGNED NOT NULL,
+    price DECIMAL(10, 2) UNSIGNED NOT NULL,
+    discount_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
+    discount_type ENUM('percentage', 'fixed_amount'),
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_order_items_item_type_item_id ON order_items (item_type, item_id);
 
 -- 17. Bảng invoices
 CREATE TABLE invoices (
@@ -295,27 +308,324 @@ CREATE INDEX idx_invoices_created_at ON invoices (created_at);
 
 CREATE INDEX idx_invoices_status ON invoices (status);
 
--- 18. Bảng treatment_usage_history
-CREATE TABLE treatment_usage_history (
+
+-- 16. Bảng user_service_packages
+CREATE TABLE user_service_packages (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_treatment_package_id INT UNSIGNED,
+    user_id CHAR(36) NOT NULL,
+    service_id INT UNSIGNED NOT NULL,
+    total_sessions INT UNSIGNED NOT NULL,
+    used_sessions INT UNSIGNED NOT NULL DEFAULT 0,
+    remaining_sessions INT UNSIGNED GENERATED ALWAYS AS (total_sessions - used_sessions) STORED,
+    expiry_date DATE,
+    is_combo BOOLEAN NOT NULL DEFAULT FALSE,
+    combo_type ENUM ('5_times', '10_times') NULL,
+    order_id INT UNSIGNED,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (service_id) REFERENCES services (id),
+    FOREIGN KEY (order_id) REFERENCES orders (id),
+    CONSTRAINT chk_sessions CHECK (used_sessions <= total_sessions)
+);
+
+
+
+-- 28. Bảng employee_attendances
+CREATE TABLE employee_attendances (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    check_in TIMESTAMP NOT NULL,
+    check_out TIMESTAMP,
+    date DATE NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_employee_attendances_user_id ON employee_attendances (user_id);
+
+CREATE INDEX idx_employee_attendances_date ON employee_attendances (date);
+
+
+-- 18. Bảng service_usage_histories
+CREATE TABLE service_usage_histories (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_service_package_id INT UNSIGNED,
     staff_user_id CHAR(36),
-    treatment_date TIMESTAMP NOT NULL,
-    invoice_id CHAR(36),
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
     result TEXT,
     notes TEXT,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_treatment_package_id) REFERENCES user_treatment_packages (id) ON DELETE
+    FOREIGN KEY (user_service_package_id) REFERENCES user_service_packages (id) ON DELETE
     SET
         NULL,
-        FOREIGN KEY (staff_user_id) REFERENCES users (id) ON DELETE
-    SET
-        NULL,
-        FOREIGN KEY (invoice_id) REFERENCES invoices (id) ON DELETE
+    FOREIGN KEY (staff_user_id) REFERENCES users (id) ON DELETE
     SET
         NULL
 );
+
+-- 32. Bảng carts
+CREATE TABLE carts (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+-- 33. Bảng cart_items
+CREATE TABLE cart_items (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    cart_id INT UNSIGNED NOT NULL,
+    item_type ENUM ('product', 'service') NOT NULL,
+    item_id INT UNSIGNED NOT NULL,
+    quantity INT UNSIGNED NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (cart_id) REFERENCES carts (id) ON DELETE CASCADE
+);
+
+-- 34. Bảng ratings
+CREATE TABLE ratings (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    rating_type ENUM('service', 'product') NOT NULL,
+    item_id INT UNSIGNED NOT NULL,
+    stars TINYINT UNSIGNED NOT NULL,
+    comment TEXT,
+    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (item_id) REFERENCES services (id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES products (id) ON DELETE CASCADE,
+    CONSTRAINT chk_stars CHECK (
+        stars BETWEEN 1
+        AND 5
+    )
+);
+
+CREATE INDEX idx_ratings_user_id ON ratings (user_id);
+
+CREATE INDEX idx_ratings_item_id ON ratings (item_id);
+
+-- 35. Bảng favorites
+CREATE TABLE favorites (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    favorite_type ENUM ('product', 'service') NOT NULL,
+    item_id INT UNSIGNED NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES services (id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES products (id) ON DELETE CASCADE
+);
+
+-- 36. Bảng notifications
+CREATE TABLE notifications (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    media_id INT UNSIGNED,
+    content TEXT NOT NULL,
+    status VARCHAR(255) NOT NULL DEFAULT 'unseen',
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (media_id) REFERENCES media (id)
+);
+
+-- 37. Bảng appointments
+CREATE TABLE appointments (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    service_id INT UNSIGNED NOT NULL,
+    staff_user_id CHAR(36),
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
+    appointment_type ENUM (
+        'facial',
+        'massage',
+        'weight_loss',
+        'hair_removal',
+        'consultation',
+        'others'
+    ) NOT NULL DEFAULT 'others',
+    status ENUM ('pending', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'pending',
+    note TEXT,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (service_id) REFERENCES services (id),
+    FOREIGN KEY (staff_user_id) REFERENCES users (id)
+);
+
+CREATE INDEX idx_appointments_user_id ON appointments (user_id);
+CREATE INDEX idx_appointments_service_id ON appointments (service_id);
+CREATE INDEX idx_appointments_staff_user_id ON appointments (staff_user_id);
+CREATE INDEX idx_appointments_start_time ON appointments (start_time);
+CREATE INDEX idx_appointments_status ON appointments (status);
+
+-- 39. Bảng user_vouchers
+CREATE TABLE user_vouchers (
+    user_id CHAR(36) NOT NULL,
+    voucher_id INT UNSIGNED NOT NULL,
+    used_at TIMESTAMP,
+    is_used TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (user_id, voucher_id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE CASCADE
+);
+
+-- 40. Bảng histories
+CREATE TABLE histories (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    table_name VARCHAR(255) NOT NULL,
+    row_id INT UNSIGNED NOT NULL,
+    action VARCHAR(255) NOT NULL,
+    changes JSON,
+    action_timestamp TIMESTAMP NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+-- 41. Bảng fcm_tokens
+CREATE TABLE fcm_tokens (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    fcm_token TEXT NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+-- 42. Bảng stock_movements
+CREATE TABLE stock_movements (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    product_id INT UNSIGNED NOT NULL,
+    quantity INT NOT NULL,
+    type ENUM ('in', 'out') NOT NULL,
+    stock_after_movement INT UNSIGNED NOT NULL,
+    note TEXT,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (product_id) REFERENCES products (id)
+);
+
+CREATE INDEX idx_stock_movements_product_id ON stock_movements (product_id);
+
+CREATE INDEX idx_stock_movements_created_at ON stock_movements (created_at);
+
+-- 43. Bảng payment_histories
+CREATE TABLE payment_histories (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    invoice_id CHAR(36) NOT NULL,
+    old_payment_status VARCHAR(255) NOT NULL,
+    new_payment_status VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (invoice_id) REFERENCES invoices (id) ON DELETE CASCADE
+);
+
+-- 44. Bảng reward_items
+CREATE TABLE reward_items (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    item_type ENUM ('product', 'service') NOT NULL,
+    item_id INT UNSIGNED NOT NULL,
+    points_required INT UNSIGNED NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (item_id) REFERENCES services (id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES products (id) ON DELETE CASCADE
+);
+
+-- 45. Bảng point_redemption_histories
+CREATE TABLE point_redemption_histories (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    reward_item_id INT UNSIGNED NOT NULL,
+    points_used INT UNSIGNED NOT NULL,
+    redeemed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (reward_item_id) REFERENCES reward_items (id) ON DELETE CASCADE
+);
+
+CREATE TABLE translations (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    translatable_type VARCHAR(255) NOT NULL,
+    translatable_id INT UNSIGNED NOT NULL,
+    language CHAR(2) NOT NULL DEFAULT 'vi',
+    field VARCHAR(255) NOT NULL,
+    value TEXT NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL
+);
+
+CREATE INDEX idx_translations_translatable ON translations (translatable_type, translatable_id, language);
+
+-- 53. Bảng banners
+CREATE TABLE banners (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    media_id INT UNSIGNED NOT NULL,
+    link VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    `order` INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (media_id) REFERENCES media (id)
+);
+
+-- 54. Bảng ai_chat_configs
+CREATE TABLE ai_chat_configs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    ai_name VARCHAR(255) NOT NULL,
+    context TEXT NOT NULL,
+    language VARCHAR(50) NOT NULL,
+    gemini_settings JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 55. Bảng chats
+CREATE TABLE chats (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    staff_id CHAR(36),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (staff_id) REFERENCES users (id) ON DELETE
+    SET
+        NULL
+);
+
+-- 56. Bảng chat_messages
+CREATE TABLE chat_messages (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    chat_id BIGINT UNSIGNED NOT NULL,
+    sender_id CHAR(36) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+
 
 -- 19. Bảng password_reset_tokens
 CREATE TABLE password_reset_tokens (
@@ -401,416 +711,4 @@ CREATE TABLE failed_jobs (
     payload LONGTEXT,
     exception LONGTEXT,
     failed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 27. Bảng vouchers
-CREATE TABLE vouchers (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    code VARCHAR(255) NOT NULL UNIQUE,
-    description TEXT,
-    discount_type VARCHAR(255) NOT NULL DEFAULT 'percentage',
-    is_unlimited TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    status VARCHAR(255) NOT NULL DEFAULT 'active',
-    used_times INT UNSIGNED NOT NULL DEFAULT 0,
-    discount_value DECIMAL(10, 2) UNSIGNED NOT NULL,
-    min_order_value DECIMAL(10, 2) UNSIGNED,
-    max_discount_amount DECIMAL(10, 2) UNSIGNED,
-    usage_limit INT UNSIGNED,
-    start_date TIMESTAMP NOT NULL,
-    end_date TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
-
--- 28. Bảng employee_attendance
-CREATE TABLE employee_attendance (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
-    check_in TIMESTAMP NOT NULL,
-    check_out TIMESTAMP,
-    date DATE NOT NULL,
-    notes TEXT,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_employee_attendance_user_id ON employee_attendance (user_id);
-
-CREATE INDEX idx_employee_attendance_date ON employee_attendance (date);
-
--- 29. Bảng payment_methods
-CREATE TABLE payment_methods (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    method_name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
-
--- 30. Bảng orders
-CREATE TABLE orders (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
-    total_amount DECIMAL(10, 2) UNSIGNED NOT NULL,
-    shipping_address_id INT UNSIGNED NOT NULL,
-    payment_method_id INT UNSIGNED NOT NULL,
-    voucher_id INT UNSIGNED,
-    discount_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
-    status VARCHAR(255) NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (shipping_address_id) REFERENCES addresses (id) ON DELETE CASCADE,
-    FOREIGN KEY (payment_method_id) REFERENCES payment_methods (id) ON DELETE CASCADE,
-        FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE
-    SET
-        NULL
-);
-
--- 31. Bảng order_items
-CREATE TABLE order_items (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    order_id INT UNSIGNED NOT NULL,
-    item_type ENUM ('product', 'treatment') NOT NULL,
-    item_id INT UNSIGNED NOT NULL,
-    quantity INT UNSIGNED NOT NULL,
-    price DECIMAL(10, 2) UNSIGNED NOT NULL,
-    discount_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
-    discount_type ENUM('percentage', 'fixed_amount'),
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
-);
-
--- 32. Bảng carts
-CREATE TABLE carts (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
--- 33. Bảng cart_items
-CREATE TABLE cart_items (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    cart_id INT UNSIGNED NOT NULL,
-    item_type ENUM ('product', 'treatment') NOT NULL,
-    item_id INT UNSIGNED NOT NULL,
-    quantity INT UNSIGNED NOT NULL DEFAULT 1,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (cart_id) REFERENCES carts (id) ON DELETE CASCADE
-);
-
--- 34. Bảng ratings
-CREATE TABLE ratings (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
-    rating_type ENUM('treatment', 'product') NOT NULL,
-    item_id INT UNSIGNED NOT NULL,
-    stars TINYINT UNSIGNED NOT NULL,
-    comment TEXT,
-    image_id INT UNSIGNED,
-    video_id INT UNSIGNED,
-    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (item_id) REFERENCES treatments (id),
-    FOREIGN KEY (item_id) REFERENCES products (id),
-    FOREIGN KEY (image_id) REFERENCES images (id),
-    FOREIGN KEY (video_id) REFERENCES videos (id),
-    CONSTRAINT chk_stars CHECK (
-        stars BETWEEN 1
-        AND 5
-    )
-);
-
-CREATE INDEX idx_ratings_user_id ON ratings (user_id);
-
-CREATE INDEX idx_ratings_item_id ON ratings (item_id);
-
--- 35. Bảng favorites
-CREATE TABLE favorites (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    favorite_type ENUM ('product', 'treatment') NOT NULL,
-    item_id INT UNSIGNED NOT NULL,
-    user_id CHAR(36) NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
--- 36. Bảng notifications
-CREATE TABLE notifications (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
-    image_id INT UNSIGNED,
-    content TEXT NOT NULL,
-    status VARCHAR(255) NOT NULL DEFAULT 'unseen',
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
--- 37. Bảng appointments
-CREATE TABLE appointments (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
-    treatment_id INT UNSIGNED NOT NULL,
-    staff_user_id CHAR(36),
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP NOT NULL,
-    actual_start_time TIMESTAMP NULL,
-    actual_end_time TIMESTAMP NULL,
-    appointment_type ENUM (
-        'facial',
-        'massage',
-        'weight_loss',
-        'hair_removal',
-        'consultation',
-        'others'
-    ) NOT NULL DEFAULT 'others',
-    status ENUM ('pending', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'pending',
-    note TEXT,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (treatment_id) REFERENCES treatments (id),
-    FOREIGN KEY (staff_user_id) REFERENCES users (id)
-);
-
-CREATE INDEX idx_appointments_appointment_type ON appointments (appointment_type);
-
-CREATE INDEX idx_appointments_user_id ON appointments (user_id);
-
-CREATE INDEX idx_appointments_treatment_id ON appointments (treatment_id);
-
-CREATE INDEX idx_appointments_staff_user_id ON appointments (staff_user_id);
-
-CREATE INDEX idx_appointments_start_time ON appointments (start_time);
-
-CREATE INDEX idx_appointments_status ON appointments (status);
-
--- 39. Bảng user_vouchers
-CREATE TABLE user_vouchers (
-    user_id CHAR(36) NOT NULL,
-    voucher_id INT UNSIGNED NOT NULL,
-    used_at TIMESTAMP,
-    is_used TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    PRIMARY KEY (user_id, voucher_id),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE CASCADE
-);
-
--- 40. Bảng histories
-CREATE TABLE histories (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
-    -- Cập nhật kiểu dữ liệu user_id
-    table_name VARCHAR(255) NOT NULL,
-    row_id INT UNSIGNED NOT NULL,
-    action VARCHAR(255) NOT NULL,
-    changes JSON,
-    action_timestamp TIMESTAMP NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
--- 41. Bảng fcm_tokens
-CREATE TABLE fcm_tokens (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
-    -- Cập nhật kiểu dữ liệu user_id
-    fcm_token TEXT NOT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
--- 42. Bảng stock_movements
-CREATE TABLE stock_movements (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    product_id INT UNSIGNED NOT NULL,
-    quantity INT NOT NULL,
-    type ENUM ('in', 'out') NOT NULL,
-    stock_after_movement INT UNSIGNED NOT NULL,
-    note TEXT,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (product_id) REFERENCES products (id)
-);
-
-CREATE INDEX idx_stock_movements_product_id ON stock_movements (product_id);
-
-CREATE INDEX idx_stock_movements_created_at ON stock_movements (created_at);
-
--- 43. Bảng payment_histories
-CREATE TABLE payment_histories (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    invoice_id CHAR(36) NOT NULL,
-    old_payment_status VARCHAR(255) NOT NULL,
-    new_payment_status VARCHAR(255) NOT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (invoice_id) REFERENCES invoices (id) ON DELETE CASCADE
-);
-
--- 44. Bảng reward_items
-CREATE TABLE reward_items (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    item_type ENUM ('product', 'treatment_combo') NOT NULL,
-    item_id INT UNSIGNED NOT NULL,
-    points_required INT UNSIGNED NOT NULL,
-    is_active TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL
-);
-
--- 45. Bảng point_redemption_history
-CREATE TABLE point_redemption_history (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id CHAR(36) NOT NULL,
-    reward_item_id INT UNSIGNED NOT NULL,
-    points_used INT UNSIGNED NOT NULL,
-    redeemed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (reward_item_id) REFERENCES reward_items (id) ON DELETE CASCADE
-);
-
--- 46. Bảng product_translations
-CREATE TABLE product_translations (
-    product_id INT UNSIGNED NOT NULL,
-    language CHAR(2) DEFAULT 'vi' NOT NULL,
-    product_name VARCHAR(255) NOT NULL,
-    description TEXT,
-    PRIMARY KEY (product_id, language),
-    FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_product_translations_language ON product_translations (language);
-
--- 47. Bảng treatment_translations
-CREATE TABLE treatment_translations (
-    treatment_id INT UNSIGNED NOT NULL,
-    language CHAR(2) DEFAULT 'vi' NOT NULL,
-    treatment_name VARCHAR(255) NOT NULL,
-    description TEXT,
-    PRIMARY KEY (treatment_id, language),
-    FOREIGN KEY (treatment_id) REFERENCES treatments (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_treatment_translations_language ON treatment_translations (language);
-
--- 48. Bảng product_category_translations
-CREATE TABLE product_category_translations (
-    category_id INT UNSIGNED NOT NULL,
-    language CHAR(2) DEFAULT 'vi' NOT NULL,
-    category_name VARCHAR(255) NOT NULL,
-    PRIMARY KEY (category_id, language),
-    FOREIGN KEY (category_id) REFERENCES product_categories (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_product_category_translations_language ON product_category_translations (language);
-
--- 49. Bảng attribute_translations
-CREATE TABLE attribute_translations (
-    attribute_id INT UNSIGNED NOT NULL,
-    language CHAR(2) DEFAULT 'vi' NOT NULL,
-    attribute_name VARCHAR(255) NOT NULL,
-    PRIMARY KEY (attribute_id, language),
-    FOREIGN KEY (attribute_id) REFERENCES attributes (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_attribute_translations_language ON attribute_translations (language);
-
--- 50. Bảng treatment_category_translations
-CREATE TABLE treatment_category_translations (
-    category_id INT UNSIGNED NOT NULL,
-    language CHAR(2) DEFAULT 'vi' NOT NULL,
-    category_name VARCHAR(255) NOT NULL,
-    PRIMARY KEY (category_id, language),
-    FOREIGN KEY (category_id) REFERENCES treatment_categories (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_treatment_category_translations_language ON treatment_category_translations (language);
-
--- 51. Bảng voucher_translations
-CREATE TABLE voucher_translations (
-    voucher_id INT UNSIGNED NOT NULL,
-    language CHAR(2) DEFAULT 'vi' NOT NULL,
-    description TEXT,
-    PRIMARY KEY (voucher_id, language),
-    FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_voucher_translations_language ON voucher_translations (language);
-
--- 52. Bảng reward_item_translations
-CREATE TABLE reward_item_translations (
-    reward_item_id INT UNSIGNED NOT NULL,
-    language CHAR(2) DEFAULT 'vi' NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    PRIMARY KEY (reward_item_id, language),
-    FOREIGN KEY (reward_item_id) REFERENCES reward_items (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_reward_item_translations_language ON reward_item_translations (language);
-
--- 53. Bảng banners
-CREATE TABLE banners (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    image_url VARCHAR(255) NOT NULL,
-    link VARCHAR(255),
-    is_active BOOLEAN DEFAULT TRUE,
-    `order` INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- 54. Bảng ai_chat_configs
-CREATE TABLE ai_chat_configs (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    ai_name VARCHAR(255) NOT NULL,
-    context TEXT NOT NULL,
-    language VARCHAR(50) NOT NULL,
-    gemini_settings JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- 55. Bảng chats
-CREATE TABLE chats (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id CHAR(36) NOT NULL,
-    staff_id CHAR(36),
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (staff_id) REFERENCES users (id) ON DELETE
-    SET
-        NULL
-);
-
--- 56. Bảng chat_messages
-CREATE TABLE chat_messages (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    chat_id BIGINT UNSIGNED NOT NULL,
-    sender_id CHAR(36) NOT NULL,
-    message TEXT NOT NULL,
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES users (id) ON DELETE CASCADE
 );

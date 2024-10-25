@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\UserTreatmentPackage;
+use App\Models\ServiceCategory;
 
-class UserTreatmentPackageService
+class ServiceCategoryService
 {
     // Add your service methods here
 }

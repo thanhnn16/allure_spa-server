@@ -80,16 +80,16 @@ VALUES (1, 'FAITH',
         'Water, Cyclopentasiloxane, Titanium Dioxide, Ethylhexyl Methoxycinnamate, Butylene Glycol, Dimethicone, Glycerin, Pentylene Glycol, Niacinamide, PEG-10 Dimethicone, Silica, Cetyl PEG/PPG-10/1 Dimethicone, Sodium Chloride, Zinc Oxide, Phenoxyethanol, Disteardimonium Hectorite, Hydrogen Dimethicone, Triethoxycaprylylsilane, Aluminum Hydroxide, Fragrance, Dipropylene Glycol, Ethylhexylglycerin, Adenosine, Disodium EDTA, Hydrolyzed Collagen, Morus Alba Root Extract, Sodium Hyaluronate',
         'Sử dụng hàng ngày, sau bước dưỡng da', 'Bảo quản nơi khô ráo, thoáng mát', 'Phù hợp cho mọi loại da');
 
--- Update treatment_categories
-INSERT INTO treatment_categories (id, category_name)
+-- Update service_categories
+INSERT INTO service_categories (id, service_category_name)
 VALUES (1, 'Chăm sóc da mặt'),
        (2, 'Massage'),
        (3, 'Giảm béo'),
        (4, 'Triệt lông'),
        (5, 'Xăm thẩm mỹ');
 
--- Update treatments
-INSERT INTO treatments (category_id, name, description, duration, price)
+-- Update services
+INSERT INTO services (category_id, services.service_name, description, duration, price)
 VALUES (1, 'Chăm da Amino - Phù hợp mọi loại da', 'Liệu trình chăm sóc da mặt phù hợp cho mọi loại da', 60, 1350000),
        (1, 'Chống lão hoá - Photo', 'Liệu trình chống lão hóa sử dụng công nghệ Photo Facial kết hợp với Tế bào gốc',
         45, 1350000),
@@ -117,20 +117,20 @@ VALUES (1, 'Chăm da Amino - Phù hợp mọi loại da', 'Liệu trình chăm s
        (4, 'Triệt lông toàn thân', 'Liệu trình triệt lông toàn thân', NULL, 2200000),
        (5, 'Xăm mày, môi nghệ thuật', 'Dịch vụ xăm mày và môi nghệ thuật', NULL, 4000000);
 
--- Update treatment_combos
-INSERT INTO treatment_combos (treatment_id, combo_type, combo_price, validity_period)
+-- Update service_combos
+INSERT INTO service_combos (service_id, combo_type, combo_price, validity_period)
 SELECT id, '5_times', price * 4, 180
-FROM treatments
+FROM services
 UNION ALL
 SELECT id, '10_times', price * 7, 365
-FROM treatments;
+FROM services;
 
 -- Chèn dữ liệu vào bảng payment_methods
-INSERT INTO payment_methods (method_name)
-VALUES ('Tiền mặt'),
-       ('Thẻ tín dụng'),
-       ('Chuyển khoản ngân hàng'),
-       ('Ví điện tử');
+INSERT INTO payment_methods (id, method_name)
+VALUES (1,'Tiền mặt'),
+       (2,'Thẻ tín dụng'),
+       (3,'Chuyển khoản ngân hàng'),
+       (4, 'Ví điện tử');
 
 -- Chèn dữ liệu vào bảng addresses
 INSERT INTO addresses (user_id, address, address_type)
@@ -156,27 +156,27 @@ WHERE u.email = 'user@example.com'
   AND v.code = 'WELCOME10';
 
 -- Chèn dữ liệu vào bảng orders
-INSERT INTO orders (user_id, total_amount, status)
-SELECT id, 1500000, 'completed'
+INSERT INTO orders (user_id, payment_method_id, total_amount, status)
+SELECT id, 1,1500000, 'completed'
 FROM users
 WHERE email = 'user@example.com';
 
 -- Chèn dữ liệu vào bảng order_items
-INSERT INTO order_items (order_id, item_type_id, item_id, quantity, price)
-SELECT o.id, 1, p.id, 1, p.price
+INSERT INTO order_items (order_id, item_type, item_id, quantity, price)
+SELECT o.id, 'product', p.id, 1, p.price
 FROM orders o
          JOIN users u ON o.user_id = u.id
          JOIN products p ON p.name = 'FAITH Members Club Face Lamela Veil EX Cleansing'
 WHERE u.email = 'user@example.com'
 UNION ALL
-SELECT o.id, 2, t.id, 1, t.price
+SELECT o.id, 'service',t.id, 1, t.price
 FROM orders o
          JOIN users u ON o.user_id = u.id
-         JOIN treatments t ON t.name = 'Chăm sóc da cơ bản'
+         JOIN services t ON t.service_name = 'Chăm sóc da cơ bản'
 WHERE u.email = 'user@example.com';
 
 -- Chèn dữ liệu vào bảng invoices
-INSERT INTO invoices (id, user_id, staff_user_id, total_amount, paid_amount, status, payment_method, note,
+INSERT INTO invoices (id, user_id, staff_user_id, total_amount, paid_amount, status, note,
                       created_by_user_id, created_at)
 SELECT UUID(),                -- id
        u.id,                  -- user_id
@@ -184,7 +184,6 @@ SELECT UUID(),                -- id
        1500000,               -- total_amount
        1500000,               -- paid_amount (assuming fully paid)
        'paid',                -- status
-       'Tiền mặt',            -- payment_method
        'Thanh toán đơn hàng', -- note
        s.id,                  -- created_by_user_id
        NOW()                  -- created_at
@@ -195,7 +194,7 @@ WHERE u.email = 'user@example.com'
 LIMIT 1;
 
 -- Chèn dữ liệu vào bảng appointments
-INSERT INTO appointments (user_id, treatment_id, staff_user_id, start_time, end_time, appointment_type, status)
+INSERT INTO appointments (user_id, service_id, staff_user_id, start_time, end_time, appointment_type, status)
 SELECT u.id,
        t.id,
        s.id,
@@ -205,8 +204,8 @@ SELECT u.id,
        'confirmed'
 FROM users u
          JOIN users s ON s.email = 'staff@example.com'
-         JOIN treatments t ON t.name = 'Chăm sóc da cơ bản'
+         JOIN services t ON t.service_name = 'Chăm sóc da cơ bản'
          JOIN orders o ON o.user_id = u.id
-         JOIN order_items oi ON oi.order_id = o.id AND oi.item_type_id = 2 AND oi.item_id = t.id
+         JOIN order_items oi ON oi.order_id = o.id AND oi.item_type = 2 AND oi.item_id = t.id
 WHERE u.email = 'user@example.com'
 LIMIT 1;

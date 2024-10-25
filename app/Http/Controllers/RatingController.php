@@ -161,13 +161,13 @@ class RatingController extends BaseController
 
     /**
      * @OA\Get(
-     *     path="/api/treatments/{treatmentId}/ratings",
+     *     path="/api/services/{serviceId}/ratings",
      *     summary="Lấy danh sách đánh giá cho một liệu trình",
      *     description="Trả về danh sách đánh giá cho một liệu trình cụ thể với phân trang",
-     *     operationId="getTreatmentRatings",
+     *     operationId="getServiceRatings",
      *     tags={"Ratings"},
      *     @OA\Parameter(
-     *         name="treatmentId",
+     *         name="serviceId",
      *         in="path",
      *         description="ID của liệu trình",
      *         required=true,
@@ -210,12 +210,12 @@ class RatingController extends BaseController
      *                     type="array",
      *                     @OA\Items(ref="#/components/schemas/Rating")
      *                 ),
-     *                 @OA\Property(property="first_page_url", type="string", example="http://localhost/api/treatments/1/ratings?page=1"),
+     *                 @OA\Property(property="first_page_url", type="string", example="http://localhost/api/services/1/ratings?page=1"),
      *                 @OA\Property(property="from", type="integer", example=1),
      *                 @OA\Property(property="last_page", type="integer", example=1),
-     *                 @OA\Property(property="last_page_url", type="string", example="http://localhost/api/treatments/1/ratings?page=1"),
+     *                 @OA\Property(property="last_page_url", type="string", example="http://localhost/api/services/1/ratings?page=1"),
      *                 @OA\Property(property="next_page_url", type="string", example=null),
-     *                 @OA\Property(property="path", type="string", example="http://localhost/api/treatments/1/ratings"),
+     *                 @OA\Property(property="path", type="string", example="http://localhost/api/services/1/ratings"),
      *                 @OA\Property(property="per_page", type="integer", example=15),
      *                 @OA\Property(property="prev_page_url", type="string", example=null),
      *                 @OA\Property(property="to", type="integer", example=15),
@@ -225,9 +225,9 @@ class RatingController extends BaseController
      *     )
      * )
      */
-    public function getTreatmentRatings(Request $request, $treatmentId)
+    public function getServiceRatings(Request $request, $serviceId)
     {
-        $ratings = $this->ratingService->getRatingsByTreatment($treatmentId, $request->all());
+        $ratings = $this->ratingService->getRatingsByService($serviceId, $request->all());
         return $this->respondWithJson($ratings, 'Đánh giá cho liệu trình');
     }
 
@@ -243,7 +243,7 @@ class RatingController extends BaseController
      *         @OA\JsonContent(
      *             required={"user_id", "rating_type", "item_id", "stars", "status"},
      *             @OA\Property(property="user_id", type="integer", example=1),
-     *             @OA\Property(property="rating_type", type="string", enum={"treatment", "product"}, example="product"),
+     *             @OA\Property(property="rating_type", type="string", enum={"service", "product"}, example="product"),
      *             @OA\Property(property="item_id", type="integer", example=1),
      *             @OA\Property(property="stars", type="integer", example=5),
      *             @OA\Property(property="comment", type="string", example="Sản phẩm rất tốt!"),

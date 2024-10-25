@@ -2,16 +2,16 @@
 
 namespace App\Imports;
 
-use App\Models\TreatmentCombo;
+use App\Models\ServiceCombo;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class TreatmentComboImport implements ToModel, WithHeadingRow
+class ServiceComboImport implements ToModel, WithHeadingRow
 {
     public function model(array $row)
     {
-        return new TreatmentCombo([
-            'treatment_id' => $row['treatment_id'],
+        return new ServiceCombo([
+            'service_id' => $row['service_id'],
             'duration' => $row['duration'],
             'combo_type' => $row['combo_type'],
             'combo_price' => $row['combo_price'],

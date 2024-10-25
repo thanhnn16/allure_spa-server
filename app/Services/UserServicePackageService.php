@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\TreatmentTranslation;
+use App\Models\UserServicePackage;
 
-class TreatmentTranslationService
+class UserServicePackageService
 {
     // Add your service methods here
 }

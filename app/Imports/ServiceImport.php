@@ -2,18 +2,18 @@
 
 namespace App\Imports;
 
-use App\Models\Treatment;
-use App\Models\TreatmentTranslation;
+use App\Models\Service;
+use App\Models\ServiceTranslation;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class TreatmentImport implements ToModel, WithHeadingRow
+class ServiceImport implements ToModel, WithHeadingRow
 {
     public function model(array $row)
     {
-        $treatment = Treatment::create([
+        $service = Service::create([
             'category_id' => $row['category_id'],
-            'treatment_name' => $row['treatment_name'],
+            'service_name' => $row['service_name'],
             'description' => $row['description'],
             'duration' => $row['duration'],
             'price' => $row['price'],
@@ -23,14 +23,14 @@ class TreatmentImport implements ToModel, WithHeadingRow
         ]);
 
         if ($row['language'] && $row['language'] !== 'vi') {
-            TreatmentTranslation::create([
-                'treatment_id' => $treatment->id,
+            ServiceTranslation::create([
+                'service_id' => $service->id,
                 'language' => $row['language'],
-                'treatment_name' => $row['translated_treatment_name'],
+                'service_name' => $row['translated_service_name'],
                 'description' => $row['translated_description'],
             ]);
         }
 
-        return $treatment;
+        return $service;
     }
 }

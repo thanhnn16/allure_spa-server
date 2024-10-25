@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\TreatmentUsageHistory;
+use App\Models\ServiceCombo;
 
-class TreatmentUsageHistoryService
+class ServiceComboService
 {
     // Add your service methods here
 }

@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\TreatmentCategory;
+use App\Models\Media;
 
-class TreatmentCategoryService
+class MediaService
 {
     // Add your service methods here
 }

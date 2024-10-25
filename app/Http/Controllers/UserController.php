@@ -208,10 +208,10 @@ class UserController extends BaseController
         return $this->respondWithJson($result['data'], $result['message'], $result['status_code']);
     }
 
-    public function getUserTreatmentPackages($userId)
+    public function getUserServicePackages($userId)
     {
-        $userTreatmentPackages = $this->userService->getUserTreatmentPackages($userId);
-        return $this->respondWithJson($userTreatmentPackages, 'User treatment packages retrieved successfully');
+        $userServicePackages = $this->userService->getUserServicePackages($userId);
+        return $this->respondWithJson($userServicePackages, 'User service packages retrieved successfully');
     }
 
     public function debugAuth(Request $request)

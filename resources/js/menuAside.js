@@ -53,7 +53,7 @@ export default [
     {
         label: 'Quản lý liệu trình',
         icon: mdiListBox,
-        route: 'treatments.index'
+        route: 'services.index'
     },
     {
         label: 'Quản lý kho hàng',

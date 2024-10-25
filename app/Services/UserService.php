@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\UserTreatmentPackage;
+use App\Models\UserServicePackage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -59,7 +59,7 @@ class UserService
     {
         return User::with([
             'addresses',
-            'userTreatmentPackages.treatment_combo.treatment',
+            'userServicePackages.service_combo.service',
             'invoices',
             'vouchers'
         ])->findOrFail($id);
@@ -110,18 +110,18 @@ class UserService
         }
     }
 
-    public function getUserTreatmentPackages(string $userId): array
+    public function getUserServicePackages(string $userId): array
     {
-        return UserTreatmentPackage::where('user_id', $userId)
+        return UserServicePackage::where('user_id', $userId)
             ->where('remaining_sessions', '>', 0)
-            ->with('treatment') // Eager load the treatment relationship
+            ->with('service') // Eager load the service relationship
             ->get()
             ->map(function ($package) {
                 return [
                     'id' => $package->id,
-                    'treatment' => $package->treatment ? [
-                        'id' => $package->treatment->id,
-                        'name' => $package->treatment->name,
+                    'service' => $package->service ? [
+                        'id' => $package->service->id,
+                        'name' => $package->service->name,
                     ] : null,
                     'remaining_sessions' => $package->remaining_sessions,
                 ];

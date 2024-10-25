@@ -2,12 +2,12 @@
 
 namespace App\Imports;
 
-use App\Models\TreatmentUsageHistory;
+use App\Models\ServiceUsageHistory;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class TreatmentUsageHistoryImport implements ToModel, WithHeadingRow
+class ServiceUsageHistoryImport implements ToModel, WithHeadingRow
 {
     /**
      * @param array $row
@@ -16,9 +16,9 @@ class TreatmentUsageHistoryImport implements ToModel, WithHeadingRow
      */
     public function model(array $row)
     {
-        return new TreatmentUsageHistory([
-            'user_treatment_package_id' => $row['user_treatment_package_id'],
-            'treatment_date'            => Date::excelToDateTimeObject($row['treatment_date']),
+        return new ServiceUsageHistory([
+            'user_service_package_id' => $row['user_service_package_id'],
+            'service_date'            => Date::excelToDateTimeObject($row['service_date']),
             'staff_id'                  => $row['staff_id'],
             'notes'                     => $row['notes'],
             'session_result'            => $row['session_result'],
