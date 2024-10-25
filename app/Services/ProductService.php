@@ -5,26 +5,30 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\UploadedFile;
 
 class ProductService
 {
     public function getProducts($request)
     {
-        $query = Product::with(['category', 'image']);
+        $query = Product::with(['category', 'media']);
 
-        if ($request->has('search')) {
-            $query->where('name', 'like', "%{$request->search}%");
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->has('category')) {
+        if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
 
-        if ($request->has('sort')) {
-            $query->orderBy($request->sort, $request->input('direction', 'asc'));
+        if ($request->filled('sort')) {
+            $direction = $request->input('direction', 'asc');
+            $query->orderBy($request->sort, $direction);
+        } else {
+            $query->orderBy('created_at', 'desc');
         }
 
-        return $query->paginate($request->input('per_page', 15));
+        return $query;
     }
 
     public function getAllCategories()
@@ -34,12 +38,22 @@ class ProductService
 
     public function createProduct(array $data)
     {
-        return Product::create($data);
+        $product = Product::create($data);
+
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+            $path = $data['image']->store('products', 'public');
+            $product->media()->create([
+                'type' => 'image',
+                'file_path' => $path
+            ]);
+        }
+
+        return $product;
     }
 
     public function getProductById($id)
     {
-        return Product::with(['category', 'image', 'productDetail', 'attributes'])->findOrFail($id);
+        return Product::with(['category', 'media', 'priceHistory', 'attributes'])->findOrFail($id);
     }
 
     public function updateProduct($id, array $data)
@@ -57,6 +71,7 @@ class ProductService
 
     public function searchProducts($searchTerm)
     {
-        return Product::where('name', 'like', "%{$searchTerm}%")->get();
+        return Product::where('product_name', 'like', "%{$searchTerm}%")->with('media')->get();
     }
+
 }

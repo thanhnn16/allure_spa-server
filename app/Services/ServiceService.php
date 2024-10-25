@@ -15,14 +15,35 @@ class ServiceService
         return ServiceCategory::with('children', 'services')->whereNull('parent_id')->get();
     }
 
-    public function getPaginatedServices(int $perPage = 15): LengthAwarePaginator
+    public function getPaginatedServices(array $filters, int $perPage = 15): LengthAwarePaginator
     {
-        return Service::with('category')->paginate($perPage);
+        $query = Service::with('category');
+
+        if (!empty($filters['search'])) {
+            $query->where('name', 'like', '%' . $filters['search'] . '%');
+        }
+
+        if (!empty($filters['category'])) {
+            $query->where('category_id', $filters['category']);
+        }
+
+        if (!empty($filters['sort'])) {
+            $direction = $filters['direction'] ?? 'asc';
+            $query->orderBy($filters['sort'], $direction);
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function getServiceById(int $id): ?Service
     {
-        return Service::with('category')->find($id);
+        return Service::with([
+            'category',
+            'media',
+            'priceHistory' => function ($query) {
+                $query->orderBy('effective_from', 'desc');
+            }
+        ])->find($id);
     }
 
     public function updateService(int $id, array $data): ?Service

@@ -41,11 +41,11 @@
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                             <tr>
                                 <th scope="col" class="px-6 py-3 w-24">Ảnh</th>
-                                <th @click="sort('product_name')" scope="col" class="px-6 py-3 cursor-pointer">
+                                <th @click="sort('name')" scope="col" class="px-6 py-3 cursor-pointer">
                                     <div class="flex items-center justify-between h-full">
                                         <span class="mr-2">Tên sản phẩm</span>
-                                        <BaseIcon :path="sortIcon('product_name')" size="18" class="flex-shrink-0"
-                                            :class="{ 'text-gray-900': form.sort === 'product_name', 'text-gray-400': form.sort !== 'product_name' }" />
+                                        <BaseIcon :path="sortIcon('name')" size="18" class="flex-shrink-0"
+                                            :class="{ 'text-gray-900': form.sort === 'name', 'text-gray-400': form.sort !== 'name' }" />
                                     </div>
                                 </th>
                                 <th @click="sort('category_id')" scope="col" class="px-6 py-3 cursor-pointer">
@@ -69,20 +69,20 @@
                             <tr v-for="product in products.data" :key="product.id"
                                 class="bg-white border-b hover:bg-gray-50">
                                 <td class="px-6 py-4">
-                                    <img :src="product.image_url" alt="Product image"
+                                    <img :src="getProductImage(product)" :alt="product.name"
                                         class="w-16 h-16 object-cover rounded-md">
                                 </td>
                                 <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                    {{ product.product_name }}
+                                    {{ product.name }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    {{ product.category.category_name }}
+                                    {{ product.category ? product.category.category_name : 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4">
                                     {{ formatPrice(product.price) }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <BaseButton label="Xem chi tiết" color="info" small />
+                                    <BaseButton label="Xem chi tiết" color="info" small @click="viewProductDetails(product.id)" />
                                 </td>
                             </tr>
                         </tbody>
@@ -113,10 +113,10 @@ import TablePagination from '@/Components/TablePagination.vue'
 const props = defineProps({
     products: Object,
     categories: Array,
-    filters: Object,
+    filters: Object
 })
 
-const showFilters = ref(false)  // Add this line
+const showFilters = ref(false)
 
 const form = useForm({
     search: props.filters?.search || '',
@@ -140,11 +140,15 @@ const toggleFilters = () => {
 }
 
 const applyFilters = () => {
-    router.get(route('products.index'), form, { preserveState: true })
+    router.get(route('products.index'), form, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true
+    })
 }
 
 const resetFilters = () => {
-    form.category = ''
+    form.reset()
     applyFilters()
 }
 
@@ -173,24 +177,23 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
 }
 
-const loadChildCategories = () => {
-    if (form.parent_category) {
-        childCategories.value = props.categories.filter(category => category.parent_id == form.parent_category)
-    } else {
-        childCategories.value = []
+const getProductImage = (product) => {
+    if (product.media && product.media.length > 0) {
+        const media = product.media[0];
+        if (media.file_path) {
+            return `/storage${media.file_path}`;
+        }
     }
-    form.category = ''
+    return 'https://via.placeholder.com/150';
 }
 
-if (form.parent_category) {
-    loadChildCategories()
-}
+const products = computed(() => {
+    console.log('Products data:', props.products);
+    return props.products;
+});
 
-const getCategoryPath = (category) => {
-    if (category.parent) {
-        return `${category.parent.category_name} > ${category.category_name}`
-    }
-    return category.category_name
+const viewProductDetails = (productId) => {
+    router.visit(route('products.show', productId))
 }
 </script>
 

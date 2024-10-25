@@ -653,13 +653,13 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Lấy danh sách sản phẩm",
+                "summary": "Get product list",
                 "operationId": "1bfaa78d1c2c3848ab8165c5dadcad3e",
                 "parameters": [
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Tìm kiếm sản phẩm",
+                        "description": "Search for products",
                         "required": false,
                         "schema": {
                             "type": "string"
@@ -668,7 +668,7 @@
                     {
                         "name": "category",
                         "in": "query",
-                        "description": "Lọc theo danh mục",
+                        "description": "Filter by category",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -677,7 +677,7 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Số sản phẩm trên mỗi trang",
+                        "description": "Number of products per page",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -686,7 +686,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Thành công",
+                        "description": "Successful",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -694,7 +694,35 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/Product"
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "product_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "category": {
+                                                        "type": "object"
+                                                    },
+                                                    "media": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "file_path": {
+                                                                    "type": "string"
+                                                                },
+                                                                "type": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
                                             }
                                         },
                                         "message": {
@@ -753,13 +781,13 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Lấy thông tin chi tiết sản phẩm",
+                "summary": "Get product details",
                 "operationId": "7ab21ddb713501f3d4c2914892c02a21",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID sản phẩm",
+                        "description": "Product ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -768,13 +796,41 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Thành công",
+                        "description": "Successful",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/Product"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "product_name": {
+                                                    "type": "string"
+                                                },
+                                                "category": {
+                                                    "type": "object"
+                                                },
+                                                "media": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "file_path": {
+                                                                "type": "string"
+                                                            },
+                                                            "type": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
                                         },
                                         "message": {
                                             "type": "string",
@@ -864,6 +920,75 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Product deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/search": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Search products",
+                "operationId": "00dd863c04c380c1e2b08beae7af14a2",
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "Search query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "product_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "media": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "file_path": {
+                                                                    "type": "string"
+                                                                },
+                                                                "type": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Products searched successfully"
                                         }
                                     },
                                     "type": "object"
@@ -2674,40 +2799,6 @@
                 },
                 "type": "object"
             },
-            "Image": {
-                "title": "Image",
-                "description": "Image model",
-                "properties": {
-                    "id": {
-                        "description": "Image ID",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "url": {
-                        "description": "Image URL",
-                        "type": "string"
-                    },
-                    "alt_text": {
-                        "description": "Alternative text for the image",
-                        "type": "string"
-                    },
-                    "type": {
-                        "description": "Type of the image",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Creation timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Last update timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
             "Invoice": {
                 "title": "Invoice",
                 "description": "Invoice model",
@@ -3070,12 +3161,40 @@
                     "category_id": {
                         "type": "integer"
                     },
-                    "image_id": {
-                        "type": "integer",
-                        "nullable": true
-                    },
                     "quantity": {
                         "type": "integer"
+                    },
+                    "brand_description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "usage": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "benefits": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "key_ingredients": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "ingredients": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "directions": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "storage_instructions": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "product_notes": {
+                        "type": "string",
+                        "nullable": true
                     },
                     "created_at": {
                         "type": "string",
@@ -3188,45 +3307,6 @@
                     "name": {
                         "description": "Translated name of the product category",
                         "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "ProductDetail": {
-                "title": "Product Detail",
-                "description": "Product Detail model",
-                "properties": {
-                    "id": {
-                        "description": "Product Detail ID",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "product_id": {
-                        "description": "ID of the associated product",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "description": {
-                        "description": "Detailed description of the product",
-                        "type": "string"
-                    },
-                    "ingredients": {
-                        "description": "List of ingredients",
-                        "type": "string"
-                    },
-                    "usage_instructions": {
-                        "description": "Instructions for using the product",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Timestamp of creation",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Timestamp of last update",
-                        "type": "string",
-                        "format": "date-time"
                     }
                 },
                 "type": "object"
@@ -4021,38 +4101,6 @@
                         "description": "Last update date",
                         "type": "string",
                         "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
-            "Video": {
-                "title": "Video",
-                "description": "Mô hình Video",
-                "properties": {
-                    "id": {
-                        "description": "ID của video",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "video_path": {
-                        "description": "Đường dẫn của video",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Ngày tạo",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Ngày cập nhật",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "deleted_at": {
-                        "description": "Ngày xóa",
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
                     }
                 },
                 "type": "object"

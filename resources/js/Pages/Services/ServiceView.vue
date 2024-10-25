@@ -21,12 +21,9 @@
                             <label class="block mb-2">Danh mục</label>
                             <select v-model="form.category" class="w-full px-4 py-2 border rounded-md">
                                 <option value="">Tất cả danh mục</option>
-                                <template v-for="category in categories" :key="category.id">
-                                    <option :value="category.id">{{ category.category_name }}</option>
-                                    <option v-for="child in category.children" :key="child.id" :value="child.id">
-                                        -- {{ child.category_name }}
-                                    </option>
-                                </template>
+                                <option v-for="category in categories" :key="category.id" :value="category.id">
+                                    {{ category.service_category_name }}
+                                </option>
                             </select>
                         </div>
                     </div>
@@ -41,16 +38,19 @@
                         <option :value="50">Xem 50 mỗi trang</option>
                     </select>
                 </div>
-                <div class="overflow-x-auto">
+                <div v-if="!services.data || services.data.length === 0" class="text-center py-4">
+                    Không có dữ liệu liệu trình
+                </div>
+                <div v-else class="overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-500">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                             <tr>
                                 <th scope="col" class="px-6 py-3 w-24">Ảnh</th>
-                                <th @click="sort('treatment_name')" scope="col" class="px-6 py-3 cursor-pointer">
+                                <th @click="sort('service_name')" scope="col" class="px-6 py-3 cursor-pointer">
                                     <div class="flex items-center justify-between h-full">
                                         <span class="mr-2">Tên liệu trình</span>
-                                        <BaseIcon :path="sortIcon('treatment_name')" size="18" class="flex-shrink-0"
-                                            :class="{ 'text-gray-900': form.sort === 'treatment_name', 'text-gray-400': form.sort !== 'treatment_name' }" />
+                                        <BaseIcon :path="sortIcon('service_name')" size="18" class="flex-shrink-0"
+                                            :class="{ 'text-gray-900': form.sort === 'service_name', 'text-gray-400': form.sort !== 'service_name' }" />
                                     </div>
                                 </th>
                                 <th @click="sort('category_id')" scope="col" class="px-6 py-3 cursor-pointer">
@@ -67,37 +67,42 @@
                                             :class="{ 'text-gray-900': form.sort === 'duration', 'text-gray-400': form.sort !== 'duration' }" />
                                     </div>
                                 </th>
-                                <th @click="sort('price')" scope="col" class="px-6 py-3 cursor-pointer">
+                                <th @click="sort('single_price')" scope="col" class="px-6 py-3 cursor-pointer">
                                     <div class="flex items-center justify-between h-full">
-                                        <span class="mr-2">Giá</span>
-                                        <BaseIcon :path="sortIcon('price')" size="18" class="flex-shrink-0"
-                                            :class="{ 'text-gray-900': form.sort === 'price', 'text-gray-400': form.sort !== 'price' }" />
+                                        <span class="mr-2">Giá (1 lần)</span>
+                                        <BaseIcon :path="sortIcon('single_price')" size="18" class="flex-shrink-0"
+                                            :class="{ 'text-gray-900': form.sort === 'single_price', 'text-gray-400': form.sort !== 'single_price' }" />
                                     </div>
                                 </th>
                                 <th scope="col" class="px-6 py-3 w-32">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="treatment in treatments.data" :key="treatment.id"
+                            <tr v-for="service in services.data" :key="service.id"
                                 class="bg-white border-b hover:bg-gray-50">
                                 <td class="px-6 py-4">
-                                    <img :src="treatment.image_url" alt="Treatment image"
+                                    <img :src="service.image?.url || 'https://via.placeholder.com/150'" alt="service.name"
                                         class="w-16 h-16 object-cover rounded-md">
                                 </td>
                                 <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                    {{ treatment.treatment_name }}
+                                    {{ service.service_name }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    {{ getCategoryPath(treatment.category) }}
+                                    {{ service.category?.service_category_name || 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    {{ formatDuration(treatment.duration) }}
+                                    {{ formatDuration(service.duration) }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    {{ formatPrice(treatment.price) }}
+                                    {{ formatPrice(service.single_price) }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <BaseButton label="Xem chi tiết" color="info" small />
+                                    <BaseButton 
+                                      label="Xem chi tiết" 
+                                      color="info" 
+                                      small 
+                                      @click="viewServiceDetails(service.id)"
+                                    />
                                 </td>
                             </tr>
                         </tbody>
@@ -105,8 +110,8 @@
                 </div>
             </CardBox>
 
-            <div v-if="treatments.links" class="mt-6">
-                <TablePagination :links="treatments.links" />
+            <div v-if="services.links" class="mt-6">
+                <TablePagination :links="services.links" />
             </div>
         </SectionMain>
     </LayoutAuthenticated>
@@ -126,10 +131,12 @@ import { useForm, router } from '@inertiajs/vue3'
 import TablePagination from '@/Components/TablePagination.vue'
 
 const props = defineProps({
-    treatments: Object,
+    services: Object,
     categories: Array,
     filters: Object,
 })
+
+console.log('Received props:', props);
 
 const showFilters = ref(false)
 
@@ -155,11 +162,11 @@ const toggleFilters = () => {
 }
 
 const applyFilters = () => {
-    router.get(route('treatments.index'), form, { preserveState: true })
+    router.get(route('services.index'), form, { preserveState: true })
 }
 
 const resetFilters = () => {
-    form.category = ''
+    form.reset()
     applyFilters()
 }
 
@@ -204,11 +211,8 @@ const formatDuration = (duration) => {
     return result.trim();
 }
 
-const getCategoryPath = (category) => {
-    if (category.parent) {
-        return `${category.parent.category_name} > ${category.category_name}`;
-    }
-    return category.category_name;
+const viewServiceDetails = (serviceId) => {
+    router.visit(route('services.show', serviceId))
 }
 </script>
 

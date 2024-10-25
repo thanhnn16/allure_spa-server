@@ -6,6 +6,7 @@ use App\Services\ServiceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Service;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Tag(
@@ -17,7 +18,7 @@ class ServiceController extends BaseController
 {
     protected $serviceService;
 
-    public function __construct(Service $serviceService)
+    public function __construct(ServiceService $serviceService)
     {
         $this->serviceService = $serviceService;
     }
@@ -60,14 +61,17 @@ class ServiceController extends BaseController
      */
     public function index(Request $request)
     {
-        $services = $this->serviceService->getPaginatedServices($request->input('per_page', 10));
+        $filters = $request->only(['search', 'category', 'sort', 'direction']);
+        $services = $this->serviceService->getPaginatedServices($filters, $request->input('per_page', 10));
 
         if ($request->expectsJson()) {
             return $this->respondWithJson($services, 'Services retrieved successfully');
         }
 
-        return $this->respondWithInertia('Services/Index', [
-            'services' => $services
+        return $this->respondWithInertia('Services/ServiceView', [
+            'services' => $services,
+            'categories' => $this->serviceService->getAllCategories(),
+            'filters' => $filters + ['per_page' => $request->input('per_page', 10)]
         ]);
     }
 
@@ -200,7 +204,10 @@ class ServiceController extends BaseController
         $service = $this->serviceService->getServiceById($id);
 
         if (!$service) {
-            return $this->respondWithJson(null, 'Service not found', 404);
+            if ($request->expectsJson()) {
+                return $this->respondWithJson(null, 'Service not found', 404);
+            }
+            return redirect()->route('services.index')->with('error', 'Service not found');
         }
 
         if ($request->expectsJson()) {
@@ -208,7 +215,7 @@ class ServiceController extends BaseController
         }
 
         return $this->respondWithInertia('Services/Show', [
-            'service' => $service
+            'service' => $service->toArray()
         ]);
     }
 

@@ -157,6 +157,12 @@ php artisan config:cache
 php artisan config:clear
 ```
 
+**_Lệnh link storage:_**
+
+```bash
+php artisan storage:link
+```
+
 
 ## Đọc thêm Document (Nên đọc để hiểu rõ hơn về các công nghệ sử dụng)
 

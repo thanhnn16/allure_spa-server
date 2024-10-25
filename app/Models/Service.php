@@ -9,18 +9,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @OA\Schema(
  *     schema="Service",
- *     title="Service",
- *     description="Service model",
- *     @OA\Property(property="id", type="integer", format="int64", description="Service ID"),
- *     @OA\Property(property="name", type="string", description="Service name"),
- *     @OA\Property(property="price", type="number", format="float", description="Service price"),
- *     @OA\Property(property="description", type="string", description="Service description"),
- *     @OA\Property(property="duration", type="integer", description="Service duration in minutes"),
- *     @OA\Property(property="image_id", type="integer", format="int64", description="Image ID"),
- *     @OA\Property(property="category_id", type="integer", format="int64", description="Category ID"),
- *     @OA\Property(property="created_at", type="string", format="date-time", description="Creation date"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", description="Last update date"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Deletion date")
+ *     title="Dịch vụ",
+ *     description="Mô hình dịch vụ",
+ *     @OA\Property(property="id", type="integer", format="int64", description="ID dịch vụ"),
+ *     @OA\Property(property="service_name", type="string", description="Tên dịch vụ"),
+ *     @OA\Property(property="description", type="string", description="Mô tả dịch vụ"),
+ *     @OA\Property(property="duration", type="integer", description="Thời gian dịch vụ tính bằng phút"),
+ *     @OA\Property(property="category_id", type="integer", format="int64", description="ID danh mục"),
+ *     @OA\Property(property="single_price", type="number", format="float", description="Giá dịch vụ đơn lẻ"),
+ *     @OA\Property(property="combo_5_price", type="number", format="float", description="Giá combo 5 lần"),
+ *     @OA\Property(property="combo_10_price", type="number", format="float", description="Giá combo 10 lần"),
+ *     @OA\Property(property="validity_period", type="integer", description="Thời hạn sử dụng tính bằng ngày"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="Ngày tạo"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", description="Ngày cập nhật cuối cùng"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Ngày xóa")
  * )
  */
 class Service extends Model
@@ -28,27 +30,33 @@ class Service extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'name',
-        'price',
+        'service_name',
         'description',
         'duration',
-        'image_id',
-        'category_id'
+        'category_id',
+        'single_price',
+        'combo_5_price',
+        'combo_10_price',
+        'validity_period'
     ];
 
-    public function image()
+    protected $morphClass = 'service';
+    protected $casts = [
+        'single_price' => 'float',
+        'combo_5_price' => 'float',
+        'combo_10_price' => 'float',
+        'duration' => 'integer',
+        'validity_period' => 'integer',
+    ];
+
+    public function media()
     {
-        return $this->belongsTo(Image::class);
+        return $this->morphMany(Media::class, 'mediable');
     }
 
     public function priceHistory()
     {
         return $this->hasMany(ServicePriceHistory::class);
-    }
-
-    public function combos()
-    {
-        return $this->hasMany(ServiceCombo::class);
     }
 
     public function appointments()
@@ -59,11 +67,6 @@ class Service extends Model
     public function ratings()
     {
         return $this->hasMany(Rating::class);
-    }
-
-    public function translations()
-    {
-        return $this->hasMany(ServiceTranslation::class);
     }
 
     public function category()
@@ -79,10 +82,5 @@ class Service extends Model
     public function userServicePackages()
     {
         return $this->hasMany(UserServicePackage::class);
-    }
-
-    public function video()
-    {
-        return $this->belongsTo(Video::class);
     }
 }

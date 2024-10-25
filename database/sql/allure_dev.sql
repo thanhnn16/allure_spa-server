@@ -83,8 +83,8 @@ CREATE INDEX idx_products_category_id ON products (category_id);
 
 CREATE INDEX idx_products_name ON products (name);
 
--- 5. Bảng product_price_history
-CREATE TABLE product_price_history (
+-- 5. Bảng product_price_histories
+CREATE TABLE product_price_histories (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     product_id INT UNSIGNED NOT NULL,
     price DECIMAL(10, 2) UNSIGNED NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE product_price_history (
     FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_product_price_history_product_id_effective_from ON product_price_history (product_id, effective_from);
+CREATE INDEX idx_product_price_histories_product_id_effective_from ON product_price_histories (product_id, effective_from);
 
 CREATE INDEX idx_products_product_name ON products (name);
 
@@ -158,8 +158,8 @@ CREATE INDEX idx_services_name ON services (service_name);
 
 CREATE INDEX idx_services_category_id ON services (category_id);
 
--- 11. Bảng service_price_history
-CREATE TABLE service_price_history (
+-- 11. Bảng service_price_histories
+CREATE TABLE service_price_histories (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     service_id INT UNSIGNED NOT NULL,
     price DECIMAL(10, 2) UNSIGNED NOT NULL,
@@ -170,7 +170,7 @@ CREATE TABLE service_price_history (
     FOREIGN KEY (service_id) REFERENCES services (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_service_price_history_service_id_effective_from ON service_price_history (service_id, effective_from);
+CREATE INDEX idx_service_price_histories_service_id_effective_from ON service_price_histories (service_id, effective_from);
 
 
 -- 14. Bảng staff_details
