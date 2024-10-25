@@ -67,7 +67,7 @@ class Product extends Model
 
     public function orderItems()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->morphMany(OrderItem::class, 'item');
     }
 
     public function cartItems()

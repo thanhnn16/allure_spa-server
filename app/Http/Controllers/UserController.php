@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Annotations as OA;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\User;
 
 class UserController extends BaseController
 {
@@ -196,10 +197,46 @@ class UserController extends BaseController
 
     public function searchUsers(Request $request)
     {
+        Log::info('Search Users Request', [
+            'query' => $request->get('query'),
+            'all_parameters' => $request->all()
+        ]);
+
         $query = $request->get('query');
-        $limit = $request->get('limit', 10);
-        $result = $this->userService->searchUsers($query, $limit);
-        return $this->respondWithJson($result['data'], $result['message'], $result['status_code']);
+        
+        try {
+            $users = User::where(function($q) use ($query) {
+                    $q->where('full_name', 'LIKE', "%{$query}%")
+                      ->orWhere('phone_number', 'LIKE', "%{$query}%")
+                      ->orWhere('email', 'LIKE', "%{$query}%");
+                })
+                ->where('role', 'user')
+                ->take(10)
+                ->get(['id', 'full_name', 'phone_number', 'email']);
+
+            Log::info('Search Users Result', [
+                'count' => $users->count(),
+                'users' => $users->toArray()
+            ]);
+
+            return response()->json([
+                'status_code' => 200,
+                'success' => true,
+                'data' => $users
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Search Users Error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status_code' => 500,
+                'success' => false,
+                'message' => 'Error searching users',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getStaffList()

@@ -2421,41 +2421,6 @@
                 },
                 "type": "object"
             },
-            "AttributeTranslation": {
-                "title": "AttributeTranslation",
-                "description": "AttributeTranslation model",
-                "properties": {
-                    "id": {
-                        "description": "Unique identifier",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "attribute_id": {
-                        "description": "ID of the related attribute",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "language": {
-                        "description": "Language code",
-                        "type": "string"
-                    },
-                    "name": {
-                        "description": "Translated name of the attribute",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Creation timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Last update timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
             "Banner": {
                 "title": "Banner",
                 "description": "Banner model",
@@ -2800,105 +2765,82 @@
                 "type": "object"
             },
             "Invoice": {
-                "title": "Invoice",
-                "description": "Invoice model",
+                "title": "Hóa đơn",
+                "description": "Mô hình hóa đơn",
                 "properties": {
                     "id": {
-                        "description": "Invoice ID",
-                        "type": "integer",
-                        "format": "int64"
+                        "description": "ID hóa đơn",
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "user_id": {
-                        "description": "User ID",
-                        "type": "integer",
-                        "format": "int64"
+                        "description": "ID người dùng",
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "staff_user_id": {
-                        "description": "Staff User ID",
-                        "type": "integer",
-                        "format": "int64"
+                        "description": "ID nhân viên",
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
                     },
                     "total_amount": {
-                        "description": "Total amount",
+                        "description": "Tổng số tiền",
                         "type": "number",
                         "format": "float"
                     },
                     "paid_amount": {
-                        "description": "Paid amount",
+                        "description": "Số tiền đã thanh toán",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "remaining_amount": {
+                        "description": "Số tiền còn lại",
                         "type": "number",
                         "format": "float"
                     },
                     "status": {
-                        "description": "Invoice status",
-                        "type": "string"
+                        "description": "Trạng thái hóa đơn",
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "partial",
+                            "paid",
+                            "cancelled"
+                        ]
                     },
-                    "payment_method": {
-                        "description": "Payment method",
-                        "type": "string"
+                    "order_id": {
+                        "description": "ID đơn hàng",
+                        "type": "integer",
+                        "format": "int64",
+                        "nullable": true
                     },
                     "note": {
-                        "description": "Invoice note",
-                        "type": "string"
+                        "description": "Ghi chú",
+                        "type": "string",
+                        "nullable": true
                     },
                     "created_by_user_id": {
-                        "description": "Created by User ID",
-                        "type": "integer",
-                        "format": "int64"
+                        "description": "ID người tạo",
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
                     },
                     "created_at": {
-                        "description": "Creation date",
+                        "description": "Ngày tạo",
                         "type": "string",
                         "format": "date-time"
                     },
                     "updated_at": {
-                        "description": "Last update date",
+                        "description": "Ngày cập nhật cuối cùng",
                         "type": "string",
                         "format": "date-time"
                     },
                     "deleted_at": {
-                        "description": "Deletion date",
+                        "description": "Ngày xóa",
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "InvoicePayment": {
-                "title": "Invoice Payment",
-                "description": "Model representing a payment for an invoice",
-                "properties": {
-                    "id": {
-                        "description": "The unique identifier of the invoice payment",
-                        "type": "integer"
-                    },
-                    "invoice_id": {
-                        "description": "The ID of the associated invoice",
-                        "type": "integer"
-                    },
-                    "payment_method_id": {
-                        "description": "The ID of the payment method used",
-                        "type": "integer"
-                    },
-                    "amount": {
-                        "description": "The amount of the payment",
-                        "type": "number",
-                        "format": "float"
-                    },
-                    "payment_date": {
-                        "description": "The date and time of the payment",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "created_at": {
-                        "description": "The creation timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "The last update timestamp",
-                        "type": "string",
-                        "format": "date-time"
                     }
                 },
                 "type": "object"
@@ -2947,35 +2889,55 @@
                 "type": "object"
             },
             "Order": {
-                "title": "Order",
-                "description": "Order model",
+                "title": "Đơn hàng",
+                "description": "Mô hình đơn hàng",
                 "properties": {
                     "id": {
-                        "description": "Order ID",
+                        "description": "ID đơn hàng",
                         "type": "integer",
                         "format": "int64"
                     },
                     "user_id": {
-                        "description": "User ID",
+                        "description": "ID người dùng",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "total_amount": {
+                        "description": "Tổng số tiền của đơn hàng",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "shipping_address_id": {
+                        "description": "ID địa chỉ giao hàng",
                         "type": "integer",
                         "format": "int64"
                     },
-                    "total_amount": {
-                        "description": "Total amount of the order",
+                    "payment_method_id": {
+                        "description": "ID phương thức thanh toán",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "voucher_id": {
+                        "description": "ID voucher",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "discount_amount": {
+                        "description": "Số tiền giảm giá",
                         "type": "number",
                         "format": "float"
                     },
                     "status": {
-                        "description": "Status of the order",
+                        "description": "Trạng thái của đơn hàng",
                         "type": "string"
                     },
                     "created_at": {
-                        "description": "Creation timestamp",
+                        "description": "Thời gian tạo",
                         "type": "string",
                         "format": "date-time"
                     },
                     "updated_at": {
-                        "description": "Last update timestamp",
+                        "description": "Thời gian cập nhật cuối cùng",
                         "type": "string",
                         "format": "date-time"
                     }
@@ -2983,45 +2945,71 @@
                 "type": "object"
             },
             "OrderItem": {
-                "title": "Order Item",
-                "description": "Order Item model",
+                "title": "Mục đơn hàng",
+                "description": "Mô hình mục đơn hàng",
                 "properties": {
                     "id": {
-                        "description": "Order Item ID",
+                        "description": "ID mục đơn hàng",
                         "type": "integer",
                         "format": "int64"
                     },
                     "order_id": {
-                        "description": "Order ID",
+                        "description": "ID đơn hàng",
                         "type": "integer",
                         "format": "int64"
                     },
-                    "product_id": {
-                        "description": "Product ID",
+                    "item_type": {
+                        "description": "Loại mục (sản phẩm hoặc dịch vụ)",
+                        "type": "string",
+                        "enum": [
+                            "product",
+                            "service"
+                        ]
+                    },
+                    "item_id": {
+                        "description": "ID của sản phẩm hoặc dịch vụ",
                         "type": "integer",
                         "format": "int64"
+                    },
+                    "service_type": {
+                        "description": "Loại dịch vụ (đơn lẻ, combo 5, combo 10)",
+                        "type": "string",
+                        "enum": [
+                            "single",
+                            "combo_5",
+                            "combo_10"
+                        ],
+                        "nullable": true
                     },
                     "quantity": {
-                        "description": "Quantity of the product",
+                        "description": "Số lượng",
                         "type": "integer"
                     },
                     "price": {
-                        "description": "Price of the product",
+                        "description": "Giá",
                         "type": "number",
                         "format": "float"
                     },
-                    "total": {
-                        "description": "Total price for this item",
+                    "discount_amount": {
+                        "description": "Số tiền giảm giá",
                         "type": "number",
                         "format": "float"
+                    },
+                    "discount_type": {
+                        "description": "Loại giảm giá (phần trăm hoặc số tiền cố định)",
+                        "type": "string",
+                        "enum": [
+                            "percentage",
+                            "fixed_amount"
+                        ]
                     },
                     "created_at": {
-                        "description": "Creation date",
+                        "description": "Ngày tạo",
                         "type": "string",
                         "format": "date-time"
                     },
                     "updated_at": {
-                        "description": "Last update date",
+                        "description": "Ngày cập nhật cuối cùng",
                         "type": "string",
                         "format": "date-time"
                     }
@@ -3029,43 +3017,29 @@
                 "type": "object"
             },
             "PaymentHistory": {
-                "title": "Payment History",
-                "description": "Payment History model",
+                "title": "Lịch sử thanh toán",
+                "description": "Mô hình lịch sử thanh toán",
                 "properties": {
                     "id": {
-                        "description": "Payment history ID",
+                        "description": "ID lịch sử thanh toán",
                         "type": "integer",
                         "format": "int64"
                     },
                     "invoice_id": {
-                        "description": "Related invoice ID",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "amount": {
-                        "description": "Payment amount",
-                        "type": "number",
-                        "format": "float"
-                    },
-                    "payment_method": {
-                        "description": "Payment method used",
-                        "type": "string"
-                    },
-                    "transaction_id": {
-                        "description": "Transaction ID",
-                        "type": "string"
-                    },
-                    "status": {
-                        "description": "Payment status",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Creation date",
+                        "description": "ID hóa đơn liên quan",
                         "type": "string",
-                        "format": "date-time"
+                        "format": "uuid"
+                    },
+                    "old_payment_status": {
+                        "description": "Trạng thái thanh toán cũ",
+                        "type": "string"
+                    },
+                    "new_payment_status": {
+                        "description": "Trạng thái thanh toán mới",
+                        "type": "string"
                     },
                     "updated_at": {
-                        "description": "Last update date",
+                        "description": "Ngày cập nhật",
                         "type": "string",
                         "format": "date-time"
                     }
@@ -3246,67 +3220,39 @@
                 "type": "object"
             },
             "ProductCategory": {
-                "title": "Product Category",
-                "description": "Product Category model",
+                "title": "Danh mục sản phẩm",
+                "description": "Mô hình danh mục sản phẩm",
                 "properties": {
                     "id": {
-                        "description": "Unique identifier",
+                        "description": "Định danh duy nhất",
                         "type": "integer",
                         "format": "int64"
                     },
-                    "name": {
-                        "description": "Name of the category",
+                    "category_name": {
+                        "description": "Tên của danh mục",
                         "type": "string"
                     },
                     "parent_id": {
-                        "description": "ID of the parent category",
-                        "type": "integer",
-                        "format": "int64",
-                        "nullable": true
-                    },
-                    "image_id": {
-                        "description": "ID of the associated image",
+                        "description": "ID của danh mục cha",
                         "type": "integer",
                         "format": "int64",
                         "nullable": true
                     },
                     "created_at": {
-                        "description": "Creation timestamp",
+                        "description": "Thời gian tạo",
                         "type": "string",
                         "format": "date-time"
                     },
                     "updated_at": {
-                        "description": "Last update timestamp",
+                        "description": "Thời gian cập nhật cuối cùng",
                         "type": "string",
                         "format": "date-time"
                     },
                     "deleted_at": {
-                        "description": "Deletion timestamp",
+                        "description": "Thời gian xóa",
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "ProductCategoryTranslation": {
-                "title": "Product Category Translation",
-                "description": "Model representing a translation of a product category",
-                "properties": {
-                    "productCategory": {
-                        "$ref": "#/components/schemas/ProductCategory"
-                    },
-                    "product_category_id": {
-                        "description": "ID of the related product category",
-                        "type": "integer"
-                    },
-                    "language": {
-                        "description": "Language code of the translation",
-                        "type": "string"
-                    },
-                    "name": {
-                        "description": "Translated name of the product category",
-                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -3328,50 +3274,19 @@
                         "type": "number",
                         "format": "float"
                     },
-                    "effective_date": {
-                        "description": "Ngày hiệu lực của giá",
+                    "effective_from": {
+                        "description": "Thời điểm bắt đầu hiệu lực của giá",
                         "type": "string",
                         "format": "date-time"
+                    },
+                    "effective_to": {
+                        "description": "Thời điểm kết thúc hiệu lực của giá",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
                     },
                     "created_at": {
                         "description": "Thời gian tạo bản ghi",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Thời gian cập nhật cuối cùng",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
-            "ProductTranslation": {
-                "title": "Product Translation",
-                "description": "Model đại diện cho bản dịch của sản phẩm",
-                "properties": {
-                    "id": {
-                        "description": "ID của bản dịch",
-                        "type": "integer"
-                    },
-                    "product_id": {
-                        "description": "ID của sản phẩm liên quan",
-                        "type": "integer"
-                    },
-                    "language": {
-                        "description": "Mã ngôn ngữ của bản dịch",
-                        "type": "string"
-                    },
-                    "name": {
-                        "description": "Tên đã dịch của sản phẩm",
-                        "type": "string"
-                    },
-                    "description": {
-                        "description": "Mô tả đã dịch của sản phẩm",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Thời gian tạo",
                         "type": "string",
                         "format": "date-time"
                     },
@@ -3492,91 +3407,63 @@
                 },
                 "type": "object"
             },
-            "RewardItemTranslation": {
-                "title": "Reward Item Translation",
-                "description": "Model representing a translation of a reward item",
-                "properties": {
-                    "id": {
-                        "description": "The ID of the translation",
-                        "type": "integer"
-                    },
-                    "reward_item_id": {
-                        "description": "The ID of the related reward item",
-                        "type": "integer"
-                    },
-                    "language": {
-                        "description": "The language code of the translation",
-                        "type": "string"
-                    },
-                    "name": {
-                        "description": "The translated name of the reward item",
-                        "type": "string"
-                    },
-                    "description": {
-                        "description": "The translated description of the reward item",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Timestamp of creation",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Timestamp of last update",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
             "Service": {
-                "title": "Service",
-                "description": "Service model",
+                "title": "Dịch vụ",
+                "description": "Mô hình dịch vụ",
                 "properties": {
                     "id": {
-                        "description": "Service ID",
+                        "description": "ID dịch vụ",
                         "type": "integer",
                         "format": "int64"
                     },
-                    "name": {
-                        "description": "Service name",
+                    "service_name": {
+                        "description": "Tên dịch vụ",
                         "type": "string"
                     },
-                    "price": {
-                        "description": "Service price",
-                        "type": "number",
-                        "format": "float"
-                    },
                     "description": {
-                        "description": "Service description",
+                        "description": "Mô tả dịch vụ",
                         "type": "string"
                     },
                     "duration": {
-                        "description": "Service duration in minutes",
+                        "description": "Thời gian dịch vụ tính bằng phút",
                         "type": "integer"
                     },
-                    "image_id": {
-                        "description": "Image ID",
+                    "category_id": {
+                        "description": "ID danh mục",
                         "type": "integer",
                         "format": "int64"
                     },
-                    "category_id": {
-                        "description": "Category ID",
-                        "type": "integer",
-                        "format": "int64"
+                    "single_price": {
+                        "description": "Giá dịch vụ đơn lẻ",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "combo_5_price": {
+                        "description": "Giá combo 5 lần",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "combo_10_price": {
+                        "description": "Giá combo 10 lần",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "validity_period": {
+                        "description": "Thời hạn sử dụng tính bằng ngày",
+                        "type": "integer"
                     },
                     "created_at": {
-                        "description": "Creation date",
+                        "description": "Ngày tạo",
                         "type": "string",
                         "format": "date-time"
                     },
                     "updated_at": {
-                        "description": "Last update date",
+                        "description": "Ngày cập nhật cuối cùng",
                         "type": "string",
                         "format": "date-time"
                     },
                     "deleted_at": {
-                        "description": "Deletion date",
+                        "description": "Ngày xóa",
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
@@ -3621,39 +3508,6 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "ServiceCategoryTranslation": {
-                "title": "Service Category Translation",
-                "description": "Model representing a translation of a service category",
-                "properties": {
-                    "id": {
-                        "description": "The ID of the translation",
-                        "type": "integer"
-                    },
-                    "service_category_id": {
-                        "description": "The ID of the related service category",
-                        "type": "integer"
-                    },
-                    "language": {
-                        "description": "The language code of the translation",
-                        "type": "string"
-                    },
-                    "name": {
-                        "description": "The translated name of the service category",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Timestamp of creation",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Timestamp of last update",
-                        "type": "string",
-                        "format": "date-time"
                     }
                 },
                 "type": "object"
@@ -3768,45 +3622,6 @@
                     },
                     "updated_at": {
                         "description": "Timestamp of when the record was last updated",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
-            "ServiceTranslation": {
-                "title": "Service Translation",
-                "description": "Model for service translations",
-                "properties": {
-                    "id": {
-                        "description": "Unique identifier",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "service_id": {
-                        "description": "ID of the related service",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "language": {
-                        "description": "Language code of the translation",
-                        "type": "string"
-                    },
-                    "name": {
-                        "description": "Translated name of the service",
-                        "type": "string"
-                    },
-                    "description": {
-                        "description": "Translated description of the service",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Creation timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Last update timestamp",
                         "type": "string",
                         "format": "date-time"
                     }
@@ -4174,39 +3989,6 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "VoucherTranslation": {
-                "title": "VoucherTranslation",
-                "description": "Model representing a voucher translation",
-                "properties": {
-                    "id": {
-                        "description": "The unique identifier of the voucher translation",
-                        "type": "integer"
-                    },
-                    "voucher_id": {
-                        "description": "The ID of the associated voucher",
-                        "type": "integer"
-                    },
-                    "language": {
-                        "description": "The language code of the translation",
-                        "type": "string"
-                    },
-                    "description": {
-                        "description": "The translated description of the voucher",
-                        "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Timestamp of creation",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Timestamp of last update",
-                        "type": "string",
-                        "format": "date-time"
                     }
                 },
                 "type": "object"

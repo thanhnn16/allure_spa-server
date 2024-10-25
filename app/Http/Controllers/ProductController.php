@@ -7,6 +7,7 @@ use App\Http\Requests\ProductRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use App\Models\Product;
 
 class ProductController extends BaseController
 {
@@ -275,9 +276,16 @@ class ProductController extends BaseController
      */
     public function searchProducts(Request $request)
     {
-        $products = $this->productService->searchProducts($request->input('query'));
+        $query = $request->get('query');
+        
+        $products = Product::where('name', 'LIKE', "%{$query}%")
+            ->where('quantity', '>', 0)
+            ->take(10)
+            ->get(['id', 'name', 'price']);
 
-        return $this->respondWithJson($products, 'Products searched successfully');
+        return response()->json([
+            'data' => $products
+        ]);
     }
 
     /**

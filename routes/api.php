@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\RatingController;
+use App\Http\Controllers\InvoiceController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -59,5 +60,9 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/products/{productId}/ratings', [RatingController::class, 'getProductRatings']);
         Route::get('/services/{serviceId}/ratings', [RatingController::class, 'getServiceRatings']);
         Route::post('/ratings', [RatingController::class, 'store']);
+
+        // Invoice routes
+        Route::resource('/invoices', InvoiceController::class);
     });
 });
+

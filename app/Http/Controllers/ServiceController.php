@@ -158,13 +158,14 @@ class ServiceController extends BaseController
     public function searchServices(Request $request)
     {
         $query = $request->get('query');
-        $services = Service::with('category')
-            ->where('name', 'like', "%{$query}%")
-            ->orWhere('description', 'like', "%{$query}%")
-            ->select('id', 'name', 'price', 'duration', 'category_id')
-            ->get();
+        
+        $services = Service::where('service_name', 'LIKE', "%{$query}%")
+            ->take(10)
+            ->get(['id', 'service_name as name', 'single_price as price']);
 
-        return response()->json(['data' => $services]);
+        return response()->json([
+            'data' => $services
+        ]);
     }
 
     /**

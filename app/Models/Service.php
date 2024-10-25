@@ -83,4 +83,9 @@ class Service extends Model
     {
         return $this->hasMany(UserServicePackage::class);
     }
+
+    public function orderItems()
+    {
+        return $this->morphMany(OrderItem::class, 'item');
+    }
 }

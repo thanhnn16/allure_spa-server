@@ -6,49 +6,37 @@
             <div class="container mx-auto px-4 py-8">
                 <h1 class="text-3xl font-bold mb-6">Tạo hóa đơn mới</h1>
                 <form @submit.prevent="submitForm" class="space-y-6">
-                    <div>
-                        <label for="user" class="block text-sm font-medium text-gray-700">Khách hàng:</label>
-                        <div class="mt-1 relative">
-                            <input type="text" v-model="userSearch" @input="searchUsers"
-                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                placeholder="Tìm theo tên hoặc số điện thoại" />
-                            <ul v-if="userResults.length > 0"
-                                class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-                                <li v-for="user in userResults" :key="user.id" @click="selectUser(user)"
-                                    class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white">
-                                    {{ user.full_name }} ({{ user.phone_number }})
-                                </li>
-                            </ul>
+                    <!-- User Selection -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Khách hàng
+                        </label>
+                        <div class="relative">
+                            <input
+                                v-model="userSearch"
+                                @input="searchUsers"
+                                type="text"
+                                placeholder="Nhập tên hoặc số điện thoại khách hàng..."
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            />
+                            <!-- Dropdown kết quả tìm kiếm -->
+                            <div v-if="userResults.length > 0" 
+                                 class="absolute z-50 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
+                                <div v-for="user in userResults" 
+                                     :key="user.id"
+                                     @click="selectUser(user)"
+                                     class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0">
+                                    <div class="font-medium">{{ user.full_name }}</div>
+                                    <div class="text-sm text-gray-500">
+                                        SĐT: {{ user.phone_number }}
+                                        <span v-if="user.email" class="ml-2">Email: {{ user.email }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Voucher -->
-                    <div>
-                        <label for="voucher" class="block text-sm font-medium text-gray-700">Voucher:</label>
-                        <select v-model="form.voucher_id"
-                            class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <option value="">Không áp dụng</option>
-                            <option v-for="voucher in vouchers" :key="voucher.id" :value="voucher.id">
-                                {{ voucher.code }} - {{ voucher.discount_value }}{{ voucher.discount_type ===
-                                    'percentage' ? '%' : 'đ'
-                                }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Phương thức thanh toán -->
-                    <div>
-                        <label for="payment_method" class="block text-sm font-medium text-gray-700">Phương thức thanh
-                            toán:</label>
-                        <select v-model="form.payment_method_id" required
-                            class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <option v-for="method in paymentMethods" :key="method.id" :value="method.id">
-                                {{ method.name }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Danh sách sản phẩm/dịch vụ -->
+                    <!-- Order Items -->
                     <div>
                         <h3 class="text-lg font-medium text-gray-900 mb-2">Sản phẩm/Dịch vụ</h3>
                         <button type="button" @click="addOrderItem"
@@ -62,17 +50,16 @@
                                     <select v-model="item.item_type" @change="searchItems(index)"
                                         class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                         <option value="product">Sản phẩm</option>
-                                        <option value="treatment">Liệu trình</option>
+                                        <option value="service">Dịch vụ</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Danh mục:</label>
-                                    <select v-model="item.category_id" @change="searchItems(index)"
+                                <div v-if="item.item_type === 'service'">
+                                    <label class="block text-sm font-medium text-gray-700">Loại dịch vụ:</label>
+                                    <select v-model="item.service_type"
                                         class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                        <option v-for="category in getCategoriesForType(item.item_type)"
-                                            :key="category.id" :value="category.id">
-                                            {{ category.category_name }}
-                                        </option>
+                                        <option value="single">Đơn lẻ</option>
+                                        <option value="combo_5">Combo 5</option>
+                                        <option value="combo_10">Combo 10</option>
                                     </select>
                                 </div>
                             </div>
@@ -98,8 +85,13 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Đơn giá:</label>
-                                    <input v-model.number="item.price" type="number" min="0"
-                                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
+                                    <input
+                                        v-model="item.price"
+                                        type="number"
+                                        class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm"
+                                        readonly
+                                        :disabled="true"
+                                    />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Thành tiền:</label>
@@ -114,7 +106,32 @@
                         </div>
                     </div>
 
-                    <!-- Ghi chú -->
+                    <!-- Voucher -->
+                    <div>
+                        <label for="voucher" class="block text-sm font-medium text-gray-700">Voucher:</label>
+                        <select v-model="form.voucher_id"
+                            class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="">Không áp dụng</option>
+                            <option v-for="voucher in vouchers" :key="voucher.id" :value="voucher.id">
+                                {{ voucher.code }} - {{ voucher.discount_value }}{{ voucher.discount_type ===
+                                    'percentage' ? '%' : 'đ'
+                                }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div>
+                        <label for="payment_method" class="block text-sm font-medium text-gray-700">Phương thức thanh toán:</label>
+                        <select v-model="form.payment_method_id" required
+                            class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option v-for="method in paymentMethods" :key="method.id" :value="method.id">
+                                {{ method.method_name }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Note -->
                     <div>
                         <label for="note" class="block text-sm font-medium text-gray-700">Ghi chú:</label>
                         <textarea v-model="form.note" rows="3"
@@ -175,8 +192,9 @@
 import { Head } from "@inertiajs/vue3";
 import SectionMain from '@/Components/SectionMain.vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import axios from 'axios'
+import { debounce } from 'lodash'
 
 
 export default {
@@ -188,8 +206,6 @@ export default {
     props: {
         vouchers: Array,
         paymentMethods: Array,
-        productCategories: Array,
-        treatmentCategories: Array,
     },
     setup(props) {
         const form = ref({
@@ -198,27 +214,47 @@ export default {
             payment_method_id: '',
             order_items: [],
             note: '',
+            total_amount: 0,
+            discount_amount: 0,
         })
 
         const userSearch = ref('')
         const userResults = ref([])
         const selectedUser = ref(null)
 
-        const searchUsers = async () => {
-            if (userSearch.value.length < 2) return
+        // Thêm watch để debug giá trị tìm kiếm
+        watch(userSearch, (newValue) => {
+            console.log('userSearch changed:', newValue)
+        })
+
+        const searchUsers = debounce(async () => {
+            console.log('Searching for:', userSearch.value)
+            
+            if (userSearch.value.length < 2) {
+                console.log('Search term too short')
+                userResults.value = []
+                return
+            }
+
             try {
+                console.log('Making API call to /api/users/search')
                 const response = await axios.get('/api/users/search', {
                     params: { query: userSearch.value }
                 })
-                userResults.value = response.data
+                console.log('API response:', response)
+                
+                userResults.value = response.data.data || []
+                console.log('Updated userResults:', userResults.value)
             } catch (error) {
-                console.error('Error searching users:', error)
+                console.error('Search error:', error)
+                console.log('Error response:', error.response)
+                userResults.value = []
             }
-        }
+        }, 300)
 
         const selectUser = (user) => {
+            console.log('Selected user:', user)
             form.value.user_id = user.id
-            selectedUser.value = user
             userSearch.value = user.full_name
             userResults.value = []
         }
@@ -226,8 +262,8 @@ export default {
         const addOrderItem = () => {
             form.value.order_items.push({
                 item_type: 'product',
-                category_id: '',
                 item_id: null,
+                service_type: null,
                 quantity: 1,
                 price: 0,
                 search: '',
@@ -240,59 +276,136 @@ export default {
         }
 
         const searchItems = async (index) => {
-            const item = form.value.order_items[index]
-            if (item.search.length < 2) return
+            const item = form.value.order_items[index];
+            if (item.search.length < 2) {
+                item.searchResults = [];
+                return;
+            }
             try {
-                const endpoint = item.item_type === 'product' ? '/api/products/search' : '/api/treatments/search'
+                const endpoint = item.item_type === 'product' ? '/api/products/search' : '/api/services/search';
                 const response = await axios.get(endpoint, {
-                    params: {
-                        query: item.search,
-                        category_id: item.category_id,
-                    }
-                })
-                item.searchResults = response.data
+                    params: { query: item.search }
+                });
+                item.searchResults = response.data.data; // Thêm .data để lấy đúng dữ liệu
             } catch (error) {
-                console.error('Error searching items:', error)
+                console.error('Error searching items:', error);
+                item.searchResults = [];
             }
         }
 
-        const selectItem = (index, item) => {
-            const orderItem = form.value.order_items[index]
-            orderItem.item_id = item.id
-            orderItem.price = item.price
-            orderItem.search = item.name
-            orderItem.searchResults = []
+        const selectedItemPrice = (item) => {
+            if (!item || !item.item_type || !item.service_type) return 0;
+            
+            if (item.item_type === 'service') {
+                switch (item.service_type) {
+                    case 'combo_5':
+                        return item.selectedItem?.combo_5_price || 0;
+                    case 'combo_10':
+                        return item.selectedItem?.combo_10_price || 0;
+                    default:
+                        return item.selectedItem?.single_price || 0;
+                }
+            }
+            return item.selectedItem?.price || 0;
         }
 
-        const getCategoriesForType = (type) => {
-            return type === 'product' ? props.productCategories : props.treatmentCategories
+        const selectItem = (index, selectedItem) => {
+            const item = form.value.order_items[index];
+            item.selectedItem = selectedItem;
+            item.item_id = selectedItem.id;
+            item.search = selectedItem.name || selectedItem.service_name;
+            item.searchResults = [];
+            
+            // Cập nhật giá dựa trên loại dịch vụ đã chọn
+            item.price = selectedItemPrice({
+                item_type: item.item_type,
+                service_type: item.service_type,
+                selectedItem: selectedItem
+            });
+            
+            // Tự động cập nhật tổng tiền
+            updateTotals();
+        }
+
+        // Thêm watcher cho service_type
+        watch(() => form.value.order_items, (items) => {
+            items.forEach((item, index) => {
+                if (item.selectedItem) {
+                    item.price = selectedItemPrice(item);
+                }
+            });
+            updateTotals();
+        }, { deep: true });
+
+        // Cập nhật hàm updateTotals
+        const updateTotals = () => {
+            const subtotal = form.value.order_items.reduce((total, item) => {
+                return total + (item.quantity * item.price);
+            }, 0);
+            
+            form.value.total_amount = subtotal;
+            
+            // Cập nhật discount nếu có voucher
+            if (form.value.voucher_id) {
+                const voucher = props.vouchers.find(v => v.id === form.value.voucher_id);
+                if (voucher) {
+                    form.value.discount_amount = voucher.discount_type === 'percentage' 
+                        ? (subtotal * voucher.discount_value / 100)
+                        : voucher.discount_value;
+                }
+            }
+            
+            // Cập nhật final total
+            form.value.final_total = Math.max(0, subtotal - (form.value.discount_amount || 0));
         }
 
         const calculateTotal = () => {
-            return form.value.order_items.reduce((total, item) => total + (item.quantity * item.price), 0)
+            return form.value.order_items.reduce((total, item) => {
+                const itemTotal = (item.quantity || 0) * (item.price || 0);
+                return total + itemTotal;
+            }, 0);
         }
 
         const calculateDiscount = () => {
-            if (form.value.voucher_id) {
-                const voucher = props.vouchers.find(v => v.id === form.value.voucher_id)
-                if (voucher) {
-                    if (voucher.discount_type === 'percentage') {
-                        return calculateTotal() * (voucher.discount_value / 100)
-                    } else {
-                        return voucher.discount_value
-                    }
-                }
+            if (!form.value.voucher_id) return 0;
+            
+            const voucher = props.vouchers.find(v => v.id === form.value.voucher_id);
+            if (!voucher) return 0;
+
+            const total = calculateTotal();
+            if (voucher.discount_type === 'percentage') {
+                return total * (voucher.discount_value / 100);
             }
-            return 0
+            return voucher.discount_value;
         }
 
         const calculateFinalTotal = () => {
-            return calculateTotal() - calculateDiscount()
+            const total = calculateTotal();
+            const discount = calculateDiscount();
+            return Math.max(0, total - discount);
         }
 
-        const formatCurrency = (value) => {
+        const formatCurrency = (value) => { 
             return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
         }
+
+        const submitForm = async () => {
+            try {
+                form.value.total_amount = calculateFinalTotal()
+                form.value.discount_amount = calculateDiscount()
+                const response = await axios.post('/api/invoices', form.value)
+                // Handle successful creation (e.g., show success message, redirect)
+                console.log('Invoice created:', response.data)
+            } catch (error) {
+                console.error('Error creating invoice:', error)
+                // Handle error (e.g., show error message)
+            }
+        }
+
+        const selectedCustomer = computed(() => {
+            if (!form.value.user_id) return null;
+            return userResults.value.find(user => user.id === form.value.user_id);
+        });
 
         return {
             form,
@@ -305,12 +418,44 @@ export default {
             removeOrderItem,
             searchItems,
             selectItem,
-            getCategoriesForType,
             calculateTotal,
             calculateDiscount,
             calculateFinalTotal,
             formatCurrency,
+            submitForm,
+            selectedCustomer,
         }
     },
 }
 </script>
+
+<style scoped>
+.form-input[readonly] {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+input[readonly] {
+    background-color: #f9fafb;
+    cursor: not-allowed;
+    color: #374151;
+}
+
+input[readonly]:focus {
+    border-color: #d1d5db;
+    box-shadow: none;
+}
+
+/* Thêm style cho dropdown */
+.absolute {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+</style>
+
+
+
+

@@ -16,6 +16,7 @@ use App\Http\Controllers\MobileAppController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReportController;
 
 Route::get('/', function () {
@@ -50,6 +51,9 @@ Route::middleware('auth')->group(function () {
 
     // Invoice routes
     Route::resource('invoices', InvoiceController::class);
+
+    // Order routes
+    Route::resource('orders', OrderController::class);
 
     // Voucher routes
     Route::resource('vouchers', VoucherController::class);

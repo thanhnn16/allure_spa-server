@@ -10,20 +10,21 @@ use OpenApi\Annotations as OA;
 /**
  * @OA\Schema(
  *     schema="Invoice",
- *     title="Invoice",
- *     description="Invoice model",
- *     @OA\Property(property="id", type="integer", format="int64", description="Invoice ID"),
- *     @OA\Property(property="user_id", type="integer", format="int64", description="User ID"),
- *     @OA\Property(property="staff_user_id", type="integer", format="int64", description="Staff User ID"),
- *     @OA\Property(property="total_amount", type="number", format="float", description="Total amount"),
- *     @OA\Property(property="paid_amount", type="number", format="float", description="Paid amount"),
- *     @OA\Property(property="status", type="string", description="Invoice status"),
- *     @OA\Property(property="payment_method", type="string", description="Payment method"),
- *     @OA\Property(property="note", type="string", description="Invoice note"),
- *     @OA\Property(property="created_by_user_id", type="integer", format="int64", description="Created by User ID"),
- *     @OA\Property(property="created_at", type="string", format="date-time", description="Creation date"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", description="Last update date"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Deletion date")
+ *     title="Hóa đơn",
+ *     description="Mô hình hóa đơn",
+ *     @OA\Property(property="id", type="string", format="uuid", description="ID hóa đơn"),
+ *     @OA\Property(property="user_id", type="string", format="uuid", description="ID người dùng"),
+ *     @OA\Property(property="staff_user_id", type="string", format="uuid", nullable=true, description="ID nhân viên"),
+ *     @OA\Property(property="total_amount", type="number", format="float", description="Tổng số tiền"),
+ *     @OA\Property(property="paid_amount", type="number", format="float", description="Số tiền đã thanh toán"),
+ *     @OA\Property(property="remaining_amount", type="number", format="float", description="Số tiền còn lại"),
+ *     @OA\Property(property="status", type="string", enum={"pending", "partial", "paid", "cancelled"}, description="Trạng thái hóa đơn"),
+ *     @OA\Property(property="order_id", type="integer", format="int64", nullable=true, description="ID đơn hàng"),
+ *     @OA\Property(property="note", type="string", nullable=true, description="Ghi chú"),
+ *     @OA\Property(property="created_by_user_id", type="string", format="uuid", nullable=true, description="ID người tạo"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="Ngày tạo"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", description="Ngày cập nhật cuối cùng"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Ngày xóa")
  * )
  */
 class Invoice extends Model
@@ -32,7 +33,7 @@ class Invoice extends Model
 
     protected $fillable = [
         'user_id', 'staff_user_id', 'total_amount', 'paid_amount',
-        'status', 'payment_method', 'note', 'created_by_user_id'
+        'status', 'order_id', 'note', 'created_by_user_id'
     ];
 
     protected $casts = [
@@ -56,18 +57,14 @@ class Invoice extends Model
         return $this->belongsTo(User::class, 'created_by_user_id');
     }
 
-    public function payments()
+    public function order()
     {
-        return $this->hasMany(InvoicePayment::class);
+        return $this->belongsTo(Order::class);
     }
+
 
     public function paymentHistories()
     {
         return $this->hasMany(PaymentHistory::class);
-    }
-
-    public function order()
-    {
-        return $this->belongsTo(Order::class);
     }
 }
