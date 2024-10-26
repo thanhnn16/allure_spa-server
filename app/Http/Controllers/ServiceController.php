@@ -330,47 +330,4 @@ class ServiceController extends BaseController
 
         return redirect()->route('services.index')->with('success', 'Service deleted successfully');
     }
-
-    /**
-     * @OA\Get(
-     *     path="/api/service-combos/{id}",
-     *     summary="Lấy chi tiết một combo dịch vụ",
-     *     tags={"Services"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID của combo dịch vụ",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful operation",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Service combo retrieved successfully"),
-     *             @OA\Property(property="status_code", type="integer", example=200),
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 ref="#/components/schemas/ServiceCombo"
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Service combo not found"
-     *     )
-     * )
-     */
-    public function showServiceCombo(Request $request, $id)
-    {
-        $serviceCombo = $this->serviceService->getServiceComboById($id);
-
-        if (!$serviceCombo) {
-            return $this->respondWithJson(null, 'Service combo not found', 404);
-        }
-
-        return $this->respondWithJson($serviceCombo, 'Service combo retrieved successfully');
-    }
 }
