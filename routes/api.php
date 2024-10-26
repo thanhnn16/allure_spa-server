@@ -62,7 +62,12 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/ratings', [RatingController::class, 'store']);
 
         // Invoice routes
-        Route::resource('/invoices', InvoiceController::class);
+        Route::get('/invoices', [InvoiceController::class, 'index']);
+        Route::post('/invoices', [InvoiceController::class, 'store']);
+        Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+        Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
+        Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy']);
+
     });
 });
 
