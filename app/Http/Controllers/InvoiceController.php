@@ -105,18 +105,21 @@ class InvoiceController extends BaseController
     {
         $invoice = Invoice::with([
             'user',
-            'order.items.item', // Load quan hệ polymorphic
+            'order.items.item',
             'order' => function($query) {
-                $query->with(['items' => function($query) {
-                    $query->with([
-                        'service' => function($query) {
-                            $query->withTrashed(); // Nếu bạn sử dụng soft deletes
-                        },
-                        'product' => function($query) {
-                            $query->withTrashed(); // Nếu bạn sử dụng soft deletes
-                        }
-                    ]);
-                }]);
+                $query->with([
+                    'items' => function($query) {
+                        $query->with([
+                            'service' => function($query) {
+                                $query->withTrashed();
+                            },
+                            'product' => function($query) {
+                                $query->withTrashed();
+                            }
+                        ]);
+                    },
+                    'voucher'
+                ]);
             },
             'paymentHistories'
         ])->findOrFail($id);
@@ -166,49 +169,17 @@ class InvoiceController extends BaseController
                 ],
                 'payment_method' => 'required|string|in:cash,transfer',
                 'payment_proof' => 'nullable|string',
+                'note' => 'nullable|string',  // Thêm validation cho note
             ]);
 
-            DB::beginTransaction();
-
-            // Lưu trạng thái cũ trước khi cập nhật
-            $oldStatus = $invoice->status;
-
-            // Cập nhật số tiền đã thanh toán
-            $newPaidAmount = $invoice->paid_amount + $validatedData['payment_amount'];
-
-            // Xác định trạng thái mới
-            $newStatus = 'pending';
-            if ($newPaidAmount >= $invoice->total_amount) {
-                $newStatus = 'paid';
-            } elseif ($newPaidAmount > 0) {
-                $newStatus = 'partial';
-            }
-
-            // Cập nhật invoice (không cập nhật remaining_amount)
-            $invoice->update([
-                'paid_amount' => $newPaidAmount,
-                'status' => $newStatus,
-                'payment_method' => $validatedData['payment_method'],
-                'payment_proof' => $validatedData['payment_proof'] ?? null,
-            ]);
-
-            // Tạo lịch sử thanh toán
-            PaymentHistory::create([
-                'invoice_id' => $invoice->id,
-                'old_payment_status' => $oldStatus,
-                'new_payment_status' => $newStatus,
-                'updated_at' => now()
-            ]);
-
-            DB::commit();
+            $invoice = $this->invoiceService->processPayment($invoice, $validatedData);
 
             if ($request->expectsJson()) {
-                return $this->respondWithJson($invoice->fresh(), 'Payment processed successfully');
+                return $this->respondWithJson($invoice->fresh(['paymentHistories']), 'Payment processed successfully');
             }
 
             return redirect()->back()->with('success', 'Thanh toán thành công');
         } catch (\Exception $e) {
-            DB::rollBack();
             if ($request->expectsJson()) {
                 return $this->respondWithJson(null, $e->getMessage(), 500);
             }

@@ -101,6 +101,19 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/invoices/{invoice}/process-payment', [InvoiceController::class, 'processPayment'])
         ->name('invoices.process-payment');
+
+    Route::get('/success', function () {
+        return Inertia::render('Payment/PaymentTest', [
+            'status' => 'success',
+            'transactionId' => request('orderCode')
+        ]);
+    })->name('payment.success');
+
+    Route::get('/cancel', function () {
+        return Inertia::render('Payment/PaymentTest', [
+            'status' => 'cancel'
+        ]);
+    })->name('payment.cancel');
 });
 
 require __DIR__ . '/auth.php';

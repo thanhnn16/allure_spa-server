@@ -88,13 +88,9 @@ class InvoiceService
         try {
             DB::beginTransaction();
 
-            // Lưu trạng thái cũ
             $oldStatus = $invoice->status;
-            
-            // Tính toán số tiền mới
             $newPaidAmount = $invoice->paid_amount + $data['payment_amount'];
             
-            // Xác định trạng thái mới
             $newStatus = 'pending';
             if ($newPaidAmount >= $invoice->total_amount) {
                 $newStatus = 'paid';
@@ -102,15 +98,13 @@ class InvoiceService
                 $newStatus = 'partial';
             }
 
-            // Cập nhật invoice (không cập nhật remaining_amount vì nó là generated column)
+            // Cập nhật invoice
             $invoice->update([
                 'paid_amount' => $newPaidAmount,
                 'status' => $newStatus,
-                'payment_method' => $data['payment_method'],
-                'payment_proof' => $data['payment_proof'] ?? null,
             ]);
 
-            // Tạo lịch sử thanh toán
+            // Tạo lịch sử thanh toán với đầy đủ thông tin
             PaymentHistory::create([
                 'invoice_id' => $invoice->id,
                 'old_payment_status' => $oldStatus,
@@ -119,7 +113,7 @@ class InvoiceService
                 'payment_method' => $data['payment_method'],
                 'payment_proof' => $data['payment_proof'] ?? null,
                 'created_by_user_id' => Auth::id(),
-                'updated_at' => now()
+                'note' => $data['note'] ?? null,
             ]);
 
             DB::commit();

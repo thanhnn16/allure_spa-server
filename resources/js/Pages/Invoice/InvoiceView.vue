@@ -10,10 +10,16 @@
 
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-2xl font-semibold">Quản lý hóa đơn</h1>
-          <button @click="createNewInvoice"
-            class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
-            Tạo hóa đơn mới
-          </button>
+          <div class="space-x-4">
+            <button @click="testPayOS" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+              Test PayOS (2,000 VNĐ)
+            </button>
+            <button @click="createNewInvoice"
+                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+              Tạo hóa đơn mới
+            </button>
+          </div>
         </div>
 
         <!-- Bộ lọc và tìm kiếm -->
@@ -119,6 +125,7 @@ import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
 import Pagination from '@/Components/Pagination.vue'
 import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
 export default {
   components: {
@@ -211,6 +218,25 @@ export default {
       return invoice.total_amount - invoice.paid_amount;
     }
 
+    const testPayOS = async () => {
+      try {
+        const response = await axios.post('/api/payos/test', {
+          amount: 2000,
+          description: "Test PayOS payment",
+          returnUrl: window.location.origin + "/success",
+          cancelUrl: window.location.origin + "/cancel"
+        });
+        
+        // Redirect to PayOS checkout URL
+        if (response.data.checkoutUrl) {
+          window.location.href = response.data.checkoutUrl;
+        }
+      } catch (error) {
+        console.error('PayOS test error:', error);
+        alert('Error initiating PayOS payment');
+      }
+    }
+
     return {
       filters,
       formatCurrency,
@@ -220,8 +246,8 @@ export default {
       applyFilters,
       createNewInvoice,
       calculateRemainingAmount,
+      testPayOS,
     }
   },
 }
 </script>
-

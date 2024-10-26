@@ -11,6 +11,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PayOSController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -67,6 +68,9 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy']);
+
+        Route::post('/payos/test', [PayOSController::class, 'testPayment']);
+        Route::post('/payos/verify', [PayOSController::class, 'verifyPayment']);
 
     });
 });

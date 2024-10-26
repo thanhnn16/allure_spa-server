@@ -532,8 +532,15 @@ CREATE TABLE payment_histories (
     invoice_id CHAR(36) NOT NULL,
     old_payment_status VARCHAR(255) NOT NULL,
     new_payment_status VARCHAR(255) NOT NULL,
+    payment_amount DECIMAL(10, 2) UNSIGNED NOT NULL,
+    payment_method VARCHAR(50) NOT NULL,
+    payment_proof TEXT NULL,
+    created_by_user_id CHAR(36) NULL,
+    note TEXT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (invoice_id) REFERENCES invoices (id) ON DELETE CASCADE
+    FOREIGN KEY (invoice_id) REFERENCES invoices (id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by_user_id) REFERENCES users (id) ON DELETE SET NULL
 );
 
 -- 44. Bảng reward_items
