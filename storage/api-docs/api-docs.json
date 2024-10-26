@@ -653,13 +653,13 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Get product list",
+                "summary": "Lấy danh sách sản phẩm",
                 "operationId": "1bfaa78d1c2c3848ab8165c5dadcad3e",
                 "parameters": [
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Search for products",
+                        "description": "Tìm kiếm sản phẩm",
                         "required": false,
                         "schema": {
                             "type": "string"
@@ -668,7 +668,7 @@
                     {
                         "name": "category",
                         "in": "query",
-                        "description": "Filter by category",
+                        "description": "Lọc theo danh mục",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -677,57 +677,99 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Number of products per page",
+                        "description": "Số sản phẩm trên mỗi trang",
                         "required": false,
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sắp xếp theo trường",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "description": "Hướng sắp xếp (asc hoặc desc)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful",
+                        "description": "Thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "product_name": {
-                                                        "type": "string"
-                                                    },
-                                                    "category": {
-                                                        "type": "object"
-                                                    },
-                                                    "media": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "integer"
-                                                                },
-                                                                "file_path": {
-                                                                    "type": "string"
-                                                                },
-                                                                "type": {
-                                                                    "type": "string"
-                                                                }
-                                                            },
-                                                            "type": "object"
-                                                        }
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        },
                                         "message": {
                                             "type": "string",
                                             "example": "Products retrieved successfully"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Product"
+                                                    }
+                                                },
+                                                "first_page_url": {
+                                                    "type": "string"
+                                                },
+                                                "from": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page_url": {
+                                                    "type": "string"
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "next_page_url": {
+                                                    "type": "string"
+                                                },
+                                                "path": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "prev_page_url": {
+                                                    "type": "string"
+                                                },
+                                                "to": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -781,13 +823,13 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Get product details",
+                "summary": "Lấy chi tiết sản phẩm",
                 "operationId": "7ab21ddb713501f3d4c2914892c02a21",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Product ID",
+                        "description": "ID sản phẩm",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -796,45 +838,25 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful",
+                        "description": "Thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer"
-                                                },
-                                                "product_name": {
-                                                    "type": "string"
-                                                },
-                                                "category": {
-                                                    "type": "object"
-                                                },
-                                                "media": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer"
-                                                            },
-                                                            "file_path": {
-                                                                "type": "string"
-                                                            },
-                                                            "type": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
                                         "message": {
                                             "type": "string",
                                             "example": "Product retrieved successfully"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Product"
                                         }
                                     },
                                     "type": "object"
@@ -1515,6 +1537,58 @@
                 ],
                 "summary": "Lấy danh sách dịch vụ",
                 "operationId": "4c175c5d6594b4a5112bbe15a46e2bb4",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Tìm kiếm theo tên dịch vụ",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Lọc theo ID danh mục",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sắp xếp theo trường",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "description": "Hướng sắp xếp (asc hoặc desc)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số lượng item trên mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successful operation",
@@ -1794,58 +1868,6 @@
                     },
                     "404": {
                         "description": "Service not found"
-                    }
-                }
-            }
-        },
-        "/api/service-combos/{id}": {
-            "get": {
-                "tags": [
-                    "Services"
-                ],
-                "summary": "Lấy chi tiết một combo dịch vụ",
-                "operationId": "61e5f0e88d5416e2884d362f48e04695",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID của combo dịch vụ",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful operation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Service combo retrieved successfully"
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 200
-                                        },
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/ServiceCombo"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Service combo not found"
                     }
                 }
             }
@@ -3038,10 +3060,42 @@
                         "description": "Trạng thái thanh toán mới",
                         "type": "string"
                     },
+                    "payment_amount": {
+                        "description": "Số tiền thanh toán",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "payment_method": {
+                        "description": "Phương thức thanh toán",
+                        "type": "string"
+                    },
+                    "payment_proof": {
+                        "description": "Bằng chứng thanh toán",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_by_user_id": {
+                        "description": "ID người tạo",
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "note": {
+                        "description": "Ghi chú",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Ngày tạo",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
                     "updated_at": {
                         "description": "Ngày cập nhật",
                         "type": "string",
-                        "format": "date-time"
+                        "format": "date-time",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -3505,52 +3559,6 @@
                     },
                     "deleted_at": {
                         "description": "The deletion timestamp, if soft deleted",
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
-            "ServiceCombo": {
-                "title": "Service Combo",
-                "description": "Service Combo model",
-                "properties": {
-                    "id": {
-                        "description": "Unique identifier",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "name": {
-                        "description": "Name of the service combo",
-                        "type": "string"
-                    },
-                    "price": {
-                        "description": "Price of the service combo",
-                        "type": "number",
-                        "format": "float"
-                    },
-                    "description": {
-                        "description": "Description of the service combo",
-                        "type": "string"
-                    },
-                    "image_id": {
-                        "description": "ID of the associated image",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "created_at": {
-                        "description": "Creation timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Last update timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "deleted_at": {
-                        "description": "Deletion timestamp",
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
