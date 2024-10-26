@@ -3,6 +3,11 @@
     <Head title="Quản lý hóa đơn" />
     <SectionMain>
       <div class="container mx-auto px-4 py-8">
+        <!-- Error message -->
+        <div v-if="error" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {{ error }}
+        </div>
+
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-2xl font-semibold">Quản lý hóa đơn</h1>
           <button @click="createNewInvoice"
@@ -30,7 +35,7 @@
         </div>
 
         <!-- Bảng hiển thị hóa đơn -->
-        <div v-if="invoices.length > 0" class="overflow-x-auto bg-white shadow-md rounded-lg">
+        <div v-if="invoices?.data?.length > 0" class="overflow-x-auto bg-white shadow-md rounded-lg">
           <table class="min-w-full leading-normal">
             <thead>
               <tr>
@@ -58,7 +63,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="invoice in invoices" :key="invoice.id">
+              <tr v-for="invoice in invoices.data" :key="invoice.id">
                 <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                   {{ invoice.id }}
                 </td>
@@ -72,7 +77,7 @@
                   {{ formatCurrency(invoice.paid_amount) }}
                 </td>
                 <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  {{ formatCurrency(invoice.remaining_amount) }}
+                  {{ formatCurrency(calculateRemainingAmount(invoice)) }}
                 </td>
                 <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                   <span :class="getStatusClass(invoice.status)">
@@ -97,8 +102,11 @@
         </div>
 
         <!-- Phân trang -->
-        <div class="mt-6">
-          <Pagination :links="links" />
+        <div v-if="invoices?.links" class="mt-6">
+          <Pagination 
+            :links="invoices.links" 
+            class="mt-6"
+          />
         </div>
       </div>
     </SectionMain>
@@ -106,11 +114,11 @@
 </template>
 
 <script>
-import { Head } from "@inertiajs/vue3";
+import { Head, router } from "@inertiajs/vue3";
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
-import Pagination from '@/Pages/Invoice/Components/Pagination.vue'
-import { ref } from 'vue'
+import Pagination from '@/Components/Pagination.vue'
+import { ref, onMounted } from 'vue'
 
 export default {
   components: {
@@ -120,13 +128,31 @@ export default {
     Pagination,
   },
   props: {
-    invoices: Array,
-    links: Array,
+    invoices: {
+      type: Object,
+      required: true,
+      default: () => ({
+        data: [],
+        links: [],
+        meta: {}
+      })
+    },
+    error: {
+      type: String,
+      default: null
+    }
   },
-  setup() {
+  setup(props) {
     const filters = ref({
       status: '',
       search: '',
+    })
+
+    onMounted(() => {
+      console.log('Invoices data:', props.invoices)
+      if (props.error) {
+        console.error('Error:', props.error)
+      }
     })
 
     const formatCurrency = (amount) => {
@@ -164,15 +190,25 @@ export default {
     }
 
     const viewInvoiceDetails = (invoiceId) => {
-      window.location.href = `/invoices/${invoiceId}`;
+      router.visit(`/invoices/${invoiceId}`);
     }
 
     const applyFilters = () => {
-      // Implement filter logic here
+      router.get('/invoices', {
+        status: filters.value.status,
+        search: filters.value.search,
+      }, {
+        preserveState: true,
+        preserveScroll: true,
+      });
     }
 
     const createNewInvoice = () => {
-      window.location.href = '/invoices/create';
+      router.visit('/invoices/create');
+    }
+
+    const calculateRemainingAmount = (invoice) => {
+      return invoice.total_amount - invoice.paid_amount;
     }
 
     return {
@@ -183,7 +219,9 @@ export default {
       viewInvoiceDetails,
       applyFilters,
       createNewInvoice,
+      calculateRemainingAmount,
     }
   },
 }
 </script>
+

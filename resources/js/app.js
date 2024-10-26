@@ -7,6 +7,8 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { createPinia } from 'pinia';
 import axios from 'axios';
+import Toast from "vue-toastification";
+import "vue-toastification/dist/index.css";
 
 const appName = import.meta.env.VITE_APP_NAME || 'AllureSpa';
 
@@ -30,6 +32,7 @@ createInertiaApp({
             .use(plugin)
             .use(ZiggyVue)
             .use(pinia)
+            .use(Toast)
             .mount(el);
     },
     progress: {

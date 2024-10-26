@@ -11,6 +11,8 @@ use App\Services\InvoiceService;
 use App\Models\PaymentMethod;
 use App\Models\Voucher;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Models\PaymentHistory;
 
 class InvoiceController extends BaseController
 {
@@ -26,8 +28,23 @@ class InvoiceController extends BaseController
      */
     public function index()
     {
-        $invoices = $this->invoiceService->getInvoices();
-        return $this->respondWithInertia('Invoice/InvoiceView', ['invoices' => $invoices]);
+        try {
+            $invoices = $this->invoiceService->getInvoices();
+
+            return $this->respondWithInertia('Invoice/InvoiceView', [
+                'invoices' => $invoices
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in invoice index:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return $this->respondWithInertia('Invoice/InvoiceView', [
+                'invoices' => [],
+                'error' => 'Có lỗi xảy ra khi tải dữ liệu hóa đơn'
+            ]);
+        }
     }
 
     /**
@@ -48,73 +65,69 @@ class InvoiceController extends BaseController
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'voucher_id' => 'nullable|exists:vouchers,id',
-            'payment_method_id' => 'required|exists:payment_methods,id',
-            'order_items' => 'required|array|min:1',
-            'order_items.*.item_type' => 'required|in:product,service',
-            'order_items.*.item_id' => 'required|integer',
-            'order_items.*.service_type' => 'nullable|in:single,combo_5,combo_10',
-            'order_items.*.quantity' => 'required|integer|min:1',
-            'order_items.*.price' => 'required|numeric|min:0',
-            'note' => 'nullable|string',
-            'total_amount' => 'required|numeric|min:0',
-            'discount_amount' => 'required|numeric|min:0',
-        ]);
-
-        DB::beginTransaction();
-
         try {
-            // Create Order
-            $order = Order::create([
-                'user_id' => $validatedData['user_id'],
-                'total_amount' => $validatedData['total_amount'],
-                'payment_method_id' => $validatedData['payment_method_id'],
-                'voucher_id' => $validatedData['voucher_id'],
-                'discount_amount' => $validatedData['discount_amount'],
-                'status' => 'pending',
+            $validatedData = $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'voucher_id' => 'nullable|exists:vouchers,id',
+                'payment_method_id' => 'required|exists:payment_methods,id',
+                'order_items' => 'required|array|min:1',
+                'order_items.*.item_type' => 'required|in:product,service',
+                'order_items.*.item_id' => 'required|integer',
+                'order_items.*.service_type' => 'nullable|in:single,combo_5,combo_10',
+                'order_items.*.quantity' => 'required|integer|min:1',
+                'order_items.*.price' => 'required|numeric|min:0',
+                'note' => 'nullable|string',
+                'total_amount' => 'required|numeric|min:0',
+                'discount_amount' => 'required|numeric|min:0',
             ]);
 
-            // Create Order Items
-            foreach ($validatedData['order_items'] as $item) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'item_type' => $item['item_type'],
-                    'item_id' => $item['item_id'],
-                    'service_type' => $item['service_type'] ?? null,
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                ]);
+            $invoice = $this->invoiceService->createInvoice($validatedData);
+            
+            if ($request->expectsJson()) {
+                return $this->respondWithJson($invoice->load(['user', 'order.items']), 'Invoice created successfully', 201);
             }
 
-            // Create Invoice
-            $invoice = Invoice::create([
-                'user_id' => $validatedData['user_id'],
-                'staff_user_id' => Auth::user()->id,
-                'total_amount' => $validatedData['total_amount'],
-                'paid_amount' => 0,
-                'status' => 'pending',
-                'order_id' => $order->id,
-                'note' => $validatedData['note'],
-                'created_by_user_id' => Auth::user()->id,
-            ]);
+            return redirect()->route('invoices.show', $invoice->id)
+                ->with('success', 'Invoice created successfully');
 
-            DB::commit();
-
-            return response()->json(['message' => 'Invoice created successfully', 'invoice' => $invoice], 201);
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Error creating invoice', 'error' => $e->getMessage()], 500);
+            if ($request->expectsJson()) {
+                return $this->respondWithJson(null, $e->getMessage(), 500);
+            }
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, $id)
     {
-        //
+        $invoice = Invoice::with([
+            'user',
+            'order.items.item', // Load quan hệ polymorphic
+            'order' => function($query) {
+                $query->with(['items' => function($query) {
+                    $query->with([
+                        'service' => function($query) {
+                            $query->withTrashed(); // Nếu bạn sử dụng soft deletes
+                        },
+                        'product' => function($query) {
+                            $query->withTrashed(); // Nếu bạn sử dụng soft deletes
+                        }
+                    ]);
+                }]);
+            },
+            'paymentHistories'
+        ])->findOrFail($id);
+
+        if ($request->expectsJson()) {
+            return $this->respondWithJson($invoice, 'Invoice retrieved successfully');
+        }
+
+        return $this->respondWithInertia('Invoice/InvoiceShow', [
+            'invoice' => $invoice
+        ]);
     }
 
     /**
@@ -139,5 +152,67 @@ class InvoiceController extends BaseController
     public function destroy(string $id)
     {
         //
+    }
+
+    public function processPayment(Request $request, Invoice $invoice)
+    {
+        try {
+            $validatedData = $request->validate([
+                'payment_amount' => [
+                    'required',
+                    'numeric',
+                    'min:0',
+                    'max:' . ($invoice->total_amount - $invoice->paid_amount)
+                ],
+                'payment_method' => 'required|string|in:cash,transfer',
+                'payment_proof' => 'nullable|string',
+            ]);
+
+            DB::beginTransaction();
+
+            // Lưu trạng thái cũ trước khi cập nhật
+            $oldStatus = $invoice->status;
+
+            // Cập nhật số tiền đã thanh toán
+            $newPaidAmount = $invoice->paid_amount + $validatedData['payment_amount'];
+
+            // Xác định trạng thái mới
+            $newStatus = 'pending';
+            if ($newPaidAmount >= $invoice->total_amount) {
+                $newStatus = 'paid';
+            } elseif ($newPaidAmount > 0) {
+                $newStatus = 'partial';
+            }
+
+            // Cập nhật invoice (không cập nhật remaining_amount)
+            $invoice->update([
+                'paid_amount' => $newPaidAmount,
+                'status' => $newStatus,
+                'payment_method' => $validatedData['payment_method'],
+                'payment_proof' => $validatedData['payment_proof'] ?? null,
+            ]);
+
+            // Tạo lịch sử thanh toán
+            PaymentHistory::create([
+                'invoice_id' => $invoice->id,
+                'old_payment_status' => $oldStatus,
+                'new_payment_status' => $newStatus,
+                'updated_at' => now()
+            ]);
+
+            DB::commit();
+
+            if ($request->expectsJson()) {
+                return $this->respondWithJson($invoice->fresh(), 'Payment processed successfully');
+            }
+
+            return redirect()->back()->with('success', 'Thanh toán thành công');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($request->expectsJson()) {
+                return $this->respondWithJson(null, $e->getMessage(), 500);
+            }
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 }

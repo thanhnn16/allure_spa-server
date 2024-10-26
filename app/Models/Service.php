@@ -45,6 +45,7 @@ class Service extends Model
         'single_price' => 'float',
         'combo_5_price' => 'float',
         'combo_10_price' => 'float',
+        'price' => 'float',
         'duration' => 'integer',
         'validity_period' => 'integer',
     ];

@@ -73,7 +73,19 @@
                                     <li v-for="result in item.searchResults" :key="result.id"
                                         @click="selectItem(index, result)"
                                         class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white">
-                                        {{ result.name }} - {{ formatCurrency(result.price) }}
+                                        <div class="flex flex-col">
+                                            <span class="font-medium">{{ result.name || result.service_name }}</span>
+                                            <span v-if="result.item_type === 'service'" class="text-sm">
+                                                Đơn lẻ: {{ formatCurrency(result.single_price) }}
+                                                <br>
+                                                Combo 5: {{ formatCurrency(result.combo_5_price) }}
+                                                <br>
+                                                Combo 10: {{ formatCurrency(result.combo_10_price) }}
+                                            </span>
+                                            <span v-else class="text-sm">
+                                                {{ formatCurrency(result.price) }}
+                                            </span>
+                                        </div>
                                     </li>
                                 </ul>
                             </div>
@@ -86,8 +98,8 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Đơn giá:</label>
                                     <input
-                                        v-model="item.price"
-                                        type="number"
+                                        :value="formatCurrency(item.price)"
+                                        type="text"
                                         class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm"
                                         readonly
                                         :disabled="true"
@@ -113,9 +125,9 @@
                             class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                             <option value="">Không áp dụng</option>
                             <option v-for="voucher in vouchers" :key="voucher.id" :value="voucher.id">
-                                {{ voucher.code }} - {{ voucher.discount_value }}{{ voucher.discount_type ===
-                                    'percentage' ? '%' : 'đ'
-                                }}
+                                {{ voucher.code }} - {{ voucher.discount_type === 'percentage' ? 
+                                    `${voucher.discount_value}%` : 
+                                    formatCurrency(voucher.discount_value) }}
                             </option>
                         </select>
                     </div>
@@ -147,39 +159,79 @@
                 <!-- Xem trước hóa đơn -->
                 <div class="mt-8">
                     <h2 class="text-2xl font-bold mb-4">Xem trước hóa đơn</h2>
-                    <div v-if="form.user_id" class="bg-white shadow overflow-hidden sm:rounded-lg">
-                        <div class="px-4 py-5 sm:px-6">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900">Thông tin hóa đơn</h3>
+                    <div v-if="form.user_id" class="bg-white shadow-lg rounded-lg overflow-hidden">
+                        <!-- Header -->
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+                            <h3 class="text-xl text-white font-semibold">Thông tin hóa đơn</h3>
                         </div>
-                        <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
-                            <dl class="sm:divide-y sm:divide-gray-200">
-                                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                    <dt class="text-sm font-medium text-gray-500">Khách hàng</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ selectedUser ?
-                                        selectedUser.full_name
-                                        : ''
-                                        }}</dd>
+                        
+                        <!-- Content -->
+                        <div class="p-6 space-y-6">
+                            <!-- Thông tin khách hàng -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="font-medium text-gray-700 mb-2">Thông tin khách hàng</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-sm text-gray-600">Họ tên:</p>
+                                        <p class="font-medium">{{ selectedCustomer?.full_name || 'Chưa chọn' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600">Số điện thoại:</p>
+                                        <p class="font-medium">{{ selectedCustomer?.phone_number || 'N/A' }}</p>
+                                    </div>
                                 </div>
-                                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                    <dt class="text-sm font-medium text-gray-500">Tổng tiền</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
-                                        formatCurrency(calculateTotal()) }}
-                                    </dd>
+                            </div>
+
+                            <!-- Chi tiết đơn hàng -->
+                            <div class="border rounded-lg overflow-hidden">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sản phẩm/Dịch vụ</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Đơn giá</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Số lượng</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr v-for="item in form.order_items" :key="item.item_id">
+                                            <td class="px-6 py-4">
+                                                <div class="text-sm text-gray-900">{{ item.search }}</div>
+                                                <div v-if="item.item_type === 'service'" class="text-xs text-gray-500">
+                                                    {{ item.service_type === 'single' ? 'Đơn lẻ' : 
+                                                       item.service_type === 'combo_5' ? 'Combo 5 lần' : 
+                                                       item.service_type === 'combo_10' ? 'Combo 10 lần' : '' }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 text-right text-sm text-gray-500">
+                                                {{ formatCurrency(item.price) }}
+                                            </td>
+                                            <td class="px-6 py-4 text-right text-sm text-gray-500">
+                                                {{ item.quantity }}
+                                            </td>
+                                            <td class="px-6 py-4 text-right text-sm text-gray-900 font-medium">
+                                                {{ formatCurrency(item.quantity * item.price) }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Tổng cộng -->
+                            <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Tổng tiền:</span>
+                                    <span class="font-medium">{{ formatCurrency(calculateTotal()) }}</span>
                                 </div>
-                                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                    <dt class="text-sm font-medium text-gray-500">Giảm giá</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
-                                        formatCurrency(calculateDiscount()) }}
-                                    </dd>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Giảm giá:</span>
+                                    <span class="font-medium text-red-600">-{{ formatCurrency(calculateDiscount()) }}</span>
                                 </div>
-                                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                    <dt class="text-sm font-medium text-gray-500">Thành tiền</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{
-                                        formatCurrency(calculateFinalTotal())
-                                        }}
-                                    </dd>
+                                <div class="flex justify-between text-lg font-bold pt-2 border-t">
+                                    <span>Thành tiền:</span>
+                                    <span class="text-indigo-600">{{ formatCurrency(calculateFinalTotal()) }}</span>
                                 </div>
-                            </dl>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -195,6 +247,8 @@ import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import { ref, computed, watch } from 'vue'
 import axios from 'axios'
 import { debounce } from 'lodash'
+import { useForm, router } from '@inertiajs/vue3'  // Thay đ���i import
+import { useToast } from 'vue-toastification'
 
 
 export default {
@@ -208,6 +262,8 @@ export default {
         paymentMethods: Array,
     },
     setup(props) {
+        const toast = useToast();
+
         const form = ref({
             user_id: '',
             voucher_id: null,
@@ -253,21 +309,23 @@ export default {
         }, 300)
 
         const selectUser = (user) => {
-            console.log('Selected user:', user)
-            form.value.user_id = user.id
-            userSearch.value = user.full_name
-            userResults.value = []
+            console.log('Selected user:', user);
+            form.value.user_id = user.id;
+            selectedUser.value = user; // Thêm dòng này
+            userSearch.value = user.full_name;
+            userResults.value = [];
         }
 
         const addOrderItem = () => {
             form.value.order_items.push({
                 item_type: 'product',
                 item_id: null,
-                service_type: null,
+                service_type: 'single', // Mặc định là đơn lẻ
                 quantity: 1,
                 price: 0,
                 search: '',
                 searchResults: [],
+                selectedItem: null
             })
         }
 
@@ -286,7 +344,11 @@ export default {
                 const response = await axios.get(endpoint, {
                     params: { query: item.search }
                 });
-                item.searchResults = response.data.data; // Thêm .data để lấy đúng dữ liệu
+                // Thêm item_type vào kết quả tìm kiếm
+                item.searchResults = response.data.data.map(result => ({
+                    ...result,
+                    item_type: item.item_type
+                }));
             } catch (error) {
                 console.error('Error searching items:', error);
                 item.searchResults = [];
@@ -310,34 +372,96 @@ export default {
         }
 
         const selectItem = (index, selectedItem) => {
+            console.log('Selected item:', selectedItem);
+            
             const item = form.value.order_items[index];
             item.selectedItem = selectedItem;
             item.item_id = selectedItem.id;
             item.search = selectedItem.name || selectedItem.service_name;
+            
+            if (selectedItem.item_type === 'service') {
+                // Ensure service_type has a default value
+                if (!item.service_type) {
+                    item.service_type = 'single';
+                }
+                
+                // Handle both price formats
+                if (selectedItem.single_price !== undefined) {
+                    // New price format
+                    switch (item.service_type) {
+                        case 'combo_5':
+                            item.price = Number(selectedItem.combo_5_price);
+                            break;
+                        case 'combo_10':
+                            item.price = Number(selectedItem.combo_10_price);
+                            break;
+                        default:
+                            item.price = Number(selectedItem.single_price);
+                            break;
+                    }
+                } else {
+                    // Legacy price format
+                    item.price = Number(selectedItem.price);
+                }
+            } else {
+                item.price = Number(selectedItem.price);
+            }
+            
+            console.log('Final price:', item.price);
+            
             item.searchResults = [];
-            
-            // Cập nhật giá dựa trên loại dịch vụ đã chọn
-            item.price = selectedItemPrice({
-                item_type: item.item_type,
-                service_type: item.service_type,
-                selectedItem: selectedItem
-            });
-            
-            // Tự động cập nhật tổng tiền
             updateTotals();
         }
 
         // Thêm watcher cho service_type
         watch(() => form.value.order_items, (items) => {
-            items.forEach((item, index) => {
+            items.forEach((item) => {
                 if (item.selectedItem) {
-                    item.price = selectedItemPrice(item);
+                    if (item.item_type === 'service') {
+                        if (item.selectedItem.single_price !== undefined) {
+                            // New price format
+                            switch (item.service_type) {
+                                case 'combo_5':
+                                    item.price = Number(item.selectedItem.combo_5_price);
+                                    break;
+                                case 'combo_10':
+                                    item.price = Number(item.selectedItem.combo_10_price);
+                                    break;
+                                default:
+                                    item.price = Number(item.selectedItem.single_price);
+                                    break;
+                            }
+                        } else {
+                            // Legacy price format
+                            item.price = Number(item.selectedItem.price);
+                        }
+                        console.log('Updated price:', item.price);
+                    }
                 }
             });
             updateTotals();
         }, { deep: true });
 
-        // Cập nhật hàm updateTotals
+        // Thêm watch cho item_type để reset các giá trị khi chuyển đổi loại
+        watch(() => form.value.order_items, (items) => {
+            items.forEach((item, index) => {
+                // Tạo một bản sao của item_type để so sánh với giá trị trước đó
+                const prevItemType = item._prevItemType;
+                if (prevItemType && prevItemType !== item.item_type) {
+                    // Reset các giá trị khi chuyển đổi loại
+                    item.item_id = null;
+                    item.price = 0;
+                    item.search = '';
+                    item.searchResults = [];
+                    item.selectedItem = null;
+                    item.service_type = item.item_type === 'service' ? 'single' : null;
+                }
+                // Lưu giá trị item_type hiện tại để so sánh trong lần thay đổi tiếp theo
+                item._prevItemType = item.item_type;
+            });
+        }, { deep: true });
+
+        // Cập nhật hm updateTotals
         const updateTotals = () => {
             const subtotal = form.value.order_items.reduce((total, item) => {
                 return total + (item.quantity * item.price);
@@ -394,17 +518,34 @@ export default {
                 form.value.total_amount = calculateFinalTotal()
                 form.value.discount_amount = calculateDiscount()
                 const response = await axios.post('/api/invoices', form.value)
-                // Handle successful creation (e.g., show success message, redirect)
-                console.log('Invoice created:', response.data)
+                
+                const paymentMethod = props.paymentMethods.find(
+                    method => method.id === form.value.payment_method_id
+                )
+                
+                if (paymentMethod?.method_name.toLowerCase().includes('tiền mặt')) {
+                    // Sử dụng router từ Inertia
+                    router.visit(`/invoices/${response.data.data.id}`, {
+                        method: 'get',
+                        preserveState: false
+                    })
+                } else {
+                    router.visit(`/invoices/${response.data.data.id}/payment`, {
+                        method: 'get',
+                        preserveState: false
+                    })
+                }
+                
+                toast.success('Tạo hóa đơn thành công!')
+                
             } catch (error) {
                 console.error('Error creating invoice:', error)
-                // Handle error (e.g., show error message)
+                toast.error('Có lỗi xảy ra khi tạo hóa đơn!')
             }
         }
 
         const selectedCustomer = computed(() => {
-            if (!form.value.user_id) return null;
-            return userResults.value.find(user => user.id === form.value.user_id);
+            return selectedUser.value;
         });
 
         return {
@@ -455,6 +596,15 @@ input[readonly]:focus {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 </style>
+
+
+
+
+
+
+
+
+
 
 
 

@@ -5,70 +5,128 @@ namespace App\Services;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PaymentHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
 class InvoiceService
 {
+    protected $orderService;
+
+    public function __construct(OrderService $orderService)
+    {
+        $this->orderService = $orderService;
+    }
+
     public function getInvoices()
     {
-        return Invoice::with(['user', 'order'])->latest()->paginate(10);
+        try {
+            $invoices = Invoice::with(['user', 'order'])
+                ->latest()
+                ->paginate(10);
+
+            return $invoices;
+        } catch (\Exception $e) {
+            Log::error('Error retrieving invoices:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 
     public function createInvoice(array $data)
     {
         DB::beginTransaction();
-
         try {
-            $order = $this->createOrder($data);
-            $this->createOrderItems($order, $data['order_items']);
-            $invoice = $this->createInvoiceRecord($order, $data);
+            // Create Order first
+            $order = Order::create([
+                'user_id' => $data['user_id'],
+                'total_amount' => $data['total_amount'],
+                'payment_method_id' => $data['payment_method_id'],
+                'voucher_id' => $data['voucher_id'],
+                'discount_amount' => $data['discount_amount'],
+                'status' => 'pending',
+            ]);
+
+            // Create Order Items
+            foreach ($data['order_items'] as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'item_type' => $item['item_type'],
+                    'item_id' => $item['item_id'],
+                    'service_type' => $item['service_type'] ?? null,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                ]);
+            }
+
+            // Create Invoice
+            $invoice = Invoice::create([
+                'user_id' => $data['user_id'],
+                'staff_user_id' => Auth::id(),
+                'total_amount' => $data['total_amount'],
+                'paid_amount' => 0,
+                'status' => 'pending',
+                'order_id' => $order->id,
+                'note' => $data['note'] ?? null,
+                'created_by_user_id' => Auth::id(),
+            ]);
 
             DB::commit();
+            return $invoice->load(['order.items', 'user']);
 
-            return $invoice;
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
     }
 
-    private function createOrder(array $data): Order
+    public function processPayment(Invoice $invoice, array $data)
     {
-        return Order::create([
-            'user_id' => $data['user_id'],
-            'total_amount' => $data['total_amount'],
-            'payment_method_id' => $data['payment_method_id'],
-            'voucher_id' => $data['voucher_id'],
-            'discount_amount' => $data['discount_amount'],
-            'status' => 'pending',
-        ]);
-    }
+        try {
+            DB::beginTransaction();
 
-    private function createOrderItems(Order $order, array $items): void
-    {
-        foreach ($items as $item) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'item_type' => $item['item_type'],
-                'item_id' => $item['item_id'],
-                'service_type' => $item['service_type'] ?? null,
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
+            // Lưu trạng thái cũ
+            $oldStatus = $invoice->status;
+            
+            // Tính toán số tiền mới
+            $newPaidAmount = $invoice->paid_amount + $data['payment_amount'];
+            
+            // Xác định trạng thái mới
+            $newStatus = 'pending';
+            if ($newPaidAmount >= $invoice->total_amount) {
+                $newStatus = 'paid';
+            } elseif ($newPaidAmount > 0) {
+                $newStatus = 'partial';
+            }
+
+            // Cập nhật invoice (không cập nhật remaining_amount vì nó là generated column)
+            $invoice->update([
+                'paid_amount' => $newPaidAmount,
+                'status' => $newStatus,
+                'payment_method' => $data['payment_method'],
+                'payment_proof' => $data['payment_proof'] ?? null,
             ]);
-        }
-    }
 
-    private function createInvoiceRecord(Order $order, array $data): Invoice
-    {
-        return Invoice::create([
-            'user_id' => $data['user_id'],
-            'staff_user_id' => Auth::user()->id,
-            'total_amount' => $data['total_amount'],
-            'paid_amount' => 0,
-            'status' => 'pending',
-            'order_id' => $order->id,
-            'note' => $data['note'],
-            'created_by_user_id' => Auth::user()->id,
-        ]);
+            // Tạo lịch sử thanh toán
+            PaymentHistory::create([
+                'invoice_id' => $invoice->id,
+                'old_payment_status' => $oldStatus,
+                'new_payment_status' => $newStatus,
+                'payment_amount' => $data['payment_amount'],
+                'payment_method' => $data['payment_method'],
+                'payment_proof' => $data['payment_proof'] ?? null,
+                'created_by_user_id' => Auth::id(),
+                'updated_at' => now()
+            ]);
+
+            DB::commit();
+            return $invoice->fresh(['paymentHistories']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

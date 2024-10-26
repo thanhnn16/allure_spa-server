@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Service;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Tag(
@@ -157,15 +158,55 @@ class ServiceController extends BaseController
 
     public function searchServices(Request $request)
     {
-        $query = $request->get('query');
-        
-        $services = Service::where('service_name', 'LIKE', "%{$query}%")
-            ->take(10)
-            ->get(['id', 'service_name as name', 'single_price as price']);
-
-        return response()->json([
-            'data' => $services
-        ]);
+        try {
+            $query = $request->get('query');
+            
+            Log::info('Service search query:', ['query' => $query]);
+            
+            $searchTerm = mb_strtolower($query);
+            
+            $services = Service::where(function($q) use ($searchTerm) {
+                    $q->whereRaw('LOWER(service_name) LIKE ?', ['%' . $searchTerm . '%']);
+                })
+                ->select([
+                    'id',
+                    'service_name',
+                    'single_price',
+                    'combo_5_price', 
+                    'combo_10_price'
+                ])
+                ->get();
+            
+            Log::info('Services found:', [
+                'count' => $services->count(),
+                'services' => $services->toArray()
+            ]);
+            
+            $transformedServices = $services->map(function($service) {
+                return [
+                    'id' => $service->id,
+                    'name' => $service->service_name,
+                    'service_name' => $service->service_name,
+                    'single_price' => (float)($service->single_price ?? 0),
+                    'combo_5_price' => (float)($service->combo_5_price ?? 0),
+                    'combo_10_price' => (float)($service->combo_10_price ?? 0),
+                    'price' => (float)($service->single_price ?? 0), // Default to single_price
+                    'item_type' => 'service'
+                ];
+            });
+            
+            return response()->json(['data' => $transformedServices]);
+        } catch (\Exception $e) {
+            Log::error('Service search error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Internal server error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

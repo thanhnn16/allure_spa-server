@@ -99,6 +99,8 @@ Route::middleware('auth')->group(function () {
     Route::get('reports/invoices', [ReportController::class, 'invoices'])->name('reports.invoices');
     Route::get('reports/ai', [ReportController::class, 'ai'])->name('reports.ai');
 
+    Route::post('/invoices/{invoice}/process-payment', [InvoiceController::class, 'processPayment'])
+        ->name('invoices.process-payment');
 });
 
 require __DIR__ . '/auth.php';

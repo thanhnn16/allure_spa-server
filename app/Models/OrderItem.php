@@ -28,7 +28,20 @@ class OrderItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'order_id', 'item_type', 'item_id', 'service_type', 'quantity', 'price', 'discount_amount', 'discount_type'
+        'order_id', 
+        'item_type', 
+        'item_id', 
+        'service_type', 
+        'quantity', 
+        'price', 
+        'discount_amount', 
+        'discount_type'
+    ];
+
+    protected $casts = [
+        'item_type' => 'string',
+        'service_type' => 'string',
+        'discount_type' => 'string',
     ];
 
     public function order()
@@ -36,8 +49,27 @@ class OrderItem extends Model
         return $this->belongsTo(Order::class);
     }
 
+    // Quan hệ polymorphic chung
     public function item()
     {
         return $this->morphTo();
+    }
+
+    // Quan hệ với Service khi item_type là 'service'
+    public function service()
+    {
+        return $this->belongsTo(Service::class, 'item_id')
+            ->whereHas('orderItems', function($query) {
+                $query->where('item_type', 'service');
+            });
+    }
+
+    // Quan hệ với Product khi item_type là 'product'
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'item_id')
+            ->whereHas('orderItems', function($query) {
+                $query->where('item_type', 'product');
+            });
     }
 }

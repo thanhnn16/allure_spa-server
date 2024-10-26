@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -29,11 +30,29 @@ use OpenApi\Annotations as OA;
  */
 class Invoice extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasUuids;
+
+    protected $keyType = 'string';
+
+    const STATUS_PENDING = 'pending';           // Chờ thanh toán
+    const STATUS_PAID = 'paid';                 // Đã thanh toán
+    const STATUS_PARTIALLY_PAID = 'partial';    // Thanh toán một phần
+    const STATUS_CANCELLED = 'cancelled';       // Đã hủy
+    const STATUS_FAILED = 'failed';             // Thanh toán thất bại
+
+    const PAYMENT_CASH = 'cash';                // Tiền mặt
+    const PAYMENT_TRANSFER = 'transfer';        // Chuyển khoản
 
     protected $fillable = [
-        'user_id', 'staff_user_id', 'total_amount', 'paid_amount',
-        'status', 'order_id', 'note', 'created_by_user_id'
+        'user_id',
+        'staff_user_id',
+        'total_amount',
+        'paid_amount',
+        'remaining_amount',
+        'status',
+        'order_id',
+        'note',
+        'created_by_user_id'
     ];
 
     protected $casts = [
@@ -62,9 +81,40 @@ class Invoice extends Model
         return $this->belongsTo(Order::class);
     }
 
-
     public function paymentHistories()
     {
         return $this->hasMany(PaymentHistory::class);
+    }
+
+    // Helper methods để kiểm tra trạng thái
+    public function isPending()
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isPaid()
+    {
+        return $this->status === self::STATUS_PAID;
+    }
+
+    public function isPartiallyPaid()
+    {
+        return $this->status === self::STATUS_PARTIALLY_PAID;
+    }
+
+    public function isCancelled()
+    {
+        return $this->status === self::STATUS_CANCELLED;
+    }
+
+    public function isFailed()
+    {
+        return $this->status === self::STATUS_FAILED;
+    }
+
+    // Tính toán số tiền còn lại cần thanh toán
+    public function calculateRemainingAmount()
+    {
+        return $this->total_amount - $this->paid_amount;
     }
 }
