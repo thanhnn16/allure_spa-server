@@ -21,48 +21,69 @@ class ProductController extends BaseController
     /**
      * @OA\Get(
      *     path="/api/products",
-     *     summary="Get product list",
+     *     summary="Lấy danh sách sản phẩm",
      *     tags={"Products"},
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Search for products",
+     *         description="Tìm kiếm sản phẩm",
      *         required=false,
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Parameter(
      *         name="category",
      *         in="query",
-     *         description="Filter by category",
+     *         description="Lọc theo danh mục",
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Number of products per page",
+     *         description="Số sản phẩm trên mỗi trang",
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
+     *     @OA\Parameter(
+     *         name="sort",
+     *         in="query",
+     *         description="Sắp xếp theo trường",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="direction",
+     *         in="query",
+     *         description="Hướng sắp xếp (asc hoặc desc)",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Successful",
+     *         description="Thành công",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", 
-     *                 @OA\Items(
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="product_name", type="string"),
-     *                     @OA\Property(property="category", type="object"),
-     *                     @OA\Property(property="media", type="array",
-     *                         @OA\Items(
-     *                             @OA\Property(property="id", type="integer"),
-     *                             @OA\Property(property="file_path", type="string"),
-     *                             @OA\Property(property="type", type="string")
-     *                         )
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Products retrieved successfully")
+     *             @OA\Property(property="message", type="string", example="Products retrieved successfully"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="current_page", type="integer"),
+     *                 @OA\Property(property="data", type="array", 
+     *                     @OA\Items(ref="#/components/schemas/Product")
+     *                 ),
+     *                 @OA\Property(property="first_page_url", type="string"),
+     *                 @OA\Property(property="from", type="integer"),
+     *                 @OA\Property(property="last_page", type="integer"),
+     *                 @OA\Property(property="last_page_url", type="string"),
+     *                 @OA\Property(property="links", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="next_page_url", type="string"),
+     *                 @OA\Property(property="path", type="string"),
+     *                 @OA\Property(property="per_page", type="integer"),
+     *                 @OA\Property(property="prev_page_url", type="string"),
+     *                 @OA\Property(property="to", type="integer"),
+     *                 @OA\Property(property="total", type="integer")
+     *             )
      *         )
      *     )
      * )
@@ -123,32 +144,26 @@ class ProductController extends BaseController
     /**
      * @OA\Get(
      *     path="/api/products/{id}",
-     *     summary="Get product details",
+     *     summary="Lấy chi tiết sản phẩm",
      *     tags={"Products"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
-     *         description="Product ID",
+     *         description="ID sản phẩm",
      *         required=true,
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Successful",
+     *         description="Thành công",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", 
-     *                 @OA\Property(property="id", type="integer"),
-     *                 @OA\Property(property="product_name", type="string"),
-     *                 @OA\Property(property="category", type="object"),
-     *                 @OA\Property(property="media", type="array",
-     *                     @OA\Items(
-     *                         @OA\Property(property="id", type="integer"),
-     *                         @OA\Property(property="file_path", type="string"),
-     *                         @OA\Property(property="type", type="string")
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="message", type="string", example="Product retrieved successfully")
+     *             @OA\Property(property="message", type="string", example="Product retrieved successfully"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/Product"
+     *             )
      *         )
      *     )
      * )
