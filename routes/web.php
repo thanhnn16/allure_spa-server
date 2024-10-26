@@ -51,6 +51,8 @@ Route::middleware('auth')->group(function () {
 
     // Invoice routes
     Route::resource('invoices', InvoiceController::class);
+    Route::post('/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])
+        ->name('invoices.cancel');
 
     // Order routes
     Route::resource('orders', OrderController::class);
@@ -114,6 +116,7 @@ Route::middleware('auth')->group(function () {
             'status' => 'cancel'
         ]);
     })->name('payment.cancel');
+
 });
 
 require __DIR__ . '/auth.php';

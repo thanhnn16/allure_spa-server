@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use PayOS\PayOS;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class PayOSController extends Controller
 {
@@ -18,48 +18,53 @@ class PayOSController extends Controller
     public function testPayment(Request $request)
     {
         try {
-            // Tạo orderCode ngẫu nhiên 6 số
-            $orderCode = intval(substr(strval(microtime(true) * 10000), -6));
+            Log::info('Starting PayOS test payment');
             
-            // Chuẩn bị dữ liệu theo yêu cầu API
-            $data = [
-                "orderCode" => $orderCode,
-                "amount" => 2000, // 2,000 VNĐ
-                "description" => "Test PayOS Payment",
-                "returnUrl" => $request->returnUrl,
-                "cancelUrl" => $request->cancelUrl,
-                // Thêm các trường tùy chọn
-                "buyerName" => "Test User",
-                "buyerEmail" => "test@example.com",
-                "buyerPhone" => "0900000000",
-                "buyerAddress" => "Test Address",
-                "items" => [
+            // Tạo orderCode là số nguyên dương không quá 9007199254740991
+            $orderCode = mt_rand(1000000, 9999999); // 7 chữ số
+            
+            // Chuẩn bị dữ liệu thanh toán
+            $paymentData = [
+                'orderCode' => $orderCode,
+                'amount' => 2000,
+                'description' => 'Test PayOS Payment',
+                'returnUrl' => $request->returnUrl,
+                'cancelUrl' => $request->cancelUrl,
+                // Thêm các thông tin tùy chọn
+                'cancelUrl' => $request->cancelUrl,
+                'returnUrl' => $request->returnUrl,
+                'expiredAt' => time() + 3600, // Hết hạn sau 1 giờ
+                'items' => [
                     [
-                        "name" => "Test Payment",
-                        "quantity" => 1,
-                        "price" => 2000
+                        'name' => 'Test Payment',
+                        'quantity' => 1,
+                        'price' => 2000
                     ]
-                ],
-                // Unix timestamp cho thời gian hết hạn (1 giờ)
-                "expiredAt" => time() + 3600,
+                ]
             ];
 
-            // Tạo signature theo yêu cầu API
-            $data['signature'] = $this->createSignature($data);
+            Log::info('Payment data prepared', ['data' => $paymentData]);
 
-            // Gọi API tạo payment link
-            $response = $this->payOS->createPaymentLink($data);
+            // Tạo payment link
+            $response = $this->payOS->createPaymentLink($paymentData);
             
+            Log::info('PayOS response received', ['response' => $response]);
+
             return response()->json([
                 'success' => true,
-                'checkoutUrl' => $response['data']['checkoutUrl'] ?? null,
-                'qrCode' => $response['data']['qrCode'] ?? null,
+                'checkoutUrl' => $response['checkoutUrl'] ?? null,
+                'orderCode' => $orderCode
             ]);
 
-        } catch (\Throwable $th) {
+        } catch (\Exception $e) {
+            Log::error('PayOS test payment error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => $th->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -67,30 +72,32 @@ class PayOSController extends Controller
     public function verifyPayment(Request $request)
     {
         try {
-            $orderCode = $request->orderCode;
-            // Gọi API kiểm tra trạng thái payment
-            $response = $this->payOS->getPaymentLinkInformation($orderCode);
-            
-            // Verify signature từ response
-            if ($this->verifySignature($response)) {
-                // Kiểm tra trạng thái thanh toán
-                if ($response['data']['status'] === 'PAID') {
-                    return response()->json([
-                        'success' => true,
-                        'data' => $response['data']
-                    ]);
-                }
-            }
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Payment verification failed'
+            Log::info('Verifying PayOS payment', [
+                'orderCode' => $request->orderCode
             ]);
 
-        } catch (\Throwable $th) {
+            $response = $this->payOS->getPaymentLinkInformation(
+                intval($request->orderCode)
+            );
+
+            Log::info('PayOS verification response', [
+                'response' => $response
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $response
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('PayOS verification error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => $th->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }

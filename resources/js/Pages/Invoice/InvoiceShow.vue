@@ -13,6 +13,12 @@
                                 class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center">
                                 <i class="fas fa-print mr-2"></i> In hóa đơn
                             </button>
+                            <!-- Thêm nút hủy hóa đơn -->
+                            <button v-if="canCancel"
+                                @click="confirmCancelInvoice"
+                                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded flex items-center">
+                                <i class="fas fa-times mr-2"></i> Hủy hóa đơn
+                            </button>
                             <Link :href="route('invoices.index')" 
                                 class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
                                 Quay lại
@@ -363,6 +369,24 @@
 
         <!-- Thêm Toast component -->
         <Toast ref="toast" />
+
+        <!-- Thêm modal xác nhận hủy hóa đơn -->
+        <div v-if="showCancelModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h3 class="text-lg font-semibold mb-4">Xác nhận hủy hóa đơn</h3>
+                <p class="mb-4">Bạn có chắc chắn muốn hủy hóa đơn này? Hành động này không thể hoàn tác.</p>
+                <div class="flex justify-end space-x-4">
+                    <button @click="showCancelModal = false" 
+                        class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">
+                        Đóng
+                    </button>
+                    <button @click="cancelInvoice" 
+                        class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded">
+                        Xác nhận hủy
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -653,6 +677,37 @@ export default {
             return `Giảm ${formatCurrency(order.discount_amount)}`;
         });
 
+        // Trong phần setup
+        const showCancelModal = ref(false)
+
+        // Thêm computed property để kiểm tra có thể hủy hay không
+        const canCancel = computed(() => {
+            return props.invoice.status === 'pending' || props.invoice.status === 'partial';
+        })
+
+        // Thêm methods
+        const confirmCancelInvoice = () => {
+            showCancelModal.value = true
+        }
+
+        const cancelInvoice = async () => {
+            try {
+                const response = await axios.post(`/invoices/${props.invoice.id}/cancel`)
+                
+                // Hiển thị thông báo thành công
+                toast.success("Hóa đơn đã được hủy thành công")
+                
+                // Reload trang để cập nhật dữ liệu
+                router.reload({ only: ['invoice'] })
+                
+                // Đóng modal
+                showCancelModal.value = false
+            } catch (error) {
+                console.error('Cancel invoice error:', error)
+                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy hóa đơn')
+            }
+        }
+
         return {
             paymentAmount,
             paymentMethod,
@@ -676,6 +731,10 @@ export default {
             subtotalAmount,
             getDetailedVoucherDescription,
             getVoucherInfo,
+            showCancelModal,
+            canCancel,
+            confirmCancelInvoice,
+            cancelInvoice,
         }
     }
 }

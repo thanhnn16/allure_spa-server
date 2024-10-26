@@ -7,7 +7,10 @@ use PayOS\PayOS;
 
 class PayOSServiceProvider extends ServiceProvider
 {
-    public function register()
+    /**
+     * Register services.
+     */
+    public function register(): void
     {
         $this->app->singleton(PayOS::class, function ($app) {
             return new PayOS(
@@ -16,5 +19,13 @@ class PayOSServiceProvider extends ServiceProvider
                 config('services.payos.checksum_key')
             );
         });
+    }
+
+    /**
+     * Bootstrap services.
+     */
+    public function boot(): void
+    {
+        //
     }
 }

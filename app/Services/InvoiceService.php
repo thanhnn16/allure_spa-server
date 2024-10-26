@@ -19,14 +19,28 @@ class InvoiceService
         $this->orderService = $orderService;
     }
 
-    public function getInvoices()
+    public function getInvoices($filters = [])
     {
         try {
-            $invoices = Invoice::with(['user', 'order'])
-                ->latest()
-                ->paginate(10);
+            $query = Invoice::with(['user', 'order']);
 
-            return $invoices;
+            // Apply status filter
+            if (!empty($filters['status'])) {
+                $query->where('status', $filters['status']);
+            }
+
+            // Apply search filter
+            if (!empty($filters['search'])) {
+                $search = $filters['search'];
+                $query->where(function($q) use ($search) {
+                    $q->where('id', 'LIKE', "%{$search}%")
+                      ->orWhereHas('user', function($q) use ($search) {
+                          $q->where('full_name', 'LIKE', "%{$search}%");
+                      });
+                });
+            }
+
+            return $query->latest()->paginate(10);
         } catch (\Exception $e) {
             Log::error('Error retrieving invoices:', [
                 'message' => $e->getMessage(),

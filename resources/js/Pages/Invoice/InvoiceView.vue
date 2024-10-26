@@ -23,75 +23,86 @@
         </div>
 
         <!-- Bộ lọc và tìm kiếm -->
-        <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div class="flex items-center space-x-4">
-            <select v-model="filters.status" class="form-select rounded-md shadow-sm">
+        <div class="mb-6 flex flex-wrap items-center gap-4">
+          <div class="flex items-center space-x-4 flex-grow">
+            <select 
+              v-model="filters.status" 
+              @change="applyFilters"
+              class="form-select rounded-md shadow-sm w-48"
+            >
               <option value="">Tất cả trạng thái</option>
               <option value="pending">Chờ thanh toán</option>
               <option value="partial">Thanh toán một phần</option>
               <option value="paid">Đã thanh toán</option>
               <option value="cancelled">Đã hủy</option>
             </select>
-            <input v-model="filters.search" type="text" placeholder="Tìm kiếm theo ID hoặc tên khách hàng"
-              class="form-input rounded-md shadow-sm" />
+            <input 
+              v-model="filters.search" 
+              @input="debounceSearch"
+              type="text" 
+              placeholder="Tìm kiếm theo ID hoặc tên khách hàng"
+              class="form-input rounded-md shadow-sm flex-grow" 
+            />
           </div>
-          <button @click="applyFilters" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-            Áp dụng bộ lọc
-          </button>
         </div>
 
         <!-- Bảng hiển thị hóa đơn -->
         <div v-if="invoices?.data?.length > 0" class="overflow-x-auto bg-white shadow-md rounded-lg">
-          <table class="min-w-full leading-normal">
+          <table class="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ID Hóa đơn
                 </th>
-                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Khách hàng
                 </th>
-                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tổng tiền
                 </th>
-                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Đã thanh toán
                 </th>
-                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Còn lại
                 </th>
-                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Hành động
                 </th>
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="invoice in invoices.data" :key="invoice.id">
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  {{ invoice.id }}
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="invoice in invoices.data" :key="invoice.id" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <span title="#{{ invoice.id }}" class="cursor-help">
+                    #{{ truncateId(invoice.id) }}
+                  </span>
                 </td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ invoice.user.full_name }}
                 </td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatCurrency(invoice.total_amount) }}
                 </td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatCurrency(invoice.paid_amount) }}
                 </td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatCurrency(calculateRemainingAmount(invoice)) }}
                 </td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <span :class="getStatusClass(invoice.status)">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span :class="getStatusClass(invoice.status)" class="flex items-center w-fit">
+                    <span class="h-2 w-2 rounded-full mr-2" :class="getStatusDotClass(invoice.status)"></span>
                     {{ getStatusText(invoice.status) }}
                   </span>
                 </td>
-                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <button @click="viewInvoiceDetails(invoice.id)" class="text-blue-600 hover:text-blue-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <button 
+                    @click="viewInvoiceDetails(invoice.id)" 
+                    class="text-indigo-600 hover:text-indigo-900 font-medium hover:underline">
                     Xem chi tiết
                   </button>
                 </td>
@@ -124,7 +135,7 @@ import { Head, router } from "@inertiajs/vue3";
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
 import Pagination from '@/Components/Pagination.vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 
 export default {
@@ -155,11 +166,17 @@ export default {
       search: '',
     })
 
+    const searchTimeout = ref(null)
+
     onMounted(() => {
       console.log('Invoices data:', props.invoices)
       if (props.error) {
         console.error('Error:', props.error)
       }
+    })
+
+    onBeforeUnmount(() => {
+      if (searchTimeout.value) clearTimeout(searchTimeout.value)
     })
 
     const formatCurrency = (amount) => {
@@ -169,15 +186,30 @@ export default {
     const getStatusClass = (status) => {
       switch (status) {
         case 'pending':
-          return 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800';
+          return 'px-3 py-1 text-sm font-medium rounded-full bg-yellow-50 text-yellow-700';
         case 'partial':
-          return 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800';
+          return 'px-3 py-1 text-sm font-medium rounded-full bg-blue-50 text-blue-700';
         case 'paid':
-          return 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800';
+          return 'px-3 py-1 text-sm font-medium rounded-full bg-green-50 text-green-700';
         case 'cancelled':
-          return 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
+          return 'px-3 py-1 text-sm font-medium rounded-full bg-red-50 text-red-700';
         default:
-          return 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800';
+          return 'px-3 py-1 text-sm font-medium rounded-full bg-gray-50 text-gray-700';
+      }
+    }
+
+    const getStatusDotClass = (status) => {
+      switch (status) {
+        case 'pending':
+          return 'bg-yellow-400';
+        case 'partial':
+          return 'bg-blue-400';
+        case 'paid':
+          return 'bg-green-400';
+        case 'cancelled':
+          return 'bg-red-400';
+        default:
+          return 'bg-gray-400';
       }
     }
 
@@ -207,7 +239,8 @@ export default {
       }, {
         preserveState: true,
         preserveScroll: true,
-      });
+        replace: true // Use replace to avoid adding to browser history
+      })
     }
 
     const createNewInvoice = () => {
@@ -220,34 +253,71 @@ export default {
 
     const testPayOS = async () => {
       try {
+        console.log('Initiating PayOS test payment...');
+        
+        // Get current origin for return URLs
+        const origin = window.location.origin;
+        
         const response = await axios.post('/api/payos/test', {
-          amount: 2000,
-          description: "Test PayOS payment",
-          returnUrl: window.location.origin + "/success",
-          cancelUrl: window.location.origin + "/cancel"
+            amount: 2000,
+            description: "Test PayOS payment",
+            returnUrl: `${origin}/success`,
+            cancelUrl: `${origin}/cancel`
         });
         
-        // Redirect to PayOS checkout URL
-        if (response.data.checkoutUrl) {
-          window.location.href = response.data.checkoutUrl;
+        console.log('PayOS response:', response.data);
+
+        if (response.data.success && response.data.checkoutUrl) {
+            console.log('Redirecting to:', response.data.checkoutUrl);
+            // Store orderCode in localStorage if needed
+            if (response.data.orderCode) {
+                localStorage.setItem('payos_order_code', response.data.orderCode);
+            }
+            window.location.href = response.data.checkoutUrl;
+        } else {
+            throw new Error('Invalid PayOS response');
         }
       } catch (error) {
         console.error('PayOS test error:', error);
-        alert('Error initiating PayOS payment');
+        console.error('Error response:', error.response?.data);
+        
+        let errorMessage = 'Error initiating PayOS payment';
+        if (error.response?.data?.message) {
+            errorMessage += `: ${error.response.data.message}`;
+        }
+        
+        alert(errorMessage);
       }
+    }
+
+    const debounceSearch = () => {
+      if (searchTimeout.value) clearTimeout(searchTimeout.value)
+      searchTimeout.value = setTimeout(() => {
+        applyFilters()
+      }, 500) // Wait 500ms after user stops typing
+    }
+
+    const truncateId = (id) => {
+      if (!id) return '';
+      if (id.length <= 8) return id;
+      return id.substring(0, 8) + '...';
     }
 
     return {
       filters,
       formatCurrency,
       getStatusClass,
+      getStatusDotClass,
       getStatusText,
       viewInvoiceDetails,
       applyFilters,
       createNewInvoice,
       calculateRemainingAmount,
       testPayOS,
+      debounceSearch,
+      truncateId,
     }
   },
 }
 </script>
+
