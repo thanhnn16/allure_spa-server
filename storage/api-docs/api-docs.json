@@ -801,44 +801,6 @@
                         }
                     }
                 }
-            },
-            "post": {
-                "tags": [
-                    "Products"
-                ],
-                "summary": "Tạo sản phẩm mới",
-                "operationId": "e8185e307706e2cd84bbcf5171e2f09d",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ProductRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Tạo thành công",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/Product"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Product created successfully"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
             }
         },
         "/api/products/{id}": {
@@ -1040,91 +1002,6 @@
                                                 }
                                             },
                                             "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "Products"
-                ],
-                "summary": "Cập nhật sản phẩm",
-                "operationId": "6a7e11900844cd85cff66e662b82bd4c",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID sản phẩm",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ProductRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Cập nhật thành công",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/Product"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Product updated successfully"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "Products"
-                ],
-                "summary": "Xóa sản phẩm",
-                "operationId": "e80a6ca46716acee6b47ea1ac91663c0",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID sản phẩm",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Xóa thành công",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Product deleted successfully"
                                         }
                                     },
                                     "type": "object"
@@ -2094,7 +1971,107 @@
                                             "example": true
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/Service"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "service_name": {
+                                                    "type": "string",
+                                                    "example": "Chăm da Amino - Phù hợp mọi loại da"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Liệu trình chăm sóc da mặt phù hợp cho mọi loại da"
+                                                },
+                                                "duration": {
+                                                    "type": "integer",
+                                                    "example": 60
+                                                },
+                                                "category_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "single_price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1350000
+                                                },
+                                                "combo_5_price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 5400000
+                                                },
+                                                "combo_10_price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 9450000
+                                                },
+                                                "validity_period": {
+                                                    "type": "integer",
+                                                    "example": 365
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "deleted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "category": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "service_category_name": {
+                                                            "type": "string",
+                                                            "example": "Chăm sóc da mặt"
+                                                        },
+                                                        "parent_id": {
+                                                            "type": "integer",
+                                                            "nullable": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "deleted_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "media": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "price_history": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"

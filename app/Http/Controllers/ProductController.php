@@ -123,25 +123,6 @@ class ProductController extends BaseController
         ]);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/products",
-     *     summary="Tạo sản phẩm mới",
-     *     tags={"Products"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/ProductRequest")
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Tạo thành công",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="data", ref="#/components/schemas/Product"),
-     *             @OA\Property(property="message", type="string", example="Product created successfully")
-     *         )
-     *     )
-     * )
-     */
     public function store(ProductRequest $request)
     {
         $product = $this->productService->createProduct($request->validated());
@@ -242,32 +223,6 @@ class ProductController extends BaseController
         ]);
     }
 
-    /**
-     * @OA\Put(
-     *     path="/api/products/{id}",
-     *     summary="Cập nhật sản phẩm",
-     *     tags={"Products"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID sản phẩm",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/ProductRequest")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Cập nhật thành công",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="data", ref="#/components/schemas/Product"),
-     *             @OA\Property(property="message", type="string", example="Product updated successfully")
-     *         )
-     *     )
-     * )
-     */
     public function update(ProductRequest $request, string $id)
     {
         $product = $this->productService->updateProduct($id, $request->validated());
@@ -279,27 +234,6 @@ class ProductController extends BaseController
         return redirect()->route('products.index')->with('success', 'Sản phẩm đã được cập nhật thành công.');
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/api/products/{id}",
-     *     summary="Xóa sản phẩm",
-     *     tags={"Products"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID sản phẩm",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Xóa thành công",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Product deleted successfully")
-     *         )
-     *     )
-     * )
-     */
     public function destroy(string $id)
     {
         $this->productService->deleteProduct($id);

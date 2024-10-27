@@ -218,29 +218,29 @@ class ServiceController extends BaseController
     {
         try {
             $query = $request->get('query');
-            
+
             Log::info('Service search query:', ['query' => $query]);
-            
+
             $searchTerm = mb_strtolower($query);
-            
-            $services = Service::where(function($q) use ($searchTerm) {
-                    $q->whereRaw('LOWER(service_name) LIKE ?', ['%' . $searchTerm . '%']);
-                })
+
+            $services = Service::where(function ($q) use ($searchTerm) {
+                $q->whereRaw('LOWER(service_name) LIKE ?', ['%' . $searchTerm . '%']);
+            })
                 ->select([
                     'id',
                     'service_name',
                     'single_price',
-                    'combo_5_price', 
+                    'combo_5_price',
                     'combo_10_price'
                 ])
                 ->get();
-            
+
             Log::info('Services found:', [
                 'count' => $services->count(),
                 'services' => $services->toArray()
             ]);
-            
-            $transformedServices = $services->map(function($service) {
+
+            $transformedServices = $services->map(function ($service) {
                 return [
                     'id' => $service->id,
                     'name' => $service->service_name,
@@ -252,14 +252,14 @@ class ServiceController extends BaseController
                     'item_type' => 'service'
                 ];
             });
-            
+
             return response()->json(['data' => $transformedServices]);
         } catch (\Exception $e) {
             Log::error('Service search error:', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'error' => 'Internal server error',
                 'message' => $e->getMessage()
@@ -289,7 +289,30 @@ class ServiceController extends BaseController
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
-     *                 ref="#/components/schemas/Service"
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="service_name", type="string", example="Chăm da Amino - Phù hợp mọi loại da"),
+     *                 @OA\Property(property="description", type="string", example="Liệu trình chăm sóc da mặt phù hợp cho mọi loại da"),
+     *                 @OA\Property(property="duration", type="integer", example=60),
+     *                 @OA\Property(property="category_id", type="integer", example=1),
+     *                 @OA\Property(property="single_price", type="number", format="float", example=1350000),
+     *                 @OA\Property(property="combo_5_price", type="number", format="float", example=5400000),
+     *                 @OA\Property(property="combo_10_price", type="number", format="float", example=9450000),
+     *                 @OA\Property(property="validity_period", type="integer", example=365),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(
+     *                     property="category",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="service_category_name", type="string", example="Chăm sóc da mặt"),
+     *                     @OA\Property(property="parent_id", type="integer", nullable=true),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", nullable=true),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", nullable=true),
+     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
+     *                 ),
+     *                 @OA\Property(property="media", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="price_history", type="array", @OA\Items(type="object"))
      *             )
      *         )
      *     ),
@@ -299,9 +322,9 @@ class ServiceController extends BaseController
      *     )
      * )
      */
-    public function show(Request $request, $id)
+    public function show(Request $request, Service $service)
     {
-        $service = $this->serviceService->getServiceById($id);
+        $service = $this->serviceService->getServiceById($service->id);
 
         if (!$service) {
             if ($request->expectsJson()) {
@@ -319,9 +342,9 @@ class ServiceController extends BaseController
         ]);
     }
 
-    public function edit(Request $request, $id)
+    public function edit(Request $request, Service $service)
     {
-        $service = $this->serviceService->getServiceById($id);
+        $service = $this->serviceService->getServiceById($service->id);
 
         if (!$service) {
             return redirect()->route('services.index')->with('error', 'Service not found');

@@ -30,6 +30,7 @@ Route::middleware('throttle:api')->group(function () {
 
     // Service routes
     Route::get('/services', [ServiceController::class, 'index']);
+    Route::get('/services/{service}', [ServiceController::class, 'show']);
     Route::get('/service-categories', [ServiceController::class, 'categories']);
 
     // Product routes
