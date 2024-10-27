@@ -25,6 +25,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *     @OA\Property(property="product_notes", type="string", nullable=true),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(
+ *         property="media",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/Media")
+ *     ),
  *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
  * )
  */

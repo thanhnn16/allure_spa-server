@@ -24,12 +24,17 @@ Route::middleware('throttle:api')->group(function () {
     Route::post('/auth/register', [RegisteredUserController::class, 'storeApi']);
     Route::post('/auth/login', [AuthenticatedSessionController::class, 'storeApi']);
 
+    // Search routes
     Route::get('/products/search', [ProductController::class, 'searchProducts']);
     Route::get('/services/search', [ServiceController::class, 'searchServices']);
 
     // Service routes
     Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/service-categories', [ServiceController::class, 'categories']);
+
+    // Product routes
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/product-categories', [ProductController::class, 'categories']);
 
     Route::middleware(['auth:sanctum'])->group(function () {
         // Appointment routes

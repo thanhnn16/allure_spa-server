@@ -724,49 +724,72 @@
                                         "data": {
                                             "properties": {
                                                 "current_page": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "example": 1
                                                 },
                                                 "data": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/Product"
-                                                    }
-                                                },
-                                                "first_page_url": {
-                                                    "type": "string"
-                                                },
-                                                "from": {
-                                                    "type": "integer"
-                                                },
-                                                "last_page": {
-                                                    "type": "integer"
-                                                },
-                                                "last_page_url": {
-                                                    "type": "string"
-                                                },
-                                                "links": {
-                                                    "type": "array",
-                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Sample Product"
+                                                            },
+                                                            "price": {
+                                                                "type": "number",
+                                                                "example": 99.99
+                                                            },
+                                                            "media": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "type": {
+                                                                            "type": "string",
+                                                                            "example": "image"
+                                                                        },
+                                                                        "file_path": {
+                                                                            "type": "string",
+                                                                            "example": "products/sample.jpg"
+                                                                        },
+                                                                        "full_url": {
+                                                                            "type": "string",
+                                                                            "example": "http://example.com/storage/products/sample.jpg"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
                                                         "type": "object"
                                                     }
                                                 },
-                                                "next_page_url": {
-                                                    "type": "string"
+                                                "first_page_url": {
+                                                    "type": "string",
+                                                    "example": "http://example.com/api/products?page=1"
                                                 },
-                                                "path": {
-                                                    "type": "string"
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 5
                                                 },
                                                 "per_page": {
-                                                    "type": "integer"
-                                                },
-                                                "prev_page_url": {
-                                                    "type": "string"
-                                                },
-                                                "to": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "example": 15
                                                 },
                                                 "total": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "example": 50
                                                 }
                                             },
                                             "type": "object"
@@ -856,7 +879,45 @@
                                             "example": true
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/Product"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Sample Product"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "example": 99.99
+                                                },
+                                                "media": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "image"
+                                                            },
+                                                            "file_path": {
+                                                                "type": "string",
+                                                                "example": "products/sample.jpg"
+                                                            },
+                                                            "full_url": {
+                                                                "type": "string",
+                                                                "example": "http://example.com/storage/products/sample.jpg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -3333,6 +3394,12 @@
                     "updated_at": {
                         "type": "string",
                         "format": "date-time"
+                    },
+                    "media": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Media"
+                        }
                     },
                     "deleted_at": {
                         "type": "string",

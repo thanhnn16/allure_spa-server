@@ -68,21 +68,33 @@ class ProductController extends BaseController
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
-     *                 @OA\Property(property="current_page", type="integer"),
-     *                 @OA\Property(property="data", type="array", 
-     *                     @OA\Items(ref="#/components/schemas/Product")
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(
+     *                     property="data",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="name", type="string", example="Sample Product"),
+     *                         @OA\Property(property="price", type="number", example=99.99),
+     *                         @OA\Property(
+     *                             property="media",
+     *                             type="array",
+     *                             @OA\Items(
+     *                                 type="object",
+     *                                 @OA\Property(property="id", type="integer", example=1),
+     *                                 @OA\Property(property="type", type="string", example="image"),
+     *                                 @OA\Property(property="file_path", type="string", example="products/sample.jpg"),
+     *                                 @OA\Property(property="full_url", type="string", example="http://example.com/storage/products/sample.jpg")
+     *                             )
+     *                         )
+     *                     )
      *                 ),
-     *                 @OA\Property(property="first_page_url", type="string"),
-     *                 @OA\Property(property="from", type="integer"),
-     *                 @OA\Property(property="last_page", type="integer"),
-     *                 @OA\Property(property="last_page_url", type="string"),
-     *                 @OA\Property(property="links", type="array", @OA\Items(type="object")),
-     *                 @OA\Property(property="next_page_url", type="string"),
-     *                 @OA\Property(property="path", type="string"),
-     *                 @OA\Property(property="per_page", type="integer"),
-     *                 @OA\Property(property="prev_page_url", type="string"),
-     *                 @OA\Property(property="to", type="integer"),
-     *                 @OA\Property(property="total", type="integer")
+     *                 @OA\Property(property="first_page_url", type="string", example="http://example.com/api/products?page=1"),
+     *                 @OA\Property(property="from", type="integer", example=1),
+     *                 @OA\Property(property="last_page", type="integer", example=5),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="total", type="integer", example=50)
      *             )
      *         )
      *     )
@@ -162,7 +174,21 @@ class ProductController extends BaseController
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
-     *                 ref="#/components/schemas/Product"
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Sample Product"),
+     *                 @OA\Property(property="price", type="number", example=99.99),
+     *                 @OA\Property(
+     *                     property="media",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="type", type="string", example="image"),
+     *                         @OA\Property(property="file_path", type="string", example="products/sample.jpg"),
+     *                         @OA\Property(property="full_url", type="string", example="http://example.com/storage/products/sample.jpg")
+     *                     )
+     *                 )
      *             )
      *         )
      *     )
@@ -292,7 +318,7 @@ class ProductController extends BaseController
     public function searchProducts(Request $request)
     {
         $query = $request->get('query');
-        
+
         $products = Product::where('name', 'LIKE', "%{$query}%")
             ->where('quantity', '>', 0)
             ->take(10)
