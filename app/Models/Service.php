@@ -22,7 +22,30 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *     @OA\Property(property="validity_period", type="integer", description="Thời hạn sử dụng tính bằng ngày"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Ngày tạo"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Ngày cập nhật cuối cùng"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Ngày xóa")
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Ngày xóa"),
+ *     @OA\Property(
+ *         property="media",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/Media"),
+ *         description="Danh sách media liên quan đến dịch vụ"
+ *     ),
+ *     @OA\Property(
+ *         property="category",
+ *         ref="#/components/schemas/ServiceCategory",
+ *         description="Danh mục của dịch vụ"
+ *     ),
+ *     @OA\Property(
+ *         property="ratings",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/Rating"),
+ *         description="Danh sách đánh giá của dịch vụ"
+ *     ),
+ *     @OA\Property(
+ *         property="appointments",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/Appointment"),
+ *         description="Danh sách lịch hẹn của dịch vụ"
+ *     )
  * )
  */
 class Service extends Model
@@ -45,7 +68,6 @@ class Service extends Model
         'single_price' => 'float',
         'combo_5_price' => 'float',
         'combo_10_price' => 'float',
-        'price' => 'float',
         'duration' => 'integer',
         'validity_period' => 'integer',
     ];

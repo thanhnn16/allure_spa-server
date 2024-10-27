@@ -17,10 +17,10 @@ class ServiceService
 
     public function getPaginatedServices(array $filters, int $perPage = 15): LengthAwarePaginator
     {
-        $query = Service::with('category');
+        $query = Service::with(['category', 'media']);
 
         if (!empty($filters['search'])) {
-            $query->where('name', 'like', '%' . $filters['search'] . '%');
+            $query->where('service_name', 'like', '%' . $filters['search'] . '%');
         }
 
         if (!empty($filters['category'])) {
@@ -65,10 +65,5 @@ class ServiceService
         }
 
         return $service->delete();
-    }
-
-    public function getServiceComboById(int $id): ?ServiceCombo
-    {
-        return ServiceCombo::with(['services', 'image'])->find($id);
     }
 }

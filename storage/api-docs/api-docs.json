@@ -1617,7 +1617,60 @@
                                                 "data": {
                                                     "type": "array",
                                                     "items": {
-                                                        "$ref": "#/components/schemas/Service"
+                                                        "allOf": [
+                                                            {
+                                                                "$ref": "#/components/schemas/Service"
+                                                            },
+                                                            {
+                                                                "properties": {
+                                                                    "media": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                            "properties": {
+                                                                                "id": {
+                                                                                    "type": "integer",
+                                                                                    "example": 1
+                                                                                },
+                                                                                "file_name": {
+                                                                                    "type": "string",
+                                                                                    "example": "service1.jpg"
+                                                                                },
+                                                                                "file_path": {
+                                                                                    "type": "string",
+                                                                                    "example": "uploads/services/service1.jpg"
+                                                                                },
+                                                                                "file_type": {
+                                                                                    "type": "string",
+                                                                                    "example": "image/jpeg"
+                                                                                },
+                                                                                "file_size": {
+                                                                                    "type": "integer",
+                                                                                    "example": 1024
+                                                                                },
+                                                                                "mediable_type": {
+                                                                                    "type": "string",
+                                                                                    "example": "App\\\\Models\\\\Service"
+                                                                                },
+                                                                                "mediable_id": {
+                                                                                    "type": "integer",
+                                                                                    "example": 1
+                                                                                },
+                                                                                "created_at": {
+                                                                                    "type": "string",
+                                                                                    "format": "date-time"
+                                                                                },
+                                                                                "updated_at": {
+                                                                                    "type": "string",
+                                                                                    "format": "date-time"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        ]
                                                     }
                                                 },
                                                 "first_page_url": {
@@ -2867,6 +2920,55 @@
                 },
                 "type": "object"
             },
+            "Media": {
+                "title": "Media",
+                "description": "Mô hình Media",
+                "properties": {
+                    "id": {
+                        "description": "ID media",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "type": {
+                        "description": "Loại media",
+                        "type": "string"
+                    },
+                    "file_path": {
+                        "description": "Đường dẫn file",
+                        "type": "string"
+                    },
+                    "mediable_type": {
+                        "description": "Loại đối tượng liên kết",
+                        "type": "string"
+                    },
+                    "mediable_id": {
+                        "description": "ID đối tượng liên kết",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "full_url": {
+                        "description": "URL đầy đủ của file",
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "description": "Ngày tạo",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Ngày cập nhật cuối cùng",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "description": "Ngày xóa",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "Notification": {
                 "title": "Notification",
                 "description": "Notification model",
@@ -3521,6 +3623,30 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
+                    },
+                    "media": {
+                        "description": "Danh sách media liên quan đến dịch vụ",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Media"
+                        }
+                    },
+                    "category": {
+                        "$ref": "#/components/schemas/ServiceCategory"
+                    },
+                    "ratings": {
+                        "description": "Danh sách đánh giá của dịch vụ",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Rating"
+                        }
+                    },
+                    "appointments": {
+                        "description": "Danh sách lịch hẹn của dịch vụ",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Appointment"
+                        }
                     }
                 },
                 "type": "object"

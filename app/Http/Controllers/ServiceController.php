@@ -78,7 +78,30 @@ class ServiceController extends BaseController
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/Service")
+     *                     @OA\Items(
+     *                         allOf={
+     *                             @OA\Schema(ref="#/components/schemas/Service"),
+     *                             @OA\Schema(
+     *                                 type="object",
+     *                                 @OA\Property(
+     *                                     property="media",
+     *                                     type="array",
+     *                                     @OA\Items(
+     *                                         type="object",
+     *                                         @OA\Property(property="id", type="integer", example=1),
+     *                                         @OA\Property(property="file_name", type="string", example="service1.jpg"),
+     *                                         @OA\Property(property="file_path", type="string", example="uploads/services/service1.jpg"),
+     *                                         @OA\Property(property="file_type", type="string", example="image/jpeg"),
+     *                                         @OA\Property(property="file_size", type="integer", example=1024),
+     *                                         @OA\Property(property="mediable_type", type="string", example="App\\Models\\Service"),
+     *                                         @OA\Property(property="mediable_id", type="integer", example=1),
+     *                                         @OA\Property(property="created_at", type="string", format="date-time"),
+     *                                         @OA\Property(property="updated_at", type="string", format="date-time")
+     *                                     )
+     *                                 )
+     *                             )
+     *                         }
+     *                     )
      *                 ),
      *                 @OA\Property(property="first_page_url", type="string", example="http://example.com/api/services?page=1"),
      *                 @OA\Property(property="from", type="integer", example=1),
