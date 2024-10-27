@@ -176,8 +176,31 @@ class ProductController extends BaseController
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="Sample Product"),
-     *                 @OA\Property(property="price", type="number", example=99.99),
+     *                 @OA\Property(property="name", type="string", example="FAITH Members Club Face Lamela Veil EX Cleansing"),
+     *                 @OA\Property(property="price", type="string", example="1000000.00"),
+     *                 @OA\Property(property="category_id", type="integer", example=1),
+     *                 @OA\Property(property="quantity", type="integer", example=100),
+     *                 @OA\Property(property="brand_description", type="string", example="FAITH"),
+     *                 @OA\Property(property="usage", type="string", example="Lấy một lượng vừa đủ (3-4 lần bơm) ra lòng bàn tay, thoa đều. Massage nhẹ nhàng lên da khô để hòa tan lớp trang điểm và bụi bẩn. Rửa sạch lại với nước ấm."),
+     *                 @OA\Property(property="benefits", type="string", example="Kết cấu sản phẩm mềm mượt, dễ tán đều, mang đến làn da sạch thoáng, ẩm mịn."),
+     *                 @OA\Property(property="key_ingredients", type="string", example="Gelatin Collagen*1"),
+     *                 @OA\Property(property="ingredients", type="string", example="Water, Coconut Oil Fatty Acid PEG-7 Glyceryl, BG, Polysorbate 60, Pentylene Glycol, Glycerin, Water-Soluble Collagen, Sodium Hyaluronate, Hydrolyzed Elastin, Lactobacillus/Pear Juice Ferment Filtrate, Galactoarabinan, PCA-Na, Rosa Damascena Flower Water, Sodium Lauroyl Glutamate Lysine, Ectoin, Magnesium Ascorbyl Phosphate, Houttuynia Cordata Extract, Aloe Barbadensis Leaf Extract, Rosmarinus Officinalis (Rosemary) Leaf Extract, Eugenia Caryophyllus (Clove) Flower Extract, Arginine, Tocopherol, Ceramide 3, Hydrogenated Lecithin, Cholesterol, Carbomer, Potassium Hydroxide"),
+     *                 @OA\Property(property="directions", type="string", example="Sử dụng hàng ngày, sáng và tối"),
+     *                 @OA\Property(property="storage_instructions", type="string", example="Bảo quản nơi khô ráo, thoáng mát, tránh ánh nắng trực tiếp"),
+     *                 @OA\Property(property="product_notes", type="string", example="Phù hợp cho mọi loại da"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(
+     *                     property="category",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="category_name", type="string", example="Làm sạch"),
+     *                     @OA\Property(property="parent_id", type="integer", nullable=true),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", nullable=true),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", nullable=true),
+     *                     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
+     *                 ),
      *                 @OA\Property(
      *                     property="media",
      *                     type="array",
@@ -185,18 +208,25 @@ class ProductController extends BaseController
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="type", type="string", example="image"),
-     *                         @OA\Property(property="file_path", type="string", example="products/sample.jpg"),
-     *                         @OA\Property(property="full_url", type="string", example="http://example.com/storage/products/sample.jpg")
+     *                         @OA\Property(property="file_path", type="string", example="/images/products/cleansing.jpg"),
+     *                         @OA\Property(property="mediable_type", type="string", example="product"),
+     *                         @OA\Property(property="mediable_id", type="integer", example=1),
+     *                         @OA\Property(property="created_at", type="string", format="date-time", nullable=true),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time", nullable=true),
+     *                         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
+     *                         @OA\Property(property="full_url", type="string", example="http://localhost:8000/storage//images/products/cleansing.jpg")
      *                     )
-     *                 )
+     *                 ),
+     *                 @OA\Property(property="price_history", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="attributes", type="array", @OA\Items(type="object"))
      *             )
      *         )
      *     )
      * )
      */
-    public function show(string $id)
+    public function show(Product $product)
     {
-        $product = $this->productService->getProductById($id);
+        $product = $this->productService->getProductById($product->id);
         $product->load(['category', 'media', 'priceHistory', 'attributes']);
 
         if (request()->expectsJson()) {

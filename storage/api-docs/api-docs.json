@@ -886,11 +886,98 @@
                                                 },
                                                 "name": {
                                                     "type": "string",
-                                                    "example": "Sample Product"
+                                                    "example": "FAITH Members Club Face Lamela Veil EX Cleansing"
                                                 },
                                                 "price": {
-                                                    "type": "number",
-                                                    "example": 99.99
+                                                    "type": "string",
+                                                    "example": "1000000.00"
+                                                },
+                                                "category_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "brand_description": {
+                                                    "type": "string",
+                                                    "example": "FAITH"
+                                                },
+                                                "usage": {
+                                                    "type": "string",
+                                                    "example": "Lấy một lượng vừa đủ (3-4 lần bơm) ra lòng bàn tay, thoa đều. Massage nhẹ nhàng lên da khô để hòa tan lớp trang điểm và bụi bẩn. Rửa sạch lại với nước ấm."
+                                                },
+                                                "benefits": {
+                                                    "type": "string",
+                                                    "example": "Kết cấu sản phẩm mềm mượt, dễ tán đều, mang đến làn da sạch thoáng, ẩm mịn."
+                                                },
+                                                "key_ingredients": {
+                                                    "type": "string",
+                                                    "example": "Gelatin Collagen*1"
+                                                },
+                                                "ingredients": {
+                                                    "type": "string",
+                                                    "example": "Water, Coconut Oil Fatty Acid PEG-7 Glyceryl, BG, Polysorbate 60, Pentylene Glycol, Glycerin, Water-Soluble Collagen, Sodium Hyaluronate, Hydrolyzed Elastin, Lactobacillus/Pear Juice Ferment Filtrate, Galactoarabinan, PCA-Na, Rosa Damascena Flower Water, Sodium Lauroyl Glutamate Lysine, Ectoin, Magnesium Ascorbyl Phosphate, Houttuynia Cordata Extract, Aloe Barbadensis Leaf Extract, Rosmarinus Officinalis (Rosemary) Leaf Extract, Eugenia Caryophyllus (Clove) Flower Extract, Arginine, Tocopherol, Ceramide 3, Hydrogenated Lecithin, Cholesterol, Carbomer, Potassium Hydroxide"
+                                                },
+                                                "directions": {
+                                                    "type": "string",
+                                                    "example": "Sử dụng hàng ngày, sáng và tối"
+                                                },
+                                                "storage_instructions": {
+                                                    "type": "string",
+                                                    "example": "Bảo quản nơi khô ráo, thoáng mát, tránh ánh nắng trực tiếp"
+                                                },
+                                                "product_notes": {
+                                                    "type": "string",
+                                                    "example": "Phù hợp cho mọi loại da"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "deleted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "category": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "category_name": {
+                                                            "type": "string",
+                                                            "example": "Làm sạch"
+                                                        },
+                                                        "parent_id": {
+                                                            "type": "integer",
+                                                            "nullable": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "deleted_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 },
                                                 "media": {
                                                     "type": "array",
@@ -906,13 +993,48 @@
                                                             },
                                                             "file_path": {
                                                                 "type": "string",
-                                                                "example": "products/sample.jpg"
+                                                                "example": "/images/products/cleansing.jpg"
+                                                            },
+                                                            "mediable_type": {
+                                                                "type": "string",
+                                                                "example": "product"
+                                                            },
+                                                            "mediable_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "deleted_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
                                                             },
                                                             "full_url": {
                                                                 "type": "string",
-                                                                "example": "http://example.com/storage/products/sample.jpg"
+                                                                "example": "http://localhost:8000/storage//images/products/cleansing.jpg"
                                                             }
                                                         },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "price_history": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "attributes": {
+                                                    "type": "array",
+                                                    "items": {
                                                         "type": "object"
                                                     }
                                                 }
