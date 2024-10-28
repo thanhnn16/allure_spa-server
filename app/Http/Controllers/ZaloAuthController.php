@@ -17,7 +17,7 @@ class ZaloAuthController extends Controller
         $state = $request->query('state');
 
         if ($code && $state) {
-            return redirect("allurespa://auth/callback?code={$code}&state={$state}");
+            return redirect("allurespa://zalo-oauth?code={$code}&state={$state}");
         }
 
         return Inertia::render('Payments/ProgressView');
