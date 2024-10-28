@@ -38,6 +38,8 @@ Route::middleware('throttle:api')->group(function () {
     Route::get('/products/{product}', [ProductController::class, 'show']);
     Route::get('/product-categories', [ProductController::class, 'categories']);
 
+    Route::post('/payos/test', [PayOSController::class, 'testPayment']);
+    Route::post('/payos/verify', [PayOSController::class, 'verifyPayment']);
 
     Route::middleware(['auth:sanctum'])->group(function () {
         // Appointment routes
@@ -77,9 +79,8 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy']);
 
-        Route::post('/payos/test', [PayOSController::class, 'testPayment']);
-        Route::post('/payos/verify', [PayOSController::class, 'verifyPayment']);
+        // Route::post('/payos/test', [PayOSController::class, 'testPayment']);
+        // Route::post('/payos/verify', [PayOSController::class, 'verifyPayment']);
 
     });
 });
-
