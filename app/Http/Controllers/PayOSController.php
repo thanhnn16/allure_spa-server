@@ -18,23 +18,35 @@ class PayOSController extends Controller
     public function testPayment(Request $request)
     {
         try {
-            $payOS = app(PayOS::class);
+            // Generate orderCode as number
+            $orderCode = time(); // Hoặc có thể dùng mt_rand() để tạo số ngẫu nhiên
             
-            // Tạo mã đơn hàng ngẫu nhiên
-            $orderCode = 'TEST' . time();
+            // Validate input data
+            $amount = intval($request->amount ?? 2000);
+            $description = $request->description ?? 'Test payment';
+            $returnUrl = $request->returnUrl;
+            $cancelUrl = $request->cancelUrl;
             
-            // Tạo yêu cầu thanh toán
+            // Prepare payment data
             $paymentData = [
                 'orderCode' => $orderCode,
-                'amount' => $request->amount ?? 2000,
-                'description' => $request->description ?? 'Test payment',
-                'returnUrl' => $request->returnUrl,
-                'cancelUrl' => $request->cancelUrl,
-                'signature' => '' // Tạo signature theo docs PayOS
+                'amount' => $amount,
+                'description' => $description,
+                'returnUrl' => $returnUrl,
+                'cancelUrl' => $cancelUrl,
             ];
             
-            // Gọi API PayOS
-            $response = $payOS->createPaymentLink($paymentData);
+            // Create signature
+            $paymentData['signature'] = $this->createSignature($paymentData);
+            
+            // Log payment request for debugging
+            Log::info('PayOS Request Data:', $paymentData);
+            
+            // Call PayOS API
+            $response = $this->payOS->createPaymentLink($paymentData);
+            
+            // Log PayOS response for debugging
+            Log::info('PayOS Response:', $response);
             
             if ($response && isset($response['checkoutUrl'])) {
                 return response()->json([
@@ -46,13 +58,19 @@ class PayOSController extends Controller
             
             return response()->json([
                 'success' => false,
-                'message' => 'Không thể tạo link thanh toán'
+                'message' => 'Không thể tạo link thanh toán',
+                'error' => $response['error'] ?? null
             ]);
             
         } catch (\Exception $e) {
+            Log::error('PayOS Error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -88,15 +106,30 @@ class PayOSController extends Controller
 
     private function createSignature($data)
     {
-        // Sắp xếp các trường theo alphabet
-        $signData = "amount={$data['amount']}&cancelUrl={$data['cancelUrl']}&description={$data['description']}&orderCode={$data['orderCode']}&returnUrl={$data['returnUrl']}";
+        try {
+            // Sắp xếp các trường theo alphabet và format theo yêu cầu của PayOS
+            $signData = sprintf(
+                "amount=%d&cancelUrl=%s&description=%s&orderCode=%d&returnUrl=%s",
+                $data['amount'],
+                $data['cancelUrl'],
+                $data['description'],
+                $data['orderCode'],
+                $data['returnUrl']
+            );
 
-        // Tạo signature với HMAC-SHA256
-        return hash_hmac(
-            'sha256',
-            $signData,
-            config('services.payos.checksum_key')
-        );
+            // Tạo signature với HMAC-SHA256
+            return hash_hmac(
+                'sha256',
+                $signData,
+                config('services.payos.checksum_key')
+            );
+        } catch (\Exception $e) {
+            Log::error('Signature Creation Error:', [
+                'message' => $e->getMessage(),
+                'data' => $data
+            ]);
+            throw $e;
+        }
     }
 
     private function verifySignature($response)
