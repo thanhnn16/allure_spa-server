@@ -211,10 +211,8 @@ class ProductController extends BaseController
         $product->load(['category', 'media', 'priceHistory', 'attributes']);
 
         if (request()->expectsJson()) {
-            $product->media->transform(function ($media) {
-                $media->full_url = $media->getFullUrlAttribute();
-                return $media;
-            });
+            // Remove this transform as it's no longer needed
+            // $product->media->transform(...)
             return $this->respondWithJson($product, 'Product retrieved successfully');
         }
 

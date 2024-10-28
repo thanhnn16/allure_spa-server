@@ -17,7 +17,10 @@ class ServiceService
 
     public function getPaginatedServices(array $filters, int $perPage = 15): LengthAwarePaginator
     {
-        $query = Service::with(['category', 'media']);
+        $query = Service::with([
+            'category',
+            'media' // Media model đã có $appends = ['full_url'] nên sẽ tự động thêm full_url
+        ]);
 
         if (!empty($filters['search'])) {
             $query->where('service_name', 'like', '%' . $filters['search'] . '%');
@@ -39,7 +42,7 @@ class ServiceService
     {
         return Service::with([
             'category',
-            'media',
+            'media', // Media model đã có $appends = ['full_url'] nên sẽ tự động thêm full_url
             'priceHistory' => function ($query) {
                 $query->orderBy('effective_from', 'desc');
             }

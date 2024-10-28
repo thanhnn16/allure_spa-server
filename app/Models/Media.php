@@ -40,6 +40,8 @@ class Media extends Model
         'mediable_id' => 'integer',
     ];
 
+    protected $appends = ['full_url'];
+
     public function mediable()
     {
         return $this->morphTo();

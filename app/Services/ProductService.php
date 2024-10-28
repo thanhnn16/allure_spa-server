@@ -13,17 +13,6 @@ class ProductService
     {
         $query = Product::with(['category', 'media']);
 
-        $query->getQuery()->macro('getModels', function () use ($query) {
-            $models = $query->getQuery()->get();
-            $models->each(function ($product) {
-                $product->media->transform(function ($media) {
-                    $media->full_url = $media->getFullUrlAttribute();
-                    return $media;
-                });
-            });
-            return $models;
-        });
-
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
@@ -64,15 +53,7 @@ class ProductService
 
     public function getProductById($id)
     {
-        $product = Product::with(['category', 'media', 'priceHistory', 'attributes'])->findOrFail($id);
-
-        // Transform media URLs
-        $product->media->transform(function ($media) {
-            $media->full_url = $media->getFullUrlAttribute();
-            return $media;
-        });
-
-        return $product;
+        return Product::with(['category', 'media', 'priceHistory', 'attributes'])->findOrFail($id);
     }
 
     public function updateProduct($id, array $data)
