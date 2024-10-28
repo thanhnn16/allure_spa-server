@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+
 /**
  * @OA\Schema(
  *     schema="Media",
@@ -49,10 +50,19 @@ class Media extends Model
 
     public function getFullUrlAttribute()
     {
+        // Kiểm tra file tồn tại trong storage public
         if (Storage::disk('public')->exists($this->file_path)) {
-            return asset('storage/' . $this->file_path);
+            return asset('storage' . $this->file_path);
         }
-        return null;
+
+        // Nếu file path bắt đầu bằng / thì bỏ / đi để tránh double slash
+        $path = ltrim($this->file_path, '/');
+
+        // Kiểm tra file tồn tại trong storage public với path đã được chuẩn hóa
+        if (Storage::disk('public')->exists($path)) {
+            return asset('storage/' . $path);
+        }
+        return asset($this->file_path);
     }
 
     public function fileExists()
