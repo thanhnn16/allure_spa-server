@@ -11,8 +11,15 @@ use Inertia\Inertia;
 class ZaloAuthController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
+        $code = $request->query('code');
+        $state = $request->query('state');
+
+        if ($code && $state) {
+            return redirect("allurespa://auth/callback?code={$code}&state={$state}");
+        }
+
         return Inertia::render('Payments/ProgressView');
     }
 
@@ -22,10 +29,10 @@ class ZaloAuthController extends Controller
         // Generate random string 43 chars long with letters and numbers
         $codeVerifier = Str::random(43);
         session(['code_verifier' => $codeVerifier]);
-        
+
         // Generate code challenge
         $codeChallenge = base64_encode(hash('sha256', $codeVerifier, true));
-        
+
         return response()->json([
             'code_challenge' => $codeChallenge
         ]);
@@ -36,7 +43,7 @@ class ZaloAuthController extends Controller
         try {
             $code = $request->code;
             $codeVerifier = session('code_verifier'); // Get stored code verifier
-            
+
             // Exchange code for tokens
             $response = Http::post('https://oauth.zaloapp.com/v4/access_token', [
                 'code' => $code,
@@ -44,15 +51,14 @@ class ZaloAuthController extends Controller
                 'grant_type' => 'authorization_code',
                 'code_verifier' => $codeVerifier
             ]);
-            
+
             if ($response->successful()) {
                 return response()->json($response->json());
             }
-            
+
             return response()->json([
                 'error' => 'Không thể lấy access token'
             ], 400);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()

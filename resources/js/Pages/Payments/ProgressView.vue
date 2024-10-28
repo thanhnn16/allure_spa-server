@@ -18,30 +18,18 @@ const error = ref('');
 
 onMounted(async () => {
   const code = route.query.code;
-  
-  if (code) {
+  const state = route.query.state;
+
+  if (code && state) {
     try {
-      const response = await fetch('/api/zalo/callback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        window.location.href = `allurespa://auth/callback?${new URLSearchParams(data)}`;
-      } else {
-        message.value = 'Có lỗi xảy ra khi đăng nhập';
-        error.value = 'Không thể xác thực với máy chủ';
-      }
+      // Chuyển hướng ngay lập tức về app
+      window.location.href = `allurespa://auth/callback?code=${code}&state=${state}`;
     } catch (err) {
       message.value = 'Có lỗi xảy ra khi đăng nhập';
       error.value = err.message;
     }
   } else {
-    error.value = 'Không tìm thấy mã xác thực';
+    error.value = 'Không tìm thấy thông tin xác thực';
   }
 });
 </script>
