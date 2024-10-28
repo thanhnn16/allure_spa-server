@@ -12,6 +12,7 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PayOSController;
+use App\Http\Controllers\ZaloAuthController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -40,6 +41,9 @@ Route::middleware('throttle:api')->group(function () {
 
     Route::post('/payos/test', [PayOSController::class, 'testPayment']);
     Route::post('/payos/verify', [PayOSController::class, 'verifyPayment']);
+
+    Route::post('/zalo/generate-code-verifier', [ZaloAuthController::class, 'generateCodeVerifier']);
+    Route::post('/zalo/callback', [ZaloAuthController::class, 'callback']);
 
     Route::middleware(['auth:sanctum'])->group(function () {
         // Appointment routes

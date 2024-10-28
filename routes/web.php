@@ -18,6 +18,7 @@ use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ZaloAuthController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -33,6 +34,8 @@ Route::get('/dashboard', function () {
         'user' => Auth::user(),
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/zalo-login-progress', [ZaloAuthController::class, 'index'])->name('zalo.login.progress');
 
 Route::middleware('auth')->group(function () {
     // User routes
@@ -116,7 +119,6 @@ Route::middleware('auth')->group(function () {
             'status' => 'cancel'
         ]);
     })->name('payment.cancel');
-
 });
 
 require __DIR__ . '/auth.php';
