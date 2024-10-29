@@ -508,10 +508,12 @@ VALUES
 
 -- Chèn dữ liệu vào bảng user_vouchers
 INSERT INTO
-  user_vouchers (user_id, voucher_id)
+  user_vouchers (user_id, voucher_id, remaining_uses, total_uses)
 SELECT
   u.id,
-  v.id
+  v.id,
+  5,
+  5
 FROM
   users u,
   vouchers v
