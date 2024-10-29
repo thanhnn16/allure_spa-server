@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @OA\Schema(
- *     schema="FcmToken",
- *     title="FCM Token",
- *     description="FCM Token model",
- *     @OA\Property(property="id", type="integer", format="int64", description="FCM Token ID"),
- *     @OA\Property(property="user_id", type="integer", format="int64", description="User ID"),
- *     @OA\Property(property="token", type="string", description="FCM Token"),
- *     @OA\Property(property="device_type", type="string", description="Device Type"),
- *     @OA\Property(property="created_at", type="string", format="date-time", description="Creation Date"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", description="Last Update Date")
+ *     schema="FcmToken", 
+ *     title="Token FCM",
+ *     description="Model Token FCM",
+ *     @OA\Property(property="id", type="integer", format="int64", description="ID của Token FCM"),
+ *     @OA\Property(property="user_id", type="integer", format="int64", description="ID của người dùng"),
+ *     @OA\Property(property="token", type="string", description="Token FCM"),
+ *     @OA\Property(property="device_type", type="string", description="Loại thiết bị"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="Ngày tạo"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", description="Ngày cập nhật cuối cùng")
  * )
  */
 class FcmToken extends Model

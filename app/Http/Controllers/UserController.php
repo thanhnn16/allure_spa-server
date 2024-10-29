@@ -398,14 +398,74 @@ class UserController extends BaseController
         return $this->respondWithJson($userInfo, 'Thông tin người dùng được truy xuất thành công');
     }
 
+    /**
+     * Store FCM token for the authenticated user
+     *
+     * @OA\Post(
+     *     path="/api/users/fcm-token",
+     *     summary="Lưu token FCM cho người dùng",
+     *     description="Lưu token FCM và loại thiết bị cho người dùng đã xác thực",
+     *     operationId="storeFcmToken", 
+     *     tags={"User"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"token", "device_type"},
+     *             @OA\Property(property="token", type="string", example="fMxn8H2zQ9G....", description="FCM token"),
+     *             @OA\Property(
+     *                 property="device_type", 
+     *                 type="string", 
+     *                 example="android", 
+     *                 description="Loại thiết bị (android/ios)",
+     *                 enum={"android", "ios"}
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Token FCM đã được lưu thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="FCM token stored successfully"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="user_id", type="string", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="token", type="string", example="fMxn8H2zQ9G...."),
+     *                 @OA\Property(property="device_type", type="string", example="android"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Dữ liệu không hợp lệ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="status_code", type="integer", example=422),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(property="token", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="device_type", type="array", @OA\Items(type="string"))
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function storeFcmToken(Request $request)
     {
         $validated = $request->validate([
             'token' => 'required|string',
-            'device_type' => 'required|string'
+            'device_type' => 'required|string|in:android,ios'
         ]);
 
-        $token = app(FcmTokenService::class)->storeFcmToken(
+        $token = $this->fcmTokenService->storeFcmToken(
             Auth::id(),
             $validated['token'],
             $validated['device_type']

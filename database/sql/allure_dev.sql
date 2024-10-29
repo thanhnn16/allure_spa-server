@@ -515,7 +515,8 @@ CREATE TABLE histories (
 CREATE TABLE fcm_tokens (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
-    fcm_token TEXT NOT NULL,
+    token TEXT NOT NULL,
+    device_type ENUM ('ios', 'android', 'web') NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
