@@ -14,6 +14,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PayOSController;
 use App\Http\Controllers\ZaloAuthController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\SearchController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -29,6 +30,9 @@ Route::middleware('throttle:api')->group(function () {
     // Search routes
     Route::get('/products/search', [ProductController::class, 'searchProducts']);
     Route::get('/services/search', [ServiceController::class, 'searchServices']);
+
+    Route::get('/search', [SearchController::class, 'search']);
+
 
     // Service routes
     Route::get('/services', [ServiceController::class, 'index']);
