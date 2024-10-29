@@ -141,16 +141,15 @@ const emit = defineEmits(['close', 'appointmentUpdated']);
 const form = ref({
     id: null,
     user: null,
-    treatment: null,
+    service: null,
     staff: null,
-    start_time: '',
-    end_time: '',
+    appointment_date: '',
+    time_slot_id: null,
     appointment_type: '',
     status: '',
     note: '',
     staff_user_id: '',
-    treatment_id: '',
-    user_treatment_package_id: null,
+    service_id: '',
 });
 
 const isEditing = ref(false);

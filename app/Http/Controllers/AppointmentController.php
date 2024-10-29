@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Http\Requests\AppointmentRequest;
 use OpenApi\Annotations as OA;
+use App\Models\TimeSlot;
 
 /**
  * @OA\Tag(
@@ -47,19 +48,63 @@ class AppointmentController extends BaseController
 
         Log::info('Appointments:', $appointments->toArray());
 
-        // Chuyển đổi múi giờ cho mỗi cuộc hẹn
-        $appointments = $appointments->map(function ($appointment) {
-            $appointment->start_time = Carbon::parse($appointment->start_time)->setTimezone('Asia/Ho_Chi_Minh');
-            $appointment->end_time = Carbon::parse($appointment->end_time)->setTimezone('Asia/Ho_Chi_Minh');
-            return $appointment;
+        // Format appointments for calendar view
+        $formattedAppointments = $appointments->map(function ($appointment) {
+            $timeSlot = $appointment->timeSlot;
+            
+            // Combine appointment date with time slot times
+            $startDateTime = Carbon::parse($appointment->appointment_date)
+                ->setTimeFromTimeString($timeSlot->start_time)
+                ->setTimezone('Asia/Ho_Chi_Minh');
+            
+            $endDateTime = Carbon::parse($appointment->appointment_date)
+                ->setTimeFromTimeString($timeSlot->end_time)
+                ->setTimezone('Asia/Ho_Chi_Minh');
+
+            return [
+                'id' => $appointment->id,
+                'title' => $appointment->user->full_name ?? 'Unknown',
+                'start' => $startDateTime->format('Y-m-d H:i:s'),
+                'end' => $endDateTime->format('Y-m-d H:i:s'),
+                'user' => $appointment->user,
+                'service' => $appointment->service,
+                'staff' => $appointment->staff,
+                'status' => $appointment->status,
+                'appointment_type' => $appointment->appointment_type,
+                'note' => $appointment->note,
+                'time_slot' => $timeSlot,
+            ];
         });
 
         if ($request->expectsJson()) {
-            return $this->respondWithJson($appointments, 'Lấy danh sách cuộc hẹn thành công');
+            return $this->respondWithJson($formattedAppointments, 'Lấy danh sách cuộc hẹn thành công');
         }
 
+        // Lấy danh sách time slots cho calendar
+        $timeSlots = TimeSlot::where('is_active', true)
+            ->orderBy('start_time')
+            ->get()
+            ->map(function ($slot) {
+                return [
+                    'id' => $slot->id,
+                    'start_time' => $slot->start_time,
+                    'end_time' => $slot->end_time,
+                    'max_bookings' => $slot->max_bookings
+                ];
+            });
+
         return $this->respondWithInertia('Calendar/CalendarView', [
-            'appointments' => $appointments
+            'appointments' => $formattedAppointments,
+            'timeSlots' => $timeSlots,
+            'businessHours' => [
+                'start' => '08:00',
+                'end' => '18:30',
+                'daysOfWeek' => [0, 1, 2, 3, 4, 5, 6] // 0 = Sunday, 1 = Monday, etc.
+            ],
+            'slotDuration' => '01:00:00', // 1 hour slots
+            'initialView' => 'timeGridWeek',
+            'slotMinTime' => '08:00:00',
+            'slotMaxTime' => '18:30:00',
         ]);
     }
 
@@ -139,7 +184,7 @@ class AppointmentController extends BaseController
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Lỗi xác th���c dữ liệu"
+     *         description="Lỗi xác thc dữ liệu"
      *     ),
      *     @OA\Response(
      *         response=403,

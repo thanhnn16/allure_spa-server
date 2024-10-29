@@ -155,14 +155,27 @@ const selectedTreatment = ref(null)
 const form = useForm({
     user_id: '',
     staff_id: '',
-    treatment_id: '',
-    user_treatment_package_id: null,
-    start_date: '',
-    end_date: '',
+    service_id: '',
+    appointment_date: '',
+    time_slot_id: null,
+    appointment_type: '',
     status: 'pending',
     note: '',
-    appointment_type: '',
-})
+});
+
+// Thêm ref cho time slots
+const timeSlots = ref([]);
+
+// Fetch time slots
+const fetchTimeSlots = async () => {
+    try {
+        const response = await axios.get('/api/time-slots');
+        timeSlots.value = response.data.data;
+    } catch (error) {
+        console.error('Error fetching time slots:', error);
+        timeSlots.value = [];
+    }
+};
 
 const modalTitle = computed(() => {
     return props.appointments && props.appointments.length > 0 ? 'Chỉnh sửa lịch hẹn' : 'Thêm lịch hẹn mới'
@@ -215,11 +228,23 @@ watch(() => props.appointments, (newAppointments) => {
 
 // Add a new watch for selectedTimeSlot
 watch(() => props.selectedTimeSlot, (newTimeSlot) => {
-    if (newTimeSlot && newTimeSlot.start && newTimeSlot.end) {
-        form.start_date = formatDateTimeForInput(newTimeSlot.start)
-        form.end_date = formatDateTimeForInput(newTimeSlot.end)
+    if (newTimeSlot && newTimeSlot.date) {
+        form.appointment_date = formatDate(newTimeSlot.date);
+        // Tìm time slot phù hợp dựa vào giờ được chọn
+        const hour = new Date(newTimeSlot.date).getHours();
+        const matchingSlot = timeSlots.value.find(slot => {
+            const slotHour = parseInt(slot.start_time.split(':')[0]);
+            return slotHour === hour;
+        });
+        if (matchingSlot) {
+            form.time_slot_id = matchingSlot.id;
+        }
     }
-}, { immediate: true })
+});
+
+function formatDate(date) {
+    return new Date(date).toISOString().split('T')[0];
+}
 
 function formatDateTimeForInput(dateTime) {
     if (!dateTime) return ''
@@ -305,6 +330,9 @@ onMounted(() => {
     if (staffList.value.length > 0) {
         form.staff_id = staffList.value[0].id
     }
+    fetchTimeSlots();
+    fetchStaffList();
+    fetchServices();
 })
 
 function fetchTreatments() {

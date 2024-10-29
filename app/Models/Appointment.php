@@ -16,15 +16,10 @@ use Carbon\Carbon;
  *     @OA\Property(property="user_id", type="integer", format="int64", description="User ID"),
  *     @OA\Property(property="service_id", type="integer", format="int64", description="Service ID"),
  *     @OA\Property(property="staff_user_id", type="integer", format="int64", description="Staff User ID"),
- *     @OA\Property(property="start_time", type="string", format="date-time", description="Appointment start time"),
- *     @OA\Property(property="end_time", type="string", format="date-time", description="Appointment end time"),
- *     @OA\Property(property="actual_start_time", type="string", format="date-time", nullable=true, description="Actual start time"),
- *     @OA\Property(property="actual_end_time", type="string", format="date-time", nullable=true, description="Actual end time"),
+ *     @OA\Property(property="appointment_date", type="string", format="date", description="Appointment date"),
+ *     @OA\Property(property="time_slot_id", type="integer", format="int64", description="Time Slot ID"),
  *     @OA\Property(property="appointment_type", type="string", description="Type of appointment"),
  *     @OA\Property(property="status", type="string", description="Appointment status"),
- *     @OA\Property(property="created_at", type="string", format="date-time", description="Creation date"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", description="Last update date"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Deletion date"),
  *     @OA\Property(property="note", type="string", description="Appointment note")
  * )
  */
@@ -36,23 +31,21 @@ class Appointment extends Model
         'user_id',
         'service_id',
         'staff_user_id',
-        'start_time',
-        'end_time',
-        'actual_start_time',
-        'actual_end_time',
+        'appointment_date',
+        'time_slot_id',
         'appointment_type',
         'status',
         'note',
     ];
 
     protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
-        'actual_start_time' => 'datetime',
-        'actual_end_time' => 'datetime',
+        'appointment_date' => 'date',
     ];
 
-    protected $appends = ['formatted_start_time', 'formatted_end_time'];
+    protected $attributes = [
+        'appointment_type' => 'others',
+        'status' => 'pending',
+    ];
 
     public function user()
     {
@@ -63,16 +56,16 @@ class Appointment extends Model
     {
         return $this->belongsTo(Service::class);
     }
-    
+
     public function staff()
     {
         return $this->belongsTo(User::class, 'staff_user_id');
     }
 
-    protected $attributes = [
-        'appointment_type' => 'others',
-        'status' => 'pending',
-    ];
+    public function timeSlot()
+    {
+        return $this->belongsTo(TimeSlot::class);
+    }
 
     public function getAppointmentTypeAttribute($value)
     {
@@ -94,18 +87,12 @@ class Appointment extends Model
         $this->attributes['status'] = strtolower($value);
     }
 
-    public function getFormattedStartTimeAttribute()
+    public function getFullScheduleAttribute()
     {
-        return $this->start_time->toIso8601String();
-    }
-
-    public function getFormattedEndTimeAttribute()
-    {
-        return $this->end_time->toIso8601String();
-    }
-
-    protected function serializeDate(\DateTimeInterface $date)
-    {
-        return Carbon::instance($date)->toIso8601String();
+        return [
+            'date' => $this->appointment_date,
+            'start_time' => $this->timeSlot->start_time,
+            'end_time' => $this->timeSlot->end_time
+        ];
     }
 }
