@@ -8,8 +8,6 @@ import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import { Head } from "@inertiajs/vue3"
-import { usePage } from '@inertiajs/vue3'
-import Echo from 'laravel-echo'
 
 const props = defineProps({
     chats: Object,
