@@ -210,7 +210,7 @@
                         }
                     },
                     "422": {
-                        "description": "Lỗi xác th���c dữ liệu"
+                        "description": "Lỗi xác thc dữ liệu"
                     },
                     "403": {
                         "description": "Không có quyền cập nhật cuộc hẹn"
@@ -2323,6 +2323,204 @@
                     }
                 ]
             }
+        },
+        "/api/users/fcm-token": {
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Lưu token FCM cho người dùng",
+                "description": "Lưu token FCM và loại thiết bị cho người dùng đã xác thực",
+                "operationId": "storeFcmToken",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "device_type"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "FCM token",
+                                        "type": "string",
+                                        "example": "fMxn8H2zQ9G...."
+                                    },
+                                    "device_type": {
+                                        "description": "Loại thiết bị (android/ios)",
+                                        "type": "string",
+                                        "enum": [
+                                            "android",
+                                            "ios"
+                                        ],
+                                        "example": "android"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token FCM đã được lưu thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "FCM token stored successfully"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "example": "fMxn8H2zQ9G...."
+                                                },
+                                                "device_type": {
+                                                    "type": "string",
+                                                    "example": "android"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "token": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "device_type": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Đăng xuất người dùng",
+                "description": "Đăng xuất và xóa FCM token của thiết bị",
+                "operationId": "logout",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "fcm_token": {
+                                        "description": "FCM token to remove (optional)",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng xuất thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đăng xuất thành công"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -2577,27 +2775,15 @@
                         "type": "integer",
                         "format": "int64"
                     },
-                    "start_time": {
-                        "description": "Appointment start time",
+                    "appointment_date": {
+                        "description": "Appointment date",
                         "type": "string",
-                        "format": "date-time"
+                        "format": "date"
                     },
-                    "end_time": {
-                        "description": "Appointment end time",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "actual_start_time": {
-                        "description": "Actual start time",
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
-                    "actual_end_time": {
-                        "description": "Actual end time",
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
+                    "time_slot_id": {
+                        "description": "Time Slot ID",
+                        "type": "integer",
+                        "format": "int64"
                     },
                     "appointment_type": {
                         "description": "Type of appointment",
@@ -2606,22 +2792,6 @@
                     "status": {
                         "description": "Appointment status",
                         "type": "string"
-                    },
-                    "created_at": {
-                        "description": "Creation date",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Last update date",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "deleted_at": {
-                        "description": "Deletion date",
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
                     },
                     "note": {
                         "description": "Appointment note",
@@ -2784,17 +2954,17 @@
                     },
                     "user_id": {
                         "description": "User ID",
-                        "type": "integer",
-                        "format": "int64"
+                        "type": "string",
+                        "format": "uuid"
                     },
-                    "staff_user_id": {
-                        "description": "Staff User ID",
-                        "type": "integer",
-                        "format": "int64"
+                    "staff_id": {
+                        "description": "Staff ID",
+                        "type": "string",
+                        "format": "uuid"
                     },
-                    "status": {
-                        "description": "Chat status",
-                        "type": "string"
+                    "is_active": {
+                        "description": "Chat active status",
+                        "type": "boolean"
                     },
                     "created_at": {
                         "description": "Creation date",
@@ -2815,15 +2985,18 @@
                 "properties": {
                     "id": {
                         "description": "The unique identifier of the chat message",
-                        "type": "integer"
+                        "type": "integer",
+                        "format": "int64"
                     },
                     "chat_id": {
                         "description": "The ID of the chat this message belongs to",
-                        "type": "integer"
+                        "type": "integer",
+                        "format": "int64"
                     },
                     "sender_id": {
-                        "description": "The ID of the user who sent this message",
-                        "type": "integer"
+                        "description": "The UUID of the user who sent this message",
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "message": {
                         "description": "The content of the chat message",
@@ -2921,34 +3094,34 @@
                 "type": "object"
             },
             "FcmToken": {
-                "title": "FCM Token",
-                "description": "FCM Token model",
+                "title": "Token FCM",
+                "description": "Model Token FCM",
                 "properties": {
                     "id": {
-                        "description": "FCM Token ID",
+                        "description": "ID của Token FCM",
                         "type": "integer",
                         "format": "int64"
                     },
                     "user_id": {
-                        "description": "User ID",
+                        "description": "ID của người dùng",
                         "type": "integer",
                         "format": "int64"
                     },
                     "token": {
-                        "description": "FCM Token",
+                        "description": "Token FCM",
                         "type": "string"
                     },
                     "device_type": {
-                        "description": "Device Type",
+                        "description": "Loại thiết bị",
                         "type": "string"
                     },
                     "created_at": {
-                        "description": "Creation Date",
+                        "description": "Ngày tạo",
                         "type": "string",
                         "format": "date-time"
                     },
                     "updated_at": {
-                        "description": "Last Update Date",
+                        "description": "Ngày cập nhật cuối cùng",
                         "type": "string",
                         "format": "date-time"
                     }
@@ -4054,6 +4227,36 @@
                         "description": "Last update timestamp",
                         "type": "string",
                         "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "TimeSlot": {
+                "title": "TimeSlot",
+                "description": "TimeSlot model",
+                "properties": {
+                    "id": {
+                        "description": "TimeSlot ID",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "start_time": {
+                        "description": "Start time",
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "end_time": {
+                        "description": "End time",
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "max_bookings": {
+                        "description": "Maximum bookings allowed",
+                        "type": "integer"
+                    },
+                    "is_active": {
+                        "description": "Slot availability status",
+                        "type": "boolean"
                     }
                 },
                 "type": "object"

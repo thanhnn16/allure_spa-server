@@ -617,37 +617,3 @@ WHERE
   u.email = 'user@example.com'
 LIMIT
   1;
-
--- Chèn dữ liệu vào bảng appointments
-INSERT INTO
-  appointments (
-    id,
-    user_id,
-    service_id,
-    staff_user_id,
-    start_time,
-    end_time,
-    appointment_type,
-    status
-  )
-SELECT
-  1,
-  u.id,
-  s.id,
-  staff.id,
-  '2024-11-01 10:00:00',
-  '2024-11-01 11:00:00',
-  'facial',
-  'confirmed'
-FROM
-  users u
-  JOIN users staff ON staff.email = 'staff@example.com'
-  JOIN services s ON s.service_name = 'Chăm da Amino - Phù hợp mọi loại da'
-  JOIN orders o ON o.user_id = u.id
-  JOIN order_items oi ON oi.order_id = o.id
-  AND oi.item_type = 'service'
-  AND oi.item_id = s.id
-WHERE
-  u.email = 'user@example.com'
-LIMIT
-  1;

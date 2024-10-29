@@ -422,10 +422,19 @@ CREATE TABLE favorites (
     user_id CHAR(36) NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
+    -- Foreign key cho user
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    -- Foreign keys cho product và service
+    FOREIGN KEY (item_id) REFERENCES products (id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES services (id) ON DELETE CASCADE,
-    FOREIGN KEY (item_id) REFERENCES products (id) ON DELETE CASCADE
+    -- Đảm bảo mỗi user chỉ có thể favorite một item một lần
+    UNIQUE KEY unique_user_favorite (user_id, favorite_type, item_id)
 );
+
+-- Thêm indexes để tối ưu performance
+CREATE INDEX idx_favorites_user_id ON favorites (user_id);
+
+CREATE INDEX idx_favorites_item_type_id ON favorites (favorite_type, item_id);
 
 -- 36. Bảng notifications
 CREATE TABLE notifications (
@@ -446,7 +455,7 @@ CREATE TABLE time_slots (
     end_time TIME NOT NULL,
     max_bookings INT UNSIGNED DEFAULT 2,
     is_active BOOLEAN DEFAULT TRUE,
-    UNIQUE KEY unique_time_slot (start_time, end_time)
+    UNIQUE KEY unique_time_slot (start_time, end_time) COMMENT 'Ensure no duplicate time slots'
 );
 
 -- 37. Bảng appointments
@@ -482,7 +491,7 @@ CREATE INDEX idx_appointments_service_id ON appointments (service_id);
 
 CREATE INDEX idx_appointments_staff_user_id ON appointments (staff_user_id);
 
-CREATE INDEX idx_appointments_start_time ON appointments (start_time);
+CREATE INDEX idx_appointments_date ON appointments (appointment_date);
 
 CREATE INDEX idx_appointments_status ON appointments (status);
 
@@ -596,7 +605,11 @@ CREATE TABLE translations (
     updated_at TIMESTAMP NULL DEFAULT NULL
 );
 
-CREATE INDEX idx_translations_translatable ON translations (translatable_type, translatable_id, language);
+CREATE INDEX idx_translations_translatable ON translations (
+    translatable_type,
+    translatable_id,
+    language
+);
 
 -- 53. Bảng banners
 CREATE TABLE banners (
