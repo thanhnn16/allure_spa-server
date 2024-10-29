@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Chat;
 use App\Services\ChatService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Response;
 
 class ChatController extends BaseController
@@ -18,7 +19,7 @@ class ChatController extends BaseController
 
     public function index(): Response
     {
-        $chats = $this->chatService->getAllChatsForUser(auth()->id());
+        $chats = $this->chatService->getAllChatsForUser(Auth::user()->id);
         
         return $this->respondWithInertia('Chats/ChatView', [
             'chats' => $chats
@@ -41,7 +42,7 @@ class ChatController extends BaseController
 
         $message = $this->chatService->sendMessage(
             $validated['chat_id'],
-            auth()->id(),
+            Auth::user()->id,
             $validated['message'],
             $request->file('attachments') ?? []
         );
@@ -51,7 +52,7 @@ class ChatController extends BaseController
 
     public function markAsRead(string $chatId)
     {
-        $this->chatService->markMessagesAsRead($chatId, auth()->id());
+        $this->chatService->markMessagesAsRead($chatId, Auth::user()->id);
         return $this->respondWithJson(null, 'Đã đánh dấu là đã đọc');
     }
 }

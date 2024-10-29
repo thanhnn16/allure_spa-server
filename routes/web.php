@@ -89,7 +89,6 @@ Route::middleware('auth')->group(function () {
     Route::resource('notifications', NotificationController::class);
 
     // Mobile App routes
-    Route::get('mobileapp/chat', [ChatController::class, 'chat'])->name('mobileapp.chat');
     Route::get('mobileapp/banners', [MobileAppController::class, 'banners'])->name('mobileapp.banners');
     Route::get('mobileapp/ai-config', [MobileAppController::class, 'index'])->name('mobileapp.ai-config');
 

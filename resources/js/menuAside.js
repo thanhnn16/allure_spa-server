@@ -88,7 +88,7 @@ export default [
             },
             {
                 label: 'Chat - Hỗ trợ trực tuyến',
-                route: 'mobileapp.chat'
+                route: 'chats.index'
             },
             {
                 label: 'Banner App',
