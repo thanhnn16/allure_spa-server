@@ -14,14 +14,19 @@ use Illuminate\Http\JsonResponse;
 use OpenApi\Annotations as OA;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use App\Services\FcmTokenService;
 
 class UserController extends BaseController
 {
     protected $userService;
+    protected $fcmTokenService;
 
-    public function __construct(UserService $userService)
-    {
+    public function __construct(
+        UserService $userService,
+        FcmTokenService $fcmTokenService
+    ) {
         $this->userService = $userService;
+        $this->fcmTokenService = $fcmTokenService;
     }
 
     /**
@@ -203,13 +208,13 @@ class UserController extends BaseController
         ]);
 
         $query = $request->get('query');
-        
+
         try {
-            $users = User::where(function($q) use ($query) {
-                    $q->where('full_name', 'LIKE', "%{$query}%")
-                      ->orWhere('phone_number', 'LIKE', "%{$query}%")
-                      ->orWhere('email', 'LIKE', "%{$query}%");
-                })
+            $users = User::where(function ($q) use ($query) {
+                $q->where('full_name', 'LIKE', "%{$query}%")
+                    ->orWhere('phone_number', 'LIKE', "%{$query}%")
+                    ->orWhere('email', 'LIKE', "%{$query}%");
+            })
                 ->where('role', 'user')
                 ->take(10)
                 ->get(['id', 'full_name', 'phone_number', 'email']);
@@ -391,5 +396,77 @@ class UserController extends BaseController
         ];
 
         return $this->respondWithJson($userInfo, 'Thông tin người dùng được truy xuất thành công');
+    }
+
+    public function storeFcmToken(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'device_type' => 'required|string'
+        ]);
+
+        $token = app(FcmTokenService::class)->storeFcmToken(
+            Auth::id(),
+            $validated['token'],
+            $validated['device_type']
+        );
+
+        return $this->respondWithJson($token, 'FCM token stored successfully');
+    }
+
+    /**
+     * Logout user and remove FCM token
+     *
+     * @OA\Post(
+     *     path="/api/auth/logout",
+     *     summary="Đăng xuất người dùng",
+     *     description="Đăng xuất và xóa FCM token của thiết bị",
+     *     operationId="logout",
+     *     tags={"Authentication"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="fcm_token", type="string", description="FCM token to remove (optional)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Đăng xuất thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Đăng xuất thành công"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true)
+     *         )
+     *     )
+     * )
+     */
+    public function logout(Request $request)
+    {
+        try {
+            $userId = Auth::id();
+            $fcmToken = $request->input('fcm_token');
+
+            // Remove FCM token
+            if ($fcmToken) {
+                // Remove specific token if provided
+                $this->fcmTokenService->removeFcmToken($userId, $fcmToken);
+            } else {
+                // Remove all tokens for this user if no specific token provided
+                $this->fcmTokenService->removeFcmToken($userId);
+            }
+
+            // Revoke the token that was used to authenticate the current request
+            $request->user()->currentAccessToken()->delete();
+
+            return $this->respondWithJson(null, 'Đăng xuất thành công');
+        } catch (\Exception $e) {
+            Log::error('Logout error: ' . $e->getMessage());
+            return $this->respondWithJson(
+                null,
+                'Có lỗi xảy ra khi đăng xuất',
+                500
+            );
+        }
     }
 }

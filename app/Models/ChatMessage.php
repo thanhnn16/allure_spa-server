@@ -9,7 +9,7 @@ use OpenApi\Annotations as OA;
 /**
  * @OA\Schema(
  *     schema="ChatMessage",
- *     title="Chat Message",
+ *     title="Chat Message", 
  *     description="Chat message model"
  * )
  */
@@ -21,17 +21,20 @@ class ChatMessage extends Model
      * @OA\Property(
      *     property="id",
      *     type="integer",
+     *     format="int64",
      *     description="The unique identifier of the chat message"
      * )
      * @OA\Property(
-     *     property="chat_id",
+     *     property="chat_id", 
      *     type="integer",
+     *     format="int64",
      *     description="The ID of the chat this message belongs to"
      * )
      * @OA\Property(
      *     property="sender_id",
-     *     type="integer",
-     *     description="The ID of the user who sent this message"
+     *     type="string",
+     *     format="uuid",
+     *     description="The UUID of the user who sent this message"
      * )
      * @OA\Property(
      *     property="message",
@@ -45,14 +48,14 @@ class ChatMessage extends Model
      * )
      * @OA\Property(
      *     property="created_at",
-     *     type="string",
+     *     type="string", 
      *     format="date-time",
      *     description="The timestamp when the message was created"
      * )
      * @OA\Property(
      *     property="updated_at",
      *     type="string",
-     *     format="date-time",
+     *     format="date-time", 
      *     description="The timestamp when the message was last updated"
      * )
      */
@@ -69,7 +72,7 @@ class ChatMessage extends Model
         return $this->belongsTo(Chat::class);
     }
 
-    public function sender()
+    public function sender() 
     {
         return $this->belongsTo(User::class, 'sender_id');
     }

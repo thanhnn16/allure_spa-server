@@ -13,6 +13,7 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PayOSController;
 use App\Http\Controllers\ZaloAuthController;
+use App\Http\Controllers\ChatController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -86,5 +87,13 @@ Route::middleware('throttle:api')->group(function () {
         // Route::post('/payos/test', [PayOSController::class, 'testPayment']);
         // Route::post('/payos/verify', [PayOSController::class, 'verifyPayment']);
 
+        // Chat routes
+        Route::get('/chats/{chat}/messages', [ChatController::class, 'getMessages']);
+        Route::post('/messages', [ChatController::class, 'sendMessage']);
+        Route::post('/users/fcm-token', [UserController::class, 'storeFcmToken']);
+        Route::post('/chats/{chat}/mark-as-read', [ChatController::class, 'markAsRead']);
+
+        // Add logout route
+        Route::post('/auth/logout', [UserController::class, 'logout']);
     });
 });
