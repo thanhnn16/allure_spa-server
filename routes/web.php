@@ -119,6 +119,13 @@ Route::middleware('auth')->group(function () {
             'status' => 'cancel'
         ]);
     })->name('payment.cancel');
+
+
+    // Chat routes
+    Route::get('/chats', [ChatController::class, 'index'])->name('chats.index');
+    Route::get('/chats/{chat}/messages', [ChatController::class, 'getMessages']);
+    Route::post('/messages', [ChatController::class, 'sendMessage']);
+    Route::post('/chats/{chat}/mark-as-read', [ChatController::class, 'markAsRead']);
 });
 
 require __DIR__ . '/auth.php';

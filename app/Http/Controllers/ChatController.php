@@ -2,63 +2,56 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Chat;
+use App\Services\ChatService;
 use Illuminate\Http\Request;
+use Inertia\Response;
 
-class ChatController extends Controller
+class ChatController extends BaseController
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    protected $chatService;
+
+    public function __construct(ChatService $chatService)
     {
-        //
+        $this->chatService = $chatService;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function index(): Response
     {
-        //
+        $chats = $this->chatService->getAllChatsForUser(auth()->id());
+        
+        return $this->respondWithInertia('Chats/ChatView', [
+            'chats' => $chats
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function getMessages(string $chatId)
     {
-        //
+        $messages = $this->chatService->getChatMessages($chatId);
+        return $this->respondWithJson($messages);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function sendMessage(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'chat_id' => 'required|exists:chats,id',
+            'message' => 'required|string',
+            'attachments.*' => 'nullable|file|max:10240'
+        ]);
+
+        $message = $this->chatService->sendMessage(
+            $validated['chat_id'],
+            auth()->id(),
+            $validated['message'],
+            $request->file('attachments') ?? []
+        );
+
+        return $this->respondWithJson($message, 'Tin nhắn đã được gửi');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function markAsRead(string $chatId)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $this->chatService->markMessagesAsRead($chatId, auth()->id());
+        return $this->respondWithJson(null, 'Đã đánh dấu là đã đọc');
     }
 }

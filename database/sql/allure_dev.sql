@@ -13,7 +13,13 @@ CREATE TABLE media (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     type ENUM('image', 'video') NOT NULL,
     file_path VARCHAR(255) NOT NULL,
-    mediable_type ENUM('product', 'service', 'user', 'notification', 'banner') NOT NULL,
+    mediable_type ENUM(
+        'product',
+        'service',
+        'user',
+        'notification',
+        'banner'
+    ) NOT NULL,
     mediable_id INT UNSIGNED NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
@@ -153,7 +159,6 @@ CREATE TABLE services (
     FOREIGN KEY (category_id) REFERENCES service_categories (id)
 );
 
-
 CREATE INDEX idx_services_name ON services (service_name);
 
 CREATE INDEX idx_services_category_id ON services (category_id);
@@ -171,7 +176,6 @@ CREATE TABLE service_price_histories (
 );
 
 CREATE INDEX idx_service_price_histories_service_id_effective_from ON service_price_histories (service_id, effective_from);
-
 
 -- 14. Bảng staff_details
 CREATE TABLE staff_details (
@@ -206,8 +210,6 @@ CREATE INDEX idx_users_phone_number ON users (phone_number);
 
 CREATE INDEX idx_users_role ON users (role);
 
-
-
 -- 29. Bảng payment_methods
 CREATE TABLE payment_methods (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -216,7 +218,6 @@ CREATE TABLE payment_methods (
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
-
 
 -- 27. Bảng vouchers
 CREATE TABLE vouchers (
@@ -235,9 +236,10 @@ CREATE TABLE vouchers (
     end_date TIMESTAMP NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    uses_per_user INT UNSIGNED DEFAULT 1 COMMENT 'Số lần mỗi user được sử dụng voucher này'
 );
-    
+
 -- 30. Bảng orders
 CREATE TABLE orders (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -253,7 +255,7 @@ CREATE TABLE orders (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (shipping_address_id) REFERENCES addresses (id) ON DELETE CASCADE,
     FOREIGN KEY (payment_method_id) REFERENCES payment_methods (id) ON DELETE CASCADE,
-        FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE
+    FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE
     SET
         NULL
 );
@@ -308,7 +310,6 @@ CREATE INDEX idx_invoices_created_at ON invoices (created_at);
 
 CREATE INDEX idx_invoices_status ON invoices (status);
 
-
 -- 16. Bảng user_service_packages
 CREATE TABLE user_service_packages (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -330,8 +331,6 @@ CREATE TABLE user_service_packages (
     CONSTRAINT chk_sessions CHECK (used_sessions <= total_sessions)
 );
 
-
-
 -- 28. Bảng employee_attendances
 CREATE TABLE employee_attendances (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -349,7 +348,6 @@ CREATE INDEX idx_employee_attendances_user_id ON employee_attendances (user_id);
 
 CREATE INDEX idx_employee_attendances_date ON employee_attendances (date);
 
-
 -- 18. Bảng service_usage_histories
 CREATE TABLE service_usage_histories (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -364,7 +362,7 @@ CREATE TABLE service_usage_histories (
     FOREIGN KEY (user_service_package_id) REFERENCES user_service_packages (id) ON DELETE
     SET
         NULL,
-    FOREIGN KEY (staff_user_id) REFERENCES users (id) ON DELETE
+        FOREIGN KEY (staff_user_id) REFERENCES users (id) ON DELETE
     SET
         NULL
 );
@@ -394,6 +392,7 @@ CREATE TABLE cart_items (
 CREATE TABLE ratings (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
+    order_item_id INT UNSIGNED NOT NULL,
     rating_type ENUM('service', 'product') NOT NULL,
     item_id INT UNSIGNED NOT NULL,
     stars TINYINT UNSIGNED NOT NULL,
@@ -403,8 +402,8 @@ CREATE TABLE ratings (
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (item_id) REFERENCES services (id) ON DELETE CASCADE,
-    FOREIGN KEY (item_id) REFERENCES products (id) ON DELETE CASCADE,
+    FOREIGN KEY (order_item_id) REFERENCES order_items (id),
+    UNIQUE KEY unique_rating_per_order_item (order_item_id),
     CONSTRAINT chk_stars CHECK (
         stars BETWEEN 1
         AND 5
@@ -441,14 +440,23 @@ CREATE TABLE notifications (
     FOREIGN KEY (media_id) REFERENCES media (id)
 );
 
+CREATE TABLE time_slots (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    max_bookings INT UNSIGNED DEFAULT 2,
+    is_active BOOLEAN DEFAULT TRUE,
+    UNIQUE KEY unique_time_slot (start_time, end_time)
+);
+
 -- 37. Bảng appointments
 CREATE TABLE appointments (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
     service_id INT UNSIGNED NOT NULL,
     staff_user_id CHAR(36),
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP NOT NULL,
+    appointment_date DATE NOT NULL,
+    time_slot_id INT UNSIGNED NOT NULL,
     appointment_type ENUM (
         'facial',
         'massage',
@@ -464,24 +472,29 @@ CREATE TABLE appointments (
     deleted_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (service_id) REFERENCES services (id),
-    FOREIGN KEY (staff_user_id) REFERENCES users (id)
+    FOREIGN KEY (staff_user_id) REFERENCES users (id),
+    FOREIGN KEY (time_slot_id) REFERENCES time_slots (id)
 );
 
 CREATE INDEX idx_appointments_user_id ON appointments (user_id);
+
 CREATE INDEX idx_appointments_service_id ON appointments (service_id);
+
 CREATE INDEX idx_appointments_staff_user_id ON appointments (staff_user_id);
+
 CREATE INDEX idx_appointments_start_time ON appointments (start_time);
+
 CREATE INDEX idx_appointments_status ON appointments (status);
 
 -- 39. Bảng user_vouchers
 CREATE TABLE user_vouchers (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
     voucher_id INT UNSIGNED NOT NULL,
-    used_at TIMESTAMP,
-    is_used TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    remaining_uses INT UNSIGNED NOT NULL,
+    total_uses INT UNSIGNED NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    PRIMARY KEY (user_id, voucher_id),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE CASCADE
 );
@@ -540,7 +553,9 @@ CREATE TABLE payment_histories (
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (invoice_id) REFERENCES invoices (id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by_user_id) REFERENCES users (id) ON DELETE SET NULL
+    FOREIGN KEY (created_by_user_id) REFERENCES users (id) ON DELETE
+    SET
+        NULL
 );
 
 -- 44. Bảng reward_items
@@ -631,8 +646,6 @@ CREATE TABLE chat_messages (
     FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users (id) ON DELETE CASCADE
 );
-
-
 
 -- 19. Bảng password_reset_tokens
 CREATE TABLE password_reset_tokens (

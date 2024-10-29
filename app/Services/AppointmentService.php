@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Models\Appointment;
-use Illuminate\Support\Facades\Validator;
+use App\Events\AppointmentCreated;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class AppointmentService
 {
@@ -17,42 +19,41 @@ class AppointmentService
 
     public function createAppointment($data)
     {
-        Log::info('Creating appointment with data:', $data);
+        return DB::transaction(function () use ($data) {
+            // Kiểm tra slot còn trống
+            $existingBookings = Appointment::where('appointment_date', $data['appointment_date'])
+                ->where('time_slot_id', $data['time_slot_id'])
+                ->where('status', '!=', 'cancelled')
+                ->count();
 
-        $validator = Validator::make($data, [
-            'user_id' => 'required|exists:users,id',
-            'staff_id' => 'required|exists:users,id',
-            'service_id' => 'required|exists:services,id',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-            'appointment_type' => 'required|string',
-            'status' => 'required|in:pending,confirmed,cancelled,completed,Pending,Confirmed,Cancelled,Completed',
-            'note' => 'nullable|string',
-        ]);
+            if ($existingBookings >= 2) {
+                return [
+                    'status' => 422,
+                    'message' => 'Khung giờ này đã đầy',
+                    'data' => null
+                ];
+            }
 
-        if ($validator->fails()) {
-            Log::warning('Appointment validation failed', ['errors' => $validator->errors()]);
-            return ['status' => 422, 'message' => 'Validation failed', 'data' => $validator->errors()];
-        }
-
-        try {
             $appointment = Appointment::create([
                 'user_id' => $data['user_id'],
-                'staff_user_id' => $data['staff_id'],
                 'service_id' => $data['service_id'],
-                'start_time' => Carbon::parse($data['start_date'])->setTimezone(config('app.timezone')),
-                'end_time' => Carbon::parse($data['end_date'])->setTimezone(config('app.timezone')),
+                'staff_user_id' => $data['staff_id'],
+                'appointment_date' => $data['appointment_date'],
+                'time_slot_id' => $data['time_slot_id'],
                 'appointment_type' => $data['appointment_type'],
-                'status' => $data['status'],
+                'status' => 'pending',
                 'note' => $data['note'] ?? null,
             ]);
 
-            Log::info('Appointment created successfully', ['appointment' => $appointment]);
-            return ['status' => 200, 'message' => 'Appointment created successfully', 'data' => $appointment];
-        } catch (\Exception $e) {
-            Log::error('Error creating appointment', ['error' => $e->getMessage()]);
-            return ['status' => 500, 'message' => 'An error occurred while creating the appointment', 'data' => null];
-        }
+            // Broadcast event
+            event(new AppointmentCreated($appointment));
+
+            return [
+                'status' => 200,
+                'message' => 'Đặt lịch thành công',
+                'data' => $appointment->load(['user', 'service', 'timeSlot'])
+            ];
+        });
     }
 
     public function updateAppointment($id, $data)
