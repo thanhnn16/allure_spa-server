@@ -22,7 +22,7 @@ class ChatService
     public function getAllChatsForUser($userId)
     {
         return Chat::where('user_id', $userId)
-            ->orWhere('staff_user_id', $userId)
+            ->orWhere('staff_id', $userId)
             ->with(['user', 'staff', 'messages' => function ($query) {
                 $query->latest()->first();
             }])
@@ -49,7 +49,7 @@ class ChatService
 
         // Get chat
         $chat = Chat::find($chatId);
-        
+
         // Get recipient's FCM tokens
         $recipientId = $chat->user_id === $senderId ? $chat->staff_id : $chat->user_id;
         $tokens = $this->fcmTokenService->getUserTokens($recipientId);

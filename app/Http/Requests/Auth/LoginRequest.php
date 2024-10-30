@@ -45,7 +45,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'phone_number' => trans('auth.failed'),
+                'phone_number' => __('auth.failed'),
             ]);
         }
 
@@ -80,6 +80,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('phone_number')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->input('phone_number')) . '|' . $this->ip());
     }
 }

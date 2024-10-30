@@ -1,7 +1,5 @@
 <?php
 
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ServiceController;
@@ -15,6 +13,7 @@ use App\Http\Controllers\PayOSController;
 use App\Http\Controllers\ZaloAuthController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\Auth\AuthController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -24,8 +23,8 @@ Route::middleware('throttle:api')->group(function () {
     });
 
     // Auth routes
-    Route::post('/auth/register', [RegisteredUserController::class, 'storeApi']);
-    Route::post('/auth/login', [AuthenticatedSessionController::class, 'storeApi']);
+    Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::post('/auth/login', [AuthController::class, 'login']);
 
     // Search routes
     Route::get('/products/search', [ProductController::class, 'searchProducts']);
@@ -92,12 +91,13 @@ Route::middleware('throttle:api')->group(function () {
         // Route::post('/payos/verify', [PayOSController::class, 'verifyPayment']);
 
         // Chat routes
+        Route::post('/chats', [ChatController::class, 'store']);
         Route::get('/chats/{chat}/messages', [ChatController::class, 'getMessages']);
         Route::post('/messages', [ChatController::class, 'sendMessage']);
-        Route::post('/users/fcm-token', [UserController::class, 'storeFcmToken']);
+        Route::post('/auth/fcm-token', [AuthController::class, 'storeFcmToken']);
         Route::post('/chats/{chat}/mark-as-read', [ChatController::class, 'markAsRead']);
 
         // Add logout route
-        Route::post('/auth/logout', [UserController::class, 'logout']);
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
     });
 });

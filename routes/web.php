@@ -19,6 +19,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ZaloAuthController;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -30,7 +31,6 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return Inertia::render('HomeView', [
         'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
         'user' => Auth::user(),
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -122,9 +122,13 @@ Route::middleware('auth')->group(function () {
 
     // Chat routes
     Route::get('/chats', [ChatController::class, 'index'])->name('chats.index');
-    Route::get('/chats/{chat}/messages', [ChatController::class, 'getMessages']);
-    Route::post('/messages', [ChatController::class, 'sendMessage']);
-    Route::post('/chats/{chat}/mark-as-read', [ChatController::class, 'markAsRead']);
+    Route::post('/chats', [ChatController::class, 'store'])->name('chats.store');
+    Route::get('/chats/{chat}/messages', [ChatController::class, 'getMessages'])->name('chats.messages');
+    Route::post('/chats/send', [ChatController::class, 'sendMessage'])->name('chats.send');
+    Route::post('/chats/{chat}/mark-as-read', [ChatController::class, 'markAsRead'])->name('chats.mark-read');
+
+    // Add broadcasting auth route
+    Broadcast::routes();
 });
 
 require __DIR__ . '/auth.php';

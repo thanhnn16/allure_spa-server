@@ -1,225 +1,410 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { mdiMessage, mdiSend, mdiPaperclip, mdiEmoticon, mdiMagnify, mdiDotsVertical } from '@mdi/js'
-import { useForm } from '@inertiajs/vue3'
-import SectionMain from '@/Components/SectionMain.vue'
-import CardBox from '@/Components/CardBox.vue'
+import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
-import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.vue'
-import BaseButton from '@/Components/BaseButton.vue'
-import { Head } from "@inertiajs/vue3"
+import { usePage, Head } from '@inertiajs/vue3'
+import axios from 'axios'
+import moment from 'moment'
+import debounce from 'lodash/debounce'
+import SectionMain from '@/Components/SectionMain.vue'
 
 const props = defineProps({
-    chats: Object,
-    currentChat: Object,
+    chats: Array
 })
 
-const currentChatId = ref(null)
-const messages = ref([])
+const user = computed(() => usePage().props.auth.user)
 const searchQuery = ref('')
+const suggestedUsers = ref([])
 const selectedChat = ref(null)
+const messages = ref([])
+const newMessage = ref('')
+const messageContainer = ref(null)
+const isLoading = ref(false)
 
-const form = useForm({
-    message: '',
-    chat_id: null,
-    attachments: []
-})
+// Format thời gian tin nhắn
+const formatTime = (timestamp) => {
+    const messageDate = moment(timestamp)
+    const today = moment().startOf('day')
 
-const filteredChats = computed(() => {
-    if (!searchQuery.value) return props.chats
-    return props.chats.filter(chat => 
-        chat.user.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-})
-
-const formatTime = (date) => {
-    return new Date(date).toLocaleTimeString('vi-VN', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-    })
+    if (messageDate.isSame(today, 'day')) {
+        return messageDate.format('HH:mm')
+    } else if (messageDate.isSame(today.clone().subtract(1, 'day'), 'day')) {
+        return 'Hôm qua ' + messageDate.format('HH:mm')
+    }
+    return messageDate.format('DD/MM/YYYY HH:mm')
 }
 
-const selectChat = async (chat) => {
-    currentChatId.value = chat.id
-    selectedChat.value = chat
-    form.chat_id = chat.id
-    
-    // Fetch messages for selected chat
-    const response = await fetch(`/api/chats/${chat.id}/messages`)
-    const data = await response.json()
-    messages.value = data.messages
-    
-    // Mark messages as read
-    await fetch(`/api/chats/${chat.id}/mark-as-read`, { method: 'POST' })
-}
+// Tìm kiếm người dùng với debounce
+const searchUsers = debounce(async () => {
+    if (!searchQuery.value) {
+        suggestedUsers.value = []
+        return
+    }
 
-const sendMessage = () => {
-    if (!form.message.trim()) return
+    try {
+        isLoading.value = true
+        const response = await axios.get(`/api/users/search?q=${searchQuery.value}`)
+        suggestedUsers.value = response.data.data.filter(u => u.id !== user.value.id)
+    } catch (error) {
+        console.error('Error searching users:', error)
+    } finally {
+        isLoading.value = false
+    }
+}, 300)
 
-    form.post('/api/messages', {
-        preserveScroll: true,
-        onSuccess: () => {
-            form.message = ''
-            form.attachments = []
+// Tạo chat mới
+const startNewChat = async (userId) => {
+    try {
+        isLoading.value = true
+        const response = await axios.post('/chats', { user_id: userId })
+        const newChat = response.data.data
+
+        // Thêm chat mới vào danh sách nếu chưa tồn tại
+        if (!props.chats.find(c => c.id === newChat.id)) {
+            props.chats.unshift(newChat)
         }
-    })
+
+        selectedChat.value = newChat
+        await loadMessages(newChat.id)
+        searchQuery.value = ''
+        suggestedUsers.value = []
+    } catch (error) {
+        console.error('Error creating chat:', error)
+    } finally {
+        isLoading.value = false
+    }
 }
 
-const handleFileUpload = (event) => {
-    form.attachments = Array.from(event.target.files)
+// Load tin nhắn của chat
+const loadMessages = async (chatId) => {
+    try {
+        isLoading.value = true
+        const response = await axios.get(`/chats/${chatId}/messages`)
+        messages.value = response.data
+        await nextTick()
+        scrollToBottom()
+        markAsRead(chatId)
+    } catch (error) {
+        console.error('Error loading messages:', error)
+    } finally {
+        isLoading.value = false
+    }
 }
 
+// Gửi tin nhắn mới
+const sendMessage = async () => {
+    if (!selectedChat.value || !newMessage.value.trim()) return;
+
+    try {
+        const formData = new FormData();
+        formData.append('chat_id', selectedChat.value.id);
+        formData.append('message', newMessage.value);
+
+        const response = await axios.post('/chats/send', formData);
+
+        if (!Array.isArray(messages.value)) {
+            messages.value = [];
+        }
+
+        // Lấy tin nhắn mới từ response.data.data
+        const newMsg = response.data.data;
+        messages.value = [...messages.value, newMsg];
+
+        newMessage.value = '';
+
+        const chatIndex = props.chats.findIndex(c => c.id === selectedChat.value.id);
+        if (chatIndex !== -1) {
+            const updatedChat = { ...props.chats[chatIndex] };
+            updatedChat.messages = [newMsg];
+            props.chats.splice(chatIndex, 1);
+            props.chats.unshift(updatedChat);
+        }
+
+        await nextTick();
+        scrollToBottom();
+    } catch (error) {
+        console.error('Error sending message:', error);
+    }
+};
+
+// Thiết lập Echo listener khi component được mount
 onMounted(() => {
-    // Listen for new messages
-    window.Echo.private(`chat.${currentChatId.value}`)
+    if (selectedChat.value) {
+        subscribeToChat(selectedChat.value.id)
+    }
+})
+
+// Hàm đăng ký lắng nghe sự kiện chat
+const subscribeToChat = (chatId) => {
+    Echo.private(`chat.${chatId}`)
         .listen('NewMessage', (e) => {
             messages.value.push(e.message)
-        })
-})
-</script>
 
+            // Cập nhật tin nhắn mới nhất trong danh sách chat
+            const chatIndex = props.chats.findIndex(c => c.id === chatId)
+            if (chatIndex !== -1) {
+                props.chats[chatIndex].messages = [e.message]
+                // Di chuyển chat lên đầu danh sách
+                const chat = props.chats.splice(chatIndex, 1)[0]
+                props.chats.unshift(chat)
+            }
+
+            nextTick(() => {
+                scrollToBottom()
+                if (e.message.sender_id !== user.value.id) {
+                    markAsRead(chatId)
+                }
+            })
+        })
+}
+
+// Watch selectedChat để đăng ký/hủy đăng ký Echo listener
+watch(() => selectedChat.value?.id, (newChatId, oldChatId) => {
+    if (oldChatId) {
+        Echo.leave(`chat.${oldChatId}`)
+    }
+    if (newChatId) {
+        subscribeToChat(newChatId)
+    }
+})
+
+// Watch searchQuery
+watch(searchQuery, searchUsers)
+
+// Thêm hàm selectChat
+const selectChat = async (chat) => {
+    console.log('Selected chat:', chat);
+    selectedChat.value = chat;
+    messages.value = [];
+    try {
+        isLoading.value = true;
+        const response = await axios.get(`/chats/${chat.id}/messages`);
+        console.log('API Response:', response);
+
+        // Truy cập đúng mảng tin nhắn từ response.data.data
+        const messageData = response.data.data;
+        messages.value = Array.isArray(messageData) ? messageData : [];
+
+        console.log('Final messages array:', messages.value);
+        await nextTick();
+        scrollToBottom();
+        markAsRead(chat.id);
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    } finally {
+        isLoading.value = false;
+    }
+}
+
+// Thêm hàm getOtherUser
+const getOtherUser = (chat) => {
+    return chat.user_id === user.value.id ? chat.staff : chat.user
+}
+
+// Thêm hàm scrollToBottom
+const scrollToBottom = () => {
+    if (messageContainer.value) {
+        messageContainer.value.scrollTop = messageContainer.value.scrollHeight
+    }
+}
+
+// Thêm hàm hasUnreadMessages
+const hasUnreadMessages = (chat) => {
+    return chat.messages.some(message =>
+        !message.is_read && message.sender_id !== user.value.id
+    )
+}
+
+// Thêm hàm markAsRead
+const markAsRead = async (chatId) => {
+    try {
+        await axios.post(`/chats/${chatId}/mark-as-read`)
+    } catch (error) {
+        console.error('Error marking messages as read:', error)
+    }
+}
+
+// Format date time helper
+const formatDateTime = (datetime) => {
+    const date = new Date(datetime);
+    return new Intl.DateTimeFormat('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).format(date);
+};
+
+// Thêm watch để theo dõi thay đổi của messages
+watch(messages, (newMessages) => {
+    console.log('Messages changed:', newMessages);
+}, { deep: true });
+</script>
 <template>
     <LayoutAuthenticated>
-        <Head title="Tin nhắn" />
-        <SectionMain>
-            <SectionTitleLineWithButton :icon="mdiMessage" title="Tin nhắn" main>
-            </SectionTitleLineWithButton>
 
-            <div class="flex h-[calc(100vh-200px)]">
-                <!-- Left sidebar - Chat list -->
-                <CardBox class="w-1/4 mr-4 p-0 overflow-hidden">
+        <Head title="Chats" />
+        <!-- Thay đổi SectionMain để fix layout -->
+        <SectionMain>
+            <div class="flex h-[calc(100vh-4rem)] bg-gray-100"> <!-- Điều chỉnh chiều cao -->
+                <!-- Sidebar danh sách chat -->
+                <div class="w-1/3 min-w-[300px] max-w-[400px] border-r bg-white flex flex-col">
+                    <!-- Thêm min/max width -->
+                    <!-- Search box -->
                     <div class="p-4 border-b">
                         <div class="relative">
-                            <input
-                                v-model="searchQuery"
-                                type="text"
-                                placeholder="Tìm kiếm..."
-                                class="w-full px-4 py-2 rounded-lg border bg-gray-50 focus:outline-none focus:border-blue-500"
-                            >
-                            <BaseButton
-                                :icon="mdiMagnify"
-                                class="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                small
-                            />
-                        </div>
-                    </div>
-
-                    <div class="overflow-y-auto h-full">
-                        <div
-                            v-for="chat in filteredChats"
-                            :key="chat.id"
-                            @click="selectChat(chat)"
-                            class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition-colors duration-150"
-                            :class="{ 'bg-blue-50': currentChatId === chat.id }"
-                        >
-                            <div class="relative">
-                                <img
-                                    :src="chat.user.avatar || '/default-avatar.png'"
-                                    class="w-12 h-12 rounded-full"
-                                    alt="Avatar"
-                                >
+                            <input v-model="searchQuery" type="text" placeholder="Tìm kiếm người dùng..."
+                                class="w-full px-4 py-2 rounded-lg border bg-gray-50 focus:outline-none focus:border-blue-500">
+                            <!-- Loading indicator -->
+                            <div v-if="isLoading" class="absolute right-3 top-1/2 -translate-y-1/2">
                                 <div
-                                    v-if="chat.user.is_online"
-                                    class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
-                                />
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <div class="flex justify-between items-center">
-                                    <h3 class="font-medium">{{ chat.user.name }}</h3>
-                                    <span class="text-sm text-gray-500">
-                                        {{ formatTime(chat.last_message?.created_at) }}
-                                    </span>
+                                    class="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin">
                                 </div>
-                                <p class="text-sm text-gray-500 truncate">
-                                    {{ chat.last_message?.message }}
-                                </p>
+                            </div>
+
+                            <!-- Dropdown tìm kiếm -->
+                            <div v-if="searchQuery && suggestedUsers.length"
+                                class="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                                <div v-for="user in suggestedUsers" :key="user.id" @click="startNewChat(user.id)"
+                                    class="flex items-center space-x-3 p-3 hover:bg-gray-50 cursor-pointer transition duration-150">
+                                    <img :src="user.avatar || 'storage/images/users/default.png'" :alt="user.full_name"
+                                        class="w-10 h-10 rounded-full object-cover">
+                                    <div>
+                                        <div class="font-medium">{{ user.full_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ user.phone_number }}</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </CardBox>
 
-                <!-- Right side - Chat messages -->
-                <CardBox class="flex-1 p-0 flex flex-col">
+                    <!-- Danh sách chat -->
+                    <div class="flex-1 overflow-y-auto">
+                        <div v-if="chats.length === 0" class="p-4 text-center text-gray-500">
+                            Chưa có cuộc trò chuyện nào
+                        </div>
+                        <div v-else>
+                            <div v-for="chat in chats" :key="chat.id" @click="selectChat(chat)" :class="[
+                                'p-4 border-b hover:bg-gray-50 cursor-pointer transition duration-150',
+                                selectedChat?.id === chat.id ? 'bg-blue-50' : ''
+                            ]">
+                                <div class="flex items-center space-x-3">
+                                    <img :src="getOtherUser(chat).avatar || 'storage/images/users/default.png'"
+                                        :alt="getOtherUser(chat).full_name" class="w-12 h-12 rounded-full object-cover">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium">{{ getOtherUser(chat).full_name }}</div>
+                                        <div class="text-sm text-gray-500 truncate">
+                                            {{ chat.messages[0]?.message || 'Bắt đầu cuộc trò chuyện' }}
+                                        </div>
+                                    </div>
+                                    <div v-if="hasUnreadMessages(chat)"
+                                        class="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat area -->
+                <div class="flex-1 flex flex-col overflow-hidden"> <!-- Thêm overflow-hidden -->
                     <template v-if="selectedChat">
                         <!-- Chat header -->
-                        <div class="p-4 border-b flex justify-between items-center">
-                            <div class="flex items-center">
-                                <img
-                                    :src="selectedChat.user.avatar || '/default-avatar.png'"
-                                    class="w-10 h-10 rounded-full"
-                                    alt="Avatar"
-                                >
-                                <div class="ml-3">
-                                    <h3 class="font-medium">{{ selectedChat.user.name }}</h3>
-                                    <p class="text-sm text-gray-500">
-                                        {{ selectedChat.user.is_online ? 'Đang hoạt động' : 'Không hoạt động' }}
-                                    </p>
-                                </div>
-                            </div>
-                            <BaseButton :icon="mdiDotsVertical" />
-                        </div>
-
-                        <!-- Messages -->
-                        <div class="flex-1 overflow-y-auto p-4">
-                            <div
-                                v-for="message in messages"
-                                :key="message.id"
-                                class="mb-4"
-                            >
-                                <div
-                                    class="flex"
-                                    :class="message.sender_id === $page.props.auth.user.id ? 'justify-end' : 'justify-start'"
-                                >
-                                    <div
-                                        class="max-w-[70%] rounded-lg px-4 py-2"
-                                        :class="message.sender_id === $page.props.auth.user.id ? 'bg-blue-500 text-white' : 'bg-gray-100'"
-                                    >
-                                        <p>{{ message.message }}</p>
-                                        <span class="text-xs mt-1 block" :class="message.sender_id === $page.props.auth.user.id ? 'text-blue-100' : 'text-gray-500'">
-                                            {{ formatTime(message.created_at) }}
-                                        </span>
+                        <div class="p-4 border-b bg-white">
+                            <div class="flex items-center space-x-3">
+                                <img :src="getOtherUser(selectedChat).avatar || 'storage/images/users/default.png'"
+                                    :alt="getOtherUser(selectedChat).full_name"
+                                    class="w-10 h-10 rounded-full object-cover">
+                                <div>
+                                    <div class="font-medium">{{ getOtherUser(selectedChat).full_name }}</div>
+                                    <div class="text-sm text-gray-500">
+                                        {{ getOtherUser(selectedChat).phone_number }}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Message input -->
-                        <div class="p-4 border-t">
-                            <div class="flex items-center space-x-2">
-                                <BaseButton :icon="mdiEmoticon" />
-                                <label class="cursor-pointer">
-                                    <BaseButton :icon="mdiPaperclip" />
-                                    <input
-                                        type="file"
-                                        class="hidden"
-                                        multiple
-                                        @change="handleFileUpload"
-                                    >
-                                </label>
-                                <input
-                                    v-model="form.message"
-                                    type="text"
-                                    placeholder="Nhập tin nhắn..."
-                                    class="flex-1 px-4 py-2 rounded-lg border bg-gray-50 focus:outline-none focus:border-blue-500"
-                                    @keyup.enter="sendMessage"
-                                >
-                                <BaseButton
-                                    :icon="mdiSend"
-                                    color="info"
-                                    @click="sendMessage"
-                                />
+                        <!-- Messages -->
+                        <div ref="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                            <div v-if="isLoading" class="flex justify-center">
+                                <div
+                                    class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">
+                                </div>
                             </div>
+                            <template v-else>
+                                <div v-if="messages && messages.length > 0">
+                                    <div v-for="message in messages" :key="message.id"
+                                        :class="['flex mb-4', message.sender_id === user.id ? 'justify-end' : 'justify-start']">
+                                        <div :class="[
+                                            'max-w-[70%] rounded-lg p-3',
+                                            message.sender_id === user.id ? 'bg-blue-500 text-white' : 'bg-white'
+                                        ]">
+                                            <div class="break-words whitespace-pre-wrap">{{ message.message }}</div>
+                                            <div :class="[
+                                                'text-xs mt-1',
+                                                message.sender_id === user.id ? 'text-blue-100' : 'text-gray-500'
+                                            ]">
+                                                {{ formatTime(message.created_at) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-else class="flex justify-center items-center h-full">
+                                    <div class="text-gray-500">Chưa có tin nhắn nào</div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Message input -->
+                        <div class="p-4 bg-white border-t">
+                            <form @submit.prevent="sendMessage" class="flex space-x-2">
+                                <input v-model="newMessage" type="text" placeholder="Nhập tin nhắn..."
+                                    class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                                <button type="submit" :disabled="!newMessage.trim() || isLoading" :class="[
+                                    'px-6 py-2 rounded-lg transition duration-150',
+                                    newMessage.trim() && !isLoading
+                                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                ]">
+                                    <span v-if="isLoading">Đang gửi...</span>
+                                    <span v-else>Gửi</span>
+                                </button>
+                            </form>
                         </div>
                     </template>
 
-                    <div
-                        v-else
-                        class="flex-1 flex items-center justify-center text-gray-500"
-                    >
-                        Chọn một cuộc trò chuyện để bắt đầu
+                    <!-- Empty state -->
+                    <div v-else class="flex-1 flex items-center justify-center bg-gray-50">
+                        <div class="text-center text-gray-500">
+                            <div class="text-xl mb-2">👋 Chào mừng đến với tin nhắn</div>
+                            <div>Chọn một cuộc trò chuyện để bắt đầu</div>
+                        </div>
                     </div>
-                </CardBox>
+                </div>
             </div>
         </SectionMain>
     </LayoutAuthenticated>
 </template>
+
+<style scoped>
+/* Thêm styles để đảm bảo scroll hoạt động đúng */
+:deep(.section-main) {
+    padding: 0;
+    height: calc(100vh - 4rem);
+}
+
+.messages-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.messages-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+}
+</style>

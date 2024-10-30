@@ -19,7 +19,6 @@ import SectionMain from '@/Components/SectionMain.vue'
 import CardBoxWidget from '@/Components/CardBoxWidget.vue'
 import CardBox from '@/Components/CardBox.vue'
 import CustomerTable from '@/Pages/Customers/Components/CustomerTable.vue'
-import NotificationBar from '@/Components/NotificationBar.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import CardBoxTransaction from '@/Components/CardBoxTransaction.vue'
 import CardBoxClient from '@/Components/CardBoxClient.vue'
@@ -34,9 +33,6 @@ const fillChartData = () => {
     chartData.value = chartConfig.sampleChartData()
 }
 
-const helloWorld = () => {
-    console.log('Hello World')
-}
 
 const newUsers = ref([])
 const userCount = ref(0)

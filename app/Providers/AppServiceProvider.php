@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Services\AuthService;
+use App\Services\FcmTokenService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,7 +17,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(AuthService::class, function ($app) {
+            return new AuthService($app->make(FcmTokenService::class));
+        });
     }
 
     /**
