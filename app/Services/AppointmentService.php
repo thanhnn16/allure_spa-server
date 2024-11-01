@@ -9,6 +9,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Models\TimeSlot;
+use App\Models\Service;
 
 class AppointmentService
 {
@@ -20,13 +22,16 @@ class AppointmentService
     public function createAppointment($data)
     {
         return DB::transaction(function () use ($data) {
-            // Kiểm tra slot còn trống
+            // Check if time slot is available
+            $timeSlot = TimeSlot::findOrFail($data['time_slot_id']);
+
+            // Count existing bookings for this date and time slot
             $existingBookings = Appointment::where('appointment_date', $data['appointment_date'])
                 ->where('time_slot_id', $data['time_slot_id'])
                 ->where('status', '!=', 'cancelled')
                 ->count();
 
-            if ($existingBookings >= 2) {
+            if ($existingBookings >= $timeSlot->max_bookings) {
                 return [
                     'status' => 422,
                     'message' => 'Khung giờ này đã đầy',
@@ -41,11 +46,10 @@ class AppointmentService
                 'appointment_date' => $data['appointment_date'],
                 'time_slot_id' => $data['time_slot_id'],
                 'appointment_type' => $data['appointment_type'],
-                'status' => 'pending',
+                'status' => $data['status'],
                 'note' => $data['note'] ?? null,
             ]);
 
-            // Broadcast event
             event(new AppointmentCreated($appointment));
 
             return [
@@ -60,8 +64,8 @@ class AppointmentService
     {
         $validator = Validator::make($data, [
             'staff_id' => 'sometimes|exists:users,id',
-            'start_time' => 'sometimes|date',
-            'end_time' => 'sometimes|date|after:start_time',
+            'appointment_date' => 'sometimes|date',
+            'time_slot_id' => 'sometimes|exists:time_slots,id',
             'status' => 'sometimes|in:pending,confirmed,cancelled,completed',
             'note' => 'nullable|string',
             'appointment_type' => 'sometimes|string',
@@ -74,20 +78,39 @@ class AppointmentService
         try {
             $appointment = Appointment::findOrFail($id);
 
-            $updateData = [
-                'staff_user_id' => $data['staff_id'] ?? $appointment->staff_user_id,
-                'start_time' => isset($data['start_time']) ? Carbon::parse($data['start_time'])->setTimezone(config('app.timezone')) : $appointment->start_time,
-                'end_time' => isset($data['end_time']) ? Carbon::parse($data['end_time'])->setTimezone(config('app.timezone')) : $appointment->end_time,
-                'status' => $data['status'] ?? $appointment->status,
-                'note' => $data['note'] ?? $appointment->note,
-                'appointment_type' => $data['appointment_type'] ?? $appointment->appointment_type,
-            ];
+            // If changing time slot, check availability
+            if (isset($data['time_slot_id']) && isset($data['appointment_date'])) {
+                $timeSlot = TimeSlot::findOrFail($data['time_slot_id']);
+                $existingBookings = Appointment::where('appointment_date', $data['appointment_date'])
+                    ->where('time_slot_id', $data['time_slot_id'])
+                    ->where('id', '!=', $id)
+                    ->where('status', '!=', 'cancelled')
+                    ->count();
+
+                if ($existingBookings >= $timeSlot->max_bookings) {
+                    return [
+                        'status' => 422,
+                        'message' => 'Khung giờ này đã đầy',
+                        'data' => null
+                    ];
+                }
+            }
+
+            $updateData = array_filter([
+                'staff_user_id' => $data['staff_id'] ?? null,
+                'appointment_date' => $data['appointment_date'] ?? null,
+                'time_slot_id' => $data['time_slot_id'] ?? null,
+                'status' => $data['status'] ?? null,
+                'note' => $data['note'] ?? null,
+                'appointment_type' => $data['appointment_type'] ?? null,
+            ]);
 
             $appointment->update($updateData);
 
-            return ['status' => 200, 'message' => 'Appointment updated successfully', 'data' => $appointment];
+            return ['status' => 200, 'message' => 'Cập nhật lịch hẹn thành công', 'data' => $appointment];
         } catch (\Exception $e) {
-            return ['status' => 500, 'message' => 'An error occurred while updating the appointment', 'data' => null];
+            Log::error('Lỗi cập nhật lịch hẹn: ' . $e->getMessage());
+            return ['status' => 500, 'message' => 'Đã xảy ra lỗi khi cập nhật lịch hẹn', 'data' => null];
         }
     }
 
@@ -136,7 +159,7 @@ class AppointmentService
     public function cancelAppointment($id, $note)
     {
         try {
-            $appointment = Appointment::findOrFail($id);
+            $appointment = Appointment::with('timeSlot')->findOrFail($id);
 
             // Kiểm tra xem người dùng có quyền hủy cuộc hẹn không
             if ($appointment->user_id !== Auth::id()) {
@@ -148,8 +171,11 @@ class AppointmentService
                 ];
             }
 
-            // Kiểm tra xem cuộc hẹn có thể hủy không (ví dụ: chưa bắt đầu)
-            if ($appointment->start_time <= now()) {
+            // Kiểm tra thời gian bắt đầu của cuộc hẹn
+            $appointmentStart = Carbon::parse($appointment->appointment_date)
+                ->setTimeFromTimeString($appointment->timeSlot->start_time);
+                
+            if ($appointmentStart <= now()) {
                 return [
                     'status' => 422,
                     'message' => 'Không thể hủy cuộc hẹn đã bắt đầu hoặc đã kết thúc',
@@ -176,6 +202,52 @@ class AppointmentService
                 'message' => 'Đã xảy ra lỗi khi hủy cuộc hẹn',
                 'data' => null,
                 'success' => false
+            ];
+        }
+    }
+
+    public function getAvailableTimeSlots($date, $serviceId = null)
+    {
+        try {
+            $timeSlots = TimeSlot::where('is_active', true)
+                ->orderBy('start_time')
+                ->get();
+
+            // If service ID is provided, filter slots based on service duration
+            if ($serviceId) {
+                $service = Service::find($serviceId);
+                if ($service) {
+                    $timeSlots = $timeSlots->filter(function ($slot) use ($service) {
+                        $slotDuration = Carbon::parse($slot->end_time)
+                            ->diffInMinutes(Carbon::parse($slot->start_time));
+                        return $slotDuration >= $service->duration;
+                    });
+                }
+            }
+
+            // Get existing appointments for the date
+            $existingAppointments = Appointment::where('appointment_date', $date)
+                ->where('status', '!=', 'cancelled')
+                ->get();
+
+            // Mark slots as available/unavailable based on existing appointments
+            $timeSlots = $timeSlots->map(function ($slot) use ($existingAppointments) {
+                $bookings = $existingAppointments->where('time_slot_id', $slot->id)->count();
+                $slot->available = $bookings < $slot->max_bookings;
+                return $slot;
+            });
+
+            return [
+                'status' => 200,
+                'message' => 'Time slots retrieved successfully',
+                'data' => $timeSlots
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error getting available time slots: ' . $e->getMessage());
+            return [
+                'status' => 500,
+                'message' => 'Error retrieving time slots',
+                'data' => null
             ];
         }
     }

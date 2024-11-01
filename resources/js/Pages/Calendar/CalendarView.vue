@@ -19,6 +19,26 @@ const props = defineProps({
     appointments: {
         type: Array,
         default: () => []
+    },
+    timeSlots: {
+        type: Array,
+        default: () => []
+    },
+    businessHours: {
+        type: Object,
+        required: true
+    },
+    slotDuration: {
+        type: String,
+        default: '01:00:00'
+    },
+    slotMinTime: {
+        type: String,
+        default: '08:00:00'
+    },
+    slotMaxTime: {
+        type: String,
+        default: '18:30:00'
     }
 })
 
@@ -40,22 +60,26 @@ watch(() => props.appointments, (newAppointments) => {
 const events = computed(() => {
     return appointments.value.map(appointment => ({
         id: appointment.id,
-        title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.treatment?.name || 'Không xác định'}`,
-        start: appointment.start_time,
-        end: appointment.end_time,
+        title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.service?.service_name || 'Không xác định'}`,
+        start: `${appointment.start}`,
+        end: `${appointment.end}`,
         extendedProps: {
             userId: appointment.user_id,
-            treatmentId: appointment.treatment_id,
+            serviceId: appointment.service_id,
             staffId: appointment.staff_user_id,
             appointmentType: appointment.appointment_type,
-            status: appointment.status
+            status: appointment.status,
+            timeSlotId: appointment.time_slot_id,
+            userName: appointment.user?.full_name,
+            serviceName: appointment.service?.service_name,
+            staffName: appointment.staff?.full_name
         }
     }))
 })
 
 const calendarOptions = computed(() => ({
     plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
-    initialView: 'timeGridWeek', // Changed to week view
+    initialView: 'timeGridWeek',
     weekends: true,
     events: events.value,
     locale: 'vi',
@@ -72,84 +96,159 @@ const calendarOptions = computed(() => ({
         day: 'Ngày',
         list: 'Danh sách'
     },
-    allDayText: 'Cả ngày',
-    moreLinkText: 'Xem thêm',
-    noEventsText: 'Không có lịch hẹn nào',
-    slotLabelFormat: {
-        hour: 'numeric',
-        minute: '2-digit',
-        omitZeroMinute: false,
-        meridiem: 'short'
-    },
-    slotMinTime: '08:00:00',
-    slotMaxTime: '18:30:00',
-    businessHours: {
-        daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
-        startTime: '08:00',
-        endTime: '18:30',
-    },
+    allDaySlot: false,
+    height: 'auto',
+    businessHours: props.businessHours,
     nowIndicator: true,
     editable: true,
     selectable: true,
+    eventResizableFromStart: false,
+    eventDurationEditable: false,
+    slotDuration: props.slotDuration,
+    snapDuration: props.slotDuration,
+    slotLabelInterval: props.slotDuration,
+    slotMinTime: props.slotMinTime,
+    slotMaxTime: props.slotMaxTime,
+    slotLabelFormat: {
+        hour: 'numeric',
+        minute: '2-digit',
+        omitZeroMinute: true,         // Bỏ hiển thị :00
+        meridiem: 'short'
+    },
+    selectConstraint: "businessHours",
+    eventConstraint: "businessHours",
+    selectMirror: true,
+    moreLinkText: 'Xem thêm',
+    noEventsText: 'Không có lịch hẹn nào',
     select: handleDateSelect,
     eventClick: handleEventClick,
     eventDrop: handleEventDrop,
-    eventResize: handleEventResize,
+    validRange: {
+        start: new Date().toISOString().split('T')[0] // Chỉ cho phép từ ngày hiện tại
+    },
 }))
 
 const selectedTimeSlot = ref(null)
 
 function handleDateSelect(selectInfo) {
-    selectedTimeSlot.value = {
-        start: selectInfo.start,
-        end: selectInfo.end
+    const selectedStart = new Date(selectInfo.start)
+    const selectedHour = selectedStart.getHours().toString().padStart(2, '0')
+    const selectedMinute = selectedStart.getMinutes().toString().padStart(2, '0')
+    const selectedTimeString = `${selectedHour}:${selectedMinute}:00`
+
+    const matchingTimeSlot = props.timeSlots.find(slot => {
+        return slot.start_time === selectedTimeString
+    })
+
+    if (!matchingTimeSlot) {
+        alert('Vui lòng chọn khung giờ hợp lệ')
+        return
     }
+
+    if (matchingTimeSlot.current_bookings >= matchingTimeSlot.max_bookings) {
+        alert('Khung giờ này đã đầy')
+        return
+    }
+
+    selectedTimeSlot.value = {
+        date: selectInfo.startStr.split('T')[0],
+        timeSlotId: matchingTimeSlot.id,
+        startTime: matchingTimeSlot.start_time,
+        endTime: matchingTimeSlot.end_time
+    }
+
     showModal.value = true
 }
 
-function handleEventClick(info) {
-    try {
-        const appointmentId = info.event.id;
-        showViewModal.value = true;
-        selectedAppointmentId.value = appointmentId;
-    } catch (error) {
-        console.error('Lỗi khi xử lý sự kiện click:', error);
-        // Hiển thị thông báo lỗi cho người dùng nếu cần
+const selectedAppointmentId = ref(null);
+
+const handleEventClick = (info) => {
+    console.log('Event clicked:', info);
+    if (!info || !info.event) {
+        console.log('Invalid event info');
+        return;
     }
-}
+    
+    // Đảm bảo ID được chuyển đổi thành số
+    const eventId = parseInt(info.event.id);
+    console.log('Event ID:', eventId);
+    
+    if (!eventId || isNaN(eventId)) {
+        console.error('Invalid event ID');
+        return;
+    }
+    
+    selectedAppointmentId.value = eventId;
+    console.log('Selected appointment ID:', selectedAppointmentId.value);
+    showViewModal.value = true;
+};
+
+const closeViewModal = () => {
+    console.log('Closing view modal');
+    showViewModal.value = false;
+    // Reset selectedAppointmentId sau khi đóng modal
+    setTimeout(() => {
+        selectedAppointmentId.value = null;
+    }, 100);
+};
+
+// Thêm watch để debug
+watch(() => selectedAppointmentId.value, (newVal) => {
+    console.log('selectedAppointmentId changed:', newVal);
+});
+
+watch(() => showViewModal.value, (newVal) => {
+    console.log('showViewModal changed:', newVal);
+});
 
 function handleEventDrop(dropInfo) {
+    const startDate = new Date(dropInfo.event.start)
+    const hour = startDate.getHours().toString().padStart(2, '0')
+    const minute = startDate.getMinutes().toString().padStart(2, '0')
+    const timeString = `${hour}:${minute}:00`
+
+    const matchingTimeSlot = props.timeSlots.find(slot =>
+        slot.start_time === timeString
+    )
+
+    if (!matchingTimeSlot) {
+        alert('Không thể di chuyển đến khung giờ này')
+        dropInfo.revert()
+        return
+    }
+
     const updatedAppointment = {
         id: dropInfo.event.id,
-        start_time: dropInfo.event.start.toISOString(),
-        end_time: dropInfo.event.end.toISOString(),
-    };
-    updateAppointment(updatedAppointment);
+        appointment_date: startDate.toISOString().split('T')[0],
+        time_slot_id: matchingTimeSlot.id
+    }
+
+    updateAppointment(updatedAppointment)
+}
+
+function updateLocalAppointments(updatedAppointment) {
+    const index = appointments.value.findIndex(apt => apt.id === updatedAppointment.id)
+    if (index !== -1) {
+        appointments.value[index] = updatedAppointment
+    } else {
+        appointments.value.push(updatedAppointment)
+    }
 }
 
 function updateAppointment(appointmentData) {
     axios.put(`/api/appointments/${appointmentData.id}`, appointmentData)
         .then(response => {
-            // Update the local appointments array
-            const index = props.appointments.findIndex(apt => apt.id === appointmentData.id);
-            if (index !== -1) {
-                props.appointments[index] = response.data.appointment;
-            }
-            // Refresh the calendar
+            updateLocalAppointments(response.data.appointment)
             if (calendarRef.value) {
-                calendarRef.value.getApi().refetchEvents();
+                calendarRef.value.getApi().refetchEvents()
             }
         })
         .catch(error => {
-            // Revert the event if the update fails
+            console.error('Lỗi khi cập nhật cuộc hẹn:', error)
             if (calendarRef.value) {
-                calendarRef.value.getApi().refetchEvents();
+                calendarRef.value.getApi().refetchEvents()
             }
-        });
-}
-
-function handleEventResize(resizeInfo) {
-    // Implement this function
+        })
 }
 
 function closeModal() {
@@ -160,25 +259,23 @@ function closeModal() {
 function saveAppointment(appointmentData) {
     const form = useForm({
         user_id: appointmentData.user_id,
-        appointment_type: appointmentData.appointment_type,
+        service_id: appointmentData.service_id,
         staff_id: appointmentData.staff_id,
-        treatment_id: appointmentData.treatment_id,
-        user_treatment_package_id: appointmentData.user_treatment_package_id,
-        start_date: appointmentData.start,
-        end_date: appointmentData.end,
-        is_all_day: appointmentData.allDay,
+        appointment_date: new Date(appointmentData.date).toISOString().split('T')[0],
+        time_slot_id: appointmentData.timeSlotId,
+        appointment_type: appointmentData.appointment_type,
         status: appointmentData.status || 'pending',
         note: appointmentData.note,
-    });
+    })
 
     form.post(route('appointments.store'), {
         preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
-            closeModal();
-            router.reload();
+            closeModal()
+            router.reload()
         },
-    });
+    })
 }
 
 function handleAppointmentAdded() {
@@ -186,23 +283,10 @@ function handleAppointmentAdded() {
     window.location.reload();
 }
 
-// Hàm để định dạng ngày giờ
-function formatDateTime(dateTimeString) {
-    const date = new Date(dateTimeString)
-    return date.toLocaleString() // Hoặc sử dụng bất kỳ định dạng nào bạn muốn
-}
-
-function closeViewModal() {
-    showViewModal.value = false;
-    selectedAppointmentId.value = null;
-}
-
 function handleAppointmentUpdate(updatedAppointment) {
     updateAppointment(updatedAppointment);
     closeViewModal();
 }
-
-const selectedAppointmentId = ref(null)
 
 const fetchAppointmentDetails = async (id) => {
     try {
@@ -230,7 +314,7 @@ const fetchAppointmentDetails = async (id) => {
         <AddAppointmentModal :show="showModal" :appointments="appointments" :selectedTimeSlot="selectedTimeSlot"
             @close="closeModal" @save="saveAppointment" @appointmentAdded="handleAppointmentAdded"
             :closeModal="closeModal" />
-        <ViewAppointmentModal :show="showViewModal" :appointmentId="Number(selectedAppointmentId)"
+        <ViewAppointmentModal :show="showViewModal" :appointmentId="selectedAppointmentId"
             @close="closeViewModal" @update="handleAppointmentUpdate"
             :fetchAppointmentDetails="fetchAppointmentDetails" />
     </LayoutAuthenticated>
@@ -239,18 +323,18 @@ const fetchAppointmentDetails = async (id) => {
 <style scoped>
 .custom-calendar {
     height: calc(100vh - 200px);
-    /* Điều chỉnh chiều cao tùy theo layout của bạn */
 }
 
 :deep(.fc-timegrid-slot) {
-    height: 3em !important;
-    /* Đặt chiều cao cố định cho mỗi ô thời gian */
+    height: 4em !important;
+    /* Tăng chiều cao của mỗi ô */
 }
 
 :deep(.fc-timegrid-axis-cushion) {
     max-width: none;
-    /* Cho phép nhãn thời gian hiển thị đầy đủ */
     white-space: nowrap;
+    padding: 8px;
+    /* Thêm padding cho nhãn thời gian */
 }
 
 :deep(.fc-timegrid-slot-label-cushion) {
@@ -260,12 +344,13 @@ const fetchAppointmentDetails = async (id) => {
 
 :deep(.fc-timegrid-now-indicator-line) {
     border-color: #ff0000;
-    /* Màu đỏ cho đường chỉ thời gian hiện tại */
 }
 
 :deep(.fc-event) {
     border-radius: 4px;
     font-size: 0.9em;
+    margin: 1px 0;
+    /* Thêm margin cho events */
 }
 
 :deep(.fc-toolbar-title) {
@@ -275,5 +360,14 @@ const fetchAppointmentDetails = async (id) => {
 
 :deep(.fc-button) {
     text-transform: capitalize;
+}
+
+/* Thêm style cho grid lines */
+:deep(.fc-timegrid-cols) {
+    border: 1px solid #ddd;
+}
+
+:deep(.fc-timegrid-col) {
+    border-right: 1px solid #ddd;
 }
 </style>

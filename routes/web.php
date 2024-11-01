@@ -65,6 +65,7 @@ Route::middleware('auth')->group(function () {
 
     // Service routes
     Route::resource('services', ServiceController::class);
+    Route::get('/api/services/appointment', [ServiceController::class, 'getServicesForAppointment']);
 
     // Service Category routes
 
@@ -129,6 +130,10 @@ Route::middleware('auth')->group(function () {
 
     // Add broadcasting auth route
     Broadcast::routes();
+
+    // Add new route for user treatment packages
+    Route::get('/api/user-treatment-packages/{userId}', [UserController::class, 'getUserTreatmentPackages'])
+        ->name('api.user.treatment-packages');
 });
 
 require __DIR__ . '/auth.php';

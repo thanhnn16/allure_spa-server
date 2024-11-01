@@ -10,7 +10,8 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="mb-4 relative">
                             <label for="user" class="block text-sm font-medium text-gray-700 mb-1">Khách hàng</label>
-                            <input type="text" v-model="userSearch" @input="searchUsers" placeholder="Tìm kiếm khách hàng"
+                            <input type="text" v-model="userSearch" @input="searchUsers"
+                                placeholder="Tìm kiếm khách hàng"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                             <ul v-if="userResults.length > 0"
                                 class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-40 overflow-y-auto">
@@ -22,7 +23,8 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="staff" class="block text-sm font-medium text-gray-700 mb-1">Nhân viên phụ trách</label>
+                            <label for="staff" class="block text-sm font-medium text-gray-700 mb-1">Nhân viên phụ
+                                trách</label>
                             <select v-model="form.staff_id" id="staff"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                 <option v-for="staffMember in staffList" :key="staffMember.id" :value="staffMember.id">
@@ -35,32 +37,32 @@
                             <label for="user_treatment_package" class="block text-sm font-medium text-gray-700 mb-1">Gói
                                 điều trị</label>
                             <select v-model="form.user_treatment_package_id" id="user_treatment_package"
-                                :disabled="isTreatmentSelected"
+                                :disabled="isServiceSelected"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="">Chọn gói điều trị</option>
                                 <option v-for="treatmentPackage in userTreatmentPackages" :key="treatmentPackage.id"
                                     :value="treatmentPackage.id">
-                                    {{ treatmentPackage.treatment ? treatmentPackage.treatment.name : 'Unknown Treatment' }} - Còn lại: {{
-                                        treatmentPackage.remaining_sessions }} buổi
+                                    {{ treatmentPackage.treatment ? treatmentPackage.treatment.name : 'Unknown Treatment' }}
+                                    - Còn lại: {{ treatmentPackage.remaining_sessions }} buổi
                                 </option>
                             </select>
                         </div>
 
-                        <div class="mb-4 relative">
-                            <label for="treatment" class="block text-sm font-medium text-gray-700 mb-1">Liệu trình</label>
-                            <input type="text" v-model="treatmentSearch" @input="searchTreatments" placeholder="Tìm kiếm liệu trình"
+                        <div class="mb-4">
+                            <label for="service" class="block text-sm font-medium text-gray-700 mb-1">Dịch vụ</label>
+                            <select v-model="form.service_id" id="service" :disabled="isUserTreatmentPackageSelected"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                            <ul v-if="treatmentResults.length > 0"
-                                class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-sm max-h-40 overflow-y-auto">
-                                <li v-for="treatment in treatmentResults" :key="treatment.id" @click="selectTreatment(treatment)"
-                                    class="px-3 py-2 hover:bg-gray-100 cursor-pointer">
-                                    {{ treatment.name }} - {{ formatPrice(treatment.price) }}
-                                </li>
-                            </ul>
+                                <option value="">Chọn dịch vụ</option>
+                                <option v-for="service in services" :key="service.id" :value="service.id">
+                                    {{ service.name || service.service_name }}
+                                </option>
+                            </select>
                         </div>
 
                         <div class="mb-4">
-                            <label for="appointment_type" class="block text-sm font-medium text-gray-700 mb-1">Loại lịch hẹn</label>
+                            <label for="appointment_type" class="block text-sm font-medium text-gray-700 mb-1">
+                                Loại lịch hẹn
+                            </label>
                             <select v-model="form.appointment_type" id="appointment_type"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                                 <option v-for="type in appointmentTypes" :key="type.value" :value="type.value">
@@ -81,17 +83,21 @@
                     </div>
                     <div class="flex flex-wrap items-center justify-between mb-4 space-y-4 md:space-y-0">
                         <div class="w-full md:w-1/2 pr-2">
-                            <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Ngày bắt
-                                đầu</label>
-                            <input type="datetime-local" v-model="form.start_date" id="start_date"
-                                :disabled="form.is_all_day"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ngày hẹn</label>
+                            <input type="date" v-model="form.appointment_date"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
                         <div class="w-full md:w-1/2 pl-2">
-                            <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">Ngày kết thúc</label>
-                            <input type="datetime-local" v-model="form.end_date" id="end_date"
-                                :disabled="form.is_all_day"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Khung giờ</label>
+                            <select v-model="form.time_slot_id"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Chọn khung giờ</option>
+                                <option v-for="slot in timeSlots" :key="slot.id" :value="slot.id"
+                                    :disabled="!slot.available">
+                                    {{ slot.displayText }}
+                                    {{ !slot.available ? '(Đã đầy)' : '' }}
+                                </option>
+                            </select>
                         </div>
                     </div>
                     <div class="mb-4">
@@ -100,16 +106,16 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                     </div>
 
-                    <div v-if="errors" class="text-red-500 mt-2">
-                        <p v-for="(error, field) in errors" :key="field">{{ error[0] }}</p>
-                    </div>
-
                     <div class="mt-6 flex justify-end space-x-3">
-                        <button type="submit"
-                            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Lưu
+                        <button type="submit" :disabled="!isFormValid" :class="[
+                            'px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2',
+                            isFormValid
+                                ? 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        ]">
+                            {{ isFormValid ? 'Lưu' : 'Vui lòng điền đầy đủ thông tin' }}
                         </button>
-                        <button @click="close"
+                        <button @click="close" type="button"
                             class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                             Đóng
                         </button>
@@ -121,10 +127,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import axios from 'axios'
-import { router, useForm } from '@inertiajs/vue3'
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue';
 
+// Khai báo props và emit
 const props = defineProps({
     show: Boolean,
     appointments: {
@@ -143,104 +148,213 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save', 'appointmentAdded'])
 
+// Định nghĩa constants
+const APPOINTMENT_TYPES = {
+    FACIAL: 'facial',           
+    MASSAGE: 'massage',         
+    WEIGHT_LOSS: 'weight_loss', 
+    HAIR_REMOVAL: 'hair_removal',
+    CONSULTATION: 'consultation',
+    OTHERS: 'others'            
+};
+
+// Định nghĩa mapping
+const CATEGORY_NAME_MAPPING = {
+    'Chăm sóc da mặt': { value: APPOINTMENT_TYPES.FACIAL, label: 'Chăm sóc da mặt' },
+    'Massage': { value: APPOINTMENT_TYPES.MASSAGE, label: 'Massage' },
+    'Giảm béo': { value: APPOINTMENT_TYPES.WEIGHT_LOSS, label: 'Giảm béo' },
+    'Triệt lông': { value: APPOINTMENT_TYPES.HAIR_REMOVAL, label: 'Triệt lông' }
+};
+
+// Khai báo các ref và state
 const userSearch = ref('')
 const userResults = ref([])
 const selectedUser = ref(null)
 const errors = ref({})
+const services = ref([])
+const timeSlots = ref([])
+const selectedService = ref(null)
+const userTreatmentPackages = ref([])
+const staffList = ref([])
+const errorMessage = ref('')
+const appointments = ref(props.appointments)
 
-const treatmentSearch = ref('')
-const treatmentResults = ref([])
-const selectedTreatment = ref(null)
-
-const form = useForm({
-    user_id: '',
-    staff_id: '',
-    service_id: '',
-    appointment_date: '',
-    time_slot_id: null,
-    appointment_type: '',
-    status: 'pending',
-    note: '',
-});
-
-// Thêm ref cho time slots
-const timeSlots = ref([]);
-
-// Fetch time slots
-const fetchTimeSlots = async () => {
-    try {
-        const response = await axios.get('/api/time-slots');
-        timeSlots.value = response.data.data;
-    } catch (error) {
-        console.error('Error fetching time slots:', error);
-        timeSlots.value = [];
-    }
+// Định nghĩa hàm resetForm trước khi sử dụng trong watch
+const resetForm = () => {
+    form.value = {
+        user_id: '',
+        service_id: '',
+        staff_id: staffList.value.length > 0 ? staffList.value[0].id : '',
+        appointment_date: props.selectedTimeSlot?.date || '',
+        time_slot_id: props.selectedTimeSlot?.timeSlotId || '',
+        appointment_type: 'consultation',
+        status: 'pending',
+        note: ''
+    };
+    selectedUser.value = null;
+    userSearch.value = '';
 };
 
+// Khởi tạo form
+const form = ref({
+    user_id: '',
+    service_id: '',
+    staff_id: '',
+    appointment_date: props.selectedTimeSlot?.date || '',
+    time_slot_id: props.selectedTimeSlot?.timeSlotId || '',
+    appointment_type: 'consultation',
+    status: 'pending',
+    note: ''
+});
+
+// Computed properties
 const modalTitle = computed(() => {
     return props.appointments && props.appointments.length > 0 ? 'Chỉnh sửa lịch hẹn' : 'Thêm lịch hẹn mới'
 })
 
-const treatments = ref([])
+const isUserTreatmentPackageSelected = computed(() => !!form.value.user_treatment_package_id)
+const isServiceSelected = computed(() => !!form.value.service_id)
 
-const userTreatmentPackages = ref([])
+// Computed property cho appointment types
+const appointmentTypes = computed(() => {
+    if (form.value.service_id) {
+        // Tìm label tương ứng với appointment type hiện tại
+        const currentTypeLabel = Object.values(CATEGORY_NAME_MAPPING)
+            .find(mapping => mapping.value === form.value.appointment_type)?.label || 'Khác';
 
-const isUserTreatmentPackageSelected = computed(() => !!form.user_treatment_package_id)
-const isTreatmentSelected = computed(() => !!form.treatment_id)
+        const baseTypes = [
+            { 
+                value: form.value.appointment_type, 
+                label: currentTypeLabel // Sử dụng label đã tìm được
+            },
+            { value: APPOINTMENT_TYPES.CONSULTATION, label: 'Tư vấn' },
+            { value: APPOINTMENT_TYPES.OTHERS, label: 'Khác' }
+        ];
+        
+        // Remove duplicates based on value
+        return baseTypes.filter((type, index, self) => 
+            index === self.findIndex(t => t.value === type.value)
+        );
+    }
 
-const errorMessage = ref('')
+    return [
+        { value: APPOINTMENT_TYPES.CONSULTATION, label: 'Tư vấn' },
+        { value: APPOINTMENT_TYPES.OTHERS, label: 'Khác' }
+    ];
+});
 
-const staffList = ref([])
+// Watch cho service_id
+watch(() => form.value.service_id, async (newServiceId) => {
+    form.value.user_treatment_package_id = '';
 
-const appointmentTypes = [
-    { value: 'facial', label: 'Chăm sóc da mặt' },
-    { value: 'massage', label: 'Massage' },
-    { value: 'weight_loss', label: 'Giảm cân' },
-    { value: 'hair_removal', label: 'Triệt lông' },
-    { value: 'consultation', label: 'Tư vấn' },
-    { value: 'others', label: 'Khác' },
-];
+    if (newServiceId) {
+        try {
+            // Fetch service details including category
+            const response = await axios.get(`/api/services/${newServiceId}`);
+            const service = response.data.data;
+            console.log('Selected service details:', service);
 
-const appointments = ref(props.appointments)
+            // Set appointment type based on service category
+            if (service.category?.service_category_name) {
+                const categoryName = service.category.service_category_name;
+                const appointmentType = CATEGORY_NAME_MAPPING[categoryName]?.value || APPOINTMENT_TYPES.OTHERS;
+                form.value.appointment_type = appointmentType;
+                console.log('Set appointment type based on category:', {
+                    category: categoryName,
+                    appointmentType: appointmentType
+                });
+            } else {
+                form.value.appointment_type = APPOINTMENT_TYPES.OTHERS;
+                console.log('No category found, setting to OTHERS');
+            }
+        } catch (error) {
+            console.error('Error fetching service details:', error);
+            form.value.appointment_type = APPOINTMENT_TYPES.OTHERS;
+        }
+
+        if (form.value.appointment_date) {
+            fetchTimeSlots();
+        }
+    } else {
+        form.value.appointment_type = APPOINTMENT_TYPES.CONSULTATION;
+        console.log('No service selected, setting to CONSULTATION');
+    }
+}, { immediate: true });
+
+// Fetch time slots
+const fetchTimeSlots = async () => {
+    try {
+        const response = await axios.get('/api/time-slots', {
+            params: {
+                date: form.value.appointment_date,
+                service_id: form.value.service_id
+            }
+        })
+
+        if (response.data && response.data.data) {
+            timeSlots.value = response.data.data.map(slot => ({
+                ...slot,
+                available: slot.current_bookings < slot.max_bookings,
+                displayText: `${slot.start_time.substring(0, 5)} - ${slot.end_time.substring(0, 5)} (${slot.current_bookings}/${slot.max_bookings})`
+            }))
+        }
+    } catch (error) {
+        console.error('Error fetching time slots:', error)
+        timeSlots.value = []
+    }
+};
+
+// Thêm watch để tự động fetch time slots khi ngày hoặc dịch vụ thay đổi
+watch([() => form.value.appointment_date, () => form.value.service_id], () => {
+    if (form.value.appointment_date) {
+        fetchTimeSlots();
+    }
+});
+
+// Watch service_id để cập nhật appointment_type
+watch(() => form.value.service_id, (newServiceId) => {
+    if (newServiceId) {
+        const service = services.value.find(s => s.id === newServiceId);
+        if (service) {
+            // Tự động set appointment_type theo service_type của service
+            form.value.appointment_type = service.service_type;
+        }
+    } else {
+        // Reset về consultation khi không chọn service
+        form.value.appointment_type = APPOINTMENT_TYPES.CONSULTATION;
+    }
+});
 
 // Log appointments for debugging
 console.log('Appointments:', appointments.value)
 
 watch(() => props.appointments, (newAppointments) => {
     if (newAppointments && newAppointments.length > 0) {
-        // Reset the form
-        form.reset()
-
-        // Update form values individually
+        resetForm();
         Object.keys(newAppointments[0]).forEach(key => {
-            if (form[key] !== undefined) {
-                form[key] = newAppointments[0][key]
+            if (form.value[key] !== undefined) {
+                form.value[key] = newAppointments[0][key]
             }
         })
-
-        // Set date fields separately
-        form.start_date = formatDateTimeForInput(newAppointments[0].start)
-        form.end_date = formatDateTimeForInput(newAppointments[0].end)
+        form.value.start_date = formatDateTimeForInput(newAppointments[0].start)
+        form.value.end_date = formatDateTimeForInput(newAppointments[0].end)
     } else {
         resetForm()
     }
 }, { immediate: true })
 
-// Add a new watch for selectedTimeSlot
+// Cập nhật watch cho selectedTimeSlot
 watch(() => props.selectedTimeSlot, (newTimeSlot) => {
     if (newTimeSlot && newTimeSlot.date) {
-        form.appointment_date = formatDate(newTimeSlot.date);
-        // Tìm time slot phù hợp dựa vào giờ được chọn
-        const hour = new Date(newTimeSlot.date).getHours();
-        const matchingSlot = timeSlots.value.find(slot => {
-            const slotHour = parseInt(slot.start_time.split(':')[0]);
-            return slotHour === hour;
+        nextTick(() => {
+            form.value = {
+                ...form.value,
+                appointment_date: newTimeSlot.date,
+                time_slot_id: newTimeSlot.timeSlotId
+            };
         });
-        if (matchingSlot) {
-            form.time_slot_id = matchingSlot.id;
-        }
     }
-});
+}, { immediate: true });
 
 function formatDate(date) {
     return new Date(date).toISOString().split('T')[0];
@@ -249,7 +363,7 @@ function formatDate(date) {
 function formatDateTimeForInput(dateTime) {
     if (!dateTime) return ''
     let date = new Date(dateTime)
-    
+
     // Format to YYYY-MM-DDTHH:mm
     return date.getFullYear() +
         '-' + pad(date.getMonth() + 1) +
@@ -268,12 +382,10 @@ function pad(number) {
     return number < 10 ? '0' + number : number
 }
 
-function resetForm() {
-    userSearch.value = ''
-    userResults.value = []
-    selectedUser.value = null
-    form.reset()
-}
+const close = () => {
+    resetForm();
+    emit('close');
+};
 
 function searchUsers() {
     if (userSearch.value.length > 2) {
@@ -296,11 +408,11 @@ function searchUsers() {
 }
 
 function selectUser(user) {
-    selectedUser.value = user
-    form.user_id = user.id
-    userResults.value = []
-    userSearch.value = user.full_name
-    fetchUserTreatmentPackages(user.id)
+    selectedUser.value = user;
+    form.value.user_id = user.id;
+    userResults.value = [];
+    userSearch.value = user.full_name;
+    fetchUserTreatmentPackages(user.id);
 }
 
 function fetchUserTreatmentPackages(userId) {
@@ -314,16 +426,12 @@ function fetchUserTreatmentPackages(userId) {
         });
 }
 
-function close() {
-    emit('close')
-}
-
 function formatPrice(price) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
 }
 
 onMounted(() => {
-    fetchTreatments()
+    fetchServices()
     fetchStaffList()
     document.addEventListener('keydown', handleKeyDown)
     console.log('Appointments in AppointmentModal:', appointments.value)
@@ -332,33 +440,35 @@ onMounted(() => {
     }
     fetchTimeSlots();
     fetchStaffList();
-    fetchServices();
 })
 
-function fetchTreatments() {
-    axios.get('/api/treatments')
-        .then(response => {
-            if (response.data && response.data.data && response.data.data.data) {
-                treatments.value = response.data.data.data
-                console.log('Treatments data:', treatments.value)
-            } else {
-                console.error('Unexpected treatments data structure:', response.data)
-                treatments.value = []
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching treatments:', error)
-            treatments.value = []
-        })
-}
+const fetchServices = async () => {
+    try {
+        const response = await axios.get('/api/services/appointment');
+        if (response.data && response.data.data) {
+            services.value = response.data.data.map(service => ({
+                ...service,
+                service_category: service.service_category || null
+            }));
+            console.log('Fetched services with categories:', services.value.map(s => ({
+                id: s.id,
+                name: s.name,
+                category: s.service_category?.name
+            })));
+        }
+    } catch (error) {
+        console.error('Error fetching services:', error);
+        services.value = [];
+    }
+};
 
 function fetchStaffList() {
     axios.get('/api/users/get-staff-list')
         .then(response => {
             if (response.data && response.data.data) {
                 staffList.value = response.data.data;
-                if (staffList.value.length > 0) {
-                    form.staff_id = staffList.value[0].id
+                if (!form.value.staff_id && staffList.value.length > 0) {
+                    form.value.staff_id = staffList.value[0].id;
                 }
             } else {
                 staffList.value = [];
@@ -382,45 +492,62 @@ onUnmounted(() => {
 })
 
 function validateForm() {
-    errors.value = {}
-    
-    if (!form.user_id) {
-        errors.value.user_id = ['Vui lòng chọn khách hàng.']
+    errors.value = {};
+    let isValid = true;
+
+    // Kiểm tra user_id
+    if (!form.value.user_id) {
+        errors.value.user_id = ['Vui lòng chọn khách hàng'];
+        isValid = false;
     }
-    
-    if (!form.staff_id) {
-        errors.value.staff_id = ['Vui lòng chọn nhân viên phụ trách.']
+
+    // Kiểm tra staff_id
+    if (!form.value.staff_id) {
+        errors.value.staff_id = ['Vui lòng chọn nhân viên phụ trách'];
+        isValid = false;
     }
-    
-    if (!form.treatment_id && !form.user_treatment_package_id) {
-        errors.value.treatment = ['Vui lòng chọn liệu trình hoặc gói điều trị.']
+
+    // Kiểm tra service_id hoặc user_treatment_package_id
+    if (!form.value.service_id && !form.value.user_treatment_package_id) {
+        errors.value.service = ['Vui lòng chọn dịch vụ hoặc gói điều trị'];
+        isValid = false;
     }
-    
-    if (!form.start_date) {
-        errors.value.start_date = ['Ngày bắt đầu là bắt buộc.']
+
+    // Kiểm tra time_slot_id
+    if (!form.value.time_slot_id) {
+        errors.value.time_slot_id = ['Vui lòng chọn khung giờ'];
+        isValid = false;
     }
-    
-    if (!form.end_date) {
-        errors.value.end_date = ['Ngày kết thúc là bắt buộc.']
-    } else if (new Date(form.end_date) <= new Date(form.start_date)) {
-        errors.value.end_date = ['Ngày kết thúc phải sau ngày bắt đầu.']
+
+    // Kiểm tra tính khả dụng của time slot
+    if (form.value.time_slot_id) {
+        const selectedSlot = timeSlots.value.find(slot =>
+            slot.id === form.value.time_slot_id
+        );
+
+        if (selectedSlot && !selectedSlot.available) {
+            errors.value.time_slot_id = ['Khung giờ này đã đầy'];
+            isValid = false;
+        }
     }
-    
-    if (!form.appointment_type) {
-        errors.value.appointment_type = ['Vui lòng chọn loại lịch hẹn.']
-    }
-    
-    return Object.keys(errors.value).length === 0
+
+    return isValid;
 }
 
 function validateAndSubmit() {
     if (validateForm()) {
         const formData = {
-            ...form,
-            start_date: formatDateForAPI(form.start_date),
-            end_date: formatDateForAPI(form.end_date),
-            status: form.status.toLowerCase(),
+            user_id: form.value.user_id,
+            staff_id: form.value.staff_id,
+            service_id: form.value.service_id || null,
+            user_treatment_package_id: form.value.user_treatment_package_id || null,
+            appointment_date: form.value.appointment_date,
+            time_slot_id: form.value.time_slot_id,
+            appointment_type: form.value.appointment_type,
+            status: form.value.status,
+            note: form.value.note || ''
         };
+
         console.log('Form data before submission:', formData);
         submitAppointment(formData);
     }
@@ -429,7 +556,16 @@ function validateAndSubmit() {
 function submitAppointment(formData) {
     console.log('Submitting appointment data:', formData);
 
-    axios.post(route('appointments.store'), formData)
+    axios.post(route('appointments.store'), {
+        user_id: formData.user_id,
+        staff_id: formData.staff_id,
+        service_id: formData.service_id,
+        appointment_date: formData.appointment_date,
+        time_slot_id: formData.time_slot_id,
+        appointment_type: formData.appointment_type,
+        status: formData.status,
+        note: formData.note,
+    })
         .then(response => {
             console.log('Appointment creation response:', response.data);
             props.closeModal();
@@ -437,37 +573,38 @@ function submitAppointment(formData) {
         })
         .catch(error => {
             console.error('Error creating appointment:', error.response ? error.response.data : error);
+            if (error.response?.data?.errors) {
+                errors.value = error.response.data.errors;
+            }
         });
 }
 
-function searchTreatments() {
-    if (treatmentSearch.value.length > 2) {
-        axios.get(`/api/treatments/search?query=${treatmentSearch.value}`)
-            .then(response => {
-                if (response.data && response.data.data) {
-                    treatmentResults.value = response.data.data;
-                } else {
-                    treatmentResults.value = [];
-                    console.warn('Unexpected response format:', response.data);
-                }
-            })
-            .catch(error => {
-                console.error('Error searching treatments:', error.response ? error.response.data : error.message);
-                treatmentResults.value = [];
-            });
-    } else {
-        treatmentResults.value = [];
-    }
-}
+// Add this after other watch statements
+watch(() => services.value, (newServices) => {
+    console.log('Services updated:', newServices);
+}, { deep: true });
 
-function selectTreatment(treatment) {
-    selectedTreatment.value = treatment
-    form.treatment_id = treatment.id
-    treatmentSearch.value = `${treatment.name} - ${formatPrice(treatment.price)}`
-    treatmentResults.value = []
-    form.appointment_type = treatment.category ? treatment.category.name.toLowerCase() : 'others'
-}
+// Thêm computed property để kiểm tra form đã điền đủ thông tin chưa
+const isFormValid = computed(() => {
+    console.log('Form values:', {
+        user_id: !!form.value.user_id,
+        service_id: !!form.value.service_id,
+        appointment_date: !!form.value.appointment_date,
+        time_slot_id: !!form.value.time_slot_id,
+    });
 
+    return Boolean(
+        form.value.user_id &&
+        form.value.service_id &&
+        form.value.appointment_date &&
+        form.value.time_slot_id
+    );
+});
+
+// Thêm watch cho các giá trị quan trọng
+watch(() => form.value, (newValue) => {
+    console.log('Form updated:', newValue);
+}, { deep: true });
 </script>
 
 <style scoped>

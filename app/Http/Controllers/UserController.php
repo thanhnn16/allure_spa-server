@@ -397,5 +397,16 @@ class UserController extends BaseController
 
         return $this->respondWithJson($userInfo, 'Thông tin người dùng được truy xuất thành công');
     }
+
+    public function getUserTreatmentPackages($userId)
+    {
+        try {
+            $packages = $this->userService->getUserServicePackages($userId);
+            return $this->respondWithJson($packages, 'User treatment packages retrieved successfully');
+        } catch (\Exception $e) {
+            Log::error('Error fetching user treatment packages: ' . $e->getMessage());
+            return $this->respondWithError('Error fetching user treatment packages', 500);
+        }
+    }
 }
     

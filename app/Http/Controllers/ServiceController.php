@@ -376,4 +376,37 @@ class ServiceController extends BaseController
 
         return redirect()->route('services.index')->with('success', 'Service deleted successfully');
     }
+
+    /**
+     * Fetch services for appointment booking
+     */
+    public function getServicesForAppointment(Request $request)
+    {
+        try {
+            $services = Service::with('category')
+                ->select([
+                    'id', 
+                    'service_name', 
+                    'single_price as price',
+                    'duration',
+                    'category_id'
+                ])
+                ->get()
+                ->map(function($service) {
+                    return [
+                        'id' => $service->id,
+                        'name' => $service->service_name,
+                        'price' => $service->price,
+                        'duration' => $service->duration,
+                        'category_name' => $service->category ? $service->category->service_category_name : null
+                    ];
+                });
+
+            return $this->respondWithJson($services, 'Services retrieved successfully');
+            
+        } catch (\Exception $e) {
+            Log::error('Error fetching services for appointment: ' . $e->getMessage());
+            return $this->respondWithError('Error fetching services: ' . $e->getMessage());
+        }
+    }
 }

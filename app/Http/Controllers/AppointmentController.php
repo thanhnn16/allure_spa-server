@@ -51,12 +51,12 @@ class AppointmentController extends BaseController
         // Format appointments for calendar view
         $formattedAppointments = $appointments->map(function ($appointment) {
             $timeSlot = $appointment->timeSlot;
-            
+
             // Combine appointment date with time slot times
             $startDateTime = Carbon::parse($appointment->appointment_date)
                 ->setTimeFromTimeString($timeSlot->start_time)
                 ->setTimezone('Asia/Ho_Chi_Minh');
-            
+
             $endDateTime = Carbon::parse($appointment->appointment_date)
                 ->setTimeFromTimeString($timeSlot->end_time)
                 ->setTimezone('Asia/Ho_Chi_Minh');
@@ -80,7 +80,7 @@ class AppointmentController extends BaseController
             return $this->respondWithJson($formattedAppointments, 'Lấy danh sách cuộc hẹn thành công');
         }
 
-        // Lấy danh sách time slots cho calendar
+        // Get time slots for calendar
         $timeSlots = TimeSlot::where('is_active', true)
             ->orderBy('start_time')
             ->get()
@@ -99,9 +99,9 @@ class AppointmentController extends BaseController
             'businessHours' => [
                 'start' => '08:00',
                 'end' => '18:30',
-                'daysOfWeek' => [0, 1, 2, 3, 4, 5, 6] // 0 = Sunday, 1 = Monday, etc.
+                'daysOfWeek' => [0, 1, 2, 3, 4, 5, 6]
             ],
-            'slotDuration' => '01:00:00', // 1 hour slots
+            'slotDuration' => '01:00:00',
             'initialView' => 'timeGridWeek',
             'slotMinTime' => '08:00:00',
             'slotMaxTime' => '18:30:00',

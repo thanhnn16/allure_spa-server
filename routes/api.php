@@ -14,6 +14,7 @@ use App\Http\Controllers\ZaloAuthController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\TimeSlotController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -35,6 +36,7 @@ Route::middleware('throttle:api')->group(function () {
 
     // Service routes
     Route::get('/services', [ServiceController::class, 'index']);
+    Route::get('/services/appointment', [ServiceController::class, 'getServicesForAppointment']);
     Route::get('/services/{service}', [ServiceController::class, 'show']);
     Route::get('/service-categories', [ServiceController::class, 'categories']);
 
@@ -99,5 +101,9 @@ Route::middleware('throttle:api')->group(function () {
 
         // Add logout route
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+        // Add time slot routes
+        Route::get('/time-slots', [TimeSlotController::class, 'index']);
+        Route::get('/time-slots/{timeSlot}', [TimeSlotController::class, 'show']);
     });
 });

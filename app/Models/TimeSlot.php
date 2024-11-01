@@ -33,8 +33,26 @@ class TimeSlot extends Model
         'max_bookings' => 'integer'
     ];
 
+    protected $appends = ['current_bookings'];
+
     public function appointments()
     {
         return $this->hasMany(Appointment::class);
     }
-} 
+
+    public function getCurrentBookingsAttribute()
+    {
+        return $this->appointments()
+            ->whereDate('appointment_date', request('date'))
+            ->count();
+    }
+
+    public function isAvailable($date)
+    {
+        $bookings = $this->appointments()
+            ->whereDate('appointment_date', $date)
+            ->count();
+
+        return $bookings < $this->max_bookings;
+    }
+}
