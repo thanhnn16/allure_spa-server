@@ -139,6 +139,17 @@ const calendarOptions = computed(() => ({
     },
     eventDrop: handleEventDrop,
     eventMaxStack: 2, // Cho phép hiển thị tối đa 2 events cùng 1 khung giờ
+    eventClassNames: (arg) => {
+        return [`${arg.event.extendedProps.status.toLowerCase()}-event`, 'calendar-event']
+    },
+    themeSystem: 'standard',
+    views: {
+        timeGrid: {
+            dayMaxEvents: 2,
+            nowIndicator: true,
+            eventMinHeight: 30
+        }
+    }
 }))
 
 const selectedTimeSlot = ref(null)
@@ -173,7 +184,6 @@ function handleDateSelect(selectInfo) {
     showModal.value = true
 }
 
-const selectedAppointmentId = ref(null);
 
 function handleEventDrop(dropInfo) {
     const event = dropInfo.event;
@@ -299,101 +309,170 @@ const statusColors = [
 
 <template>
     <LayoutAuthenticated>
-
         <Head title="Lịch hẹn" />
         <SectionMain>
-            <!-- Add status legend -->
-            <div class="mb-4 flex items-center gap-4 p-4 bg-white rounded-lg shadow">
-                <span class="font-semibold">Trạng thái:</span>
+            <!-- Status legend với dark mode support -->
+            <div class="mb-4 flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-lg shadow">
+                <span class="font-semibold dark:text-slate-200">Trạng thái:</span>
                 <div class="flex gap-4">
-                    <div v-for="item in statusColors" :key="item.status" class="flex items-center gap-2">
+                    <div v-for="item in statusColors" :key="item.status" 
+                         class="flex items-center gap-2 dark:text-slate-300">
                         <div class="w-4 h-4 rounded" :style="{ backgroundColor: item.color }"></div>
                         <span>{{ item.status }}</span>
                     </div>
                 </div>
             </div>
 
-            <FullCalendar ref="calendarRef" :options="calendarOptions" class="custom-calendar" />
+            <div class="calendar-container bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+                <FullCalendar ref="calendarRef" :options="calendarOptions" class="custom-calendar" />
+            </div>
         </SectionMain>
-        <AddAppointmentModal :show="showModal" :appointments="appointments" :selectedTimeSlot="selectedTimeSlot"
-            @close="closeModal" @save="saveAppointment" @appointmentAdded="handleAppointmentAdded"
-            :closeModal="closeModal" />
+        
+        <AddAppointmentModal 
+            :show="showModal" 
+            :appointments="appointments" 
+            :selectedTimeSlot="selectedTimeSlot"
+            @close="closeModal" 
+            @save="saveAppointment" 
+            @appointmentAdded="handleAppointmentAdded"
+            :closeModal="closeModal" 
+        />
     </LayoutAuthenticated>
 </template>
-<style scoped>
+
+<style>
+/* Base calendar styles */
+.calendar-container {
+    min-height: calc(100vh - 200px);
+}
+
 .custom-calendar {
-    height: calc(100vh - 200px);
+    height: 100%;
 }
 
-:deep(.fc-timegrid-slot) {
-    height: 50px !important;
+/* Dark mode styles */
+.dark .fc {
+    --fc-border-color: rgb(51, 65, 85);
+    --fc-page-bg-color: rgb(30, 41, 59);
+    --fc-neutral-bg-color: rgb(51, 65, 85);
+    --fc-list-event-hover-bg-color: rgb(51, 65, 85);
+    --fc-today-bg-color: rgba(59, 130, 246, 0.1);
 }
 
-:deep(.fc-timegrid-axis-cushion) {
-    max-width: none;
-    white-space: nowrap;
-    padding: 8px;
+.dark .fc-theme-standard td,
+.dark .fc-theme-standard th {
+    border-color: var(--fc-border-color);
 }
 
-/* Tooltip styles */
-.tippy-box[data-theme~='light-border'] {
-    background-color: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    z-index: 9999 !important;
+.dark .fc-theme-standard .fc-scrollgrid {
+    border-color: var(--fc-border-color);
 }
 
-.tippy-box[data-theme~='light-border'] .tippy-content {
-    padding: 0;
+.dark .fc-timegrid-slot-label {
+    color: rgb(203, 213, 225);
 }
 
-.tippy-box[data-theme~='light-border'][data-placement^='top']>.tippy-arrow::before {
-    border-top-color: #e2e8f0;
+.dark .fc-day-today {
+    background: var(--fc-today-bg-color) !important;
 }
 
-.tippy-box[data-theme~='light-border'][data-placement^='bottom']>.tippy-arrow::before {
-    border-bottom-color: #e2e8f0;
+/* Event styles with dark mode support */
+.calendar-event {
+    margin: 1px 0;
+    border-radius: 4px;
+    padding: 2px 4px;
 }
 
-/* Status colors */
-:deep(.status-pending) {
+/* Status colors - Light mode */
+.status-pending {
     background-color: #fbbf24 !important;
     border-color: #f59e0b !important;
     color: #000 !important;
 }
 
-:deep(.status-confirmed) {
+.status-confirmed {
     background-color: #34d399 !important;
     border-color: #10b981 !important;
     color: #000 !important;
 }
 
-:deep(.status-cancelled) {
+.status-cancelled {
     background-color: #ef4444 !important;
     border-color: #dc2626 !important;
     color: #fff !important;
 }
 
-:deep(.status-completed) {
+.status-completed {
     background-color: #3b82f6 !important;
     border-color: #2563eb !important;
     color: #fff !important;
 }
 
-/* Event styles */
-:deep(.fc-timegrid-event-harness) {
-    width: 100% !important;
-    height: 50px;
-    margin: 0 !important;
+/* Dark mode specific event styles */
+.dark .calendar-event {
+    opacity: 0.9;
 }
 
+/* Tooltip styles with dark mode */
+.tippy-box[data-theme~='light-border'] {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
 
-:deep(.fc-event-title) {
+.dark .tippy-box[data-theme~='light-border'] {
+    background-color: rgb(30, 41, 59);
+    border-color: rgb(51, 65, 85);
+    color: rgb(203, 213, 225);
+}
+
+/* Calendar header and controls */
+.dark .fc-button-primary {
+    background-color: rgb(51, 65, 85) !important;
+    border-color: rgb(71, 85, 105) !important;
+    color: rgb(203, 213, 225) !important;
+}
+
+.dark .fc-button-primary:hover {
+    background-color: rgb(71, 85, 105) !important;
+}
+
+.dark .fc-button-primary:disabled {
+    background-color: rgb(51, 65, 85) !important;
+    opacity: 0.65;
+}
+
+/* Time grid specific styles */
+.fc-timegrid-slot {
+    height: 50px !important;
+}
+
+.fc-timegrid-axis-cushion {
+    max-width: none;
+    white-space: nowrap;
+    padding: 8px;
+}
+
+.dark .fc-timegrid-axis-cushion {
+    color: rgb(203, 213, 225);
+}
+
+/* Event title styles */
+.fc-event-title {
     font-size: 0.85em !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
     padding: 2px !important;
+}
+
+/* Now indicator */
+.dark .fc-timegrid-now-indicator-line {
+    border-color: #ef4444;
+}
+
+.dark .fc-timegrid-now-indicator-arrow {
+    border-color: #ef4444;
 }
 </style>

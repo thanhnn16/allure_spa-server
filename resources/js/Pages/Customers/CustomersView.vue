@@ -145,7 +145,6 @@ onMounted(() => {
 
 <template>
     <LayoutAuthenticated>
-
         <Head title="Quản lý khách hàng" />
         <SectionMain>
             <SectionTitleLineWithButton :icon="mdiTableAccount" title="Danh sách khách hàng" main>
@@ -160,29 +159,38 @@ onMounted(() => {
                 <BaseButton v-else label="Hiển thị tất cả" small @click="toggleUpcomingBirthdays" />
             </NotificationBar>
 
-            <CardBox class="mb-6 px-4 py-4" has-table>
+            <CardBox class="mb-6 px-4 py-4 dark:bg-slate-900" has-table>
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center space-x-4">
                         <BaseButton :icon="mdiFilter" label="Bộ lọc" @click="toggleFilters" />
                         <BaseButton v-if="showFilters" label="Đặt lại bộ lọc" @click="resetFilters" />
                     </div>
                 </div>
+
                 <div v-if="showFilters">
                     <div class="mb-4">
                         <label class="inline-flex items-center cursor-pointer">
                             <input type="checkbox" v-model="showingDeletedUsers" @change="toggleDeletedUsers"
                                 class="sr-only peer">
-                            <div
-                                class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+                            <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 
+                                peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer 
+                                dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white 
+                                after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white 
+                                after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 
+                                after:transition-all dark:border-slate-600 peer-checked:bg-blue-600">
                             </div>
-                            <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Hiển thị người dùng
-                                đã xóa</span>
+                            <span class="ml-3 text-sm font-medium text-gray-900 dark:text-slate-300">
+                                Hiển thị người dùng đã xóa
+                            </span>
                         </label>
                     </div>
+
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block mb-2">Giới tính</label>
-                            <select v-model="form.gender" class="w-full px-4 py-2 border rounded-md">
+                            <label class="block mb-2 dark:text-slate-300">Giới tính</label>
+                            <select v-model="form.gender" 
+                                class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
+                                dark:border-slate-700 dark:text-slate-300">
                                 <option value="">Tất cả</option>
                                 <option value="male">Nam</option>
                                 <option value="female">Nữ</option>
@@ -190,8 +198,10 @@ onMounted(() => {
                             </select>
                         </div>
                         <div>
-                            <label class="block mb-2">Độ tuổi</label>
-                            <select v-model="form.age_range" class="w-full px-4 py-2 border rounded-md">
+                            <label class="block mb-2 dark:text-slate-300">Độ tuổi</label>
+                            <select v-model="form.age_range" 
+                                class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
+                                dark:border-slate-700 dark:text-slate-300">
                                 <option value="">Tất cả</option>
                                 <option value="0-18">0-18</option>
                                 <option value="19-30">19-30</option>
@@ -200,8 +210,10 @@ onMounted(() => {
                             </select>
                         </div>
                         <div>
-                            <label class="block mb-2">Điểm tích lũy</label>
-                            <select v-model="form.loyalty_points_range" class="w-full px-4 py-2 border rounded-md">
+                            <label class="block mb-2 dark:text-slate-300">Điểm tích lũy</label>
+                            <select v-model="form.loyalty_points_range" 
+                                class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
+                                dark:border-slate-700 dark:text-slate-300">
                                 <option value="">Tất cả</option>
                                 <option value="0-100">0-100</option>
                                 <option value="101-500">101-500</option>
@@ -210,8 +222,10 @@ onMounted(() => {
                             </select>
                         </div>
                         <div>
-                            <label class="block mb-2">Số lần mua hàng</label>
-                            <select v-model="form.purchase_count_range" class="w-full px-4 py-2 border rounded-md">
+                            <label class="block mb-2 dark:text-slate-300">Số lần mua hàng</label>
+                            <select v-model="form.purchase_count_range" 
+                                class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
+                                dark:border-slate-700 dark:text-slate-300">
                                 <option value="">Tất cả</option>
                                 <option value="0-1">0-1</option>
                                 <option value="2-5">2-5</option>
@@ -220,24 +234,35 @@ onMounted(() => {
                             </select>
                         </div>
                     </div>
+
                     <div class="mb-4">
-                        <label class="block mb-2">Ngày tạo tài khoản</label>
-                        <input type="date" v-model="form.created_at_range" class="w-full px-4 py-2 border rounded-md">
+                        <label class="block mb-2 dark:text-slate-300">Ngày tạo tài khoản</label>
+                        <input type="date" v-model="form.created_at_range" 
+                            class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
+                            dark:border-slate-700 dark:text-slate-300">
                     </div>
-                    <BaseButton :icon="mdiFilter" label="Áp dụng bộ lọc" @click="applyFilters" />
                 </div>
+
                 <div class="mt-4">
-                    <input v-model="form.search" type="text" placeholder="Tìm kiếm theo tên hoặc số điện thoại"
-                        class="w-full px-4 py-2 mb-4 border rounded-md">
-                    <select v-model="form.per_page" @change="handlePerPageChange" class="px-4 py-2 border rounded-md">
+                    <input v-model="form.search" type="text" 
+                        placeholder="Tìm kiếm theo tên hoặc số điện thoại"
+                        class="w-full px-4 py-2 mb-4 border rounded-md dark:bg-slate-800 
+                        dark:border-slate-700 dark:text-slate-300 
+                        placeholder:dark:text-slate-500">
+                    
+                    <select v-model="form.per_page" @change="handlePerPageChange" 
+                        class="px-4 py-2 border rounded-md dark:bg-slate-800 
+                        dark:border-slate-700 dark:text-slate-300">
                         <option :value="10">Xem 10 mỗi trang</option>
                         <option :value="25">Xem 25 mỗi trang</option>
                         <option :value="50">Xem 50 mỗi trang</option>
                     </select>
                 </div>
-                <div v-if="!hasUsers" class="text-center py-5">
+
+                <div v-if="!hasUsers" class="text-center py-5 dark:text-slate-300">
                     <p>Không có khách hàng</p>
                 </div>
+
                 <CustomerTable v-if="hasUsers" :items="usersData" :checkable="true" />
             </CardBox>
 
@@ -246,35 +271,38 @@ onMounted(() => {
             </div>
 
             <AddCustomerModal v-model="showAddCustomerModal" @customer-added="handleCustomerAdded" />
-            <ImportCustomersModal
-                v-model="showImportCustomersModal"
-                @imported="handleCustomersImported"
-            />
+            <ImportCustomersModal v-model="showImportCustomersModal" @imported="handleCustomersImported" />
+
             <NotificationBar v-if="showImportSuccess" color="success" :icon="mdiCheckCircle">
-                Nhập từ Excel thành công
-                <div v-if="importStats">
-                    Tổng số: {{ importStats.total }}, 
-                    Thành công: {{ importStats.successful }}, 
-                    Thất bại: {{ importStats.failed }}
+                <div class="dark:text-slate-300">
+                    Nhập từ Excel thành công
+                    <div v-if="importStats">
+                        Tổng số: {{ importStats.total }}, 
+                        Thành công: {{ importStats.successful }}, 
+                        Thất bại: {{ importStats.failed }}
+                    </div>
                 </div>
                 <BaseButton label="Đóng" small @click="showImportSuccess = false" />
             </NotificationBar>
 
             <NotificationBar v-if="showImportErrors" color="danger" :icon="mdiAlertCircle">
-                Có lỗi xảy ra khi nhập dữ liệu
+                <div class="dark:text-slate-300">
+                    Có lỗi xảy ra khi nhập dữ liệu
+                </div>
                 <BaseButton label="Xem chi tiết" small @click="showImportErrors = true" />
             </NotificationBar>
 
-            <CardBox v-if="showImportErrors" title="Lỗi nhập dữ liệu" is-modal>
+            <CardBox v-if="showImportErrors" title="Lỗi nhập dữ liệu" is-modal 
+                class="dark:bg-slate-900">
                 <template #footer>
                     <BaseButton label="Đóng" color="info" @click="showImportErrors = false" />
                 </template>
-                <div v-if="importStats" class="mb-4">
+                <div v-if="importStats" class="mb-4 dark:text-slate-300">
                     <p>Tổng số dòng: {{ importStats.total }}</p>
                     <p>Số dòng thành công: {{ importStats.successful }}</p>
                     <p>Số dòng thất bại: {{ importStats.failed }}</p>
                 </div>
-                <ul class="list-disc list-inside">
+                <ul class="list-disc list-inside dark:text-slate-300">
                     <li v-for="(error, index) in importErrors" :key="index" class="mb-2">
                         {{ error }}
                     </li>
