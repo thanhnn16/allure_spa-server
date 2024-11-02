@@ -12,10 +12,10 @@ use OpenApi\Annotations as OA;
  *     title="User Voucher",
  *     description="User Voucher model",
  *     @OA\Property(property="id", type="integer", format="int64", description="User Voucher ID"),
- *     @OA\Property(property="user_id", type="integer", format="int64", description="User ID"),
+ *     @OA\Property(property="user_id", type="string", format="uuid", description="User ID"),
  *     @OA\Property(property="voucher_id", type="integer", format="int64", description="Voucher ID"),
- *     @OA\Property(property="is_used", type="boolean", description="Whether the voucher is used or not"),
- *     @OA\Property(property="used_date", type="string", format="date-time", description="Date when the voucher was used"),
+ *     @OA\Property(property="remaining_uses", type="integer", description="Remaining number of uses"),
+ *     @OA\Property(property="total_uses", type="integer", description="Total number of uses"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Creation date"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Last update date")
  * )
@@ -25,12 +25,10 @@ class UserVoucher extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'voucher_id', 'is_used', 'used_date'
-    ];
-
-    protected $casts = [
-        'is_used' => 'boolean',
-        'used_date' => 'datetime',
+        'user_id', 
+        'voucher_id', 
+        'remaining_uses', 
+        'total_uses'
     ];
 
     public function user()

@@ -42,13 +42,23 @@ class User extends Authenticatable
     public $incrementing = false;
 
     protected $fillable = [
-        'phone_number', 'email', 'password', 'role', 'full_name', 'gender',
-        'date_of_birth', 'image_id', 'loyalty_points', 'skin_condition',
-        'note', 'purchase_count'
+        'phone_number',
+        'email',
+        'password',
+        'role',
+        'full_name',
+        'gender',
+        'date_of_birth',
+        'image_id',
+        'loyalty_points',
+        'skin_condition',
+        'note',
+        'purchase_count'
     ];
 
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
 
     protected $casts = [
@@ -144,7 +154,7 @@ class User extends Authenticatable
     public function vouchers()
     {
         return $this->belongsToMany(Voucher::class, 'user_vouchers')
-                    ->withPivot('is_used')
-                    ->withTimestamps();
+            ->withPivot('remaining_uses', 'total_uses')
+            ->withTimestamps();
     }
 }

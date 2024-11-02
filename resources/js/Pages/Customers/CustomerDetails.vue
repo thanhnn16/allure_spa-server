@@ -14,8 +14,8 @@ const page = usePage();
 axios.defaults.headers.common['X-CSRF-TOKEN'] = page.props.csrf_token;
 
 onErrorCaptured((err, instance, info) => {
-  console.error('Captured an error:', err, instance, info);
-  return false; // prevents the error from propagating further
+    console.error('Captured an error:', err, instance, info);
+    return false; // prevents the error from propagating further
 });
 
 const props = defineProps({
@@ -190,10 +190,13 @@ const formatVoucherValue = (type, value) => {
             <CardBox v-if="activeTab === 'treatments'" class="mb-6">
                 <h3 class="text-lg font-semibold mb-4">Liệu trình đang sử dụng</h3>
                 <div v-if="safeUser.user_treatment_packages && safeUser.user_treatment_packages.length > 0">
-                    <div v-for="treatmentPackage in safeUser.user_treatment_packages" :key="treatmentPackage.id" class="mb-4">
-                        <p><strong>Tên liệu trình:</strong> {{ treatmentPackage.treatment_combo?.treatment?.name || 'N/A' }}</p>
+                    <div v-for="treatmentPackage in safeUser.user_treatment_packages" :key="treatmentPackage.id"
+                        class="mb-4">
+                        <p><strong>Tên liệu trình:</strong> {{ treatmentPackage.treatment_combo?.treatment?.name ||
+                            'N/A' }}</p>
                         <p><strong>Loại combo:</strong> {{ treatmentPackage.treatment_combo?.name || 'N/A' }}</p>
-                        <p><strong>Số buổi còn lại:</strong> {{ treatmentPackage.remaining_sessions }}/{{ treatmentPackage.total_sessions }}</p>
+                        <p><strong>Số buổi còn lại:</strong> {{ treatmentPackage.remaining_sessions }}/{{
+                            treatmentPackage.total_sessions }}</p>
                         <p><strong>Ngày hết hạn:</strong> {{ formatDate(treatmentPackage.expiry_date) }}</p>
                     </div>
                 </div>
@@ -222,7 +225,8 @@ const formatVoucherValue = (type, value) => {
                         <p><strong>Giá trị:</strong> {{ formatVoucherValue(voucher.type, voucher.value) }}</p>
                         <p><strong>Ngày bắt đầu:</strong> {{ formatDate(voucher.start_date) }}</p>
                         <p><strong>Ngày kết thúc:</strong> {{ formatDate(voucher.end_date) }}</p>
-                        <p><strong>Trạng thái:</strong> {{ voucher.pivot.is_used ? 'Đã sử dụng' : 'Chưa sử dụng' }}</p>
+                        <p><strong>Số lần sử dụng còn lại:</strong> {{ voucher.pivot.remaining_uses }}/{{
+                            voucher.pivot.total_uses }}</p>
                     </div>
                 </div>
                 <p v-else>Không có dữ liệu voucher.</p>
