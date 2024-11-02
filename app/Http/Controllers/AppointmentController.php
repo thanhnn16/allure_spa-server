@@ -151,7 +151,9 @@ class AppointmentController extends BaseController
             return $this->respondWithJson($result['data'], $result['message'], $result['status']);
         }
 
-        return redirect()->route('appointments.index')->with('success', $result['message']);
+        return redirect()->route('appointments.index')
+        ->with('success', $result['message'])
+        ->with('appointment', $result['data']);
     }
 
     /**

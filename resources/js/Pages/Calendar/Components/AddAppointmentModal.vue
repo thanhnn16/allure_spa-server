@@ -538,7 +538,6 @@ function validateAndSubmit() {
 }
 
 function submitAppointment(formData) {
-
     axios.post(route('appointments.store'), {
         user_id: formData.user_id,
         staff_id: formData.staff_id,
@@ -549,16 +548,20 @@ function submitAppointment(formData) {
         status: formData.status,
         note: formData.note,
     })
-        .then(response => {
-            props.closeModal();
-            emit('appointmentAdded');
-        })
-        .catch(error => {
-            console.error('Error creating appointment:', error.response ? error.response.data : error);
-            if (error.response?.data?.errors) {
-                errors.value = error.response.data.errors;
-            }
-        });
+    .then(response => {
+        // Emit cả save và appointmentAdded events
+        emit('save', formData);
+        emit('appointmentAdded');
+        props.closeModal();
+    })
+    .catch(error => {
+        console.error('Error creating appointment:', error.response ? error.response.data : error);
+        if (error.response?.data?.errors) {
+            errors.value = error.response.data.errors;
+        }
+        // Thêm emit error event nếu cần
+        // emit('error', error.response?.data?.errors || 'Có lỗi xảy ra khi tạo lịch hẹn');
+    });
 }
 
 // Add this after other watch statements

@@ -61,6 +61,7 @@ const events = computed(() => {
         title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.service?.service_name || 'Không xác định'}`,
         start: `${appointment.start}`,
         end: `${appointment.end}`,
+        className: `status-${appointment.status.toLowerCase()}`,
         extendedProps: {
             userId: appointment.user_id,
             serviceId: appointment.service_id,
@@ -137,6 +138,7 @@ const calendarOptions = computed(() => ({
         router.visit(`/appointments/${info.event.id}`)
     },
     eventDrop: handleEventDrop,
+    eventMaxStack: 2, // Cho phép hiển thị tối đa 2 events cùng 1 khung giờ
 }))
 
 const selectedTimeSlot = ref(null)
@@ -180,7 +182,6 @@ function handleEventDrop(dropInfo) {
     const selectedMinute = selectedStart.getMinutes().toString().padStart(2, '0');
     const selectedTimeString = `${selectedHour}:${selectedMinute}:00`;
 
-    // Tìm time slot phù hợp
     const matchingTimeSlot = props.timeSlots.find(slot => {
         return slot.start_time === selectedTimeString;
     });
@@ -199,19 +200,6 @@ function handleEventDrop(dropInfo) {
     axios.put(`/api/appointments/${event.id}`, updatedAppointment)
         .then(response => {
             if (response.status === 200) {
-                const updatedData = response.data.data;
-                
-                // Cập nhật dữ liệu local
-                const index = appointments.value.findIndex(apt => apt.id === updatedData.id);
-                if (index !== -1) {
-                    appointments.value[index] = {
-                        ...appointments.value[index],
-                        ...updatedData,
-                        start: `${updatedData.appointment_date}T${updatedData.time_slot.start_time}`,
-                        end: `${updatedData.appointment_date}T${updatedData.time_slot.end_time}`
-                    };
-                }
-
                 toast.success(response.data.message);
             } else {
                 throw new Error(response.data.message || "Có lỗi xảy ra");
@@ -220,6 +208,9 @@ function handleEventDrop(dropInfo) {
         .catch(error => {
             console.error('Error:', error);
             toast.error(error.response?.data?.message || "Có lỗi xảy ra khi cập nhật lịch hẹn!");
+            if (calendarRef.value) {
+                calendarRef.value.getApi().refetchEvents();
+            }
             dropInfo.revert();
         });
 }
@@ -249,8 +240,9 @@ function saveAppointment(appointmentData) {
         user_id: appointmentData.user_id,
         service_id: appointmentData.service_id,
         staff_id: appointmentData.staff_id,
-        appointment_date: new Date(appointmentData.date).toISOString().split('T')[0],
-        time_slot_id: appointmentData.timeSlotId,
+        // Đảm bảo ngày được format đúng
+        appointment_date: formatDate(appointmentData.appointment_date),
+        time_slot_id: appointmentData.time_slot_id,
         appointment_type: appointmentData.appointment_type,
         status: appointmentData.status || 'pending',
         note: appointmentData.note,
@@ -261,18 +253,33 @@ function saveAppointment(appointmentData) {
         preserveScroll: true,
         onSuccess: (response) => {
             closeModal()
+            // Cập nhật danh sách appointments local với dữ liệu đã được format
             if (response?.props?.appointment) {
-                updateLocalAppointments(response.props.appointment)
+                const formattedAppointment = {
+                    ...response.props.appointment,
+                    start: `${response.props.appointment.appointment_date} ${response.props.appointment.timeSlot.start_time}`,
+                    end: `${response.props.appointment.appointment_date} ${response.props.appointment.timeSlot.end_time}`
+                }
+                appointments.value = [...appointments.value, formattedAppointment]
             }
+            // Refresh calendar events
             if (calendarRef.value) {
                 calendarRef.value.getApi().refetchEvents()
             }
             toast.success("Thêm lịch hẹn thành công!")
         },
         onError: (errors) => {
-            toast.error("Có lỗi xảy ra khi thêm lịch hẹn!")
+            const errorMessage = Object.values(errors).flat().join('\n')
+            toast.error(`Có lỗi xảy ra khi thêm lịch hẹn! ${errorMessage}`)
         }
     })
+}
+
+// Thêm hàm format date
+function formatDate(date) {
+    if (!date) return ''
+    const d = new Date(date)
+    return d.toISOString().split('T')[0]
 }
 
 function handleAppointmentAdded() {
@@ -280,6 +287,14 @@ function handleAppointmentAdded() {
         calendarRef.value.getApi().refetchEvents()
     }
 }
+
+// Add status legend component
+const statusColors = [
+    { status: 'Đang chờ', class: 'status-pending', color: '#fbbf24' },
+    { status: 'Đã xác nhận', class: 'status-confirmed', color: '#34d399' },
+    { status: 'Đã hủy', class: 'status-cancelled', color: '#ef4444' },
+    { status: 'Hoàn thành', class: 'status-completed', color: '#3b82f6' }
+]
 </script>
 
 <template>
@@ -287,6 +302,17 @@ function handleAppointmentAdded() {
 
         <Head title="Lịch hẹn" />
         <SectionMain>
+            <!-- Add status legend -->
+            <div class="mb-4 flex items-center gap-4 p-4 bg-white rounded-lg shadow">
+                <span class="font-semibold">Trạng thái:</span>
+                <div class="flex gap-4">
+                    <div v-for="item in statusColors" :key="item.status" class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded" :style="{ backgroundColor: item.color }"></div>
+                        <span>{{ item.status }}</span>
+                    </div>
+                </div>
+            </div>
+
             <FullCalendar ref="calendarRef" :options="calendarOptions" class="custom-calendar" />
         </SectionMain>
         <AddAppointmentModal :show="showModal" :appointments="appointments" :selectedTimeSlot="selectedTimeSlot"
@@ -294,56 +320,19 @@ function handleAppointmentAdded() {
             :closeModal="closeModal" />
     </LayoutAuthenticated>
 </template>
-
 <style scoped>
 .custom-calendar {
     height: calc(100vh - 200px);
 }
 
 :deep(.fc-timegrid-slot) {
-    height: 4em !important;
-    /* Tăng chiều cao của mỗi ô */
+    height: 50px !important;
 }
 
 :deep(.fc-timegrid-axis-cushion) {
     max-width: none;
     white-space: nowrap;
     padding: 8px;
-    /* Thêm padding cho nhãn thời gian */
-}
-
-:deep(.fc-timegrid-slot-label-cushion) {
-    font-weight: bold;
-    color: #555;
-}
-
-:deep(.fc-timegrid-now-indicator-line) {
-    border-color: #ff0000;
-}
-
-:deep(.fc-event) {
-    border-radius: 4px;
-    font-size: 0.9em;
-    margin: 1px 0;
-    /* Thêm margin cho events */
-}
-
-:deep(.fc-toolbar-title) {
-    font-size: 1.5em !important;
-    font-weight: bold;
-}
-
-:deep(.fc-button) {
-    text-transform: capitalize;
-}
-
-/* Thêm style cho grid lines */
-:deep(.fc-timegrid-cols) {
-    border: 1px solid #ddd;
-}
-
-:deep(.fc-timegrid-col) {
-    border-right: 1px solid #ddd;
 }
 
 /* Tooltip styles */
@@ -358,11 +347,52 @@ function handleAppointmentAdded() {
     padding: 0;
 }
 
-.tippy-box[data-theme~='light-border'][data-placement^='top'] > .tippy-arrow::before {
+.tippy-box[data-theme~='light-border'][data-placement^='top']>.tippy-arrow::before {
     border-top-color: #e2e8f0;
 }
 
-.tippy-box[data-theme~='light-border'][data-placement^='bottom'] > .tippy-arrow::before {
+.tippy-box[data-theme~='light-border'][data-placement^='bottom']>.tippy-arrow::before {
     border-bottom-color: #e2e8f0;
+}
+
+/* Status colors */
+:deep(.status-pending) {
+    background-color: #fbbf24 !important;
+    border-color: #f59e0b !important;
+    color: #000 !important;
+}
+
+:deep(.status-confirmed) {
+    background-color: #34d399 !important;
+    border-color: #10b981 !important;
+    color: #000 !important;
+}
+
+:deep(.status-cancelled) {
+    background-color: #ef4444 !important;
+    border-color: #dc2626 !important;
+    color: #fff !important;
+}
+
+:deep(.status-completed) {
+    background-color: #3b82f6 !important;
+    border-color: #2563eb !important;
+    color: #fff !important;
+}
+
+/* Event styles */
+:deep(.fc-timegrid-event-harness) {
+    width: 100% !important;
+    height: 50px;
+    margin: 0 !important;
+}
+
+
+:deep(.fc-event-title) {
+    font-size: 0.85em !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    padding: 2px !important;
 }
 </style>
