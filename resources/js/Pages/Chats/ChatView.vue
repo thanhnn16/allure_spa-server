@@ -209,10 +209,10 @@ const scrollToBottom = () => {
 
 // Thêm hàm hasUnreadMessages
 const hasUnreadMessages = (chat) => {
-    return chat.messages.some(message =>
-        !message.is_read && message.sender_id !== user.value.id
-    )
+    return chat.messages && chat.messages.length > 0 &&
+        chat.messages.some(message => !message.is_read && message.sender_id !== user.value.id);
 }
+
 
 // Thêm hàm markAsRead
 const markAsRead = async (chatId) => {
@@ -292,7 +292,9 @@ watch(messages, (newMessages) => {
                                     <div class="flex-1 min-w-0">
                                         <div class="font-medium">{{ getOtherUser(chat).full_name }}</div>
                                         <div class="text-sm text-gray-500 truncate">
-                                            {{ chat.messages[0]?.message || 'Bắt đầu cuộc trò chuyện' }}
+                                            {{ chat.messages && chat.messages.length > 0
+                                                ? chat.messages[0].message
+                                            : 'Bắt đầu cuộc trò chuyện' }}
                                         </div>
                                     </div>
                                     <div v-if="hasUnreadMessages(chat)"
