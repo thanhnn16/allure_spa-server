@@ -129,12 +129,14 @@ export default {
       const urlParams = new URLSearchParams(window.location.search)
       const paymentStatus = urlParams.get('status')
       const orderCode = urlParams.get('orderCode')
+      const invoiceId = urlParams.get('invoice_id')
 
-      if (paymentStatus === 'success') {
+      if (paymentStatus === 'success' && orderCode) {
         try {
           // Verify payment with backend
           const response = await axios.post('/api/payos/verify', {
-            orderCode: orderCode
+            orderCode: orderCode,
+            invoice_id: invoiceId
           })
           
           if (response.data.success) {
@@ -142,7 +144,7 @@ export default {
             paymentData.value = response.data.data
           } else {
             status.value = 'error'
-            errorMessage.value = 'Không thể xác minh giao dịch'
+            errorMessage.value = response.data.message || 'Không thể xác minh giao dịch'
           }
         } catch (error) {
           status.value = 'error'

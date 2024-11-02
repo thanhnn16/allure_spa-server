@@ -523,24 +523,37 @@ export default {
                     method => method.id === form.value.payment_method_id
                 )
                 
-                if (paymentMethod?.method_name.toLowerCase().includes('tiền mặt')) {
-                    // Sử dụng router từ Inertia
-                    router.visit(`/invoices/${response.data.data.id}`, {
-                        method: 'get',
-                        preserveState: false
-                    })
-                } else {
-                    router.visit(`/invoices/${response.data.data.id}/payment`, {
-                        method: 'get',
-                        preserveState: false
-                    })
+                // Kiểm tra nếu là phương thức chuyển khoản
+                if (paymentMethod?.method_name.toLowerCase().includes('chuyển khoản')) {
+                    // Gọi API để tạo payment link PayOS
+                    try {
+                        const payosResponse = await axios.post(`/api/invoices/${response.data.data.id}/pay-with-payos`)
+                        if (payosResponse.data.success && payosResponse.data.checkoutUrl) {
+                            // Chuyển hướng đến trang thanh toán PayOS
+                            router.visit(payosResponse.data.checkoutUrl, {
+                                method: 'get',
+                                preserveState: false
+                            })
+                            return
+                        }
+                    } catch (payosError) {
+                        console.error('PayOS payment error:', payosError)
+                        toast.error('Không thể khởi tạo thanh toán PayOS')
+                        return
+                    }
                 }
+                
+                // Nếu là thanh toán tiền mặt hoặc có lỗi với PayOS, chuyển đến trang chi tiết hóa đơn
+                router.visit(`/invoices/${response.data.data.id}`, {
+                    method: 'get',
+                    preserveState: false
+                })
                 
                 toast.success('Tạo hóa đơn thành công!')
                 
             } catch (error) {
                 console.error('Error creating invoice:', error)
-                toast.error('Có lỗi xảy ra khi tạo hóa đơn!')
+                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo hóa đơn!')
             }
         }
 

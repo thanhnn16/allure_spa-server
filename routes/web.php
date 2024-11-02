@@ -19,6 +19,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ZaloAuthController;
+use App\Http\Controllers\PayOSController;
 use Illuminate\Support\Facades\Broadcast;
 
 Route::get('/', function () {
@@ -104,8 +105,17 @@ Route::middleware('auth')->group(function () {
     Route::get('reports/invoices', [ReportController::class, 'invoices'])->name('reports.invoices');
     Route::get('reports/ai', [ReportController::class, 'ai'])->name('reports.ai');
 
+    // Invoice payment routes
     Route::post('/invoices/{invoice}/process-payment', [InvoiceController::class, 'processPayment'])
         ->name('invoices.process-payment');
+    Route::post('/invoices/{invoice}/pay-with-payos', [InvoiceController::class, 'payWithPayOS'])
+        ->name('invoices.pay-with-payos');
+
+    // PayOS routes
+    Route::get('/payment/test', [PayOSController::class, 'showPaymentStatus'])
+        ->name('payment.test');
+    Route::post('/api/payos/verify', [PayOSController::class, 'verifyPayment'])
+        ->name('payos.verify');
 
     Route::get('/success', function () {
         return Inertia::render('Payment/PaymentTest', [

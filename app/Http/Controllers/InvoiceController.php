@@ -13,6 +13,7 @@ use App\Models\Voucher;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\PaymentHistory;
+use PayOS\PayOS;
 
 class InvoiceController extends BaseController
 {
@@ -41,7 +42,7 @@ class InvoiceController extends BaseController
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return $this->respondWithInertia('Invoice/InvoiceView', [
                 'invoices' => [],
                 'error' => 'Có lỗi xảy ra khi tải dữ liệu hóa đơn'
@@ -84,14 +85,13 @@ class InvoiceController extends BaseController
             ]);
 
             $invoice = $this->invoiceService->createInvoice($validatedData);
-            
+
             if ($request->expectsJson()) {
                 return $this->respondWithJson($invoice->load(['user', 'order.items']), 'Invoice created successfully', 201);
             }
 
             return redirect()->route('invoices.show', $invoice->id)
                 ->with('success', 'Invoice created successfully');
-
         } catch (\Exception $e) {
             if ($request->expectsJson()) {
                 return $this->respondWithJson(null, $e->getMessage(), 500);
@@ -108,14 +108,14 @@ class InvoiceController extends BaseController
         $invoice = Invoice::with([
             'user',
             'order.items.item',
-            'order' => function($query) {
+            'order' => function ($query) {
                 $query->with([
-                    'items' => function($query) {
+                    'items' => function ($query) {
                         $query->with([
-                            'service' => function($query) {
+                            'service' => function ($query) {
                                 $query->withTrashed();
                             },
-                            'product' => function($query) {
+                            'product' => function ($query) {
                                 $query->withTrashed();
                             }
                         ]);
@@ -228,6 +228,66 @@ class InvoiceController extends BaseController
                 return $this->respondWithJson(null, $e->getMessage(), 400);
             }
             return back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function payWithPayOS(Request $request, Invoice $invoice)
+    {
+        try {
+            // Validate invoice status
+            if (!in_array($invoice->status, ['pending', 'partial'])) {
+                throw new \Exception('Hóa đơn không hợp lệ để thanh toán');
+            }
+
+            $remainingAmount = $invoice->total_amount - $invoice->paid_amount;
+
+            // Prepare payment data
+            $paymentData = [
+                'orderCode' => 'INV' . $invoice->id . '_' . time(),
+                'amount' => $remainingAmount,
+                'description' => "Thanh toán hóa đơn #" . $invoice->id,
+                'returnUrl' => config('app.url') . '/payment/test?invoice_id=' . $invoice->id,
+                'cancelUrl' => config('app.url') . '/payment/test?invoice_id=' . $invoice->id . '&status=cancel',
+            ];
+
+            // Call PayOS service
+            $payOS = app(PayOS::class);
+            $response = $payOS->createPaymentLink($paymentData);
+
+            if ($response && isset($response['checkoutUrl'])) {
+                // Save payment attempt to history
+                PaymentHistory::create([
+                    'invoice_id' => $invoice->id,
+                    'old_payment_status' => $invoice->status,
+                    'new_payment_status' => 'processing',
+                    'payment_amount' => $remainingAmount,
+                    'payment_method' => 'payos',
+                    'created_by_user_id' => Auth::id(),
+                    'note' => 'Khởi tạo thanh toán qua PayOS',
+                    'payment_data' => json_encode([
+                        'order_code' => $paymentData['orderCode'],
+                        'checkout_url' => $response['checkoutUrl']
+                    ])
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'checkoutUrl' => $response['checkoutUrl']
+                ]);
+            }
+
+            throw new \Exception('Không thể tạo link thanh toán');
+        } catch (\Exception $e) {
+            Log::error('PayOS Payment Error:', [
+                'invoice_id' => $invoice->id,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
