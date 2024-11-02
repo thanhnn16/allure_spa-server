@@ -341,6 +341,7 @@ const statusColors = [
     border: 1px solid #e2e8f0;
     border-radius: 0.5rem;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    z-index: 9999 !important;
 }
 
 .tippy-box[data-theme~='light-border'] .tippy-content {
