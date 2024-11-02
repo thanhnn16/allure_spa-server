@@ -95,4 +95,34 @@ class Appointment extends Model
             'end_time' => $this->timeSlot->end_time
         ];
     }
+
+    /**
+     * Get formatted appointment data for UI
+     * @return array
+     */
+    public function getFormattedAppointmentAttribute()
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->service->name ?? 'Appointment',
+            'start' => Carbon::parse($this->appointment_date)->format('Y-m-d') . ' ' . $this->timeSlot->start_time,
+            'end' => Carbon::parse($this->appointment_date)->format('Y-m-d') . ' ' . $this->timeSlot->end_time,
+            'resourceId' => $this->staff_user_id,
+            'extendedProps' => [
+                'status' => $this->status,
+                'appointment_type' => $this->appointment_type,
+                'user' => $this->user,
+                'service' => $this->service,
+                'timeSlot' => $this->timeSlot
+            ]
+        ];
+    }
+
+    /**
+     * Scope to get appointments with all necessary relations
+     */
+    public function scopeWithFullDetails($query)
+    {
+        return $query->with(['user', 'service', 'staff', 'timeSlot']);
+    }
 }
