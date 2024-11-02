@@ -252,20 +252,14 @@ watch(() => form.value.service_id, async (newServiceId) => {
             // Fetch service details including category
             const response = await axios.get(`/api/services/${newServiceId}`);
             const service = response.data.data;
-            console.log('Selected service details:', service);
 
             // Set appointment type based on service category
             if (service.category?.service_category_name) {
                 const categoryName = service.category.service_category_name;
                 const appointmentType = CATEGORY_NAME_MAPPING[categoryName]?.value || APPOINTMENT_TYPES.OTHERS;
                 form.value.appointment_type = appointmentType;
-                console.log('Set appointment type based on category:', {
-                    category: categoryName,
-                    appointmentType: appointmentType
-                });
             } else {
                 form.value.appointment_type = APPOINTMENT_TYPES.OTHERS;
-                console.log('No category found, setting to OTHERS');
             }
         } catch (error) {
             console.error('Error fetching service details:', error);
@@ -277,7 +271,6 @@ watch(() => form.value.service_id, async (newServiceId) => {
         }
     } else {
         form.value.appointment_type = APPOINTMENT_TYPES.CONSULTATION;
-        console.log('No service selected, setting to CONSULTATION');
     }
 }, { immediate: true });
 
@@ -325,8 +318,6 @@ watch(() => form.value.service_id, (newServiceId) => {
     }
 });
 
-// Log appointments for debugging
-console.log('Appointments:', appointments.value)
 
 watch(() => props.appointments, (newAppointments) => {
     if (newAppointments && newAppointments.length > 0) {
@@ -434,7 +425,6 @@ onMounted(() => {
     fetchServices()
     fetchStaffList()
     document.addEventListener('keydown', handleKeyDown)
-    console.log('Appointments in AppointmentModal:', appointments.value)
     if (staffList.value.length > 0) {
         form.staff_id = staffList.value[0].id
     }
@@ -450,11 +440,6 @@ const fetchServices = async () => {
                 ...service,
                 service_category: service.service_category || null
             }));
-            console.log('Fetched services with categories:', services.value.map(s => ({
-                id: s.id,
-                name: s.name,
-                category: s.service_category?.name
-            })));
         }
     } catch (error) {
         console.error('Error fetching services:', error);
@@ -548,13 +533,11 @@ function validateAndSubmit() {
             note: form.value.note || ''
         };
 
-        console.log('Form data before submission:', formData);
         submitAppointment(formData);
     }
 }
 
 function submitAppointment(formData) {
-    console.log('Submitting appointment data:', formData);
 
     axios.post(route('appointments.store'), {
         user_id: formData.user_id,
@@ -567,7 +550,6 @@ function submitAppointment(formData) {
         note: formData.note,
     })
         .then(response => {
-            console.log('Appointment creation response:', response.data);
             props.closeModal();
             emit('appointmentAdded');
         })
@@ -581,18 +563,9 @@ function submitAppointment(formData) {
 
 // Add this after other watch statements
 watch(() => services.value, (newServices) => {
-    console.log('Services updated:', newServices);
 }, { deep: true });
 
-// Thêm computed property để kiểm tra form đã điền đủ thông tin chưa
 const isFormValid = computed(() => {
-    console.log('Form values:', {
-        user_id: !!form.value.user_id,
-        service_id: !!form.value.service_id,
-        appointment_date: !!form.value.appointment_date,
-        time_slot_id: !!form.value.time_slot_id,
-    });
-
     return Boolean(
         form.value.user_id &&
         form.value.service_id &&
@@ -603,7 +576,6 @@ const isFormValid = computed(() => {
 
 // Thêm watch cho các giá trị quan trọng
 watch(() => form.value, (newValue) => {
-    console.log('Form updated:', newValue);
 }, { deep: true });
 </script>
 

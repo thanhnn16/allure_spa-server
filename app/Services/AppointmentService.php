@@ -16,7 +16,29 @@ class AppointmentService
 {
     public function getAppointments($request)
     {
-        return Appointment::with(['user', 'service', 'staff'])->get();
+        $query = Appointment::with([
+            'user',
+            'service',
+            'staff',
+            'timeSlot'
+        ]);
+
+        // Thêm filter theo thời gian
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('appointment_date', [
+                $request->start_date,
+                $request->end_date
+            ]);
+        }
+
+        // Thêm filter theo trạng thái
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        return $query->orderBy('appointment_date')
+            ->orderBy('time_slot_id')
+            ->get();
     }
 
     public function createAppointment($data)
@@ -107,10 +129,21 @@ class AppointmentService
 
             $appointment->update($updateData);
 
-            return ['status' => 200, 'message' => 'Cập nhật lịch hẹn thành công', 'data' => $appointment];
+            // Load relationships cần thiết
+            $appointment->load(['user', 'service', 'staff', 'timeSlot']);
+
+            return [
+                'status' => 200,
+                'message' => 'Cập nhật lịch hẹn thành công',
+                'data' => $appointment
+            ];
         } catch (\Exception $e) {
             Log::error('Lỗi cập nhật lịch hẹn: ' . $e->getMessage());
-            return ['status' => 500, 'message' => 'Đã xảy ra lỗi khi cập nhật lịch hẹn', 'data' => null];
+            return [
+                'status' => 500,
+                'message' => 'Đã xảy ra lỗi khi cập nhật lịch hẹn',
+                'data' => null
+            ];
         }
     }
 
@@ -174,7 +207,7 @@ class AppointmentService
             // Kiểm tra thời gian bắt đầu của cuộc hẹn
             $appointmentStart = Carbon::parse($appointment->appointment_date)
                 ->setTimeFromTimeString($appointment->timeSlot->start_time);
-                
+
             if ($appointmentStart <= now()) {
                 return [
                     'status' => 422,

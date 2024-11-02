@@ -195,6 +195,10 @@ class AppointmentController extends BaseController
     public function update(Request $request, $id)
     {
         $result = $this->appointmentService->updateAppointment($id, $request->all());
+        
+        // Log để debug
+        Log::info('Update appointment response:', $result);
+        
         return $this->respondWithJson($result['data'], $result['message'], $result['status']);
     }
 
@@ -225,10 +229,24 @@ class AppointmentController extends BaseController
      *     )
      * )
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $result = $this->appointmentService->getAppointmentDetails($id);
-        return response()->json($result);
+        
+        // Nếu là request API thì trả về JSON
+        if ($request->expectsJson()) {
+            return response()->json($result);
+        }
+        
+        // Nếu không phải API request thì render trang chi tiết bằng Inertia
+        if ($result['status'] === 200) {
+            return $this->respondWithInertia('Calendar/Components/AppointmentDetails', [
+                'appointment' => $result['data']->load(['user', 'service', 'staff', 'timeSlot'])
+            ]);
+        }
+        
+        // Nếu có lỗi thì redirect về trang danh sách với thông báo
+        return redirect()->route('appointments.index')->with('error', $result['message']);
     }
 
     /**
@@ -254,7 +272,7 @@ class AppointmentController extends BaseController
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Không tìm thấy cuộc hẹn"
+     *         description="Kh��ng tìm thấy cuộc hẹn"
      *     )
      * )
      */

@@ -134,6 +134,9 @@ Route::middleware('auth')->group(function () {
     // Add new route for user treatment packages
     Route::get('/api/user-treatment-packages/{userId}', [UserController::class, 'getUserTreatmentPackages'])
         ->name('api.user.treatment-packages');
+
+    // Thêm route mới cho trang chi tiết lịch hẹn
+    Route::get('/appointments/{id}', [AppointmentController::class, 'show'])->name('appointments.show');
 });
 
 require __DIR__ . '/auth.php';

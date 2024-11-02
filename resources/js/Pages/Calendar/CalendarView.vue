@@ -12,8 +12,10 @@ import SectionMain from '@/Components/SectionMain.vue'
 import AddAppointmentModal from '@/Pages/Calendar/Components/AddAppointmentModal.vue'
 import { useForm } from '@inertiajs/vue3'
 import axios from 'axios'
-import ViewAppointmentModal from './Components/ViewAppointmentModal.vue'
 import { parseISO } from 'date-fns'
+import tippy from 'tippy.js'
+import 'tippy.js/dist/tippy.css'
+import { useToast } from "vue-toastification"
 
 const props = defineProps({
     appointments: {
@@ -23,10 +25,6 @@ const props = defineProps({
     timeSlots: {
         type: Array,
         default: () => []
-    },
-    businessHours: {
-        type: Object,
-        required: true
     },
     slotDuration: {
         type: String,
@@ -98,7 +96,6 @@ const calendarOptions = computed(() => ({
     },
     allDaySlot: false,
     height: 'auto',
-    businessHours: props.businessHours,
     nowIndicator: true,
     editable: true,
     selectable: true,
@@ -115,17 +112,31 @@ const calendarOptions = computed(() => ({
         omitZeroMinute: true,         // Bỏ hiển thị :00
         meridiem: 'short'
     },
-    selectConstraint: "businessHours",
-    eventConstraint: "businessHours",
-    selectMirror: true,
     moreLinkText: 'Xem thêm',
     noEventsText: 'Không có lịch hẹn nào',
     select: handleDateSelect,
-    eventClick: handleEventClick,
-    eventDrop: handleEventDrop,
-    validRange: {
-        start: new Date().toISOString().split('T')[0] // Chỉ cho phép từ ngày hiện tại
+    eventDidMount: (info) => {
+        tippy(info.el, {
+            content: `
+                <div class="p-2">
+                    <div class="font-bold">${info.event.extendedProps.userName || 'Không xác định'}</div>
+                    <div>Dịch vụ: ${info.event.extendedProps.serviceName || 'Không xác định'}</div>
+                    <div>Nhân viên: ${info.event.extendedProps.staffName || 'Không xác định'}</div>
+                    <div>Trạng thái: ${info.event.extendedProps.status}</div>
+                </div>
+            `,
+            allowHTML: true,
+            placement: 'top',
+            theme: 'light-border',
+            delay: [200, 0], // Delay before showing tooltip
+            interactive: true
+        })
     },
+    eventClick: (info) => {
+        info.jsEvent.preventDefault()
+        router.visit(`/appointments/${info.event.id}`)
+    },
+    eventDrop: handleEventDrop,
 }))
 
 const selectedTimeSlot = ref(null)
@@ -162,99 +173,76 @@ function handleDateSelect(selectInfo) {
 
 const selectedAppointmentId = ref(null);
 
-const handleEventClick = (info) => {
-    console.log('Event clicked:', info);
-    if (!info || !info.event) {
-        console.log('Invalid event info');
-        return;
-    }
-    
-    // Đảm bảo ID được chuyển đổi thành số
-    const eventId = parseInt(info.event.id);
-    console.log('Event ID:', eventId);
-    
-    if (!eventId || isNaN(eventId)) {
-        console.error('Invalid event ID');
-        return;
-    }
-    
-    selectedAppointmentId.value = eventId;
-    console.log('Selected appointment ID:', selectedAppointmentId.value);
-    showViewModal.value = true;
-};
-
-const closeViewModal = () => {
-    console.log('Closing view modal');
-    showViewModal.value = false;
-    // Reset selectedAppointmentId sau khi đóng modal
-    setTimeout(() => {
-        selectedAppointmentId.value = null;
-    }, 100);
-};
-
-// Thêm watch để debug
-watch(() => selectedAppointmentId.value, (newVal) => {
-    console.log('selectedAppointmentId changed:', newVal);
-});
-
-watch(() => showViewModal.value, (newVal) => {
-    console.log('showViewModal changed:', newVal);
-});
-
 function handleEventDrop(dropInfo) {
-    const startDate = new Date(dropInfo.event.start)
-    const hour = startDate.getHours().toString().padStart(2, '0')
-    const minute = startDate.getMinutes().toString().padStart(2, '0')
-    const timeString = `${hour}:${minute}:00`
+    const event = dropInfo.event;
+    const selectedStart = new Date(event.start);
+    const selectedHour = selectedStart.getHours().toString().padStart(2, '0');
+    const selectedMinute = selectedStart.getMinutes().toString().padStart(2, '0');
+    const selectedTimeString = `${selectedHour}:${selectedMinute}:00`;
 
-    const matchingTimeSlot = props.timeSlots.find(slot =>
-        slot.start_time === timeString
-    )
+    // Tìm time slot phù hợp
+    const matchingTimeSlot = props.timeSlots.find(slot => {
+        return slot.start_time === selectedTimeString;
+    });
 
     if (!matchingTimeSlot) {
-        alert('Không thể di chuyển đến khung giờ này')
-        dropInfo.revert()
-        return
+        toast.error('Vui lòng chọn khung giờ hợp lệ');
+        dropInfo.revert();
+        return;
     }
 
     const updatedAppointment = {
-        id: dropInfo.event.id,
-        appointment_date: startDate.toISOString().split('T')[0],
-        time_slot_id: matchingTimeSlot.id
-    }
+        appointment_date: event.start.toISOString().split('T')[0],
+        time_slot_id: matchingTimeSlot.id,
+    };
 
-    updateAppointment(updatedAppointment)
+    axios.put(`/api/appointments/${event.id}`, updatedAppointment)
+        .then(response => {
+            if (response.status === 200) {
+                const updatedData = response.data.data;
+                
+                // Cập nhật dữ liệu local
+                const index = appointments.value.findIndex(apt => apt.id === updatedData.id);
+                if (index !== -1) {
+                    appointments.value[index] = {
+                        ...appointments.value[index],
+                        ...updatedData,
+                        start: `${updatedData.appointment_date}T${updatedData.time_slot.start_time}`,
+                        end: `${updatedData.appointment_date}T${updatedData.time_slot.end_time}`
+                    };
+                }
+
+                toast.success(response.data.message);
+            } else {
+                throw new Error(response.data.message || "Có lỗi xảy ra");
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            toast.error(error.response?.data?.message || "Có lỗi xảy ra khi cập nhật lịch hẹn!");
+            dropInfo.revert();
+        });
+}
+
+function refreshCalendar() {
+    if (calendarRef.value) {
+        calendarRef.value.getApi().refetchEvents()
+    }
 }
 
 function updateLocalAppointments(updatedAppointment) {
     const index = appointments.value.findIndex(apt => apt.id === updatedAppointment.id)
     if (index !== -1) {
         appointments.value[index] = updatedAppointment
-    } else {
-        appointments.value.push(updatedAppointment)
     }
-}
-
-function updateAppointment(appointmentData) {
-    axios.put(`/api/appointments/${appointmentData.id}`, appointmentData)
-        .then(response => {
-            updateLocalAppointments(response.data.appointment)
-            if (calendarRef.value) {
-                calendarRef.value.getApi().refetchEvents()
-            }
-        })
-        .catch(error => {
-            console.error('Lỗi khi cập nhật cuộc hẹn:', error)
-            if (calendarRef.value) {
-                calendarRef.value.getApi().refetchEvents()
-            }
-        })
 }
 
 function closeModal() {
     showModal.value = false
     selectedAppointment.value = null
 }
+
+const toast = useToast()
 
 function saveAppointment(appointmentData) {
     const form = useForm({
@@ -271,37 +259,27 @@ function saveAppointment(appointmentData) {
     form.post(route('appointments.store'), {
         preserveState: true,
         preserveScroll: true,
-        onSuccess: () => {
+        onSuccess: (response) => {
             closeModal()
-            router.reload()
+            if (response?.props?.appointment) {
+                updateLocalAppointments(response.props.appointment)
+            }
+            if (calendarRef.value) {
+                calendarRef.value.getApi().refetchEvents()
+            }
+            toast.success("Thêm lịch hẹn thành công!")
         },
+        onError: (errors) => {
+            toast.error("Có lỗi xảy ra khi thêm lịch hẹn!")
+        }
     })
 }
 
 function handleAppointmentAdded() {
-    // Reload the page to reflect the new appointment
-    window.location.reload();
-}
-
-function handleAppointmentUpdate(updatedAppointment) {
-    updateAppointment(updatedAppointment);
-    closeViewModal();
-}
-
-const fetchAppointmentDetails = async (id) => {
-    try {
-        const response = await axios.get(`/api/appointments/${id}`);
-        if (response.data.status === 200 && response.data.data) {
-            return response.data.data;
-        } else {
-            console.error('Lỗi khi fetch thông tin cuộc hẹn:', response.data.message);
-            return null;
-        }
-    } catch (error) {
-        console.error('Lỗi khi fetch thông tin cuộc hẹn:', error.response?.data?.message || error.message);
-        return null;
+    if (calendarRef.value) {
+        calendarRef.value.getApi().refetchEvents()
     }
-};
+}
 </script>
 
 <template>
@@ -314,9 +292,6 @@ const fetchAppointmentDetails = async (id) => {
         <AddAppointmentModal :show="showModal" :appointments="appointments" :selectedTimeSlot="selectedTimeSlot"
             @close="closeModal" @save="saveAppointment" @appointmentAdded="handleAppointmentAdded"
             :closeModal="closeModal" />
-        <ViewAppointmentModal :show="showViewModal" :appointmentId="selectedAppointmentId"
-            @close="closeViewModal" @update="handleAppointmentUpdate"
-            :fetchAppointmentDetails="fetchAppointmentDetails" />
     </LayoutAuthenticated>
 </template>
 
@@ -369,5 +344,25 @@ const fetchAppointmentDetails = async (id) => {
 
 :deep(.fc-timegrid-col) {
     border-right: 1px solid #ddd;
+}
+
+/* Tooltip styles */
+.tippy-box[data-theme~='light-border'] {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.tippy-box[data-theme~='light-border'] .tippy-content {
+    padding: 0;
+}
+
+.tippy-box[data-theme~='light-border'][data-placement^='top'] > .tippy-arrow::before {
+    border-top-color: #e2e8f0;
+}
+
+.tippy-box[data-theme~='light-border'][data-placement^='bottom'] > .tippy-arrow::before {
+    border-bottom-color: #e2e8f0;
 }
 </style>
