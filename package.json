@@ -30,6 +30,7 @@
         "@fullcalendar/scrollgrid": "^6.1.15",
         "@fullcalendar/timegrid": "^6.1.15",
         "@fullcalendar/vue3": "^6.1.15",
+        "@headlessui/vue": "^1.7.23",
         "@inertiajs/vue3": "^1.0.0",
         "@mdi/js": "^7.4.47",
         "@vue/server-renderer": "^3.4.0",
