@@ -171,29 +171,33 @@ onMounted(() => {
     }
 })
 
-// Hàm đăng ký lắng nghe sự kiện chat
+// Cập nhật hàm subscribeToChat
 const subscribeToChat = (chatId) => {
     Echo.private(`chat.${chatId}`)
         .listen('NewMessage', (e) => {
-            // Thêm tin nhắn mới vào cuối danh sách
-            messages.value = [...messages.value, e.message]
+            // Kiểm tra xem tin nhắn đã tồn tại chưa
+            const messageExists = messages.value.some(m => m.id === e.message.id);
+            if (!messageExists) {
+                messages.value = [...messages.value, e.message];
 
-            // Cập nhật tin nhắn mới nhất trong danh sách chat
-            const chatIndex = props.chats.findIndex(c => c.id === chatId)
-            if (chatIndex !== -1) {
-                props.chats[chatIndex].messages = [e.message]
-                const chat = props.chats.splice(chatIndex, 1)[0]
-                props.chats.unshift(chat)
-            }
-
-            nextTick(() => {
-                scrollToBottom()
-                if (e.message.sender_id !== user.value.id) {
-                    markAsRead(chatId)
+                // Cập nhật tin nhắn mới nhất trong danh sách chat
+                const chatIndex = props.chats.findIndex(c => c.id === chatId);
+                if (chatIndex !== -1) {
+                    const updatedChat = { ...props.chats[chatIndex] };
+                    updatedChat.messages = [e.message];
+                    props.chats.splice(chatIndex, 1);
+                    props.chats.unshift(updatedChat);
                 }
-            })
-        })
-}
+
+                nextTick(() => {
+                    scrollToBottom();
+                    if (e.message.sender_id !== user.value.id) {
+                        markAsRead(chatId);
+                    }
+                });
+            }
+        });
+};
 
 // Watch selectedChat để đăng ký/hủy đăng ký Echo listener
 watch(() => selectedChat.value?.id, (newChatId, oldChatId) => {

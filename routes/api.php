@@ -15,6 +15,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\TimeSlotController;
+use App\Http\Controllers\FirebaseWebhookController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -107,4 +108,6 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/time-slots', [TimeSlotController::class, 'index']);
         Route::get('/time-slots/{timeSlot}', [TimeSlotController::class, 'show']);
     });
+
+    Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);
 });
