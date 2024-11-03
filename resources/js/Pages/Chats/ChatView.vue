@@ -82,9 +82,9 @@ const startNewChat = async (userId) => {
 const loadMessages = async (chatId, page = 1, append = false) => {
     try {
         if (page === 1) {
-            isLoading.value = true
+            isLoading.value = true;
         } else {
-            isLoadingMore.value = true
+            isLoadingMore.value = true;
         }
 
         const response = await axios.get(`/chats/${chatId}/messages`, {
@@ -92,38 +92,40 @@ const loadMessages = async (chatId, page = 1, append = false) => {
                 page: page,
                 per_page: 20
             }
-        })
+        });
 
-        const { messages: newMessages, has_more } = response.data.data
-        hasMoreMessages.value = has_more
+        const { messages: newMessages, has_more } = response.data.data;
+        hasMoreMessages.value = has_more;
 
         // Đảo ngược thứ tự tin nhắn từ API để tin nhắn cũ nhất ở trên cùng
-        const reversedMessages = [...newMessages].reverse()
+        const reversedMessages = [...newMessages].reverse();
 
         if (append) {
             // Khi load more, thêm tin nhắn cũ vào trên cùng
-            messages.value = [...reversedMessages, ...messages.value]
+            messages.value = [...reversedMessages, ...messages.value];
         } else {
-            messages.value = reversedMessages
+            messages.value = reversedMessages;
         }
 
-        currentPage.value = page
+        currentPage.value = page;
 
-        await nextTick()
+        // Đợi DOM cập nhật
+        await nextTick();
         
+        // Force cuộn xuống dưới khi là lần đầu load hoặc load trang đầu tiên
         if (isFirstLoad.value || !append) {
-            scrollToBottom()
-            isFirstLoad.value = false
+            scrollToBottom(true);
+            isFirstLoad.value = false;
         }
 
         if (page === 1) {
-            markAsRead(chatId)
+            markAsRead(chatId);
         }
     } catch (error) {
-        console.error('Error loading messages:', error)
+        console.error('Error loading messages:', error);
     } finally {
-        isLoading.value = false
-        isLoadingMore.value = false
+        isLoading.value = false;
+        isLoadingMore.value = false;
     }
 }
 
@@ -157,8 +159,9 @@ const sendMessage = async () => {
             props.chats.unshift(updatedChat);
         }
 
+        // Force cuộn xuống sau khi gửi tin nhắn
         await nextTick();
-        scrollToBottom();
+        scrollToBottom(true);
     } catch (error) {
         console.error('Error sending message:', error);
     }
@@ -175,12 +178,10 @@ onMounted(() => {
 const subscribeToChat = (chatId) => {
     Echo.private(`chat.${chatId}`)
         .listen('NewMessage', (e) => {
-            // Kiểm tra xem tin nhắn đã tồn tại chưa
             const messageExists = messages.value.some(m => m.id === e.message.id);
             if (!messageExists) {
                 messages.value = [...messages.value, e.message];
 
-                // Cập nhật tin nhắn mới nhất trong danh sách chat
                 const chatIndex = props.chats.findIndex(c => c.id === chatId);
                 if (chatIndex !== -1) {
                     const updatedChat = { ...props.chats[chatIndex] };
@@ -189,8 +190,9 @@ const subscribeToChat = (chatId) => {
                     props.chats.unshift(updatedChat);
                 }
 
+                // Force cuộn xuống khi nhận tin nhắn mới
                 nextTick(() => {
-                    scrollToBottom();
+                    scrollToBottom(true);
                     if (e.message.sender_id !== user.value.id) {
                         markAsRead(chatId);
                     }
@@ -214,12 +216,12 @@ watch(searchQuery, searchUsers)
 
 // Thêm hàm selectChat
 const selectChat = async (chat) => {
-    selectedChat.value = chat
-    messages.value = []
-    currentPage.value = 1
-    hasMoreMessages.value = false
-    isFirstLoad.value = true
-    await loadMessages(chat.id, 1)
+    selectedChat.value = chat;
+    messages.value = [];
+    currentPage.value = 1;
+    hasMoreMessages.value = false;
+    isFirstLoad.value = true;
+    await loadMessages(chat.id, 1);
 }
 
 // Thêm hàm getOtherUser
@@ -228,9 +230,17 @@ const getOtherUser = (chat) => {
 }
 
 // Thêm hàm scrollToBottom
-const scrollToBottom = () => {
+const scrollToBottom = (force = false) => {
     if (messageContainer.value) {
-        messageContainer.value.scrollTop = messageContainer.value.scrollHeight
+        const container = messageContainer.value;
+        const isScrolledNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        
+        // Cuộn xuống nếu force = true hoặc đang ở gần cuối
+        if (force || isScrolledNearBottom) {
+            nextTick(() => {
+                container.scrollTop = container.scrollHeight;
+            });
+        }
     }
 }
 
