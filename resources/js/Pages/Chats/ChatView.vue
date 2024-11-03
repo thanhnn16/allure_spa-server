@@ -19,6 +19,10 @@ const messages = ref([])
 const newMessage = ref('')
 const messageContainer = ref(null)
 const isLoading = ref(false)
+const currentPage = ref(1)
+const hasMoreMessages = ref(false)
+const isLoadingMore = ref(false)
+const isFirstLoad = ref(true)
 
 // Format thời gian tin nhắn
 const formatTime = (timestamp) => {
@@ -75,18 +79,50 @@ const startNewChat = async (userId) => {
 }
 
 // Load tin nhắn của chat
-const loadMessages = async (chatId) => {
+const loadMessages = async (chatId, page = 1, append = false) => {
     try {
-        isLoading.value = true
-        const response = await axios.get(`/chats/${chatId}/messages`)
-        messages.value = response.data
+        if (page === 1) {
+            isLoading.value = true
+        } else {
+            isLoadingMore.value = true
+        }
+
+        const response = await axios.get(`/chats/${chatId}/messages`, {
+            params: {
+                page: page,
+                per_page: 20
+            }
+        })
+
+        const { messages: newMessages, has_more } = response.data.data
+        hasMoreMessages.value = has_more
+
+        if (append) {
+            // Thêm tin nhắn cũ vào đầu danh sách
+            messages.value = [...newMessages, ...messages.value]
+        } else {
+            messages.value = newMessages
+        }
+
+        currentPage.value = page
+
         await nextTick()
-        scrollToBottom()
-        markAsRead(chatId)
+        
+        if (isFirstLoad.value) {
+            scrollToBottom()
+            isFirstLoad.value = false
+        } else if (!append) {
+            scrollToBottom()
+        }
+
+        if (page === 1) {
+            markAsRead(chatId)
+        }
     } catch (error) {
         console.error('Error loading messages:', error)
     } finally {
         isLoading.value = false
+        isLoadingMore.value = false
     }
 }
 
@@ -172,27 +208,12 @@ watch(searchQuery, searchUsers)
 
 // Thêm hàm selectChat
 const selectChat = async (chat) => {
-    console.log('Selected chat:', chat);
-    selectedChat.value = chat;
-    messages.value = [];
-    try {
-        isLoading.value = true;
-        const response = await axios.get(`/chats/${chat.id}/messages`);
-        console.log('API Response:', response);
-
-        // Truy cập đúng mảng tin nhắn từ response.data.data
-        const messageData = response.data.data;
-        messages.value = Array.isArray(messageData) ? messageData : [];
-
-        console.log('Final messages array:', messages.value);
-        await nextTick();
-        scrollToBottom();
-        markAsRead(chat.id);
-    } catch (error) {
-        console.error('Error loading messages:', error);
-    } finally {
-        isLoading.value = false;
-    }
+    selectedChat.value = chat
+    messages.value = []
+    currentPage.value = 1
+    hasMoreMessages.value = false
+    isFirstLoad.value = true
+    await loadMessages(chat.id, 1)
 }
 
 // Thêm hàm getOtherUser
@@ -237,6 +258,22 @@ const formatDateTime = (datetime) => {
 watch(messages, (newMessages) => {
     console.log('Messages changed:', newMessages);
 }, { deep: true });
+
+// Thêm hàm xử lý scroll để tải thêm tin nhắn
+const handleScroll = debounce(async (e) => {
+    const container = e.target
+    // Kiểm tra khi scroll gần đến đầu container
+    if (container.scrollTop <= 100 && hasMoreMessages.value && !isLoadingMore.value) {
+        const nextPage = currentPage.value + 1
+        const previousHeight = container.scrollHeight
+        
+        await loadMessages(selectedChat.value.id, nextPage, true)
+        
+        // Giữ nguyên vị trí scroll sau khi tải thêm tin nhắn
+        const newHeight = container.scrollHeight
+        container.scrollTop = newHeight - previousHeight
+    }
+}, 200)
 </script>
 <template>
     <LayoutAuthenticated>
@@ -324,7 +361,16 @@ watch(messages, (newMessages) => {
                         </div>
 
                         <!-- Messages -->
-                        <div ref="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                        <div 
+                            ref="messageContainer" 
+                            class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+                            @scroll="handleScroll"
+                        >
+                            <!-- Thêm loading indicator cho "Load more" -->
+                            <div v-if="isLoadingMore" class="flex justify-center py-2">
+                                <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                            
                             <div v-if="isLoading" class="flex justify-center">
                                 <div
                                     class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">
