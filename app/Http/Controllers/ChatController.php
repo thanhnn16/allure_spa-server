@@ -17,7 +17,7 @@ class ChatController extends BaseController
         $this->chatService = $chatService;
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
         $chats = $this->chatService->getAllChatsForUser(Auth::user()->id);
 
