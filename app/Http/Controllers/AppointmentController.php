@@ -28,16 +28,52 @@ class AppointmentController extends BaseController
     /**
      * @OA\Get(
      *     path="/api/appointments",
-     *     summary="Lấy danh sách cuộc hẹn",
+     *     summary="Lấy danh sách lịch hẹn",
      *     tags={"Appointments"},
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Ngày bắt đầu (Y-m-d)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date", 
+     *         in="query",
+     *         description="Ngày kết thúc (Y-m-d)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query", 
+     *         description="Trạng thái lịch hẹn",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"pending", "confirmed", "cancelled", "completed"})
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Trả về danh sách cuộc hẹn",
+     *         description="Thành công",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="status_code", type="integer"),
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Appointment"))
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Lấy danh sách lịch hẹn thành công"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="title", type="string"),
+     *                     @OA\Property(property="start", type="string", format="date-time"),
+     *                     @OA\Property(property="end", type="string", format="date-time"),
+     *                     @OA\Property(property="user", ref="#/components/schemas/User"),
+     *                     @OA\Property(property="service", ref="#/components/schemas/Service"),
+     *                     @OA\Property(property="staff", ref="#/components/schemas/User"),
+     *                     @OA\Property(property="status", type="string"),
+     *                     @OA\Property(property="appointment_type", type="string"),
+     *                     @OA\Property(property="note", type="string"),
+     *                     @OA\Property(property="time_slot", ref="#/components/schemas/TimeSlot")
+     *                 )
+     *             )
      *         )
      *     )
      * )
@@ -111,35 +147,39 @@ class AppointmentController extends BaseController
     /**
      * @OA\Post(
      *     path="/api/appointments",
-     *     summary="Tạo cuộc hẹn mới",
+     *     summary="Tạo lịch hẹn mới",
      *     tags={"Appointments"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"user_id", "staff_id", "service_id", "start_date", "end_date", "appointment_type", "status"},
+     *             required={"user_id","service_id","staff_id","appointment_date","time_slot_id","appointment_type","status"},
      *             @OA\Property(property="user_id", type="integer", example=1),
-     *             @OA\Property(property="staff_id", type="integer", example=2),
-     *             @OA\Property(property="service_id", type="integer", example=3),
-     *             @OA\Property(property="start_date", type="string", format="date-time", example="2023-05-01T09:00:00+07:00"),
-     *             @OA\Property(property="end_date", type="string", format="date-time", example="2023-05-01T10:00:00+07:00"),
+     *             @OA\Property(property="service_id", type="integer", example=1),
+     *             @OA\Property(property="staff_id", type="integer", example=1),
+     *             @OA\Property(property="appointment_date", type="string", format="date", example="2024-03-20"),
+     *             @OA\Property(property="time_slot_id", type="integer", example=1),
      *             @OA\Property(property="appointment_type", type="string", example="consultation"),
      *             @OA\Property(property="status", type="string", example="pending"),
-     *             @OA\Property(property="note", type="string", example="Ghi chú cho cuộc hẹn")
+     *             @OA\Property(property="note", type="string", example="Ghi chú cho lịch hẹn", nullable=true)
      *         )
      *     ),
      *     @OA\Response(
-     *         response=201,
-     *         description="Cuộc hẹn được tạo thành công",
+     *         response=200,
+     *         description="Thành công",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="status_code", type="integer"),
-     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Đặt lịch thành công"),
      *             @OA\Property(property="data", ref="#/components/schemas/Appointment")
      *         )
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Lỗi xác thực dữ liệu"
+     *         description="Lỗi dữ liệu",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Khung giờ này đã đầy"),
+     *             @OA\Property(property="data", type="null")
+     *         )
      *     )
      * )
      */
@@ -158,39 +198,44 @@ class AppointmentController extends BaseController
 
     /**
      * @OA\Put(
-     *     path="/api/appointments/{id}/update",
-     *     summary="Cập nhật cuộc hẹn (cho cả web và mobile)",
+     *     path="/api/appointments/{id}",
+     *     summary="Cập nhật lịch hẹn",
      *     tags={"Appointments"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
+     *         description="ID của lịch hẹn",
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\RequestBody(
+     *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="start_time", type="string", format="date-time"),
-     *             @OA\Property(property="end_time", type="string", format="date-time"),
-     *             @OA\Property(property="note", type="string")
+     *             @OA\Property(property="staff_id", type="integer", example=1),
+     *             @OA\Property(property="appointment_date", type="string", format="date", example="2024-03-20"),
+     *             @OA\Property(property="time_slot_id", type="integer", example=1),
+     *             @OA\Property(property="status", type="string", enum={"pending", "confirmed", "cancelled", "completed"}),
+     *             @OA\Property(property="appointment_type", type="string", example="consultation"),
+     *             @OA\Property(property="note", type="string", example="Ghi chú cập nhật")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Trả về cuộc hẹn đã được cập nhật",
+     *         description="Thành công",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="status_code", type="integer"),
-     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Cập nhật lịch hẹn thành công"),
      *             @OA\Property(property="data", ref="#/components/schemas/Appointment")
      *         )
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Lỗi xác thc dữ liệu"
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Không có quyền cập nhật cuộc hẹn"
+     *         description="Lỗi dữ liệu",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="data", type="object")
+     *         )
      *     )
      * )
      */
@@ -274,7 +319,7 @@ class AppointmentController extends BaseController
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Kh��ng tìm thấy cuộc hẹn"
+     *         description="Khng tìm thấy cuộc hẹn"
      *     )
      * )
      */
@@ -304,36 +349,47 @@ class AppointmentController extends BaseController
     /**
      * @OA\Put(
      *     path="/api/appointments/{id}/cancel",
-     *     summary="Hủy cuộc hẹn (cho cả web và mobile)",
+     *     summary="Huỷ lịch hẹn",
      *     tags={"Appointments"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
+     *         description="ID của lịch hẹn",
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\RequestBody(
+     *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="note", type="string", example="Lý do hủy: Bận việc đột xuất")
+     *             @OA\Property(property="note", type="string", example="Lý do huỷ lịch hẹn")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Trả về thông báo hủy thành công",
+     *         description="Thành công",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="status_code", type="integer"),
-     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Huỷ lịch hẹn thành công"),
      *             @OA\Property(property="data", ref="#/components/schemas/Appointment")
      *         )
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Không có quyền hủy cuộc hẹn"
+     *         description="Không có quyền",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Bạn không có quyền huỷ lịch hẹn này"),
+     *             @OA\Property(property="data", type="null")
+     *         )
      *     ),
      *     @OA\Response(
-     *         response=404,
-     *         description="Không tìm thấy cuộc hẹn"
+     *         response=422,
+     *         description="Lỗi nghiệp vụ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Không thể huỷ lịch hẹn đã bắt đầu hoặc đã kết thúc"),
+     *             @OA\Property(property="data", type="null")
+     *         )
      *     )
      * )
      */

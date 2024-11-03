@@ -21,28 +21,101 @@
                 "tags": [
                     "Appointments"
                 ],
-                "summary": "Lấy danh sách cuộc hẹn",
+                "summary": "Lấy danh sách lịch hẹn",
                 "operationId": "09fd012ab97514481bde57bbeac2699b",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Ngày bắt đầu (Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Ngày kết thúc (Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái lịch hẹn",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "confirmed",
+                                "cancelled",
+                                "completed"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Trả về danh sách cuộc hẹn",
+                        "description": "Thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "message": {
-                                            "type": "string"
-                                        },
-                                        "status_code": {
-                                            "type": "integer"
-                                        },
                                         "success": {
-                                            "type": "boolean"
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lấy danh sách lịch hẹn thành công"
                                         },
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/Appointment"
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "start": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "end": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "user": {
+                                                        "$ref": "#/components/schemas/User"
+                                                    },
+                                                    "service": {
+                                                        "$ref": "#/components/schemas/Service"
+                                                    },
+                                                    "staff": {
+                                                        "$ref": "#/components/schemas/User"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "appointment_type": {
+                                                        "type": "string"
+                                                    },
+                                                    "note": {
+                                                        "type": "string"
+                                                    },
+                                                    "time_slot": {
+                                                        "$ref": "#/components/schemas/TimeSlot"
+                                                    }
+                                                },
+                                                "type": "object"
                                             }
                                         }
                                     },
@@ -57,7 +130,7 @@
                 "tags": [
                     "Appointments"
                 ],
-                "summary": "Tạo cuộc hẹn mới",
+                "summary": "Tạo lịch hẹn mới",
                 "operationId": "15017f04a457b26e2a870c8a011a407a",
                 "requestBody": {
                     "required": true,
@@ -66,10 +139,10 @@
                             "schema": {
                                 "required": [
                                     "user_id",
-                                    "staff_id",
                                     "service_id",
-                                    "start_date",
-                                    "end_date",
+                                    "staff_id",
+                                    "appointment_date",
+                                    "time_slot_id",
                                     "appointment_type",
                                     "status"
                                 ],
@@ -78,23 +151,22 @@
                                         "type": "integer",
                                         "example": 1
                                     },
-                                    "staff_id": {
-                                        "type": "integer",
-                                        "example": 2
-                                    },
                                     "service_id": {
                                         "type": "integer",
-                                        "example": 3
+                                        "example": 1
                                     },
-                                    "start_date": {
-                                        "type": "string",
-                                        "format": "date-time",
-                                        "example": "2023-05-01T09:00:00+07:00"
+                                    "staff_id": {
+                                        "type": "integer",
+                                        "example": 1
                                     },
-                                    "end_date": {
+                                    "appointment_date": {
                                         "type": "string",
-                                        "format": "date-time",
-                                        "example": "2023-05-01T10:00:00+07:00"
+                                        "format": "date",
+                                        "example": "2024-03-20"
+                                    },
+                                    "time_slot_id": {
+                                        "type": "integer",
+                                        "example": 1
                                     },
                                     "appointment_type": {
                                         "type": "string",
@@ -106,77 +178,8 @@
                                     },
                                     "note": {
                                         "type": "string",
-                                        "example": "Ghi chú cho cuộc hẹn"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Cuộc hẹn được tạo thành công",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string"
-                                        },
-                                        "status_code": {
-                                            "type": "integer"
-                                        },
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Appointment"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Lỗi xác thực dữ liệu"
-                    }
-                }
-            }
-        },
-        "/api/appointments/{id}/update": {
-            "put": {
-                "tags": [
-                    "Appointments"
-                ],
-                "summary": "Cập nhật cuộc hẹn (cho cả web và mobile)",
-                "operationId": "b52dd36b873ffa18eeedfb76420bad96",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "start_time": {
-                                        "type": "string",
-                                        "format": "date-time"
-                                    },
-                                    "end_time": {
-                                        "type": "string",
-                                        "format": "date-time"
-                                    },
-                                    "note": {
-                                        "type": "string"
+                                        "example": "Ghi chú cho lịch hẹn",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -186,19 +189,18 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Trả về cuộc hẹn đã được cập nhật",
+                        "description": "Thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "message": {
-                                            "type": "string"
-                                        },
-                                        "status_code": {
-                                            "type": "integer"
-                                        },
                                         "success": {
-                                            "type": "boolean"
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đặt lịch thành công"
                                         },
                                         "data": {
                                             "$ref": "#/components/schemas/Appointment"
@@ -210,10 +212,27 @@
                         }
                     },
                     "422": {
-                        "description": "Lỗi xác thc dữ liệu"
-                    },
-                    "403": {
-                        "description": "Không có quyền cập nhật cuộc hẹn"
+                        "description": "Lỗi dữ liệu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Khung giờ này đã đầy"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -265,6 +284,114 @@
                     }
                 }
             },
+            "put": {
+                "tags": [
+                    "Appointments"
+                ],
+                "summary": "Cập nhật lịch hẹn",
+                "operationId": "a779a3a6175fee8a68b75461718a1ec3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của lịch hẹn",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "staff_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "appointment_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-03-20"
+                                    },
+                                    "time_slot_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "confirmed",
+                                            "cancelled",
+                                            "completed"
+                                        ]
+                                    },
+                                    "appointment_type": {
+                                        "type": "string",
+                                        "example": "consultation"
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Ghi chú cập nhật"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cập nhật lịch hẹn thành công"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Appointment"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lỗi dữ liệu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "delete": {
                 "tags": [
                     "Appointments"
@@ -307,7 +434,7 @@
                         }
                     },
                     "404": {
-                        "description": "Không tìm thấy cuộc hẹn"
+                        "description": "Khng tìm thấy cuộc hẹn"
                     }
                 }
             }
@@ -317,12 +444,13 @@
                 "tags": [
                     "Appointments"
                 ],
-                "summary": "Hủy cuộc hẹn (cho cả web và mobile)",
+                "summary": "Huỷ lịch hẹn",
                 "operationId": "4db8a90b150e98040b669dfb6ce09562",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID của lịch hẹn",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -330,13 +458,14 @@
                     }
                 ],
                 "requestBody": {
+                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "properties": {
                                     "note": {
                                         "type": "string",
-                                        "example": "Lý do hủy: Bận việc đột xuất"
+                                        "example": "Lý do huỷ lịch hẹn"
                                     }
                                 },
                                 "type": "object"
@@ -346,19 +475,18 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Trả về thông báo hủy thành công",
+                        "description": "Thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "message": {
-                                            "type": "string"
-                                        },
-                                        "status_code": {
-                                            "type": "integer"
-                                        },
                                         "success": {
-                                            "type": "boolean"
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Huỷ lịch hẹn thành công"
                                         },
                                         "data": {
                                             "$ref": "#/components/schemas/Appointment"
@@ -370,10 +498,50 @@
                         }
                     },
                     "403": {
-                        "description": "Không có quyền hủy cuộc hẹn"
+                        "description": "Không có quyền",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bạn không có quyền huỷ lịch hẹn này"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
-                    "404": {
-                        "description": "Không tìm thấy cuộc hẹn"
+                    "422": {
+                        "description": "Lỗi nghiệp vụ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không thể huỷ lịch hẹn đã bắt đầu hoặc đã kết thúc"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -383,9 +551,10 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "User login",
-                "operationId": "e7497a8460e3f9c9143c94d539ab7e30",
+                "summary": "Đăng nhập người dùng",
+                "operationId": "535ffeda4b78916efd658b2844ea897a",
                 "requestBody": {
+                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
@@ -395,12 +564,10 @@
                                 ],
                                 "properties": {
                                     "phone_number": {
-                                        "type": "string",
-                                        "example": "0123456789"
+                                        "type": "string"
                                     },
                                     "password": {
-                                        "type": "string",
-                                        "example": "12345678"
+                                        "type": "string"
                                     }
                                 },
                                 "type": "object"
@@ -410,100 +577,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Successful login",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Đăng nhập thành công"
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 200
-                                        },
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "user": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string",
-                                                            "example": "01234567-89ab-cdef-0123-456789abcdef"
-                                                        },
-                                                        "full_name": {
-                                                            "type": "string",
-                                                            "example": "John Doe"
-                                                        },
-                                                        "phone_number": {
-                                                            "type": "string",
-                                                            "example": "0123456789"
-                                                        },
-                                                        "email": {
-                                                            "type": "string",
-                                                            "example": "john@example.com"
-                                                        },
-                                                        "role": {
-                                                            "type": "string",
-                                                            "example": "admin"
-                                                        },
-                                                        "created_at": {
-                                                            "type": "string",
-                                                            "format": "date-time",
-                                                            "example": "2023-04-15T09:00:00Z"
-                                                        },
-                                                        "updated_at": {
-                                                            "type": "string",
-                                                            "format": "date-time",
-                                                            "example": "2023-04-15T09:00:00Z"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "token": {
-                                                    "type": "string",
-                                                    "example": "2|zyxwvutsrqponmlkjihgfedcba654321"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Thông tin đăng nhập không chính xác"
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 401
-                                        },
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "data": {
-                                            "type": "null",
-                                            "example": null
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Đăng nhập thành công"
                     }
                 }
             }
@@ -513,9 +587,10 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Register a new user",
-                "operationId": "c55f991703b466dc8ad2c2faca73266b",
+                "summary": "Đăng ký người dùng mới",
+                "operationId": "da8643013c2941f5ed7f8a9c9b4a7f7a",
                 "requestBody": {
+                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
@@ -527,20 +602,19 @@
                                 ],
                                 "properties": {
                                     "full_name": {
-                                        "type": "string",
-                                        "example": "John Doe"
+                                        "type": "string"
                                     },
                                     "phone_number": {
-                                        "type": "string",
-                                        "example": "0123456789"
+                                        "type": "string"
                                     },
                                     "password": {
-                                        "type": "string",
-                                        "example": "password123"
+                                        "type": "string"
                                     },
                                     "password_confirmation": {
-                                        "type": "string",
-                                        "example": "password123"
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
                                     }
                                 },
                                 "type": "object"
@@ -550,18 +624,96 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "User registered successfully",
+                        "description": "Đăng ký thành công"
+                    }
+                }
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Đăng xuất người dùng",
+                "operationId": "46f8a14c8083abb69eed72768aa08629",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "fcm_token": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng xuất thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/fcm-token": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Lưu token FCM cho người dùng",
+                "description": "Lưu token FCM và loại thiết bị cho người dùng đã xác thực",
+                "operationId": "storeFcmToken",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "device_type"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "FCM token",
+                                        "type": "string",
+                                        "example": "fMxn8H2zQ9G...."
+                                    },
+                                    "device_type": {
+                                        "description": "Loại thiết bị (android/ios)",
+                                        "type": "string",
+                                        "enum": [
+                                            "android",
+                                            "ios"
+                                        ],
+                                        "example": "android"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token FCM đã được lưu thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Đăng ký thành công"
+                                            "example": "FCM token stored successfully"
                                         },
                                         "status_code": {
                                             "type": "integer",
-                                            "example": 201
+                                            "example": 200
                                         },
                                         "success": {
                                             "type": "boolean",
@@ -569,44 +721,29 @@
                                         },
                                         "data": {
                                             "properties": {
-                                                "user": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "string",
-                                                            "example": "01234567-89ab-cdef-0123-456789abcdef"
-                                                        },
-                                                        "full_name": {
-                                                            "type": "string",
-                                                            "example": "John Doe"
-                                                        },
-                                                        "phone_number": {
-                                                            "type": "string",
-                                                            "example": "0123456789"
-                                                        },
-                                                        "email": {
-                                                            "type": "string",
-                                                            "example": "john@example.com"
-                                                        },
-                                                        "role": {
-                                                            "type": "string",
-                                                            "example": "user"
-                                                        },
-                                                        "created_at": {
-                                                            "type": "string",
-                                                            "format": "date-time",
-                                                            "example": "2023-04-15T09:00:00Z"
-                                                        },
-                                                        "updated_at": {
-                                                            "type": "string",
-                                                            "format": "date-time",
-                                                            "example": "2023-04-15T09:00:00Z"
-                                                        }
-                                                    },
-                                                    "type": "object"
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
                                                 },
                                                 "token": {
                                                     "type": "string",
-                                                    "example": "1|abcdefghijklmnopqrstuvwxyz123456"
+                                                    "example": "fMxn8H2zQ9G...."
+                                                },
+                                                "device_type": {
+                                                    "type": "string",
+                                                    "example": "android"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
                                                 }
                                             },
                                             "type": "object"
@@ -618,34 +755,14 @@
                         }
                     },
                     "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Số điện thoại đã được sử dụng"
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 422
-                                        },
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "data": {
-                                            "type": "null",
-                                            "example": null
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Dữ liệu không hợp lệ"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/products": {
@@ -2323,227 +2440,10 @@
                     }
                 ]
             }
-        },
-        "/api/users/fcm-token": {
-            "post": {
-                "tags": [
-                    "User"
-                ],
-                "summary": "Lưu token FCM cho người dùng",
-                "description": "Lưu token FCM và loại thiết bị cho người dùng đã xác thực",
-                "operationId": "storeFcmToken",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "token",
-                                    "device_type"
-                                ],
-                                "properties": {
-                                    "token": {
-                                        "description": "FCM token",
-                                        "type": "string",
-                                        "example": "fMxn8H2zQ9G...."
-                                    },
-                                    "device_type": {
-                                        "description": "Loại thiết bị (android/ios)",
-                                        "type": "string",
-                                        "enum": [
-                                            "android",
-                                            "ios"
-                                        ],
-                                        "example": "android"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Token FCM đã được lưu thành công",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "FCM token stored successfully"
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 200
-                                        },
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "user_id": {
-                                                    "type": "string",
-                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                                                },
-                                                "token": {
-                                                    "type": "string",
-                                                    "example": "fMxn8H2zQ9G...."
-                                                },
-                                                "device_type": {
-                                                    "type": "string",
-                                                    "example": "android"
-                                                },
-                                                "created_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
-                                                "updated_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Dữ liệu không hợp lệ",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The given data was invalid."
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 422
-                                        },
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "errors": {
-                                            "properties": {
-                                                "token": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "device_type": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/auth/logout": {
-            "post": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Đăng xuất người dùng",
-                "description": "Đăng xuất và xóa FCM token của thiết bị",
-                "operationId": "logout",
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "fcm_token": {
-                                        "description": "FCM token to remove (optional)",
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Đăng xuất thành công",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Đăng xuất thành công"
-                                        },
-                                        "status_code": {
-                                            "type": "integer",
-                                            "example": 200
-                                        },
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
         }
     },
     "components": {
         "schemas": {
-            "MobileAppointmentUpdateRequest": {
-                "properties": {
-                    "start_time": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2023-05-01T09:30:00+07:00"
-                    },
-                    "end_time": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2023-05-01T10:30:00+07:00"
-                    },
-                    "note": {
-                        "type": "string",
-                        "example": "Cập nhật ghi chú cho cuộc hẹn từ ứng dụng di động"
-                    }
-                },
-                "type": "object"
-            },
             "CreateRatingRequest": {
                 "title": "Yêu cầu tạo đánh giá",
                 "description": "Yêu cầu tạo đánh giá mới",
@@ -4393,22 +4293,21 @@
                     },
                     "user_id": {
                         "description": "User ID",
-                        "type": "integer",
-                        "format": "int64"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "voucher_id": {
                         "description": "Voucher ID",
                         "type": "integer",
                         "format": "int64"
                     },
-                    "is_used": {
-                        "description": "Whether the voucher is used or not",
-                        "type": "boolean"
+                    "remaining_uses": {
+                        "description": "Remaining number of uses",
+                        "type": "integer"
                     },
-                    "used_date": {
-                        "description": "Date when the voucher was used",
-                        "type": "string",
-                        "format": "date-time"
+                    "total_uses": {
+                        "description": "Total number of uses",
+                        "type": "integer"
                     },
                     "created_at": {
                         "description": "Creation date",
