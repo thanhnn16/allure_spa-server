@@ -97,22 +97,23 @@ const loadMessages = async (chatId, page = 1, append = false) => {
         const { messages: newMessages, has_more } = response.data.data
         hasMoreMessages.value = has_more
 
+        // Đảo ngược thứ tự tin nhắn từ API để tin nhắn cũ nhất ở trên cùng
+        const reversedMessages = [...newMessages].reverse()
+
         if (append) {
-            // Thêm tin nhắn cũ vào đầu danh sách
-            messages.value = [...newMessages, ...messages.value]
+            // Khi load more, thêm tin nhắn cũ vào trên cùng
+            messages.value = [...reversedMessages, ...messages.value]
         } else {
-            messages.value = newMessages
+            messages.value = reversedMessages
         }
 
         currentPage.value = page
 
         await nextTick()
         
-        if (isFirstLoad.value) {
+        if (isFirstLoad.value || !append) {
             scrollToBottom()
             isFirstLoad.value = false
-        } else if (!append) {
-            scrollToBottom()
         }
 
         if (page === 1) {
@@ -141,12 +142,13 @@ const sendMessage = async () => {
             messages.value = [];
         }
 
-        // Lấy tin nhắn mới từ response.data.data
+        // Thêm tin nhắn mới vào cuối danh sách
         const newMsg = response.data.data;
         messages.value = [...messages.value, newMsg];
 
         newMessage.value = '';
 
+        // Cập nhật danh sách chat
         const chatIndex = props.chats.findIndex(c => c.id === selectedChat.value.id);
         if (chatIndex !== -1) {
             const updatedChat = { ...props.chats[chatIndex] };
@@ -173,13 +175,13 @@ onMounted(() => {
 const subscribeToChat = (chatId) => {
     Echo.private(`chat.${chatId}`)
         .listen('NewMessage', (e) => {
-            messages.value.push(e.message)
+            // Thêm tin nhắn mới vào cuối danh sách
+            messages.value = [...messages.value, e.message]
 
             // Cập nhật tin nhắn mới nhất trong danh sách chat
             const chatIndex = props.chats.findIndex(c => c.id === chatId)
             if (chatIndex !== -1) {
                 props.chats[chatIndex].messages = [e.message]
-                // Di chuyển chat lên đầu danh sách
                 const chat = props.chats.splice(chatIndex, 1)[0]
                 props.chats.unshift(chat)
             }
