@@ -93,6 +93,7 @@ Route::middleware('throttle:api')->group(function () {
         // Route::post('/payos/verify', [PayOSController::class, 'verifyPayment']);
 
         // Chat routes
+        Route::get('/chats', [ChatController::class, 'index']);
         Route::post('/chats', [ChatController::class, 'store']);
         Route::get('/chats/{chat}/messages', [ChatController::class, 'getMessages']);
         Route::post('/messages', [ChatController::class, 'sendMessage']);

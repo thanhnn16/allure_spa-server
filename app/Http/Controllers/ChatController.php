@@ -17,9 +17,13 @@ class ChatController extends BaseController
         $this->chatService = $chatService;
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $chats = $this->chatService->getAllChatsForUser(Auth::user()->id);
+
+        if ($request->wantsJson()) {
+            return $this->respondWithJson($chats);
+        }
 
         return $this->respondWithInertia('Chats/ChatView', [
             'chats' => $chats
