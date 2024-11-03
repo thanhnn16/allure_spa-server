@@ -30,10 +30,19 @@ class ChatController extends BaseController
         ]);
     }
 
-    public function getMessages(string $chatId)
+    public function getMessages(string $chatId, Request $request)
     {
-        $messages = $this->chatService->getChatMessages($chatId);
-        return $this->respondWithJson($messages);
+        $page = $request->query('page', 1);
+        $perPage = $request->query('per_page', 20);
+        
+        $messages = $this->chatService->getChatMessages($chatId, $page, $perPage);
+        
+        // Transform response to include pagination info
+        return $this->respondWithJson([
+            'messages' => $messages->items(),
+            'has_more' => $messages->hasMorePages(),
+            'next_page' => $messages->currentPage() + 1
+        ]);
     }
 
     public function sendMessage(Request $request)

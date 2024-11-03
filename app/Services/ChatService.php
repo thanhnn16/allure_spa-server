@@ -30,12 +30,12 @@ class ChatService
             ->get();
     }
 
-    public function getChatMessages($chatId)
+    public function getChatMessages($chatId, $page = 1, $perPage = 20)
     {
         return ChatMessage::where('chat_id', $chatId)
             ->with('sender')
-            ->orderBy('created_at')
-            ->get();
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
     }
 
     public function sendMessage($chatId, $senderId, $message, $attachments = [])
