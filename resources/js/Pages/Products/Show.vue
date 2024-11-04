@@ -110,9 +110,10 @@
         </SectionMain>
 
         <EditProductModal
-            v-if="showEditModal"
+            v-model="showEditModal"
             :product="product"
-            @close="showEditModal = false"
+            :categories="categories"
+            @close="closeEditModal"
             @product-updated="handleProductUpdated"
         />
 
@@ -147,6 +148,7 @@ import { mdiPackageVariantClosed, mdiArrowLeft, mdiPencil, mdiDelete, mdiImage }
 
 const props = defineProps({
     product: Object,
+    categories: Array,
 })
 
 const showEditModal = ref(false)
@@ -166,8 +168,12 @@ const formatDate = (date) => {
     return new Date(date).toLocaleDateString('vi-VN')
 }
 
-const handleProductUpdated = () => {
+const closeEditModal = () => {
     showEditModal.value = false
+}
+
+const handleProductUpdated = () => {
+    closeEditModal()
     router.reload({ only: ['product'] })
 }
 

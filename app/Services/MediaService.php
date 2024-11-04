@@ -16,14 +16,16 @@ class MediaService
     public function upload(UploadedFile $file, string $folder = 'uploads'): string
     {
         try {
+            $folderPath = 'images/' . $folder;
+            
             $fileName = Str::random(40) . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs($folder, $fileName, 'public');
+            $path = $file->storeAs($folderPath, $fileName, 'public');
             
             Log::channel('media_debug')->info('File upload attempt:', [
                 'original_name' => $file->getClientOriginalName(),
                 'size' => $file->getSize(),
                 'mime_type' => $file->getMimeType(),
-                'folder' => $folder,
+                'folder' => $folderPath,
                 'generated_name' => $fileName,
                 'storage_path' => $path
             ]);
@@ -31,7 +33,7 @@ class MediaService
             if (!$path) {
                 Log::channel('media_debug')->error('File upload failed', [
                     'file' => $file->getClientOriginalName(),
-                    'folder' => $folder
+                    'folder' => $folderPath
                 ]);
                 throw new \Exception('Failed to store file');
             }
@@ -41,7 +43,7 @@ class MediaService
             Log::channel('media_debug')->error('File upload exception:', [
                 'message' => $e->getMessage(),
                 'file' => $file->getClientOriginalName(),
-                'folder' => $folder
+                'folder' => $folderPath ?? $folder
             ]);
             throw $e;
         }
@@ -74,7 +76,8 @@ class MediaService
                 'type' => $type
             ]);
 
-            $path = $this->upload($file, strtolower(class_basename($model)) . 's');
+            $folderName = strtolower(Str::plural(class_basename($model)));
+            $path = $this->upload($file, $folderName);
             
             $media = $model->media()->create([
                 'type' => $type,

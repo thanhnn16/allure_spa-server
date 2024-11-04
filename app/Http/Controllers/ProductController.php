@@ -148,7 +148,7 @@ class ProductController extends BaseController
             // Handle images if present
             if ($request->hasFile('images')) {
                 Log::channel('product_debug')->info('Processing images:', [
-                    'files' => collect($request->file('images'))->map(function($file) {
+                    'files' => collect($request->file('images'))->map(function ($file) {
                         return [
                             'name' => $file->getClientOriginalName(),
                             'size' => $file->getSize(),
@@ -158,7 +158,7 @@ class ProductController extends BaseController
                 ]);
 
                 $mediaItems = $this->mediaService->createMultiple($product, $request->file('images'), 'image');
-                
+
                 Log::channel('product_debug')->info('Images processed:', [
                     'media_items_count' => count($mediaItems),
                     'media_items' => collect($mediaItems)->map(fn($item) => [
@@ -179,11 +179,11 @@ class ProductController extends BaseController
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             if ($request->expectsJson()) {
                 return $this->respondWithError('Không thể tạo sản phẩm: ' . $e->getMessage(), 500);
             }
-            
+
             return back()->withErrors(['error' => 'Không thể tạo sản phẩm'])->withInput();
         }
     }
@@ -262,16 +262,17 @@ class ProductController extends BaseController
     public function show(Product $product)
     {
         $product = $this->productService->getProductById($product->id);
+        $categories = $this->productService->getAllCategories();
+
         $product->load(['category', 'media', 'priceHistory', 'attributes']);
 
         if (request()->expectsJson()) {
-            // Remove this transform as it's no longer needed
-            // $product->media->transform(...)
             return $this->respondWithJson($product, 'Product retrieved successfully');
         }
 
         return $this->respondWithInertia('Products/Show', [
-            'product' => $product
+            'product' => $product,
+            'categories' => $categories,
         ]);
     }
 
@@ -393,7 +394,7 @@ class ProductController extends BaseController
             }
 
             $mediaItems = $this->mediaService->createMultiple($product, $request->file('images'), 'image');
-            
+
             Log::channel('product_debug')->info('Images uploaded successfully:', [
                 'media_items_count' => count($mediaItems),
                 'media_items' => collect($mediaItems)->map(fn($item) => [
@@ -407,13 +408,12 @@ class ProductController extends BaseController
                 'media' => $mediaItems,
                 'message' => 'Images uploaded successfully'
             ]);
-
         } catch (\Exception $e) {
             Log::channel('product_debug')->error('Image upload failed:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return $this->respondWithError('Failed to upload images: ' . $e->getMessage(), 500);
         }
     }

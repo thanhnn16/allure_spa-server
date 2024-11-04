@@ -182,11 +182,6 @@ const getImageUrl = (image) => {
     return '/storage/' + image.file_path;
 }
 
-const handleImageError = (event) => {
-    console.error('Image failed to load:', event.target.src);
-    event.target.src = '/images/placeholder-product.jpg';
-}
-
 const setAsMain = async (imageId) => {
     try {
         await axios.put(route('media.reorder'), {
