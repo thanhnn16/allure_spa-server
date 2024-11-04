@@ -408,29 +408,9 @@ class UserController extends BaseController
     /**
      * Show user profile
      */
-    public function profile(Request $request)
+    public function profile()
     {
-        $user = Auth::user();
-        $userData = [
-            'id' => $user->id,
-            'full_name' => $user->full_name,
-            'email' => $user->email,
-            'phone_number' => $user->phone_number,
-            'gender' => $user->gender,
-            'date_of_birth' => $user->date_of_birth,
-            'skin_condition' => $user->skin_condition,
-            'loyalty_points' => $user->loyalty_points,
-            'role' => $user->role,
-            'avatar_url' => $user->avatar_url
-        ];
-
-        if ($request->expectsJson()) {
-            return $this->respondWithJson($userData, 'Profile retrieved successfully');
-        }
-
-        return $this->respondWithInertia('ProfileView', [
-            'userData' => $userData
-        ]);
+        return $this->respondWithInertia('ProfileView');
     }
 
     /**
@@ -444,7 +424,7 @@ class UserController extends BaseController
             ]);
 
             $user = $request->user();
-            
+
             // Xóa avatar cũ nếu có
             if ($user->media) {
                 $this->mediaService->delete($user->media);
@@ -463,7 +443,6 @@ class UserController extends BaseController
                 'user' => $user,
                 'avatar_url' => $media->full_url
             ], 'Avatar uploaded successfully');
-
         } catch (\Exception $e) {
             Log::error('Upload avatar error: ' . $e->getMessage());
             return $this->respondWithJson(

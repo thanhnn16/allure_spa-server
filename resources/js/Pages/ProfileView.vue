@@ -32,20 +32,13 @@ import { useToast } from 'vue-toastification'
 const mainStore = useMainStore()
 const toast = useToast()
 
-const props = defineProps({
-  userData: {
-    type: Object,
-    required: true
-  }
-})
-
 const profileForm = reactive({
-  full_name: props.userData.full_name,
-  email: props.userData.email,
-  phone_number: props.userData.phone_number,
-  gender: props.userData.gender,
-  date_of_birth: props.userData.date_of_birth,
-  skin_condition: props.userData.skin_condition,
+  full_name: '',
+  email: '',
+  phone_number: '',
+  gender: '',
+  date_of_birth: '',
+  skin_condition: '',
   avatar: null
 })
 
@@ -55,6 +48,17 @@ const passwordForm = reactive({
   password_confirmation: ''
 })
 
+const updateFormFromStore = () => {
+  const user = mainStore.user
+  profileForm.full_name = user.full_name
+  profileForm.email = user.email
+  profileForm.phone_number = user.phone_number
+  profileForm.gender = user.gender
+  profileForm.date_of_birth = user.date_of_birth
+  profileForm.skin_condition = user.skin_condition
+  profileForm.avatar = user.avatar_url
+}
+
 const submitProfile = () => {
   const formData = new FormData()
   Object.keys(profileForm).forEach(key => {
@@ -63,16 +67,17 @@ const submitProfile = () => {
     }
   })
 
-  axios.post(`/api/users/${props.userData.id}`, formData, {
+  axios.post(`/api/users/${mainStore.user.id}`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
   })
     .then(response => {
       mainStore.setUser(response.data.data)
+      toast.success('Cập nhật thông tin thành công')
     })
     .catch(error => {
-      // Xử lý lỗi
+      toast.error('Có lỗi xảy ra khi cập nhật thông tin')
     })
 }
 
@@ -134,6 +139,7 @@ const submitPass = () => {
 // Load user info when component mounted
 onMounted(async () => {
   await mainStore.fetchUserInfo()
+  updateFormFromStore()
 })
 </script>
 
@@ -148,7 +154,7 @@ onMounted(async () => {
         <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="handleAvatarUpload" />
       </SectionTitleLineWithButton>
 
-      <UserCard class="mb-6" :userData="userData" />
+      <UserCard class="mb-6" :userData="mainStore.user" />
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CardBox is-form @submit.prevent="submitProfile">
