@@ -415,6 +415,81 @@ class UserController extends BaseController
 
     /**
      * Upload user avatar
+     * 
+     * @OA\Post(
+     *     path="/api/user/avatar",
+     *     summary="Upload avatar cho người dùng",
+     *     description="Upload và cập nhật avatar cho người dùng đã xác thực",
+     *     operationId="uploadUserAvatar",
+     *     tags={"User"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="avatar",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="File ảnh avatar (jpeg, png, jpg, gif, max 2MB)"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Upload avatar thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Avatar uploaded successfully"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="user",
+     *                     ref="#/components/schemas/User"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="avatar_url",
+     *                     type="string",
+     *                     example="http://example.com/storage/images/users/avatar.jpg"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The avatar field is required."),
+     *             @OA\Property(property="status_code", type="integer", example=400),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="data", type="null", example=null)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated."),
+     *             @OA\Property(property="status_code", type="integer", example=401),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="data", type="null", example=null)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Failed to upload avatar"),
+     *             @OA\Property(property="status_code", type="integer", example=500),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="data", type="null", example=null)
+     *         )
+     *     )
+     * )
      */
     public function uploadAvatar(Request $request)
     {

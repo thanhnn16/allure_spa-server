@@ -2440,6 +2440,160 @@
                     }
                 ]
             }
+        },
+        "/api/user/avatar": {
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Upload avatar cho người dùng",
+                "description": "Upload và cập nhật avatar cho người dùng đã xác thực",
+                "operationId": "uploadUserAvatar",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "avatar": {
+                                        "description": "File ảnh avatar (jpeg, png, jpg, gif, max 2MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Upload avatar thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Avatar uploaded successfully"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "$ref": "#/components/schemas/User"
+                                                },
+                                                "avatar_url": {
+                                                    "type": "string",
+                                                    "example": "http://example.com/storage/images/users/avatar.jpg"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The avatar field is required."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 400
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to upload avatar"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 500
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -3176,12 +3330,16 @@
                     },
                     "mediable_id": {
                         "description": "ID đối tượng liên kết",
-                        "type": "integer",
-                        "format": "int64"
+                        "type": "string"
                     },
                     "full_url": {
                         "description": "URL đầy đủ của file",
                         "type": "string"
+                    },
+                    "position": {
+                        "description": "Vị trí của media",
+                        "type": "integer",
+                        "format": "int64"
                     },
                     "created_at": {
                         "description": "Ngày tạo",
