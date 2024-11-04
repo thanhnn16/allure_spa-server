@@ -120,3 +120,26 @@ Route::middleware('throttle:api')->group(function () {
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);
 });
+
+// Public PayOS routes (không cần auth)
+Route::prefix('payos')->group(function () {
+    Route::post('/test', [PayOSController::class, 'testPayment']);
+    Route::post('/verify', [PayOSController::class, 'verifyPayment']);
+});
+
+// Protected PayOS routes (cần auth)
+Route::middleware(['auth:sanctum'])->group(function () {
+    // ... existing authenticated routes ...
+
+    // PayOS routes for authenticated users
+    Route::prefix('payos')->group(function () {
+        Route::post('/process', [PayOSController::class, 'processPayment']);
+    });
+
+    // Invoice payment routes
+    Route::prefix('invoices')->group(function () {
+        // ... existing invoice routes ...
+        Route::get('/{invoice}/payment', [InvoiceController::class, 'getPaymentDetails']);
+        Route::post('/{invoice}/pay', [PayOSController::class, 'processPayment']);
+    });
+});

@@ -20,13 +20,9 @@ class PayOSController extends Controller
     private function createPaymentLink(array $paymentData)
     {
         try {
-            // Log payment request
             Log::info('PayOS Request:', $paymentData);
-
-            // Call PayOS API
+            
             $response = $this->payOS->createPaymentLink($paymentData);
-
-            // Log PayOS response
             Log::info('PayOS Response:', $response);
 
             if (isset($response['checkoutUrl'])) {
@@ -58,18 +54,13 @@ class PayOSController extends Controller
 
     public function testPayment(Request $request)
     {
-        // Generate orderCode as timestamp + random string
         $orderCode = 'TEST_' . time() . '_' . substr(md5(uniqid()), 0, 8);
-
-        // Validate input data
         $amount = intval($request->amount ?? 2000);
-        $description = $request->description ?? 'Test payment';
 
-        // Prepare payment data according to PayOS API docs
         $paymentData = [
             'orderCode' => $orderCode,
             'amount' => $amount,
-            'description' => $description,
+            'description' => $request->description ?? 'Test payment',
             'returnUrl' => $request->returnUrl,
             'cancelUrl' => $request->cancelUrl,
             'buyerName' => $request->buyerName ?? null,
@@ -110,9 +101,9 @@ class PayOSController extends Controller
             ];
 
             $result = $this->createPaymentLink($paymentData);
-            
+
             if ($result['success']) {
-                // Store payment information
+                // Create payment history record
                 PaymentHistory::create([
                     'invoice_id' => $invoice->id,
                     'amount' => $amount / 100, // Convert back to normal currency
@@ -122,7 +113,7 @@ class PayOSController extends Controller
                 ]);
             }
 
-            return response()->json($result, $result['success'] ? 200 : 400);
+            return response()->json($result);
         } catch (\Exception $e) {
             Log::error('PayOS Process Payment Error:', [
                 'message' => $e->getMessage(),
@@ -140,19 +131,15 @@ class PayOSController extends Controller
     {
         try {
             $orderCode = $request->orderCode;
-            
             if (!$orderCode) {
                 throw new \Exception('Thiếu mã đơn hàng');
             }
 
-            // Verify payment status with PayOS
             $response = $this->payOS->getPaymentLinkInformation($orderCode);
             Log::info('PayOS Verification Response:', $response);
 
             if ($response && $response['status'] === 'PAID') {
-                // Handle successful payment
                 if (str_starts_with($orderCode, 'INV_')) {
-                    // Update invoice payment
                     $this->handleInvoicePayment($orderCode, $response);
                 }
 
@@ -189,7 +176,6 @@ class PayOSController extends Controller
 
     private function handleInvoicePayment($orderCode, $paymentResponse)
     {
-        // Extract invoice ID from orderCode
         preg_match('/INV_([^_]+)_/', $orderCode, $matches);
         $invoiceId = $matches[1] ?? null;
 
