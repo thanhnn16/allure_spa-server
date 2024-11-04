@@ -81,7 +81,7 @@ class MediaService
             
             $media = $model->media()->create([
                 'type' => $type,
-                'file_path' => $path
+                'file_path' => '/' . $path
             ]);
 
             Log::channel('media_debug')->info('Media record created:', [
