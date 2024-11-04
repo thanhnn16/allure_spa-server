@@ -3,20 +3,17 @@ import { ref, reactive, computed, defineComponent, h } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 import {
     mdiAccount, mdiPackageVariant, mdiReceipt, mdiGift, mdiClose, mdiDelete,
-    mdiAlert, mdiPencil, mdiTicketPercent
+    mdiAlert, mdiPencil, mdiTicketPercent, mdiCamera
 } from '@mdi/js'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
-import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.vue'
 import CardBox from '@/Components/CardBox.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import { Head } from '@inertiajs/vue3'
 import NotificationBar from '@/Components/NotificationBar.vue'
 import axios from 'axios'
-import { usePage } from '@inertiajs/vue3'
-
-const page = usePage()
+import UserAvatar from '@/Components/UserAvatar.vue'
 
 const props = defineProps({
     user: Object,
@@ -257,7 +254,7 @@ const submitAddress = async () => {
     } catch (error) {
         notification.value = {
             type: 'danger',
-            message: error.response?.data?.message || 'Có lỗi xảy ra'
+            message: error.response?.data?.message || 'C lỗi xảy ra'
         }
     }
 }
@@ -295,6 +292,44 @@ const formatAddressType = (type) => {
             return type;
     }
 }
+
+const handleAvatarError = (event) => {
+    const target = event.target
+    target.style.display = 'none'
+    target.parentElement.querySelector('div').style.display = 'flex'
+}
+
+const handleAvatarUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    try {
+        const response = await axios.post('/api/user/avatar', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+
+        // Update user data with new avatar
+        if (response.data.data.user) {
+            Object.assign(props.user, response.data.data.user)
+        }
+
+        notification.value = {
+            type: 'success',
+            message: 'Avatar đã được cập nhật thành công'
+        }
+    } catch (error) {
+        console.error('Upload error:', error)
+        notification.value = {
+            type: 'danger',
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi tải lên avatar'
+        }
+    }
+}
 </script>
 <template>
     <LayoutAuthenticated>
@@ -305,10 +340,22 @@ const formatAddressType = (type) => {
             <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6 mb-6">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center space-x-4">
-                        <div
-                            class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                            <BaseIcon :path="mdiAccount" class="w-8 h-8 text-blue-500 dark:text-blue-400" />
+                        <!-- Avatar section -->
+                        <div class="relative">
+                            <UserAvatar 
+                                :fullName="safeUser.full_name" 
+                                :avatarUrl="safeUser.avatar_url"
+                                size="lg" />
+                            
+                            <!-- Upload button overlay -->
+                            <label class="absolute bottom-0 right-0 bg-blue-500 dark:bg-blue-600 
+                                rounded-full p-1.5 cursor-pointer hover:bg-blue-600 dark:hover:bg-blue-700 
+                                transition-colors shadow-md">
+                                <input type="file" @change="handleAvatarUpload" accept="image/*" class="hidden">
+                                <BaseIcon :path="mdiCamera" class="w-4 h-4 text-white" />
+                            </label>
                         </div>
+
                         <div>
                             <h1 class="text-2xl font-bold dark:text-white">{{ safeUser.full_name }}</h1>
                             <p class="text-gray-600 dark:text-gray-400">{{ safeUser.phone_number }}</p>
@@ -396,8 +443,7 @@ const formatAddressType = (type) => {
                                             {{ address.district }}, {{ address.province }}
                                         </p>
                                         <div class="flex space-x-2 text-sm">
-                                            <span v-if="address.is_default" 
-                                                class="text-blue-600 dark:text-blue-400">
+                                            <span v-if="address.is_default" class="text-blue-600 dark:text-blue-400">
                                                 Địa chỉ mặc định
                                             </span>
                                             <span v-if="address.is_temporary"
@@ -606,5 +652,14 @@ const formatAddressType = (type) => {
 
 .dark ::-webkit-scrollbar-thumb:hover {
     background: #64748b;
+}
+
+/* Add these styles */
+.avatar-upload-button {
+    transition: opacity 0.2s;
+}
+
+.avatar-upload-button:hover {
+    opacity: 0.9;
 }
 </style>

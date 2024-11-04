@@ -49,7 +49,7 @@ class User extends Authenticatable
         'full_name',
         'gender',
         'date_of_birth',
-        'image_id',
+        'media_id',
         'loyalty_points',
         'skin_condition',
         'note',
@@ -120,7 +120,7 @@ class User extends Authenticatable
 
     public function media()
     {
-        return $this->belongsTo(Media::class, 'image_id');
+        return $this->belongsTo(Media::class, 'media_id');
     }
 
     public function getAvatarUrlAttribute()

@@ -251,7 +251,7 @@ onMounted(() => {
                         placeholder:dark:text-slate-500">
                     
                     <select v-model="form.per_page" @change="handlePerPageChange" 
-                        class="px-4 py-2 border rounded-md dark:bg-slate-800 
+                        class="px-10 py-2 border rounded-md dark:bg-slate-800 
                         dark:border-slate-700 dark:text-slate-300">
                         <option :value="10">Xem 10 mỗi trang</option>
                         <option :value="25">Xem 25 mỗi trang</option>

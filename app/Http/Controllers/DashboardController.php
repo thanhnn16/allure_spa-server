@@ -57,13 +57,16 @@ class DashboardController extends Controller
             $endDate = Carbon::now();
             $groupBy = $this->getGroupBy($period);
             $dateFormat = $this->getDateFormat($period);
+
             $result = Invoice::whereBetween('created_at', [$startDate, $endDate])
+                ->whereIn('status', ['paid', 'partial'])
                 ->groupBy($groupBy)
                 ->orderBy($groupBy)
                 ->get([
                     DB::raw("DATE_FORMAT(created_at, '{$dateFormat}') as date"),
-                    DB::raw('SUM(total_amount) as total_sales')
+                    DB::raw('SUM(paid_amount) as total_sales')
                 ]);
+
             return $result->map(function ($item) {
                 return [
                     'date' => $item->date,
@@ -94,13 +97,15 @@ class DashboardController extends Controller
     {
         switch ($period) {
             case 'week':
+                return '%d/%m';
             case 'month':
-                return '%Y-%m-%d';
+                return '%d/%m';
             case 'quarter':
+                return '%m/%Y';
             case 'year':
-                return '%Y-%m';
+                return '%m/%Y';
             default:
-                return '%Y-%m-%d';
+                return '%d/%m';
         }
     }
 }

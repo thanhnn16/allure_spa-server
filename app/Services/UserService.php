@@ -40,6 +40,8 @@ class UserService
             $query->withTrashed();
         }
 
+        $query->with('media');
+
         return $query;
     }
 

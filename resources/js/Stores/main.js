@@ -6,7 +6,7 @@ export const useMainStore = defineStore('main', () => {
   const user = ref({
     full_name: '',
     email: '',
-    avatar_url: null,
+    avatar_url: '',
     role: '',
     phone_number: '',
     gender: '',

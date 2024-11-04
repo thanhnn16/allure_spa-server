@@ -1,40 +1,47 @@
 <template>
     <LayoutAuthenticated>
+
         <Head :title="'Chi tiết sản phẩm: ' + product.name" />
         <SectionMain>
             <div class="flex justify-between items-center mb-6">
                 <SectionTitleLineWithButton :icon="mdiPackageVariantClosed" :title="'Chi tiết sản phẩm'" main />
-                <BaseButton :icon="mdiArrowLeft" label="Quay lại" color="info" small @click="router.visit(route('products.index'))" />
+                <BaseButton :icon="mdiArrowLeft" label="Quay lại" color="info" small
+                    @click="router.visit(route('products.index'))" />
             </div>
 
-            <CardBox class="mb-6">
+            <CardBox class="mb-6 dark:bg-dark-surface">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-4">
-                        <Carousel v-if="product.media && product.media.length > 0" :items="processedMedia" :settings="carouselSettings">
+                        <Carousel v-if="product.media && product.media.length > 0" :items="processedMedia"
+                            :settings="carouselSettings">
                         </Carousel>
-                        <img v-else src="/images/placeholder-product.jpg" :alt="product.name" class="w-full h-auto rounded-lg shadow-lg">
+                        <img v-else src="/images/placeholder-product.jpg" :alt="product.name"
+                            class="w-full h-auto rounded-lg shadow-lg">
                         <div class="flex justify-between">
                             <div class="space-x-2">
-                                <BaseButton :icon="mdiImage" label="Quản lý ảnh" color="success" @click="showManageImagesModal = true" />
-                                <BaseButton :icon="mdiPencil" label="Chỉnh sửa" color="info" @click="showEditModal = true" />
+                                <BaseButton :icon="mdiImage" label="Quản lý ảnh" color="success"
+                                    @click="showManageImagesModal = true" />
+                                <BaseButton :icon="mdiPencil" label="Chỉnh sửa" color="info"
+                                    @click="showEditModal = true" />
                             </div>
                             <BaseButton :icon="mdiDelete" label="Xóa" color="danger" @click="showDeleteModal = true" />
                         </div>
                     </div>
                     <div class="space-y-4">
-                        <h3 class="text-2xl font-semibold">{{ product.name }}</h3>
-                        <p class="text-gray-600">{{ product.category ? product.category.category_name : 'Không có danh mục' }}</p>
+                        <h3 class="text-2xl font-semibold dark:text-gray-100">{{ product.name }}</h3>
+                        <p class="text-gray-600 dark:text-gray-400">{{ product.category ? product.category.category_name
+                            : 'Không có danh mục' }}</p>
                         <div>
-                            <h4 class="font-medium">Giá hiện tại:</h4>
-                            <p class="text-2xl font-bold text-green-600">{{ formatPrice(product.price) }}</p>
+                            <h4 class="font-medium dark:text-gray-300">Giá hiện tại:</h4>
+                            <p class="text-2xl font-bold text-green-600 dark:text-green-500">{{ formatPrice(product.price) }}</p>
                         </div>
                         <div>
-                            <h4 class="font-medium">Số lượng:</h4>
-                            <p>{{ product.quantity }}</p>
+                            <h4 class="font-medium dark:text-gray-300">Số lượng:</h4>
+                            <p class="dark:text-gray-400">{{ product.quantity }}</p>
                         </div>
                         <div v-if="product.brand_description">
-                            <h4 class="font-medium">Mô tả thương hiệu:</h4>
-                            <p>{{ product.brand_description }}</p>
+                            <h4 class="font-medium dark:text-gray-300">Mô tả thương hiệu:</h4>
+                            <p class="dark:text-gray-400">{{ product.brand_description }}</p>
                         </div>
                         <div v-if="product.usage">
                             <h4 class="font-medium">Cách sử dụng:</h4>
@@ -68,92 +75,93 @@
                 </div>
             </CardBox>
 
-            <CardBox class="mb-6">
-                <h3 class="text-xl font-semibold mb-4">Lịch sử giá</h3>
+            <CardBox class="mb-6 dark:bg-dark-surface">
+                <h3 class="text-xl font-semibold mb-4 dark:text-gray-100">Lịch sử giá</h3>
                 <div class="overflow-x-auto">
-                    <table v-if="product.price_history && product.price_history.length > 0" 
-                           class="min-w-full">
-                        <thead>
-                            <tr class="border-b border-gray-200">
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Giá</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Ngày bắt đầu</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Ngày kết thúc</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(history, index) in sortedPriceHistory" 
-                                :key="history.id"
-                                class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                                :class="{'bg-green-50 hover:bg-green-100': !history.effective_to}">
-                                <td class="px-6 py-4">
-                                    <span :class="{'font-semibold text-green-600': !history.effective_to}">
-                                        {{ formatPrice(history.price) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    {{ formatDateTime(history.effective_from) }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    {{ history.effective_to ? formatDateTime(history.effective_to) : '-' }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span v-if="!history.effective_to" 
-                                          class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                        Đang áp dụng
-                                    </span>
-                                    <span v-else 
-                                          class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                                        Đã kết thúc
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <template v-if="sortedPriceHistory && sortedPriceHistory.length > 0">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+                            <thead>
+                                <tr class="border-b border-gray-200 dark:border-dark-border">
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                                        Giá</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                                        Ngày bắt đầu</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                                        Ngày kết thúc</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                                        Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(history, index) in sortedPriceHistory" :key="history.id"
+                                    class="border-b border-gray-100 hover:bg-gray-50 transition-colors dark:border-dark-border dark:hover:bg-dark-bg"
+                                    :class="{ 'bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30': !history.effective_to }">
+                                    <td class="px-6 py-4">
+                                        <span :class="{ 'font-semibold text-green-600': !history.effective_to }">
+                                            {{ formatPrice(history.price) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ formatDateTime(history.effective_from) }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ history.effective_to ? formatDateTime(history.effective_to) : '-' }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span v-if="!history.effective_to"
+                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400">
+                                            Đang áp dụng
+                                        </span>
+                                        <span v-else
+                                            class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+                                            Đã kết thúc
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </template>
                     <p v-else class="text-gray-500 italic">Chưa có dữ liệu lịch sử giá.</p>
                 </div>
             </CardBox>
 
-            <CardBox class="mb-6">
-                <h3 class="text-xl font-semibold mb-4">Thuộc tính sản phẩm</h3>
-                <table v-if="product.attributes && product.attributes.length > 0" class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên thuộc tính</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá trị</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr v-for="attribute in product.attributes" :key="attribute.id">
-                            <td class="px-6 py-4 whitespace-nowrap">{{ attribute.name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ attribute.pivot.attribute_value }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <CardBox class="mb-6 dark:bg-dark-surface">
+                <h3 class="text-xl font-semibold mb-4 dark:text-gray-100">Thuộc tính sản phẩm</h3>
+                <template v-if="product.attributes && product.attributes.length > 0">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+                        <thead class="bg-gray-50 dark:bg-dark-bg">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Tên thuộc tính</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Giá trị</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200 dark:bg-dark-surface dark:divide-dark-border">
+                            <tr v-for="attribute in product.attributes" :key="attribute.id">
+                                <td class="px-6 py-4 whitespace-nowrap">{{ attribute.name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ attribute.pivot.attribute_value }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </template>
                 <p v-else class="text-gray-500 italic">Chưa có dữ liệu thuộc tính sản phẩm.</p>
             </CardBox>
         </SectionMain>
 
-        <EditProductModal
-            v-model="showEditModal"
-            :product="product"
-            :categories="categories"
-            @close="closeEditModal"
-            @product-updated="handleProductUpdated"
-        />
+        <EditProductModal v-model="showEditModal" :product="product" :categories="categories" @close="closeEditModal"
+            @product-updated="handleProductUpdated" />
 
-        <DeleteConfirmModal
-            v-if="showDeleteModal"
-            :product="product"
-            @close="showDeleteModal = false"
-            @product-deleted="handleProductDeleted"
-        />
+        <DeleteConfirmModal v-if="showDeleteModal" :product="product" @close="showDeleteModal = false"
+            @product-deleted="handleProductDeleted" />
 
-        <ManageImagesModal
-            v-model="showManageImagesModal"
-            :product="product"
-            @updated="handleImagesUpdated"
-        />
+        <ManageImagesModal v-model="showManageImagesModal" :product="product" @updated="handleImagesUpdated" />
     </LayoutAuthenticated>
 </template>
 
@@ -259,7 +267,8 @@ table {
     border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
     border: none;
 }
 </style>

@@ -505,14 +505,14 @@ class UserController extends BaseController
                 $this->mediaService->delete($user->media);
             }
 
-            // Upload avatar mới - luôn sử dụng type 'image' cho avatar
+            // Upload avatar mới
             $media = $this->mediaService->create($user, $request->file('avatar'), 'image');
 
             // Cập nhật user
-            $user->image_id = $media->id;
+            $user->media_id = $media->id;
             $user->save();
 
-            $user->load('media'); // Eager load media relationship
+            $user->load('media');
 
             return $this->respondWithJson([
                 'user' => $user,

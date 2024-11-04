@@ -83,7 +83,7 @@ const viewDetails = (itemId) => {
           <TableCheckboxCell @checked="checked($event, item)" />
         </td>
         <td class="border-b-0 lg:w-6 before:hidden">
-          <UserAvatar :fullName="item.full_name || ''" class="w-12 h-12 mx-auto" />
+          <UserAvatar :fullName="item.full_name" :avatarUrl="item.avatar_url" size="sm" class="mx-auto" />
         </td>
         <td data-label="Họ và tên">
           {{ item.full_name }}
@@ -104,11 +104,7 @@ const viewDetails = (itemId) => {
           <div class="flex items-center justify-start lg:justify-end">
             <BaseButtons type="justify-start lg:justify-end" no-wrap>
               <Link :href="route('users.show', item.id)" class="inline-flex">
-                <BaseButton
-                  color="info"
-                  :icon="mdiEye"
-                  small
-                />
+              <BaseButton color="info" :icon="mdiEye" small />
               </Link>
             </BaseButtons>
           </div>

@@ -31,7 +31,11 @@ const userRole = computed(() => {
 <template>
   <CardBox>
     <BaseLevel type="justify-around lg:justify-center">
-      <UserAvatarCurrentUser class="lg:mx-12" :avatar-url="mainStore.avatarUrl" />
+      <UserAvatarCurrentUser 
+        class="lg:mx-12" 
+        :avatar-url="mainStore.user.avatar_url"
+        :fullName="userName"
+        size="lg" />
       <div class="space-y-3 text-center md:text-left lg:mx-12">
         <h1 class="text-2xl">
           Xin chào, <b>{{ userName }}</b>!

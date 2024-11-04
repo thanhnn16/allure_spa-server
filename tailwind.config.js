@@ -18,6 +18,9 @@ module.exports = {
             colors: {
                 'dark-bg': '#1a1b1e',
                 'dark-surface': '#2c2e33',
+                'dark-border': '#404040',
+                'dark-text': '#e5e5e5',
+                'dark-muted': '#6b7280',
             },
             zIndex: {
                 "-1": "-1",

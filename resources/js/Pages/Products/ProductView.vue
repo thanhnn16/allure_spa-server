@@ -9,7 +9,7 @@
                 <BaseButton :icon="mdiTableBorder" label="Nhập từ Excel" color="success" rounded-full small />
             </SectionTitleLineWithButton>
 
-            <CardBox class="mb-6 px-4 py-4" has-table>
+            <CardBox class="mb-6 px-4 py-4 dark:bg-dark-surface" has-table>
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center space-x-4">
                         <BaseButton :icon="mdiFilter" label="Bộ lọc" @click="toggleFilters" />
@@ -18,8 +18,8 @@
                 </div>
                 <div v-if="showFilters" class="mb-4">
                     <div class="mb-4">
-                        <label class="block mb-2">Danh mục</label>
-                        <select v-model="form.category" class="w-full px-4 py-2 border rounded-md">
+                        <label class="block mb-2 dark:text-gray-300">Danh mục</label>
+                        <select v-model="form.category" class="w-full px-4 py-2 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
                             <option value="">Tất cả danh mục</option>
                             <option v-for="category in categories" :key="category.id" :value="category.id">
                                 {{ category.category_name }}
@@ -30,16 +30,16 @@
                 </div>
                 <div class="my-4">
                     <input v-model="form.search" type="text" placeholder="Tìm kiếm sản phẩm..."
-                        class="w-full px-4 py-2 mb-4 border rounded-md">
-                    <select v-model="form.per_page" @change="handlePerPageChange" class="px-8 py-2 border rounded-md">
+                        class="w-full px-4 py-2 mb-4 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300 dark:placeholder-gray-500">
+                    <select v-model="form.per_page" @change="handlePerPageChange" class="px-8 py-2 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
                         <option :value="10">Xem 10 mỗi trang</option>
                         <option :value="25">Xem 25 mỗi trang</option>
                         <option :value="50">Xem 50 mỗi trang</option>
                     </select>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-300">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-dark-surface dark:text-gray-300">
                             <tr>
                                 <th scope="col" class="px-6 py-3 w-24">Ảnh</th>
                                 <th @click="sort('name')" scope="col" class="px-6 py-3 cursor-pointer">
@@ -68,12 +68,12 @@
                         </thead>
                         <tbody>
                             <tr v-for="product in products.data" :key="product.id"
-                                class="bg-white border-b hover:bg-gray-50">
+                                class="bg-white border-b hover:bg-gray-50 dark:bg-dark-surface dark:border-dark-border dark:hover:bg-dark-bg">
                                 <td class="px-6 py-4">
                                     <img :src="getProductImage(product)" :alt="product.name"
                                         class="w-16 h-16 object-cover rounded-md">
                                 </td>
-                                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
                                     {{ product.name }}
                                 </td>
                                 <td class="px-6 py-4">
