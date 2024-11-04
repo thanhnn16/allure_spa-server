@@ -107,6 +107,9 @@ Route::middleware('throttle:api')->group(function () {
         // Add time slot routes
         Route::get('/time-slots', [TimeSlotController::class, 'index']);
         Route::get('/time-slots/{timeSlot}', [TimeSlotController::class, 'show']);
+
+        // Product routes
+        Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);
