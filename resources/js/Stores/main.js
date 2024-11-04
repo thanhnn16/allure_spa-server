@@ -3,62 +3,46 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 
 export const useMainStore = defineStore('main', () => {
-  const userName = ref('')
-  const userEmail = ref('')
+  const user = ref({
+    full_name: '',
+    email: '',
+    avatar_url: null,
+    role: '',
+    phone_number: '',
+    gender: '',
+    date_of_birth: '',
+    skin_condition: ''
+  })
 
-  const userAvatar = computed(
-    () =>
-      `https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail.value.replace(
-        /[^a-z0-9]+/gi,
-        '-'
-      )}`
-  )
-
-  const isFieldFocusRegistered = ref(false)
-  const clients = ref([])
-  const history = ref([])
-  const users = ref([])
+  const fullName = computed(() => user.value.full_name)
+  const avatarUrl = computed(() => user.value.avatar_url ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.value.email.replace(/[^a-z0-9]+/gi, '-')}`)
 
   function setUser(payload) {
-    if (payload.full_name) {
-      userName.value = payload.full_name
-    }
-    if (payload.email) {
-      userEmail.value = payload.email
+    user.value = {
+      ...user.value,
+      ...payload
     }
   }
 
-  function fetchSampleHistory() {
-    axios
-      .get(`data-sources/history.json`)
-      .then((result) => {
-        history.value = result?.data?.data
-      })
-      .catch((error) => {
-        alert(error.message)
-      })
-  }
-
-  function fetchUsers() {
-    return axios.get(route('users.index'))
-      .then((response) => {
-        users.value = response.data.users || []
-      })
-      .catch((error) => {
-        console.error('Error fetching users:', error)
-        users.value = []
-      })
+  // Lấy thông tin user từ API
+  async function fetchUserInfo() {
+    try {
+      const response = await axios.get('/api/user/info')
+      if (response.data.success) {
+        console.log(response.data.data)
+        setUser(response.data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error)
+    }
   }
 
   return {
-    userName,
-    userEmail,
-    userAvatar,
-    isFieldFocusRegistered,
-    history,
-    users,
+    user,
+    fullName,
+    avatarUrl,
     setUser,
-    fetchSampleHistory,
-    fetchUsers
+    fetchUserInfo
   }
 })

@@ -1,7 +1,20 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
+import { Head } from '@inertiajs/vue3'
 import { useMainStore } from '@/Stores/main'
-import { mdiAccount, mdiMail, mdiAsterisk, mdiFormTextboxPassword, mdiGithub } from '@mdi/js'
+import {
+  mdiAccount,
+  mdiMail,
+  mdiAsterisk,
+  mdiFormTextboxPassword,
+  mdiPhone,
+  mdiGenderMaleFemale,
+  mdiCalendar,
+  mdiPencil,
+  mdiAccountTie,
+  mdiClockOutline,
+  mdiUpload
+} from '@mdi/js'
 import SectionMain from '@/Components/SectionMain.vue'
 import CardBox from '@/Components/CardBox.vue'
 import BaseDivider from '@/Components/BaseDivider.vue'
@@ -13,12 +26,27 @@ import BaseButtons from '@/Components/BaseButtons.vue'
 import UserCard from '@/Components/UserCard.vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.vue'
+import axios from 'axios'
+import { useToast } from 'vue-toastification'
 
 const mainStore = useMainStore()
+const toast = useToast()
+
+const props = defineProps({
+  userData: {
+    type: Object,
+    required: true
+  }
+})
 
 const profileForm = reactive({
-  name: mainStore.userName,
-  email: mainStore.userEmail
+  full_name: props.userData.full_name,
+  email: props.userData.email,
+  phone_number: props.userData.phone_number,
+  gender: props.userData.gender,
+  date_of_birth: props.userData.date_of_birth,
+  skin_condition: props.userData.skin_condition,
+  avatar: null
 })
 
 const passwordForm = reactive({
@@ -28,105 +56,158 @@ const passwordForm = reactive({
 })
 
 const submitProfile = () => {
-  mainStore.setUser(profileForm)
+  const formData = new FormData()
+  Object.keys(profileForm).forEach(key => {
+    if (profileForm[key] !== null) {
+      formData.append(key, profileForm[key])
+    }
+  })
+
+  axios.post(`/api/users/${props.userData.id}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+    .then(response => {
+      mainStore.setUser(response.data.data)
+    })
+    .catch(error => {
+      // Xử lý lỗi
+    })
+}
+
+const handleAvatarUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // Kiểm tra kích thước file (giới hạn 2MB)
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error('Kích thước file không được vượt quá 2MB')
+    return
+  }
+
+  // Kiểm tra định dạng file
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg']
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('Chỉ chấp nhận file ảnh định dạng JPG, PNG hoặc GIF')
+    return
+  }
+
+  const formData = new FormData()
+  formData.append('avatar', file)
+
+  try {
+    toast.info('Đang tải ảnh lên...')
+
+    const response = await axios.post('/api/users/upload-avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json'
+      }
+    })
+
+    if (response.data.success) {
+      mainStore.setUser(response.data.data.user)
+      profileForm.avatar = response.data.data.avatar_url
+      event.target.value = ''
+      toast.success('Tải ảnh đại diện thành công')
+    }
+  } catch (error) {
+    console.error('Upload error:', error)
+    const errorMessage = error.response?.data?.message || 'Không thể tải lên ảnh đại diện'
+    toast.error(errorMessage)
+  }
 }
 
 const submitPass = () => {
-  //
+  axios.post('/api/change-password', passwordForm)
+    .then(response => {
+      passwordForm.password_current = ''
+      passwordForm.password = ''
+      passwordForm.password_confirmation = ''
+    })
+    .catch(error => {
+      // Xử lý lỗi
+    })
 }
+
+// Load user info when component mounted
+onMounted(async () => {
+  await mainStore.fetchUserInfo()
+})
 </script>
 
 <template>
   <LayoutAuthenticated>
+
+    <Head title="Thông tin cá nhân" />
     <SectionMain>
-      <SectionTitleLineWithButton :icon="mdiAccount" title="Profile" main>
-        <BaseButton
-          href="https://github.com/justboil/admin-one-vue-tailwind"
-          target="_blank"
-          :icon="mdiGithub"
-          label="Star on GitHub"
-          color="contrast"
-          rounded-full
-          small
-        />
+      <SectionTitleLineWithButton :icon="mdiAccount" title="Thông tin cá nhân" main>
+        <BaseButton :icon="mdiUpload" label="Tải lên ảnh đại diện" color="info" rounded-full small
+          @click="$refs.avatarInput.click()" />
+        <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="handleAvatarUpload" />
       </SectionTitleLineWithButton>
 
-      <UserCard class="mb-6" />
+      <UserCard class="mb-6" :userData="userData" />
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CardBox is-form @submit.prevent="submitProfile">
-          <FormField label="Avatar" help="Max 500kb">
-            <FormFilePicker label="Upload" />
+          <FormField label="Họ và tên" help="Bắt buộc">
+            <FormControl v-model="profileForm.full_name" :icon="mdiAccount" name="full_name" required />
           </FormField>
 
-          <FormField label="Name" help="Required. Your name">
-            <FormControl
-              v-model="profileForm.name"
-              :icon="mdiAccount"
-              name="username"
-              required
-              autocomplete="username"
-            />
+          <FormField label="Email">
+            <FormControl v-model="profileForm.email" :icon="mdiMail" type="email" name="email" autocomplete="email" />
           </FormField>
-          <FormField label="E-mail" help="Required. Your e-mail">
-            <FormControl
-              v-model="profileForm.email"
-              :icon="mdiMail"
-              type="email"
-              name="email"
-              required
-              autocomplete="email"
-            />
+
+          <FormField label="Số điện thoại">
+            <FormControl v-model="profileForm.phone_number" :icon="mdiPhone" name="phone_number" />
+          </FormField>
+
+          <FormField label="Giới tính">
+            <FormControl v-model="profileForm.gender" :icon="mdiGenderMaleFemale" type="select" :options="[
+              { value: 'male', label: 'Nam' },
+              { value: 'female', label: 'Nữ' },
+              { value: 'other', label: 'Khác' }
+            ]" name="gender" />
+          </FormField>
+
+          <FormField label="Ngày sinh">
+            <FormControl v-model="profileForm.date_of_birth" :icon="mdiCalendar" type="date" name="date_of_birth" />
+          </FormField>
+
+          <FormField label="Tình trạng da">
+            <FormControl v-model="profileForm.skin_condition" name="skin_condition" />
           </FormField>
 
           <template #footer>
             <BaseButtons>
-              <BaseButton color="info" type="submit" label="Submit" />
-              <BaseButton color="info" label="Options" outline />
+              <BaseButton color="info" type="submit" label="Cập nhật" />
             </BaseButtons>
           </template>
         </CardBox>
 
         <CardBox is-form @submit.prevent="submitPass">
-          <FormField label="Current password" help="Required. Your current password">
-            <FormControl
-              v-model="passwordForm.password_current"
-              :icon="mdiAsterisk"
-              name="password_current"
-              type="password"
-              required
-              autocomplete="current-password"
-            />
+          <FormField label="Mật khẩu hiện tại" help="Bắt buộc nhập mật khẩu hiện tại">
+            <FormControl v-model="passwordForm.password_current" :icon="mdiAsterisk" name="password_current"
+              type="password" required autocomplete="current-password" />
           </FormField>
 
           <BaseDivider />
 
-          <FormField label="New password" help="Required. New password">
-            <FormControl
-              v-model="passwordForm.password"
-              :icon="mdiFormTextboxPassword"
-              name="password"
-              type="password"
-              required
-              autocomplete="new-password"
-            />
+          <FormField label="Mật khẩu mới" help="Bắt buộc nhập mật khẩu mới">
+            <FormControl v-model="passwordForm.password" :icon="mdiFormTextboxPassword" name="password" type="password"
+              required autocomplete="new-password" />
           </FormField>
 
-          <FormField label="Confirm password" help="Required. New password one more time">
-            <FormControl
-              v-model="passwordForm.password_confirmation"
-              :icon="mdiFormTextboxPassword"
-              name="password_confirmation"
-              type="password"
-              required
-              autocomplete="new-password"
-            />
+          <FormField label="Xác nhận mật khẩu" help="Nhập lại mật khẩu mới">
+            <FormControl v-model="passwordForm.password_confirmation" :icon="mdiFormTextboxPassword"
+              name="password_confirmation" type="password" required autocomplete="new-password" />
           </FormField>
 
           <template #footer>
             <BaseButtons>
-              <BaseButton type="submit" color="info" label="Submit" />
-              <BaseButton color="info" label="Options" outline />
+              <BaseButton type="submit" color="info" label="Đổi mật khẩu" />
             </BaseButtons>
           </template>
         </CardBox>

@@ -1,41 +1,56 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useMainStore } from '@/Stores/main'
-import { mdiCheckDecagram } from '@mdi/js'
+import { mdiCheckDecagram, mdiAccountTie, mdiClockOutline } from '@mdi/js'
 import BaseLevel from '@/Components/BaseLevel.vue'
 import UserAvatarCurrentUser from '@/Components/UserAvatarCurrentUser.vue'
 import CardBox from '@/Components/CardBox.vue'
-import FormCheckRadio from '@/Components/FormCheckRadio.vue'
 import PillTag from '@/Components/PillTag.vue'
+import BaseIcon from '@/Components/BaseIcon.vue'
 
 const mainStore = useMainStore()
 
-const userName = computed(() => mainStore.userName)
+const props = defineProps({
+  userData: {
+    type: Object,
+    required: true
+  }
+})
 
-const userSwitchVal = ref(false)
+const userName = computed(() => mainStore.fullName)
+const userRole = computed(() => {
+  const roles = {
+    'admin': 'Quản trị viên',
+    'staff': 'Nhân viên',
+    'user': 'Khách hàng'
+  }
+  return roles[mainStore.user.role] || mainStore.user.role
+})
 </script>
 
 <template>
   <CardBox>
     <BaseLevel type="justify-around lg:justify-center">
-      <UserAvatarCurrentUser class="lg:mx-12" />
+      <UserAvatarCurrentUser class="lg:mx-12" :avatar-url="mainStore.avatarUrl" />
       <div class="space-y-3 text-center md:text-left lg:mx-12">
-        <div class="flex justify-center md:block">
-          <FormCheckRadio
-            v-model="userSwitchVal"
-            name="notifications-switch"
-            type="switch"
-            label="Notifications"
-            :input-value="true"
-          />
-        </div>
         <h1 class="text-2xl">
-          Howdy, <b>{{ userName }}</b
-          >!
+          Xin chào, <b>{{ userName }}</b>!
         </h1>
-        <p>Last login <b>12 mins ago</b> from <b>127.0.0.1</b></p>
+
+        <!-- Role -->
+        <div class="flex items-center justify-center md:justify-start text-gray-500">
+          <BaseIcon :path="mdiAccountTie" class="mr-2" size="20" />
+          <span>{{ userRole }}</span>
+        </div>
+
+        <!-- Email -->
+        <div v-if="mainStore.user.email" class="flex items-center justify-center md:justify-start text-gray-500">
+          <BaseIcon :path="mdiClockOutline" class="mr-2" size="20" />
+          <span>{{ mainStore.user.email }}</span>
+        </div>
+
         <div class="flex justify-center md:block">
-          <PillTag label="Verified" color="info" :icon="mdiCheckDecagram" />
+          <PillTag v-if="mainStore.user.email_verified_at" label="Đã xác thực" color="info" :icon="mdiCheckDecagram" />
         </div>
       </div>
     </BaseLevel>

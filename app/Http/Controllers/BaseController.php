@@ -43,8 +43,8 @@ class BaseController extends Controller
         $status = $statusCodes[$errorCode] ?? $status;
 
         return response()->json([
-            'error_code' => $errorCode,
-            'status_code' => $status,
+            'status_code' => $errorCode,
+            'message' => $status,
             'success' => false,
             'data' => null
         ], $status);

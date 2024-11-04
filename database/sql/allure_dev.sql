@@ -21,7 +21,7 @@ CREATE TABLE media (
         'notification',
         'banner'
     ) NOT NULL,
-    mediable_id INT UNSIGNED NOT NULL,
+    mediable_id VARCHAR(36) NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL

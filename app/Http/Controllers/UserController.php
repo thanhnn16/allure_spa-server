@@ -15,18 +15,22 @@ use OpenApi\Annotations as OA;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use App\Services\FcmTokenService;
+use App\Services\MediaService;
 
 class UserController extends BaseController
 {
     protected $userService;
     protected $fcmTokenService;
+    protected $mediaService;
 
     public function __construct(
         UserService $userService,
-        FcmTokenService $fcmTokenService
+        FcmTokenService $fcmTokenService,
+        MediaService $mediaService
     ) {
         $this->userService = $userService;
         $this->fcmTokenService = $fcmTokenService;
+        $this->mediaService = $mediaService;
     }
 
     /**
@@ -382,20 +386,12 @@ class UserController extends BaseController
      */
     public function getUserInfo(Request $request)
     {
-        $user = $request->user();
-        $userInfo = [
-            'id' => $user->id,
-            'full_name' => $user->full_name,
-            'phone_number' => $user->phone_number,
-            'email' => $user->email,
-            'gender' => $user->gender,
-            'date_of_birth' => $user->date_of_birth,
-            'loyalty_points' => $user->loyalty_points,
-            'skin_condition' => $user->skin_condition,
-            'purchase_count' => $user->purchase_count,
-        ];
-
-        return $this->respondWithJson($userInfo, 'Thông tin người dùng được truy xuất thành công');
+        try {
+            $user = $request->user()->load('media');
+            return $this->respondWithJson($user);
+        } catch (\Exception $e) {
+            return $this->respondWithJson(null, $e->getMessage(), 500);
+        }
     }
 
     public function getUserTreatmentPackages($userId)
@@ -408,5 +404,73 @@ class UserController extends BaseController
             return $this->respondWithError('Error fetching user treatment packages', 500);
         }
     }
+
+    /**
+     * Show user profile
+     */
+    public function profile(Request $request)
+    {
+        $user = Auth::user();
+        $userData = [
+            'id' => $user->id,
+            'full_name' => $user->full_name,
+            'email' => $user->email,
+            'phone_number' => $user->phone_number,
+            'gender' => $user->gender,
+            'date_of_birth' => $user->date_of_birth,
+            'skin_condition' => $user->skin_condition,
+            'loyalty_points' => $user->loyalty_points,
+            'role' => $user->role,
+            'avatar_url' => $user->avatar_url
+        ];
+
+        if ($request->expectsJson()) {
+            return $this->respondWithJson($userData, 'Profile retrieved successfully');
+        }
+
+        return $this->respondWithInertia('ProfileView', [
+            'userData' => $userData
+        ]);
+    }
+
+    /**
+     * Upload user avatar
+     */
+    public function uploadAvatar(Request $request)
+    {
+        try {
+            $request->validate([
+                'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
+
+            $user = $request->user();
+            
+            // Xóa avatar cũ nếu có
+            if ($user->media) {
+                $this->mediaService->delete($user->media);
+            }
+
+            // Upload avatar mới - luôn sử dụng type 'image' cho avatar
+            $media = $this->mediaService->create($user, $request->file('avatar'), 'image');
+
+            // Cập nhật user
+            $user->image_id = $media->id;
+            $user->save();
+
+            $user->load('media'); // Eager load media relationship
+
+            return $this->respondWithJson([
+                'user' => $user,
+                'avatar_url' => $media->full_url
+            ], 'Avatar uploaded successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Upload avatar error: ' . $e->getMessage());
+            return $this->respondWithJson(
+                null,
+                'Failed to upload avatar: ' . $e->getMessage(),
+                500
+            );
+        }
+    }
 }
-    

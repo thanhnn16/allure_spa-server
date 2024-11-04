@@ -109,7 +109,13 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/time-slots/{timeSlot}', [TimeSlotController::class, 'show']);
 
         // Product routes
-        Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+        Route::put('/products/{product}', [ProductController::class, 'update'])->name('api.products.update');
+
+        // Profile route
+        Route::get('/profile', [UserController::class, 'profile']);
+
+        // Add new route for uploading avatar
+        Route::post('/users/upload-avatar', [UserController::class, 'uploadAvatar']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

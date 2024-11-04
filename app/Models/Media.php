@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Log;
  *     @OA\Property(property="type", type="string", description="Loại media"),
  *     @OA\Property(property="file_path", type="string", description="Đường dẫn file"),
  *     @OA\Property(property="mediable_type", type="string", description="Loại đối tượng liên kết"),
- *     @OA\Property(property="mediable_id", type="integer", format="int64", description="ID đối tượng liên kết"),
+ *     @OA\Property(property="mediable_id", type="string", description="ID đối tượng liên kết"),
  *     @OA\Property(property="full_url", type="string", description="URL đầy đủ của file"),
  *     @OA\Property(property="position", type="integer", format="int64", description="Vị trí của media"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Ngày tạo"),
@@ -40,7 +40,7 @@ class Media extends Model
     protected $casts = [
         'type' => 'string',
         'mediable_type' => 'string',
-        'mediable_id' => 'integer',
+        'mediable_id' => 'string',
         'position' => 'integer'
     ];
 

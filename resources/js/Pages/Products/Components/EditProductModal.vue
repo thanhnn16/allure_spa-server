@@ -30,17 +30,10 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-700">Giá *</label>
-          <input 
-            v-model="displayPrice"
-            @input="handlePriceInput"
-            @blur="formatDisplayPrice"
-            type="text"
-            :class="[
-              'mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500',
-              validationErrors.price ? 'border-red-500' : 'border-gray-300'
-            ]"
-            required
-          >
+          <input v-model="displayPrice" @input="handlePriceInput" @blur="formatDisplayPrice" type="text" :class="[
+            'mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500',
+            validationErrors.price ? 'border-red-500' : 'border-gray-300'
+          ]" required>
           <span v-if="validationErrors.price" class="text-red-500 text-sm">{{ validationErrors.price }}</span>
         </div>
 
@@ -264,7 +257,7 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    form.put(route('products.update', props.product.id), {
+    form.put(route('api.products.update', props.product.id), {
       preserveScroll: true,
       onSuccess: () => {
         toast.success('Cập nhật sản phẩm thành công')

@@ -43,9 +43,10 @@ Route::middleware('auth')->group(function () {
     // User routes
     Route::resource('users', UserController::class);
     Route::post('/users/import', [UserController::class, 'import'])->name('users.import');
+
     // Profile routes
-    Route::get('/users/profile', [UserController::class, 'profile'])->name('users.profile');
-    Route::patch('/users/profile', [UserController::class, 'updateProfile'])->name('users.updateProfile');
+    Route::get('/profile/', [UserController::class, 'profile'])->name('users.profile');
+    Route::patch('/profile/{profile}', [UserController::class, 'updateProfile'])->name('users.updateProfile');
 
     // Product routes
     Route::resource('products', ProductController::class);

@@ -79,9 +79,13 @@ class MediaService
             $folderName = strtolower(Str::plural(class_basename($model)));
             $path = $this->upload($file, $folderName);
             
-            $media = $model->media()->create([
-                'type' => $type,
-                'file_path' => '/' . $path
+            $mediaType = in_array($type, ['image', 'video']) ? $type : 'image';
+            
+            $media = Media::create([
+                'type' => $mediaType,
+                'file_path' => '/' . $path,
+                'mediable_type' => class_basename($model),
+                'mediable_id' => $model->id
             ]);
 
             Log::channel('media_debug')->info('Media record created:', [

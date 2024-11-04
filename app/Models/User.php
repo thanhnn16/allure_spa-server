@@ -66,6 +66,8 @@ class User extends Authenticatable
         'date_of_birth' => 'date',
     ];
 
+    protected $appends = ['avatar_url'];
+
     public function addresses()
     {
         return $this->hasMany(Address::class);
@@ -118,7 +120,12 @@ class User extends Authenticatable
 
     public function media()
     {
-        return $this->belongsTo(Media::class);
+        return $this->belongsTo(Media::class, 'image_id');
+    }
+
+    public function getAvatarUrlAttribute()
+    {
+        return $this->media ? $this->media->full_url : null;
     }
 
     public function cart()
