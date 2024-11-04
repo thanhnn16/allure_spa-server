@@ -13,6 +13,7 @@ CREATE TABLE media (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     type ENUM('image', 'video') NOT NULL,
     file_path VARCHAR(255) NOT NULL,
+    position INT UNSIGNED DEFAULT 0,
     mediable_type ENUM(
         'product',
         'service',
