@@ -605,30 +605,6 @@ VALUES
   (2, 'Thẻ tín dụng'),
   (3, 'Chuyển khoản ngân hàng');
 
--- Chèn dữ liệu vào bảng addresses
-INSERT INTO
-  addresses (id, user_id, address, address_type)
-SELECT
-  1,
-  id,
-  '123 Đường ABC, Quận 1, TP.HCM',
-  'home'
-FROM
-  users
-WHERE
-  email = 'admin@example.com'
-UNION
-ALL
-SELECT
-  2,
-  id,
-  '456 Đường XYZ, Quận 2, TP.HCM',
-  'work'
-FROM
-  users
-WHERE
-  email = 'user@example.com';
-
 -- Chèn dữ liệu vào bảng vouchers
 INSERT INTO
   vouchers (
