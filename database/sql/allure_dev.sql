@@ -196,8 +196,11 @@ CREATE INDEX idx_staff_details_hire_date ON staff_details (hire_date);
 CREATE TABLE addresses (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NULL,
-    address TEXT NOT NULL,
+    province VARCHAR(255) NOT NULL,
+    district VARCHAR(255) NOT NULL,
+    address VARCHAR(255) NOT NULL,
     address_type ENUM ('home', 'work', 'shipping', 'others') NOT NULL DEFAULT 'home',
+    is_default BOOLEAN DEFAULT FALSE,
     is_temporary BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,

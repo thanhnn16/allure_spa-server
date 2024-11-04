@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -154,6 +155,9 @@ Route::middleware('auth')->group(function () {
     // Media routes
     Route::put('/media/reorder', [MediaController::class, 'reorder'])->name('media.reorder');
     Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
+
+    // Address routes
+    Route::resource('addresses', AddressController::class);
 });
 
 require __DIR__ . '/auth.php';

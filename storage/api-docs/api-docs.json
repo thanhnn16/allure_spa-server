@@ -16,6 +16,211 @@
         }
     ],
     "paths": {
+        "/api/addresses": {
+            "post": {
+                "tags": [
+                    "Address"
+                ],
+                "summary": "Tạo địa chỉ mới",
+                "description": "Store a new address",
+                "operationId": "5549e34fec9817a9794302a767fc7fde",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "province",
+                                    "district",
+                                    "address"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "province": {
+                                        "type": "string"
+                                    },
+                                    "district": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "address_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "home",
+                                            "work",
+                                            "shipping",
+                                            "others"
+                                        ]
+                                    },
+                                    "is_default": {
+                                        "type": "boolean"
+                                    },
+                                    "is_temporary": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Address"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/addresses/{address}": {
+            "put": {
+                "tags": [
+                    "Address"
+                ],
+                "summary": "Cập nhật địa chỉ",
+                "description": "Update an address",
+                "operationId": "b71276024d0a845244b455b67cd1eae4",
+                "parameters": [
+                    {
+                        "name": "address",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "province": {
+                                        "type": "string"
+                                    },
+                                    "district": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "address_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "home",
+                                            "work",
+                                            "shipping",
+                                            "others"
+                                        ]
+                                    },
+                                    "is_default": {
+                                        "type": "boolean"
+                                    },
+                                    "is_temporary": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Address"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Address"
+                ],
+                "summary": "Xóa địa chỉ",
+                "description": "Delete an address",
+                "operationId": "225747ebbc189734860d975104b1555c",
+                "parameters": [
+                    {
+                        "name": "address",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/appointments": {
             "get": {
                 "tags": [
@@ -2741,36 +2946,37 @@
                     },
                     "user_id": {
                         "description": "User ID",
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "address_line1": {
-                        "description": "Address line 1",
-                        "type": "string"
-                    },
-                    "address_line2": {
-                        "description": "Address line 2",
                         "type": "string",
-                        "nullable": true
+                        "format": "uuid"
                     },
-                    "city": {
-                        "description": "City",
+                    "province": {
+                        "description": "Province",
                         "type": "string"
                     },
-                    "state": {
-                        "description": "State",
+                    "district": {
+                        "description": "District",
                         "type": "string"
                     },
-                    "postal_code": {
-                        "description": "Postal code",
+                    "address": {
+                        "description": "Address",
                         "type": "string"
                     },
-                    "country": {
-                        "description": "Country",
-                        "type": "string"
+                    "address_type": {
+                        "description": "Address type",
+                        "type": "string",
+                        "enum": [
+                            "home",
+                            "work",
+                            "shipping",
+                            "others"
+                        ]
                     },
                     "is_default": {
                         "description": "Is default address",
+                        "type": "boolean"
+                    },
+                    "is_temporary": {
+                        "description": "Is temporary address",
                         "type": "boolean"
                     },
                     "created_at": {
@@ -2782,6 +2988,12 @@
                         "description": "Last update date",
                         "type": "string",
                         "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "description": "Deletion date",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -4574,6 +4786,10 @@
         {
             "name": "Services",
             "description": "API Endpoints của Service"
+        },
+        {
+            "name": "Address",
+            "description": "Address"
         },
         {
             "name": "Authentication",
