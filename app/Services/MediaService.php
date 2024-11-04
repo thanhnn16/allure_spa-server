@@ -81,17 +81,23 @@ class MediaService
             
             $mediaType = in_array($type, ['image', 'video']) ? $type : 'image';
             
+            $maxPosition = Media::where('mediable_type', class_basename($model))
+                ->where('mediable_id', $model->id)
+                ->max('position');
+            
             $media = Media::create([
                 'type' => $mediaType,
                 'file_path' => '/' . $path,
                 'mediable_type' => class_basename($model),
-                'mediable_id' => $model->id
+                'mediable_id' => $model->id,
+                'position' => $maxPosition === null ? 0 : $maxPosition + 1
             ]);
 
             Log::channel('media_debug')->info('Media record created:', [
                 'media_id' => $media->id,
                 'file_path' => $media->file_path,
-                'full_url' => $media->getFullUrlAttribute()
+                'full_url' => $media->getFullUrlAttribute(),
+                'position' => $media->position
             ]);
 
             return $media;
