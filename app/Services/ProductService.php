@@ -4,16 +4,22 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductPriceHistory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 
 class ProductService
 {
     protected $mediaService;
+    protected $priceHistoryService;
 
-    public function __construct(MediaService $mediaService)
-    {
+    public function __construct(
+        MediaService $mediaService,
+        ProductPriceHistoryService $priceHistoryService
+    ) {
         $this->mediaService = $mediaService;
+        $this->priceHistoryService = $priceHistoryService;
     }
 
     public function getProducts($request)
@@ -60,23 +66,57 @@ class ProductService
 
     public function getProductById($id)
     {
-        return Product::with(['category', 'media', 'priceHistory', 'attributes'])->findOrFail($id);
+        return Product::with([
+            'category', 
+            'media',
+            'priceHistory' => function($query) {
+                $query->orderBy('effective_from', 'desc'); // Sắp xếp theo thời gian mới nhất
+            },
+            'attributes'
+        ])->findOrFail($id);
     }
 
     public function updateProduct($id, array $data)
     {
-        $product = Product::findOrFail($id);
-        $product->update($data);
+        try {
+            DB::beginTransaction();
+            
+            $product = Product::findOrFail($id);
+            $oldPrice = $product->price;
+            
+            // Update product
+            $product->update($data);
 
-        if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
-            $this->mediaService->create($product, $data['image'], 'image');
+            // If price has changed, create price history record
+            if (isset($data['price']) && $oldPrice != $data['price']) {
+                // Close previous price history record
+                ProductPriceHistory::where('product_id', $product->id)
+                    ->whereNull('effective_to')
+                    ->update(['effective_to' => now()]);
+
+                // Create new price history record
+                ProductPriceHistory::create([
+                    'product_id' => $product->id,
+                    'price' => $data['price'],
+                    'effective_from' => now(),
+                ]);
+            }
+
+            // Handle image uploads if present
+            if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+                $this->mediaService->create($product, $data['image'], 'image');
+            }
+
+            if (isset($data['images']) && is_array($data['images'])) {
+                $this->mediaService->createMultiple($product, $data['images'], 'image');
+            }
+
+            DB::commit();
+            return $product;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        if (isset($data['images']) && is_array($data['images'])) {
-            $this->mediaService->createMultiple($product, $data['images'], 'image');
-        }
-
-        return $product;
     }
 
     public function deleteProduct($id)

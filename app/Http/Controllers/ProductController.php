@@ -278,13 +278,29 @@ class ProductController extends BaseController
 
     public function update(ProductRequest $request, string $id)
     {
-        $product = $this->productService->updateProduct($id, $request->validated());
+        try {
+            $product = $this->productService->updateProduct($id, $request->validated());
 
-        if ($request->expectsJson()) {
-            return $this->respondWithJson($product, 'Product updated successfully');
+            if ($request->wantsJson()) {
+                return $this->respondWithJson([
+                    'product' => $product,
+                    'message' => 'Cập nhật sản phẩm thành công'
+                ]);
+            }
+
+            return back()->with('success', 'Sản phẩm đã được cập nhật thành công');
+        } catch (\Exception $e) {
+            Log::error('Product update failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            if ($request->wantsJson()) {
+                return $this->respondWithError('Không thể cập nhật sản phẩm: ' . $e->getMessage(), 500);
+            }
+
+            return back()->withErrors(['error' => 'Không thể cập nhật sản phẩm'])->withInput();
         }
-
-        return redirect()->route('products.index')->with('success', 'Sản phẩm đã được cập nhật thành công.');
     }
 
     public function destroy(string $id)

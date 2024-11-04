@@ -70,23 +70,48 @@
 
             <CardBox class="mb-6">
                 <h3 class="text-xl font-semibold mb-4">Lịch sử giá</h3>
-                <table v-if="product.price_history && product.price_history.length > 0" class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày bắt đầu</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày kết thúc</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr v-for="history in product.price_history" :key="history.id">
-                            <td class="px-6 py-4 whitespace-nowrap">{{ formatPrice(history.price) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ formatDate(history.effective_from) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ history.effective_to ? formatDate(history.effective_to) : 'Hiện tại' }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p v-else class="text-gray-500 italic">Chưa có dữ liệu lịch sử giá.</p>
+                <div class="overflow-x-auto">
+                    <table v-if="product.price_history && product.price_history.length > 0" 
+                           class="min-w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Giá</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Ngày bắt đầu</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Ngày kết thúc</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(history, index) in sortedPriceHistory" 
+                                :key="history.id"
+                                class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                                :class="{'bg-green-50 hover:bg-green-100': !history.effective_to}">
+                                <td class="px-6 py-4">
+                                    <span :class="{'font-semibold text-green-600': !history.effective_to}">
+                                        {{ formatPrice(history.price) }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ formatDateTime(history.effective_from) }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ history.effective_to ? formatDateTime(history.effective_to) : '-' }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span v-if="!history.effective_to" 
+                                          class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        Đang áp dụng
+                                    </span>
+                                    <span v-else 
+                                          class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        Đã kết thúc
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p v-else class="text-gray-500 italic">Chưa có dữ liệu lịch sử giá.</p>
+                </div>
             </CardBox>
 
             <CardBox class="mb-6">
@@ -202,6 +227,23 @@ const handleImagesUpdated = () => {
     router.reload({ only: ['product'] })
 }
 
+const formatDateTime = (date) => {
+    return new Date(date).toLocaleString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    })
+}
+
+const sortedPriceHistory = computed(() => {
+    if (!props.product.price_history) return []
+    return [...props.product.price_history].sort((a, b) => {
+        return new Date(b.effective_from) - new Date(a.effective_from)
+    })
+})
+
 onMounted(() => {
     console.log('Chi tiết sản phẩm:', props.product)
     if (props.product.media && props.product.media.length > 0) {
@@ -210,3 +252,14 @@ onMounted(() => {
     }
 })
 </script>
+
+<style scoped>
+/* Add these styles if you want to remove the default table borders completely */
+table {
+    border-collapse: collapse;
+}
+
+th, td {
+    border: none;
+}
+</style>
