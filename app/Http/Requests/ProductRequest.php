@@ -28,8 +28,15 @@ class ProductRequest extends FormRequest
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'category_id' => 'required|exists:product_categories,id',
-            'image_id' => 'nullable|exists:images,id',
             'quantity' => 'required|integer|min:0',
+            'brand_description' => 'nullable|string',
+            'usage' => 'nullable|string',
+            'benefits' => 'nullable|string',
+            'key_ingredients' => 'nullable|string',
+            'ingredients' => 'nullable|string',
+            'directions' => 'nullable|string',
+            'storage_instructions' => 'nullable|string',
+            'product_notes' => 'nullable|string',
         ];
     }
 }
