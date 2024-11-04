@@ -21,6 +21,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ZaloAuthController;
 use App\Http\Controllers\PayOSController;
 use Illuminate\Support\Facades\Broadcast;
+use App\Http\Controllers\MediaController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -144,6 +145,14 @@ Route::middleware('auth')->group(function () {
     // Add new route for user treatment packages
     Route::get('/api/user-treatment-packages/{userId}', [UserController::class, 'getUserTreatmentPackages'])
         ->name('api.user.treatment-packages');
+
+    // Product routes
+    Route::post('/products/{product}/upload-images', [ProductController::class, 'uploadImages'])
+        ->name('products.upload-images');
+
+    // Media routes
+    Route::put('/media/reorder', [MediaController::class, 'reorder'])->name('media.reorder');
+    Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 });
 
 require __DIR__ . '/auth.php';

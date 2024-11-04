@@ -14,7 +14,10 @@
                         </Carousel>
                         <img v-else src="/images/placeholder-product.jpg" :alt="product.name" class="w-full h-auto rounded-lg shadow-lg">
                         <div class="flex justify-between">
-                            <BaseButton :icon="mdiPencil" label="Chỉnh sửa" color="info" @click="showEditModal = true" />
+                            <div class="space-x-2">
+                                <BaseButton :icon="mdiImage" label="Quản lý ảnh" color="success" @click="showManageImagesModal = true" />
+                                <BaseButton :icon="mdiPencil" label="Chỉnh sửa" color="info" @click="showEditModal = true" />
+                            </div>
                             <BaseButton :icon="mdiDelete" label="Xóa" color="danger" @click="showDeleteModal = true" />
                         </div>
                     </div>
@@ -119,6 +122,12 @@
             @close="showDeleteModal = false"
             @product-deleted="handleProductDeleted"
         />
+
+        <ManageImagesModal
+            v-model="showManageImagesModal"
+            :product="product"
+            @updated="handleImagesUpdated"
+        />
     </LayoutAuthenticated>
 </template>
 
@@ -133,7 +142,8 @@ import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.
 import EditProductModal from './Components/EditProductModal.vue'
 import DeleteConfirmModal from './Components/DeleteConfirmModal.vue'
 import Carousel from '@/Components/Carousel.vue'
-import { mdiPackageVariantClosed, mdiArrowLeft, mdiPencil, mdiDelete } from '@mdi/js'
+import ManageImagesModal from './Components/ManageImagesModal.vue'
+import { mdiPackageVariantClosed, mdiArrowLeft, mdiPencil, mdiDelete, mdiImage } from '@mdi/js'
 
 const props = defineProps({
     product: Object,
@@ -141,6 +151,7 @@ const props = defineProps({
 
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
+const showManageImagesModal = ref(false)
 
 const carouselSettings = {
     itemsToShow: 1,
@@ -180,6 +191,10 @@ const processedMedia = computed(() => {
         file_path: item.file_path.startsWith('http') ? item.file_path : `/storage/${item.file_path}`
     }))
 })
+
+const handleImagesUpdated = () => {
+    router.reload({ only: ['product'] })
+}
 
 onMounted(() => {
     console.log('Chi tiết sản phẩm:', props.product)

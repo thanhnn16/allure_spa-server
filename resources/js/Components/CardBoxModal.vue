@@ -44,7 +44,6 @@ const confirmCancel = (mode) => {
 }
 
 const confirm = () => confirmCancel('confirm')
-
 const cancel = () => confirmCancel('cancel')
 
 window.addEventListener('keydown', (e) => {
@@ -56,33 +55,57 @@ window.addEventListener('keydown', (e) => {
 
 <template>
   <OverlayLayer v-show="value" @overlay-click="cancel">
-    <CardBox
-      v-show="value"
-      class="shadow-lg max-h-modal w-11/12 md:w-3/5 lg:w-2/5 xl:w-4/12 z-50"
-      is-modal
-    >
-      <CardBoxComponentTitle :title="title">
-        <BaseButton
-          v-if="hasCancel"
-          :icon="mdiClose"
-          color="whiteDark"
-          small
-          rounded-full
-          @click.prevent="cancel"
-        />
+    <CardBox v-show="value" class="shadow-lg w-11/12 md:w-3/5 lg:w-2/5 xl:w-4/12 z-50" is-modal>
+      <!-- Header -->
+      <CardBoxComponentTitle :title="title" class="sticky top-0 z-10 bg-white border-b">
+        <BaseButton v-if="hasCancel" :icon="mdiClose" color="whiteDark" small rounded-full @click.prevent="cancel" />
       </CardBoxComponentTitle>
 
-      <div class="space-y-3">
-        <slot />
+      <!-- Content -->
+      <div class="overflow-y-auto custom-scrollbar" style="max-height: calc(90vh - 120px);">
+        <div class="px-6 py-4">
+          <slot />
+        </div>
       </div>
 
-      <template #footer>
-        <BaseButtons v-if="hasButton">
+      <!-- Footer -->
+      <div class="sticky bottom-0 z-10 px-6 py-4">
+        <BaseButtons v-if="hasButton" class="flex justify-end gap-3">
+          <BaseButton v-if="hasCancel" label="Hủy" :color="button" outline @click="cancel" />
           <BaseButton :label="buttonLabel" :color="button" @click="confirm" />
-          <BaseButton v-if="hasCancel" label="Cancel" :color="button" outline @click="cancel" />
         </BaseButtons>
         <slot name="footer"></slot>
-      </template>
+      </div>
     </CardBox>
   </OverlayLayer>
 </template>
+
+<style scoped>
+.custom-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Sticky header and footer */
+.sticky {
+  position: sticky;
+  background: white;
+}
+
+/* Card styling */
+:deep(.card) {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Button spacing */
+.gap-3 {
+  gap: 0.75rem;
+}
+</style>

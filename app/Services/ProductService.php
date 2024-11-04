@@ -9,6 +9,13 @@ use Illuminate\Http\UploadedFile;
 
 class ProductService
 {
+    protected $mediaService;
+
+    public function __construct(MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
+
     public function getProducts($request)
     {
         $query = Product::with(['category', 'media']);
@@ -41,11 +48,11 @@ class ProductService
         $product = Product::create($data);
 
         if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
-            $path = $data['image']->store('products', 'public');
-            $product->media()->create([
-                'type' => 'image',
-                'file_path' => $path
-            ]);
+            $this->mediaService->create($product, $data['image'], 'image');
+        }
+
+        if (isset($data['images']) && is_array($data['images'])) {
+            $this->mediaService->createMultiple($product, $data['images'], 'image');
         }
 
         return $product;
@@ -60,6 +67,15 @@ class ProductService
     {
         $product = Product::findOrFail($id);
         $product->update($data);
+
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+            $this->mediaService->create($product, $data['image'], 'image');
+        }
+
+        if (isset($data['images']) && is_array($data['images'])) {
+            $this->mediaService->createMultiple($product, $data['images'], 'image');
+        }
+
         return $product;
     }
 

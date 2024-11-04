@@ -4,7 +4,8 @@
         <Head title="Quản lý mỹ phẩm" />
         <SectionMain>
             <SectionTitleLineWithButton :icon="mdiPackageVariantClosed" title="Danh sách mỹ phẩm" main>
-                <BaseButton :icon="mdiPlus" label="Tạo mỹ phẩm" color="info" rounded-full small />
+                <BaseButton :icon="mdiPlus" label="Tạo mỹ phẩm" color="info" rounded-full small
+                    @click="showCreateModal = true" />
                 <BaseButton :icon="mdiTableBorder" label="Nhập từ Excel" color="success" rounded-full small />
             </SectionTitleLineWithButton>
 
@@ -82,7 +83,8 @@
                                     {{ formatPrice(product.price) }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <BaseButton label="Xem chi tiết" color="info" small @click="viewProductDetails(product.id)" />
+                                    <BaseButton label="Xem chi tiết" color="info" small
+                                        @click="viewProductDetails(product.id)" />
                                 </td>
                             </tr>
                         </tbody>
@@ -93,6 +95,15 @@
             <div v-if="products.links" class="mt-6">
                 <TablePagination :links="products.links" />
             </div>
+
+            <CreateProductModal 
+                v-model:show="showCreateModal"
+                :categories="categories" 
+                @close="handleModalClose"
+                @created="handleProductCreated"
+                @error="handleProductError"
+                @validationFailed="handleValidationFailed"
+            />
         </SectionMain>
     </LayoutAuthenticated>
 </template>
@@ -109,6 +120,8 @@ import { Head } from "@inertiajs/vue3"
 import { ref, watch, computed } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import TablePagination from '@/Components/TablePagination.vue'
+import CreateProductModal from '@/Components/Products/CreateProductModal.vue'
+import { useToast } from 'vue-toastification'
 
 const props = defineProps({
     products: Object,
@@ -117,6 +130,8 @@ const props = defineProps({
 })
 
 const showFilters = ref(false)
+const showCreateModal = ref(false)
+const toast = useToast()
 
 const form = useForm({
     search: props.filters?.search || '',
@@ -194,6 +209,28 @@ const products = computed(() => {
 
 const viewProductDetails = (productId) => {
     router.visit(route('products.show', productId))
+}
+
+const handleProductCreated = (success) => {
+    if (success) {
+        showCreateModal.value = false
+        toast.success('Tạo sản phẩm thành công!')
+        router.reload()
+    }
+}
+
+const handleProductError = (error) => {
+    toast.error('Có lỗi xảy ra khi tạo sản phẩm')
+}
+
+const handleModalClose = () => {
+    if (!form.processing) {
+        showCreateModal.value = false
+    }
+}
+
+const handleValidationFailed = (errors) => {
+    toast.error('Vui lòng kiểm tra lại thông tin nhập vào')
 }
 </script>
 
