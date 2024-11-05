@@ -21,7 +21,7 @@ class PayOSController extends Controller
     {
         try {
             Log::info('PayOS Request:', $paymentData);
-            
+
             $response = $this->payOS->createPaymentLink($paymentData);
             Log::info('PayOS Response:', $response);
 
@@ -77,7 +77,7 @@ class PayOSController extends Controller
     {
         try {
             $invoice = Invoice::findOrFail($request->invoice_id);
-            
+
             if (!$invoice->isPending() && !$invoice->isPartiallyPaid()) {
                 return response()->json([
                     'success' => false,
@@ -98,22 +98,48 @@ class PayOSController extends Controller
                 'buyerEmail' => $invoice->user->email ?? null,
                 'buyerPhone' => $invoice->user->phone ?? null,
                 'buyerAddress' => $invoice->user->address ?? null,
+                'items' => $this->formatOrderItems($invoice->order->items),
             ];
 
-            $result = $this->createPaymentLink($paymentData);
+            try {
+                Log::info('PayOS Request:', $paymentData);
 
-            if ($result['success']) {
-                // Create payment history record
-                PaymentHistory::create([
-                    'invoice_id' => $invoice->id,
-                    'amount' => $amount / 100, // Convert back to normal currency
-                    'payment_method' => 'payos',
-                    'status' => 'pending',
-                    'transaction_code' => $orderCode,
+                $response = $this->payOS->createPaymentLink($paymentData);
+                Log::info('PayOS Response:', $response);
+
+                if (isset($response['checkoutUrl'])) {
+                    PaymentHistory::create([
+                        'invoice_id' => $invoice->id,
+                        'amount' => $amount / 100,
+                        'payment_method' => 'payos',
+                        'status' => 'pending',
+                        'transaction_code' => $orderCode,
+                    ]);
+
+                    return response()->json([
+                        'success' => true,
+                        'checkoutUrl' => $response['checkoutUrl'],
+                        'orderCode' => $orderCode,
+                        'qrCode' => $response['qrCode'] ?? null,
+                    ]);
+                }
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể tạo link thanh toán',
+                    'error' => $response['desc'] ?? null
+                ], 400);
+            } catch (\Exception $e) {
+                Log::error('PayOS Error:', [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
-            }
 
-            return response()->json($result);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()
+                ], 500);
+            }
         } catch (\Exception $e) {
             Log::error('PayOS Process Payment Error:', [
                 'message' => $e->getMessage(),
@@ -125,6 +151,19 @@ class PayOSController extends Controller
                 'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function formatOrderItems($orderItems)
+    {
+        return $orderItems->map(function ($item) {
+            return [
+                'name' => $item->item_type === 'product' ?
+                    $item->product->name :
+                    $item->service->name,
+                'quantity' => $item->quantity,
+                'price' => $item->price
+            ];
+        })->toArray();
     }
 
     public function verifyPayment(Request $request)
@@ -196,8 +235,8 @@ class PayOSController extends Controller
                 if ($invoice) {
                     $invoice->paid_amount += $payment->amount;
                     $invoice->remaining_amount = $invoice->calculateRemainingAmount();
-                    $invoice->status = $invoice->remaining_amount > 0 ? 
-                        Invoice::STATUS_PARTIALLY_PAID : 
+                    $invoice->status = $invoice->remaining_amount > 0 ?
+                        Invoice::STATUS_PARTIALLY_PAID :
                         Invoice::STATUS_PAID;
                     $invoice->save();
                 }
