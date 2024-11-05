@@ -54,7 +54,7 @@ class PayOSController extends Controller
 
     public function testPayment(Request $request)
     {
-        $orderCode = 'TEST_' . time() . '_' . substr(md5(uniqid()), 0, 8);
+        $orderCode = intval(time() . rand(1000, 9999));
         $amount = intval($request->amount ?? 2000);
 
         $paymentData = [
@@ -85,8 +85,8 @@ class PayOSController extends Controller
                 ], 400);
             }
 
-            $orderCode = 'INV_' . $invoice->id . '_' . time();
-            $amount = intval($invoice->remaining_amount * 100); // Convert to smallest currency unit
+            $orderCode = intval($invoice->id . time() . rand(100, 999));
+            $amount = intval($invoice->remaining_amount * 100);
 
             $paymentData = [
                 'orderCode' => $orderCode,
@@ -176,7 +176,7 @@ class PayOSController extends Controller
 
     private function handleInvoicePayment($orderCode, $paymentResponse)
     {
-        preg_match('/INV_([^_]+)_/', $orderCode, $matches);
+        preg_match('/^(\d+)/', $orderCode, $matches);
         $invoiceId = $matches[1] ?? null;
 
         if (!$invoiceId) {
