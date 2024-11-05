@@ -97,8 +97,6 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy']);
 
-        // Route::post('/payos/test', [PayOSController::class, 'testPayment']);
-        // Route::post('/payos/verify', [PayOSController::class, 'verifyPayment']);
 
         // Chat routes
         Route::get('/chats', [ChatController::class, 'index']);
@@ -123,30 +121,24 @@ Route::middleware('throttle:api')->group(function () {
 
         // Add new route for uploading avatar
         Route::post('/users/upload-avatar', [UserController::class, 'uploadAvatar']);
+
+        // PayOS routes
+        Route::prefix('payos')->group(function () {
+            Route::post('/process', [PayOSController::class, 'processPayment']);
+        });
+
+        // Invoice routes
+        Route::prefix('invoices')->group(function () {
+            Route::get('/{invoice}/payment', [InvoiceController::class, 'getPaymentDetails']);
+            Route::post('/{invoice}/pay', [PayOSController::class, 'processPayment']);
+            Route::post('/{invoice}/payos', [PayOSController::class, 'createPaymentLink']);
+        });
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);
 });
 
-// Public PayOS routes (không cần auth)
 Route::prefix('payos')->group(function () {
     Route::post('/test', [PayOSController::class, 'testPayment']);
     Route::post('/verify', [PayOSController::class, 'verifyPayment']);
-});
-
-// Protected PayOS routes (cần auth)
-Route::middleware(['auth:sanctum'])->group(function () {
-    // ... existing authenticated routes ...
-
-    // PayOS routes for authenticated users
-    Route::prefix('payos')->group(function () {
-        Route::post('/process', [PayOSController::class, 'processPayment']);
-    });
-
-    // Invoice payment routes
-    Route::prefix('invoices')->group(function () {
-        // ... existing invoice routes ...
-        Route::get('/{invoice}/payment', [InvoiceController::class, 'getPaymentDetails']);
-        Route::post('/{invoice}/pay', [PayOSController::class, 'processPayment']);
-    });
 });
