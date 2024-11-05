@@ -54,20 +54,30 @@ class PayOSController extends Controller
 
     public function testPayment(Request $request)
     {
-        $orderCode = intval(substr(time(), -8)); // Use last 8 digits of timestamp
+        $orderCode = intval(substr(time() . rand(10, 99), -8));
         $amount = intval($request->amount ?? 2000);
 
         $paymentData = [
             'orderCode' => $orderCode,
             'amount' => $amount,
-            'description' => "Test#" . $orderCode, // Short description
+            'description' => "HD" . $orderCode, // Simplified description
             'returnUrl' => $request->returnUrl,
             'cancelUrl' => $request->cancelUrl,
-            'buyerName' => $request->buyerName ?? null,
-            'buyerEmail' => $request->buyerEmail ?? null,
-            'buyerPhone' => $request->buyerPhone ?? null,
-            'buyerAddress' => $request->buyerAddress ?? null,
         ];
+
+        // Add optional buyer info if provided
+        if ($request->buyerName) {
+            $paymentData['buyerName'] = substr($request->buyerName, 0, 255);
+        }
+        if ($request->buyerEmail) {
+            $paymentData['buyerEmail'] = substr($request->buyerEmail, 0, 255);
+        }
+        if ($request->buyerPhone) {
+            $paymentData['buyerPhone'] = substr($request->buyerPhone, 0, 20);
+        }
+        if ($request->buyerAddress) {
+            $paymentData['buyerAddress'] = substr($request->buyerAddress, 0, 255);
+        }
 
         $result = $this->createPaymentLink($paymentData);
         return response()->json($result, $result['success'] ? 200 : 400);
@@ -262,22 +272,11 @@ class PayOSController extends Controller
             $invoice = Invoice::with(['order.items.product', 'order.items.service', 'user'])
                 ->findOrFail($invoiceId);
 
-            // Generate a smaller orderCode using invoice ID and timestamp
-            $orderCode = intval(substr($invoiceId . time(), -8)); // Take last 8 digits to ensure smaller number
+            // Generate orderCode using last 8 digits
+            $orderCode = intval(substr(time() . rand(10, 99), -8));
 
-            // Format items for PayOS
-            $items = $invoice->order->items->map(function ($item) {
-                return [
-                    'name' => $item->item_type === 'product' ?
-                        $item->product->name :
-                        $item->service->name,
-                    'quantity' => $item->quantity,
-                    'price' => (int)($item->price * 100) // Convert to smallest currency unit
-                ];
-            })->toArray();
-
-            // Create shortened description
-            $description = "HD#{$invoice->id}"; // Short description format
+            // Simplified description - maximum 25 characters
+            $description = sprintf('HD%d', $invoice->id);
 
             $paymentData = [
                 'orderCode' => $orderCode,
@@ -285,15 +284,22 @@ class PayOSController extends Controller
                 'description' => $description,
                 'returnUrl' => $request->returnUrl,
                 'cancelUrl' => $request->cancelUrl,
-                'items' => $items,
             ];
 
-            // Add optional buyer information if available
+            // Add buyer info only if available and valid
             if ($invoice->user) {
-                $paymentData['buyerName'] = $invoice->user->full_name;
-                $paymentData['buyerEmail'] = $invoice->user->email;
-                $paymentData['buyerPhone'] = $invoice->user->phone_number;
-                $paymentData['buyerAddress'] = $invoice->user->address;
+                if ($invoice->user->full_name) {
+                    $paymentData['buyerName'] = substr($invoice->user->full_name, 0, 255);
+                }
+                if ($invoice->user->email) {
+                    $paymentData['buyerEmail'] = substr($invoice->user->email, 0, 255);
+                }
+                if ($invoice->user->phone_number) {
+                    $paymentData['buyerPhone'] = substr($invoice->user->phone_number, 0, 20);
+                }
+                if ($invoice->user->address) {
+                    $paymentData['buyerAddress'] = substr($invoice->user->address, 0, 255);
+                }
             }
 
             Log::info('PayOS Payment Data:', $paymentData);
