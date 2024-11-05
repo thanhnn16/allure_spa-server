@@ -60,7 +60,7 @@ class PayOSController extends Controller
         $paymentData = [
             'orderCode' => $orderCode,
             'amount' => $amount,
-            'description' => "HD" . $orderCode, // Simplified description
+            'description' => "Thanh toán cho Allure Spa",
             'returnUrl' => $request->returnUrl,
             'cancelUrl' => $request->cancelUrl,
         ];
@@ -103,7 +103,7 @@ class PayOSController extends Controller
             }
 
             $orderCode = intval($invoice->id . time() . rand(100, 999));
-            $amount = intval($invoice->remaining_amount * 100);
+            $amount = intval($invoice->remaining_amount);
 
             $paymentData = [
                 'orderCode' => $orderCode,
@@ -123,9 +123,10 @@ class PayOSController extends Controller
             if ($result['success']) {
                 PaymentHistory::create([
                     'invoice_id' => $invoice->id,
-                    'amount' => $amount / 100,
+                    'payment_amount' => $amount,
                     'payment_method' => 'payos',
-                    'status' => 'pending',
+                    'old_payment_status' => 'pending',
+                    'new_payment_status' => 'pending',
                     'transaction_code' => $orderCode,
                 ]);
             }
@@ -171,7 +172,7 @@ class PayOSController extends Controller
 
             if ($response && isset($response['status'])) {
                 $paymentStatus = $response['status'];
-                $amount = isset($response['amount']) ? $response['amount'] / 100 : 0; // Convert from smallest unit
+                $amount = isset($response['amount']) ? $response['amount'] : 0; // Convert from smallest unit
 
                 // Extract invoice ID from orderCode if it exists
                 preg_match('/^(\d+)/', $orderCode, $matches);
@@ -181,7 +182,7 @@ class PayOSController extends Controller
                     $payment = PaymentHistory::where('transaction_code', $orderCode)->first();
                     if ($payment) {
                         $payment->update([
-                            'status' => 'completed',
+                            'new_payment_status' => 'completed',
                             'payment_details' => json_encode($response)
                         ]);
 
@@ -244,7 +245,7 @@ class PayOSController extends Controller
 
             $paymentData = [
                 'orderCode' => $orderCode,
-                'amount' => (int)($invoice->remaining_amount * 100), // Convert to smallest currency unit
+                'amount' => (int)($invoice->remaining_amount),
                 'description' => $description,
                 'returnUrl' => $request->returnUrl,
                 'cancelUrl' => $request->cancelUrl,
