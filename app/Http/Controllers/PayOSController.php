@@ -54,13 +54,13 @@ class PayOSController extends Controller
 
     public function testPayment(Request $request)
     {
-        $orderCode = intval(time() . rand(1000, 9999));
+        $orderCode = intval(substr(time(), -8)); // Use last 8 digits of timestamp
         $amount = intval($request->amount ?? 2000);
 
         $paymentData = [
             'orderCode' => $orderCode,
             'amount' => $amount,
-            'description' => $request->description ?? 'Test payment',
+            'description' => "Test#" . $orderCode, // Short description
             'returnUrl' => $request->returnUrl,
             'cancelUrl' => $request->cancelUrl,
             'buyerName' => $request->buyerName ?? null,
@@ -253,7 +253,6 @@ class PayOSController extends Controller
     public function createPaymentLinkForInvoice(Request $request, $invoiceId)
     {
         try {
-            // Log request data
             Log::info('PayOS Create Payment Link Request:', [
                 'invoice_id' => $invoiceId,
                 'return_url' => $request->returnUrl,
@@ -263,40 +262,27 @@ class PayOSController extends Controller
             $invoice = Invoice::with(['order.items.product', 'order.items.service', 'user'])
                 ->findOrFail($invoiceId);
 
-            // Log invoice data
-            Log::info('Invoice Data:', [
-                'invoice' => $invoice->toArray()
-            ]);
-
-            if (!$invoice->isPending() && !$invoice->isPartiallyPaid()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Hóa đơn không hợp lệ để thanh toán'
-                ], 400);
-            }
+            // Generate a smaller orderCode using invoice ID and timestamp
+            $orderCode = intval(substr($invoiceId . time(), -8)); // Take last 8 digits to ensure smaller number
 
             // Format items for PayOS
             $items = $invoice->order->items->map(function ($item) {
-                $itemData = [
+                return [
                     'name' => $item->item_type === 'product' ?
                         $item->product->name :
                         $item->service->name,
                     'quantity' => $item->quantity,
                     'price' => (int)($item->price * 100) // Convert to smallest currency unit
                 ];
-                
-                // Log each item formatting
-                Log::info('Formatted Item:', $itemData);
-                
-                return $itemData;
             })->toArray();
 
-            $orderCode = $invoiceId . time() . rand(100, 999);
+            // Create shortened description
+            $description = "HD#{$invoice->id}"; // Short description format
 
             $paymentData = [
                 'orderCode' => $orderCode,
                 'amount' => (int)($invoice->remaining_amount * 100), // Convert to smallest currency unit
-                'description' => "Thanh toán hóa đơn #{$invoiceId}",
+                'description' => $description,
                 'returnUrl' => $request->returnUrl,
                 'cancelUrl' => $request->cancelUrl,
                 'items' => $items,
@@ -310,17 +296,15 @@ class PayOSController extends Controller
                 $paymentData['buyerAddress'] = $invoice->user->address;
             }
 
-            // Log payment data before sending to PayOS
             Log::info('PayOS Payment Data:', $paymentData);
 
             $response = $this->payOS->createPaymentLink($paymentData);
-            
-            // Log PayOS response
+
             Log::info('PayOS Response:', $response);
 
             if (isset($response['checkoutUrl'])) {
                 // Create payment history record
-                $paymentHistory = PaymentHistory::create([
+                PaymentHistory::create([
                     'invoice_id' => $invoice->id,
                     'amount' => $invoice->remaining_amount,
                     'payment_method' => 'payos',
@@ -328,10 +312,7 @@ class PayOSController extends Controller
                     'transaction_code' => $orderCode,
                 ]);
 
-                // Log payment history creation
-                Log::info('Payment History Created:', $paymentHistory->toArray());
-
-                $successResponse = [
+                return response()->json([
                     'success' => true,
                     'data' => [
                         'checkoutUrl' => $response['checkoutUrl'],
@@ -341,12 +322,7 @@ class PayOSController extends Controller
                         'amount' => $invoice->remaining_amount,
                         'payment_method' => 'payos'
                     ]
-                ];
-
-                // Log success response
-                Log::info('Success Response:', $successResponse);
-
-                return response()->json($successResponse);
+                ]);
             }
 
             throw new \Exception($response['desc'] ?? 'Không thể tạo link thanh toán');
@@ -359,12 +335,7 @@ class PayOSController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Không thể tạo link thanh toán: ' . $e->getMessage(),
-                'error_details' => [
-                    'code' => $e->getCode(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
+                'message' => 'Không thể tạo link thanh toán: ' . $e->getMessage()
             ], 500);
         }
     }
