@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Requests\AppointmentRequest;
 use OpenApi\Annotations as OA;
 use App\Models\TimeSlot;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @OA\Tag(
@@ -396,6 +397,143 @@ class AppointmentController extends BaseController
     public function cancel(Request $request, $id)
     {
         $result = $this->appointmentService->cancelAppointment($id, $request->input('note'));
+        return $this->respondWithJson($result['data'], $result['message'], $result['status']);
+    }
+
+    /**
+     * @OA\Schema(
+     *     schema="AppointmentResponse",
+     *     title="Appointment Response",
+     *     description="Response format for appointments",
+     *     @OA\Property(property="success", type="boolean", example=true),
+     *     @OA\Property(property="message", type="string", example="Lấy danh sách lịch hẹn thành công"),
+     *     @OA\Property(
+     *         property="data",
+     *         type="array",
+     *         @OA\Items(
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="title", type="string", example="Facial Treatment"),
+     *             @OA\Property(property="start", type="string", format="date-time", example="2024-03-20 09:00:00"),
+     *             @OA\Property(property="end", type="string", format="date-time", example="2024-03-20 10:00:00"),
+     *             @OA\Property(
+     *                 property="service",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Facial Treatment"),
+     *                 @OA\Property(property="price", type="number", example=500000)
+     *             ),
+     *             @OA\Property(
+     *                 property="staff",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", example="staff-uuid"),
+     *                 @OA\Property(property="full_name", type="string", example="Staff Name")
+     *             ),
+     *             @OA\Property(property="status", type="string", example="confirmed"),
+     *             @OA\Property(property="appointment_type", type="string", example="facial"),
+     *             @OA\Property(property="note", type="string", example="Customer note"),
+     *             @OA\Property(
+     *                 property="time_slot",
+     *                 type="object",
+     *                 @OA\Property(property="start_time", type="string", example="09:00:00"),
+     *                 @OA\Property(property="end_time", type="string", example="10:00:00")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+
+    /**
+     * @OA\Get(
+     *     path="/api/appointments/my-appointments",
+     *     summary="Lấy danh sách lịch hẹn của người dùng đang đăng nhập",
+     *     tags={"Appointments"},
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Lọc theo trạng thái",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"pending", "confirmed", "cancelled", "completed"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="appointment_type",
+     *         in="query",
+     *         description="Lọc theo loại dịch vụ",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"facial", "massage", "weight_loss", "hair_removal", "consultation", "others"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="from_date",
+     *         in="query",
+     *         description="Lọc từ ngày",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="to_date",
+     *         in="query",
+     *         description="Lọc đến ngày",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Lấy danh sách lịch hẹn thành công"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="title", type="string", example="Facial Treatment"),
+     *                     @OA\Property(property="start", type="string", format="date-time", example="2024-03-20 09:00:00"),
+     *                     @OA\Property(property="end", type="string", format="date-time", example="2024-03-20 10:00:00"),
+     *                     @OA\Property(
+     *                         property="service",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="name", type="string", example="Facial Treatment"),
+     *                         @OA\Property(property="price", type="number", example=500000)
+     *                     ),
+     *                     @OA\Property(
+     *                         property="staff",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="string", example="staff-uuid"),
+     *                         @OA\Property(property="full_name", type="string", example="Staff Name")
+     *                     ),
+     *                     @OA\Property(property="status", type="string", example="confirmed"),
+     *                     @OA\Property(property="appointment_type", type="string", example="facial"),
+     *                     @OA\Property(property="note", type="string", example="Customer note"),
+     *                     @OA\Property(
+     *                         property="time_slot",
+     *                         type="object",
+     *                         @OA\Property(property="start_time", type="string", example="09:00:00"),
+     *                         @OA\Property(property="end_time", type="string", example="10:00:00")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Chưa xác thực",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
+     */
+    public function getMyAppointments(Request $request)
+    {
+        $filters = [
+            'status' => $request->status,
+            'appointment_type' => $request->appointment_type,
+            'from_date' => $request->from_date,
+            'to_date' => $request->to_date
+        ];
+        
+        $result = $this->appointmentService->getAppointmentsByUser(Auth::id(), $filters);
         return $this->respondWithJson($result['data'], $result['message'], $result['status']);
     }
 }

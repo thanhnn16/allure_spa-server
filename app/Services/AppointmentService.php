@@ -285,5 +285,72 @@ class AppointmentService
         }
     }
 
+    public function getAppointmentsByUser($userId, array $filters = [])
+    {
+        try {
+            $query = Appointment::with(['service', 'staff', 'timeSlot'])
+                ->where('user_id', $userId)
+                ->orderBy('appointment_date', 'desc')
+                ->orderBy('time_slot_id', 'asc');
+
+            // Filter by status
+            if (!empty($filters['status'])) {
+                $query->where('status', strtolower($filters['status']));
+            }
+
+            // Filter by appointment type
+            if (!empty($filters['appointment_type'])) {
+                $query->where('appointment_type', strtolower($filters['appointment_type']));
+            }
+
+            // Filter by date range
+            if (!empty($filters['from_date'])) {
+                $query->where('appointment_date', '>=', $filters['from_date']);
+            }
+            if (!empty($filters['to_date'])) {
+                $query->where('appointment_date', '<=', $filters['to_date']);
+            }
+
+            $appointments = $query->get();
+
+            $formattedAppointments = $appointments->map(function ($appointment) {
+                $timeSlot = $appointment->timeSlot;
+                $startDateTime = Carbon::parse($appointment->appointment_date)
+                    ->setTimeFromTimeString($timeSlot->start_time)
+                    ->setTimezone('Asia/Ho_Chi_Minh');
+                
+                $endDateTime = Carbon::parse($appointment->appointment_date)
+                    ->setTimeFromTimeString($timeSlot->end_time)
+                    ->setTimezone('Asia/Ho_Chi_Minh');
+
+                return [
+                    'id' => $appointment->id,
+                    'title' => $appointment->service->name ?? 'Appointment',
+                    'start' => $startDateTime->format('Y-m-d H:i:s'),
+                    'end' => $endDateTime->format('Y-m-d H:i:s'),
+                    'service' => $appointment->service,
+                    'staff' => $appointment->staff,
+                    'status' => $appointment->status,
+                    'appointment_type' => $appointment->appointment_type,
+                    'note' => $appointment->note,
+                    'time_slot' => $timeSlot
+                ];
+            });
+
+            return [
+                'status' => 200,
+                'message' => 'Lấy danh sách lịch hẹn thành công',
+                'data' => $formattedAppointments
+            ];
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage());
+            return [
+                'status' => 500,
+                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
+                'data' => null
+            ];
+        }
+    }
+
     // Implement other methods as needed...
 }
