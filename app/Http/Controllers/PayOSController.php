@@ -309,12 +309,13 @@ class PayOSController extends Controller
             Log::info('PayOS Response:', $response);
 
             if (isset($response['checkoutUrl'])) {
-                // Create payment history record
+                // Create payment history record with initial status
                 PaymentHistory::create([
                     'invoice_id' => $invoice->id,
                     'amount' => $invoice->remaining_amount,
                     'payment_method' => 'payos',
                     'status' => 'pending',
+                    'old_payment_status' => 'pending', // Add default status
                     'transaction_code' => $orderCode,
                 ]);
 

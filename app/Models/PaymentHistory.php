@@ -38,6 +38,10 @@ class PaymentHistory extends Model
         'note'
     ];
 
+    protected $attributes = [
+        'old_payment_status' => 'pending' // Thêm giá trị mặc định
+    ];
+
     protected $casts = [
         'payment_amount' => 'decimal:2',
         'created_at' => 'datetime',
