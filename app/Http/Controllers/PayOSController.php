@@ -17,7 +17,7 @@ class PayOSController extends Controller
         $this->payOS = $payOS;
     }
 
-    private function createPaymentLink(array $paymentData)
+    protected function createPaymentLink(array $paymentData)
     {
         try {
             Log::info('PayOS Request:', $paymentData);
@@ -101,45 +101,19 @@ class PayOSController extends Controller
                 'items' => $this->formatOrderItems($invoice->order->items),
             ];
 
-            try {
-                Log::info('PayOS Request:', $paymentData);
+            $result = $this->createPaymentLink($paymentData);
 
-                $response = $this->payOS->createPaymentLink($paymentData);
-                Log::info('PayOS Response:', $response);
-
-                if (isset($response['checkoutUrl'])) {
-                    PaymentHistory::create([
-                        'invoice_id' => $invoice->id,
-                        'amount' => $amount / 100,
-                        'payment_method' => 'payos',
-                        'status' => 'pending',
-                        'transaction_code' => $orderCode,
-                    ]);
-
-                    return response()->json([
-                        'success' => true,
-                        'checkoutUrl' => $response['checkoutUrl'],
-                        'orderCode' => $orderCode,
-                        'qrCode' => $response['qrCode'] ?? null,
-                    ]);
-                }
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không thể tạo link thanh toán',
-                    'error' => $response['desc'] ?? null
-                ], 400);
-            } catch (\Exception $e) {
-                Log::error('PayOS Error:', [
-                    'message' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+            if ($result['success']) {
+                PaymentHistory::create([
+                    'invoice_id' => $invoice->id,
+                    'amount' => $amount / 100,
+                    'payment_method' => 'payos',
+                    'status' => 'pending',
+                    'transaction_code' => $orderCode,
                 ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()
-                ], 500);
             }
+
+            return response()->json($result, $result['success'] ? 200 : 400);
         } catch (\Exception $e) {
             Log::error('PayOS Process Payment Error:', [
                 'message' => $e->getMessage(),
