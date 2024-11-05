@@ -197,4 +197,55 @@ class AddressController extends BaseController
             return $this->respondWithJson(null, 'Lỗi khi lấy danh sách địa chỉ: ' . $e->getMessage(), 500);
         }
     }
+
+    /**
+     * Get addresses for current authenticated user
+     * 
+     * @OA\Get(
+     *     path="/api/user/my-addresses",
+     *     summary="Lấy danh sách địa chỉ của người dùng hiện tại",
+     *     tags={"Address"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Lấy danh sách địa chỉ thành công"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="user_id", type="string", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                     @OA\Property(property="province", type="string", example="Hà Nội"),
+     *                     @OA\Property(property="district", type="string", example="Cầu Giấy"),
+     *                     @OA\Property(property="address", type="string", example="144 Xuân Thủy"),
+     *                     @OA\Property(property="address_type", type="string", example="home"),
+     *                     @OA\Property(property="is_default", type="boolean", example=true),
+     *                     @OA\Property(property="is_temporary", type="boolean", example=false),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2024-03-15T09:00:00Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-03-15T09:00:00Z")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Chưa xác thực",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated")
+     *         )
+     *     )
+     * )
+     */
+    public function getAddressByUser()
+    {
+        try {
+            $addresses = $this->addressService->getAddressByUser();
+            return $this->respondWithJson($addresses, 'Lấy danh sách địa chỉ thành công');
+        } catch (\Exception $e) {
+            return $this->respondWithJson(null, 'Lỗi khi lấy danh sách địa chỉ: ' . $e->getMessage(), 500);
+        }
+    }
 }

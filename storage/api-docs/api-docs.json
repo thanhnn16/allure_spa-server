@@ -252,6 +252,105 @@
                 ]
             }
         },
+        "/api/user/my-addresses": {
+            "get": {
+                "tags": [
+                    "Address"
+                ],
+                "summary": "Lấy danh sách địa chỉ của người dùng hiện tại",
+                "description": "Get addresses for current authenticated user",
+                "operationId": "c71dca8c1e47d9d0d6fbcd4d9e3effbe",
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lấy danh sách địa chỉ thành công"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "string",
+                                                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                    },
+                                                    "province": {
+                                                        "type": "string",
+                                                        "example": "Hà Nội"
+                                                    },
+                                                    "district": {
+                                                        "type": "string",
+                                                        "example": "Cầu Giấy"
+                                                    },
+                                                    "address": {
+                                                        "type": "string",
+                                                        "example": "144 Xuân Thủy"
+                                                    },
+                                                    "address_type": {
+                                                        "type": "string",
+                                                        "example": "home"
+                                                    },
+                                                    "is_default": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_temporary": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-03-15T09:00:00Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-03-15T09:00:00Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa xác thực",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/appointments": {
             "get": {
                 "tags": [

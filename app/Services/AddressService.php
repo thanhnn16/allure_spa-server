@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Address;
+use Illuminate\Support\Facades\Auth;
 
 class AddressService
 {
@@ -40,5 +41,13 @@ class AddressService
     public function delete(Address $address): bool
     {
         return $address->delete();
+    }
+
+    public function getAddressByUser()
+    {
+        return Address::where('user_id', Auth::user()->id)
+            ->orderBy('is_default', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 }

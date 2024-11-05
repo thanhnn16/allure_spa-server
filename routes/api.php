@@ -85,6 +85,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/user/addresses', [AddressController::class, 'store']);
         Route::put('/user/addresses/{address}', [AddressController::class, 'update']);
         Route::delete('/user/addresses/{address}', [AddressController::class, 'destroy']);
+        Route::get('/user/my-addresses', [AddressController::class, 'getAddressByUser']);
 
         // Rating routes
         Route::get('/ratings', [RatingController::class, 'index']);
