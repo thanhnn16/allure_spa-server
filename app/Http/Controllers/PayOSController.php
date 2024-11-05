@@ -224,42 +224,6 @@ class PayOSController extends Controller
         }
     }
 
-    private function handleInvoicePayment($orderCode, $paymentResponse)
-    {
-        preg_match('/^(\d+)/', $orderCode, $matches);
-        $invoiceId = $matches[1] ?? null;
-
-        if (!$invoiceId) {
-            Log::error('Invalid order code format:', ['orderCode' => $orderCode]);
-            return;
-        }
-
-        try {
-            $payment = PaymentHistory::where('transaction_code', $orderCode)->first();
-            if ($payment) {
-                $payment->update([
-                    'status' => 'completed',
-                    'payment_details' => json_encode($paymentResponse)
-                ]);
-
-                $invoice = Invoice::find($invoiceId);
-                if ($invoice) {
-                    $invoice->paid_amount += $payment->amount;
-                    $invoice->remaining_amount = $invoice->calculateRemainingAmount();
-                    $invoice->status = $invoice->remaining_amount > 0 ?
-                        Invoice::STATUS_PARTIALLY_PAID :
-                        Invoice::STATUS_PAID;
-                    $invoice->save();
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Error handling invoice payment:', [
-                'error' => $e->getMessage(),
-                'orderCode' => $orderCode
-            ]);
-        }
-    }
-
     public function createPaymentLinkForInvoice(Request $request, $invoiceId)
     {
         try {
@@ -312,11 +276,12 @@ class PayOSController extends Controller
                 // Create payment history record with both old and new status
                 PaymentHistory::create([
                     'invoice_id' => $invoice->id,
-                    'amount' => $invoice->remaining_amount,
+                    'payment_amount' => $invoice->remaining_amount,
                     'payment_method' => 'payos',
                     'old_payment_status' => 'pending',
                     'new_payment_status' => 'pending',
                     'transaction_code' => $orderCode,
+                    'note' => 'Khởi tạo thanh toán qua PayOS'
                 ]);
 
                 return response()->json([
