@@ -2719,6 +2719,113 @@
                 }
             }
         },
+        "/api/time-slots/available": {
+            "get": {
+                "tags": [
+                    "TimeSlots"
+                ],
+                "summary": "Kiểm tra các khung giờ trống cho ngày được chọn",
+                "operationId": "d9f3fb3a81cc60464f51de1ddda03ca1",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "Ngày cần kiểm tra (format: Y-m-d)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "service_id",
+                        "in": "query",
+                        "description": "ID của dịch vụ (để kiểm tra thời gian phù hợp)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lấy danh sách khung giờ trống thành công"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "start_time": {
+                                                        "type": "string",
+                                                        "example": "09:00:00"
+                                                    },
+                                                    "end_time": {
+                                                        "type": "string",
+                                                        "example": "10:00:00"
+                                                    },
+                                                    "available": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "current_bookings": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "max_bookings": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lỗi validate",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ngày không hợp lệ"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/users/{id}": {
             "put": {
                 "tags": [
@@ -5110,6 +5217,10 @@
         {
             "name": "Products",
             "description": "Products"
+        },
+        {
+            "name": "TimeSlots",
+            "description": "TimeSlots"
         },
         {
             "name": "User",
