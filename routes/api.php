@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ServiceController;
@@ -64,7 +65,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/appointments/{appointment}/update', [AppointmentController::class, 'update']);
         Route::put('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel']);
 
-        // Add these routes inside the authenticated group
+        // User routes
         Route::get('/users/search', [UserController::class, 'searchUsers']);
         Route::get('/users/get-staff-list', [UserController::class, 'getStaffList']);
         Route::get('/users/{userId}/service-packages', [UserController::class, 'getUserServicePackages']);
@@ -76,6 +77,12 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index']);
 
         Route::get('/user/info', [UserController::class, 'getUserInfo']);
+
+        // User address routes
+        Route::get('/user/addresses', [AddressController::class, 'index']);
+        Route::post('/user/addresses', [AddressController::class, 'store']);
+        Route::put('/user/addresses/{address}', [AddressController::class, 'update']);
+        Route::delete('/user/addresses/{address}', [AddressController::class, 'destroy']);
 
         // Rating routes
         Route::get('/ratings', [RatingController::class, 'index']);

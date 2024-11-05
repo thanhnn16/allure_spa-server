@@ -16,30 +16,25 @@
         }
     ],
     "paths": {
-        "/api/addresses": {
+        "/api/user/addresses": {
             "post": {
                 "tags": [
                     "Address"
                 ],
                 "summary": "Tạo địa chỉ mới",
                 "description": "Store a new address",
-                "operationId": "5549e34fec9817a9794302a767fc7fde",
+                "operationId": "5f031b0aa49cef0cbaebe56a036b26f7",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "user_id",
                                     "province",
                                     "district",
                                     "address"
                                 ],
                                 "properties": {
-                                    "user_id": {
-                                        "type": "string",
-                                        "format": "uuid"
-                                    },
                                     "province": {
                                         "type": "string"
                                     },
@@ -97,14 +92,14 @@
                 ]
             }
         },
-        "/api/addresses/{address}": {
+        "/api/user/addresses/{address}": {
             "put": {
                 "tags": [
                     "Address"
                 ],
                 "summary": "Cập nhật địa chỉ",
                 "description": "Update an address",
-                "operationId": "b71276024d0a845244b455b67cd1eae4",
+                "operationId": "b4c2e30be132080f7747fef57cca1a00",
                 "parameters": [
                     {
                         "name": "address",
@@ -183,7 +178,7 @@
                 ],
                 "summary": "Xóa địa chỉ",
                 "description": "Delete an address",
-                "operationId": "225747ebbc189734860d975104b1555c",
+                "operationId": "845cfc5b0fc94b5bb624c6e9c75b9c99",
                 "parameters": [
                     {
                         "name": "address",

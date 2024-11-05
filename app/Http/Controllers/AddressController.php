@@ -20,15 +20,14 @@ class AddressController extends BaseController
      * Store a new address
      * 
      * @OA\Post(
-     *     path="/api/addresses",
+     *     path="/api/user/addresses",
      *     summary="Tạo địa chỉ mới",
      *     tags={"Address"},
      *     security={{ "bearerAuth": {} }},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"user_id", "province", "district", "address"},
-     *             @OA\Property(property="user_id", type="string", format="uuid"),
+     *             required={"province", "district", "address"},
      *             @OA\Property(property="province", type="string"),
      *             @OA\Property(property="district", type="string"),
      *             @OA\Property(property="address", type="string"),
@@ -50,7 +49,6 @@ class AddressController extends BaseController
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
             'province' => 'required|string|max:255',
             'district' => 'required|string|max:255',
             'address' => 'required|string|max:255',
@@ -71,7 +69,7 @@ class AddressController extends BaseController
      * Update an address
      * 
      * @OA\Put(
-     *     path="/api/addresses/{address}",
+     *     path="/api/user/addresses/{address}",
      *     summary="Cập nhật địa chỉ",
      *     tags={"Address"},
      *     security={{ "bearerAuth": {} }},
@@ -125,7 +123,7 @@ class AddressController extends BaseController
      * Delete an address
      * 
      * @OA\Delete(
-     *     path="/api/addresses/{address}",
+     *     path="/api/user/addresses/{address}",
      *     summary="Xóa địa chỉ",
      *     tags={"Address"},
      *     security={{ "bearerAuth": {} }},
