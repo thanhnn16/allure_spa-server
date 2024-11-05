@@ -222,4 +222,49 @@ class PayOSController extends Controller
             ]);
         }
     }
+
+    public function createPaymentLinkForInvoice(Invoice $invoice, Request $request)
+    {
+        try {
+            $orderCode = intval($invoice->id . time() . rand(100, 999));
+            $amount = intval($invoice->remaining_amount * 100); // Convert to smallest currency unit
+
+            $paymentData = [
+                'orderCode' => $orderCode,
+                'amount' => $amount,
+                'description' => "Thanh toán hóa đơn #" . $invoice->id,
+                'returnUrl' => $request->returnUrl,
+                'cancelUrl' => $request->cancelUrl,
+                'buyerName' => $invoice->user->full_name ?? null,
+                'buyerEmail' => $invoice->user->email ?? null,
+                'buyerPhone' => $invoice->user->phone ?? null,
+                'buyerAddress' => $invoice->user->address ?? null,
+                'items' => $this->formatOrderItems($invoice->order->items),
+            ];
+
+            $result = $this->createPaymentLink($paymentData);
+
+            if ($result['success']) {
+                PaymentHistory::create([
+                    'invoice_id' => $invoice->id,
+                    'amount' => $amount / 100,
+                    'payment_method' => 'payos',
+                    'status' => 'pending',
+                    'transaction_code' => $orderCode,
+                ]);
+            }
+
+            return response()->json($result, $result['success'] ? 200 : 400);
+        } catch (\Exception $e) {
+            Log::error('PayOS Create Payment Link Error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi tạo link thanh toán: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

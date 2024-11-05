@@ -131,7 +131,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::prefix('invoices')->group(function () {
             Route::get('/{invoice}/payment', [InvoiceController::class, 'getPaymentDetails']);
             Route::post('/{invoice}/pay', [PayOSController::class, 'processPayment']);
-            Route::post('/{invoice}/payos', [PayOSController::class, 'createPaymentLink']);
+            Route::post('/{invoice}/payos', [PayOSController::class, 'createPaymentLinkForInvoice']);
         });
     });
 
