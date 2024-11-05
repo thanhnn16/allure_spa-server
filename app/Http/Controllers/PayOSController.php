@@ -241,7 +241,7 @@ class PayOSController extends Controller
             $orderCode = intval(substr(time() . rand(10, 99), -8));
 
             // Simplified description - maximum 25 characters
-            $description = sprintf('HD%d', $invoice->id);
+            $description = sprintf('Thanh toán cho Allure Spa');
 
             $paymentData = [
                 'orderCode' => $orderCode,
