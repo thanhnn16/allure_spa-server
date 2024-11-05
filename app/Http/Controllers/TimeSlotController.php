@@ -62,13 +62,6 @@ class TimeSlotController extends BaseController
      *         required=true,
      *         @OA\Schema(type="string", format="date")
      *     ),
-     *     @OA\Parameter(
-     *         name="service_id",
-     *         in="query",
-     *         description="ID của dịch vụ (để kiểm tra thời gian phù hợp)",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Thành công",
@@ -104,12 +97,10 @@ class TimeSlotController extends BaseController
     {
         $request->validate([
             'date' => 'required|date|after_or_equal:today',
-            'service_id' => 'required|exists:services,id'
         ]);
 
         try {
             $date = $request->get('date');
-            $serviceId = $request->get('service_id');
 
             $timeSlots = TimeSlot::where('is_active', true)
                 ->orderBy('start_time')
