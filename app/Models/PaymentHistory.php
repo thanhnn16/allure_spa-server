@@ -39,7 +39,8 @@ class PaymentHistory extends Model
     ];
 
     protected $attributes = [
-        'old_payment_status' => 'pending' // Thêm giá trị mặc định
+        'old_payment_status' => 'pending',
+        'new_payment_status' => 'pending',
     ];
 
     protected $casts = [
