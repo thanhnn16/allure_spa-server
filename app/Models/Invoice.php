@@ -112,7 +112,6 @@ class Invoice extends Model
         return $this->status === self::STATUS_FAILED;
     }
 
-    // Tính toán số tiền còn lại cần thanh toán
     public function calculateRemainingAmount()
     {
         return $this->total_amount - $this->paid_amount;
