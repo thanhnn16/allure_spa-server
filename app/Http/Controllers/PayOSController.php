@@ -76,7 +76,14 @@ class PayOSController extends Controller
     public function processPayment(Request $request)
     {
         try {
-            $invoice = Invoice::findOrFail($request->invoice_id);
+            $invoice = Invoice::find($request->invoice_id);
+            
+            if (!$invoice) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy hóa đơn'
+                ], 404);
+            }
 
             if (!$invoice->isPending() && !$invoice->isPartiallyPaid()) {
                 return response()->json([
@@ -117,7 +124,8 @@ class PayOSController extends Controller
         } catch (\Exception $e) {
             Log::error('PayOS Process Payment Error:', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'invoice_id' => $request->invoice_id
             ]);
 
             return response()->json([
@@ -223,11 +231,20 @@ class PayOSController extends Controller
         }
     }
 
-    public function createPaymentLinkForInvoice(Invoice $invoice, Request $request)
+    public function createPaymentLinkForInvoice(Request $request, $invoiceId)
     {
         try {
+            $invoice = Invoice::find($invoiceId);
+            
+            if (!$invoice) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy hóa đơn'
+                ], 404);
+            }
+
             $orderCode = intval($invoice->id . time() . rand(100, 999));
-            $amount = intval($invoice->remaining_amount * 100); // Convert to smallest currency unit
+            $amount = intval($invoice->remaining_amount * 100);
 
             $paymentData = [
                 'orderCode' => $orderCode,
@@ -258,7 +275,8 @@ class PayOSController extends Controller
         } catch (\Exception $e) {
             Log::error('PayOS Create Payment Link Error:', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'invoice_id' => $invoiceId
             ]);
 
             return response()->json([
