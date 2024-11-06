@@ -142,6 +142,7 @@ Route::middleware('throttle:api')->group(function () {
         // Favorite routes
         Route::post('/favorites/toggle', [FavoriteController::class, 'toggle']);
         Route::get('/favorites', [FavoriteController::class, 'index']);
+        Route::get('/favorites/{type}', [FavoriteController::class, 'getByType']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

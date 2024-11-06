@@ -41,4 +41,19 @@ class FavoriteService
             ->where('user_id', Auth::id())
             ->get();
     }
+
+    public function getFavoritesByType($type)
+    {
+        $query = Favorite::where('user_id', Auth::id());
+        
+        if ($type === 'product') {
+            return $query->whereNotNull('product_id')
+                ->with('product.media')
+                ->get();
+        }
+        
+        return $query->whereNotNull('service_id')
+            ->with('service.media')
+            ->get();
+    }
 }

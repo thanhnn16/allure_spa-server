@@ -96,4 +96,69 @@ class FavoriteController extends BaseController
         $favorites = $this->favoriteService->getUserFavorites();
         return $this->respondWithJson($favorites);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/favorites/{type}",
+     *     summary="Get user's favorites by type (products or services)",
+     *     tags={"Favorites"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="path",
+     *         required=true,
+     *         description="Type of favorites to retrieve",
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={"product", "service"}
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="status_code", type="integer"),
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="user_id", type="integer"),
+     *                     @OA\Property(property="product_id", type="integer", nullable=true),
+     *                     @OA\Property(property="service_id", type="integer", nullable=true),
+     *                     @OA\Property(
+     *                         property="product",
+     *                         nullable=true,
+     *                         ref="#/components/schemas/Product"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="service",
+     *                         nullable=true,
+     *                         ref="#/components/schemas/Service"
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
+    public function getByType($type)
+    {
+        $validator = Validator::make(['type' => $type], [
+            'type' => 'required|in:product,service'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondWithError(422, $validator->errors()->first());
+        }
+
+        $favorites = $this->favoriteService->getFavoritesByType($type);
+        return $this->respondWithJson($favorites);
+    }
 } 

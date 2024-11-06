@@ -1402,6 +1402,99 @@
                 ]
             }
         },
+        "/api/favorites/{type}": {
+            "get": {
+                "tags": [
+                    "Favorites"
+                ],
+                "summary": "Get user's favorites by type (products or services)",
+                "operationId": "3b68d5b825999ee1789aaaa9df128cde",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "description": "Type of favorites to retrieve",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "product",
+                                "service"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "status_code": {
+                                            "type": "integer"
+                                        },
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "product_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "service_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "product": {
+                                                        "oneOf": [
+                                                            {
+                                                                "$ref": "#/components/schemas/Product"
+                                                            }
+                                                        ],
+                                                        "nullable": true
+                                                    },
+                                                    "service": {
+                                                        "oneOf": [
+                                                            {
+                                                                "$ref": "#/components/schemas/Service"
+                                                            }
+                                                        ],
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/products": {
             "get": {
                 "tags": [
