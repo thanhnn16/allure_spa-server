@@ -109,6 +109,15 @@ class AiConfigController extends BaseController
     {
         try {
             $validated = $this->validateConfig($request);
+            
+            // Xử lý các trường JSON
+            $jsonFields = ['safety_settings', 'function_declarations', 'tool_config'];
+            foreach ($jsonFields as $field) {
+                if (isset($validated[$field]) && is_string($validated[$field])) {
+                    $validated[$field] = json_decode($validated[$field], true);
+                }
+            }
+
             $config = $this->aiConfigService->createConfig($validated);
 
             return response()->json([
@@ -133,6 +142,15 @@ class AiConfigController extends BaseController
     {
         try {
             $validated = $this->validateConfig($request);
+            
+            // Xử lý các trường JSON
+            $jsonFields = ['safety_settings', 'function_declarations', 'tool_config'];
+            foreach ($jsonFields as $field) {
+                if (isset($validated[$field]) && is_string($validated[$field])) {
+                    $validated[$field] = json_decode($validated[$field], true);
+                }
+            }
+
             $config = $this->aiConfigService->updateConfig($id, $validated);
 
             return response()->json([

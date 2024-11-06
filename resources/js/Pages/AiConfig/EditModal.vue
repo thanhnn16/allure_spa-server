@@ -166,6 +166,9 @@ import JsonEditor from '@/Components/JsonEditor.vue'
 import { useConfigValidation } from '@/Composables/useConfigValidation'
 import { router } from '@inertiajs/vue3'
 import axios from 'axios'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 const props = defineProps({
     config: {
@@ -234,20 +237,44 @@ const isEditMode = computed(() => {
     return props.config !== null && Object.keys(props.config).length > 0
 })
 
-// Thêm defaultFormData để khởi tạo giá trị mặc định
+// Sửa lại phần khởi tạo defaultFormData
 const defaultFormData = {
     ai_name: '',
     type: 'system_prompt',
+    context: JSON.stringify({
+        role: "assistant",
+        description: "Mô tả về vai trò của AI",
+        instructions: "Hướng dẫn chi tiết cho AI",
+        custom_instructions: {
+            system_instructions: "Bạn là một trợ lý AI thông minh...",
+            user_instructions: "Hãy trả lời một cách chuyên nghiệp và thân thiện"
+        }
+    }, null, 2),
     language: 'vi',
-    model_type: 'gemini-pro',
+    model_type: 'gemini-1.5-pro',
     temperature: 0.7,
     max_tokens: 2048,
     top_p: 0.9,
     top_k: 40,
-    safety_settings: props.defaultSafetySettings,
-    function_declarations: props.defaultFunctionDeclarations,
-    tool_config: props.defaultToolConfig
-}
+    safety_settings: JSON.stringify(props.defaultSafetySettings || [], null, 2),
+    function_declarations: JSON.stringify(props.defaultFunctionDeclarations || [], null, 2),
+    tool_config: JSON.stringify(props.defaultToolConfig || {}, null, 2)
+};
+
+// Thêm hàm để format JSON string
+const formatJsonString = (value, defaultValue = null) => {
+    try {
+        if (typeof value === 'string') {
+            return JSON.stringify(JSON.parse(value), null, 2);
+        } else if (typeof value === 'object') {
+            return JSON.stringify(value, null, 2);
+        }
+        return JSON.stringify(defaultValue || {}, null, 2);
+    } catch (e) {
+        console.error('Error formatting JSON:', e);
+        return JSON.stringify(defaultValue || {}, null, 2);
+    }
+};
 
 // Cập nhật khởi tạo formData
 const formData = reactive(
@@ -304,33 +331,50 @@ const getFieldProps = (field) => {
 
 const jsonErrors = ref({});
 
+// Thêm hàm kiểm tra JSON string
+const isJsonString = (str) => {
+    try {
+        JSON.parse(str);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+// Sửa lại hàm initializeFormData
 function initializeFormData() {
     if (props.config) {
-        // Nếu đang edit, chuyển đổi các trường JSON thành string nếu cần
         const data = { ...props.config };
-        ['context', 'function_declarations', 'tool_config'].forEach(key => {
-            if (typeof data[key] === 'object') {
-                data[key] = JSON.stringify(data[key], null, 2);
+
+        // Xử lý các trường JSON
+        const jsonFields = ['context', 'safety_settings', 'function_declarations', 'tool_config'];
+        jsonFields.forEach(key => {
+            try {
+                if (data[key]) {
+                    if (typeof data[key] === 'string' && !isJsonString(data[key]) && key === 'context') {
+                        // Nếu context là text thường, wrap vào object
+                        data[key] = JSON.stringify({
+                            role: "assistant",
+                            description: "AI Assistant",
+                            instructions: data[key],
+                            custom_instructions: {
+                                system_instructions: data[key],
+                                user_instructions: ""
+                            }
+                        }, null, 2);
+                    } else if (typeof data[key] === 'object') {
+                        data[key] = JSON.stringify(data[key], null, 2);
+                    }
+                }
+            } catch (e) {
+                console.error(`Error initializing ${key}:`, e);
+                // Set default value if error
+                data[key] = JSON.stringify(defaultFormData[key], null, 2);
             }
         });
         return data;
     }
-
-    // Nếu tạo mới, sử dụng giá trị mặc định
-    return {
-        ai_name: '',
-        type: 'system_prompt',
-        language: 'vi',
-        model_type: 'gemini-pro',
-        temperature: 0.7,
-        max_tokens: 2048,
-        top_p: 0.9,
-        top_k: 40,
-        context: '',
-        safety_settings: JSON.stringify(props.defaultSafetySettings, null, 2),
-        function_declarations: JSON.stringify(props.defaultFunctionDeclarations, null, 2),
-        tool_config: JSON.stringify(props.defaultToolConfig, null, 2)
-    };
+    return { ...defaultFormData };
 }
 
 const handleJsonError = (field, error) => {
@@ -341,18 +385,41 @@ const handleJsonError = (field, error) => {
     }
 };
 
+// Sửa lại hàm validateJsonFields
 const validateJsonFields = () => {
-    const jsonFields = ['context', 'function_declarations', 'tool_config'];
+    const jsonFields = ['context', 'safety_settings', 'function_declarations', 'tool_config'];
     let isValid = true;
 
     jsonFields.forEach(field => {
         try {
             if (formData[field]) {
-                JSON.parse(formData[field]);
+                let value = formData[field];
+
+                // Nếu là string nhưng không phải JSON, wrap nó vào một object
+                if (typeof value === 'string' && !isJsonString(value)) {
+                    if (field === 'context') {
+                        formData[field] = JSON.stringify({
+                            role: "assistant",
+                            description: "AI Assistant",
+                            instructions: value,
+                            custom_instructions: {
+                                system_instructions: value,
+                                user_instructions: ""
+                            }
+                        }, null, 2);
+                    }
+                } else if (typeof value === 'string') {
+                    // Nếu là JSON string, validate nó
+                    JSON.parse(value);
+                } else if (typeof value === 'object') {
+                    // Nếu là object, stringify để validate
+                    JSON.stringify(value);
+                }
+                delete jsonErrors.value[field];
             }
-            delete jsonErrors.value[field];
         } catch (e) {
-            jsonErrors.value[field] = 'Invalid JSON format';
+            console.error(`Error validating ${field}:`, e);
+            jsonErrors.value[field] = `Invalid JSON format in ${field}`;
             isValid = false;
         }
     });
@@ -360,30 +427,45 @@ const validateJsonFields = () => {
     return isValid;
 };
 
-// Cập nhật handleSubmit
+// Sửa lại hàm handleSubmit
 const handleSubmit = async () => {
     try {
-        isSubmitting.value = true
-        errors.value = {}
+        isSubmitting.value = true;
+        errors.value = {};
 
-        // Validate JSON fields
         if (!validateJsonFields()) {
+            isSubmitting.value = false;
             return;
         }
 
-        // Convert JSON strings to objects for submission
         const submitData = { ...formData };
-        ['context', 'function_declarations', 'tool_config'].forEach(key => {
-            if (submitData[key]) {
-                try {
-                    submitData[key] = JSON.parse(submitData[key]);
-                } catch (e) {
-                    console.error(`Failed to parse ${key}: ${e}`);
+        ['context', 'safety_settings', 'function_declarations', 'tool_config'].forEach(key => {
+            try {
+                if (submitData[key]) {
+                    // Nếu là string, kiểm tra xem có phải JSON không
+                    if (typeof submitData[key] === 'string') {
+                        if (isJsonString(submitData[key])) {
+                            submitData[key] = JSON.parse(submitData[key]);
+                        } else if (key === 'context') {
+                            // Nếu là text thường, wrap vào object
+                            submitData[key] = {
+                                role: "assistant",
+                                description: "AI Assistant",
+                                instructions: submitData[key],
+                                custom_instructions: {
+                                    system_instructions: submitData[key],
+                                    user_instructions: ""
+                                }
+                            };
+                        }
+                    }
                 }
+            } catch (e) {
+                console.error(`Error parsing ${key}:`, e);
+                throw new Error(`Invalid JSON format in ${key}`);
             }
         });
 
-        // API endpoint
         const url = isEditMode.value
             ? `/api/ai-configs/${props.config.id}`
             : '/api/ai-configs';
@@ -400,11 +482,27 @@ const handleSubmit = async () => {
 
     } catch (error) {
         console.error('Submit error:', error);
-        toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+        toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra');
     } finally {
         isSubmitting.value = false;
     }
-}
+};
+
+// Thêm watch để theo dõi các trường JSON
+watch(formData, (newData) => {
+    ['context', 'safety_settings', 'function_declarations', 'tool_config'].forEach(field => {
+        if (newData[field]) {
+            try {
+                if (typeof newData[field] === 'string') {
+                    JSON.parse(newData[field]);
+                    delete jsonErrors.value[field];
+                }
+            } catch (e) {
+                jsonErrors.value[field] = `Invalid JSON format in ${field}`;
+            }
+        }
+    });
+}, { deep: true });
 
 // Thêm watch để cập nhật form khi props.config thay đổi
 watch(() => props.config, (newConfig) => {

@@ -145,7 +145,8 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/favorites', [FavoriteController::class, 'index']);
         Route::get('/favorites/{type}', [FavoriteController::class, 'getByType']);
 
-        Route::prefix('ai-config')->group(function () {
+        // Sửa lại routes cho AI Config
+        Route::prefix('ai-configs')->group(function () {
             Route::get('/', [AiConfigController::class, 'index']);
             Route::post('/', [AiConfigController::class, 'store']);
             Route::put('/{id}', [AiConfigController::class, 'update']);

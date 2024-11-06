@@ -42,11 +42,6 @@ class AiChatConfigService
     public function createConfig(array $data)
     {
         try {
-            // Xử lý gemini_settings nếu có
-            if (isset($data['gemini_settings']) && is_array($data['gemini_settings'])) {
-                $data['gemini_settings'] = json_encode($data['gemini_settings']);
-            }
-
             // Đảm bảo các trường bắt buộc
             $defaultData = [
                 'is_active' => true,
@@ -59,12 +54,19 @@ class AiChatConfigService
                 'top_k' => 40,
             ];
 
-            // Merge data, allowing api_key to be overwritten if provided
+            // Merge data với default values
             $mergedData = array_merge($defaultData, $data);
 
-            // Ensure api_key is included even if null
-            if (!isset($mergedData['api_key'])) {
-                $mergedData['api_key'] = null;
+            // Đảm bảo các trường JSON được lưu đúng định dạng
+            $jsonFields = ['safety_settings', 'function_declarations', 'tool_config'];
+            foreach ($jsonFields as $field) {
+                if (isset($mergedData[$field])) {
+                    if (is_string($mergedData[$field])) {
+                        $mergedData[$field] = json_decode($mergedData[$field], true);
+                    }
+                } else {
+                    $mergedData[$field] = null;
+                }
             }
 
             return AiChatConfig::create($mergedData);
@@ -78,11 +80,15 @@ class AiChatConfigService
     {
         try {
             $config = AiChatConfig::findOrFail($id);
-            
-            // Handle api_key specially
-            if (!isset($data['api_key'])) {
-                // If api_key is not provided, keep the existing one
-                $data['api_key'] = $config->api_key;
+
+            // Xử lý các trường JSON
+            $jsonFields = ['safety_settings', 'function_declarations', 'tool_config'];
+            foreach ($jsonFields as $field) {
+                if (isset($data[$field])) {
+                    if (is_string($data[$field])) {
+                        $data[$field] = json_decode($data[$field], true);
+                    }
+                }
             }
 
             $config->update($data);
@@ -113,12 +119,12 @@ class AiChatConfigService
             $data = [
                 'ai_name' => $fileName,
                 'type' => $type,
-                'context' => $file->getClientOriginalExtension() === 'json' 
+                'context' => $file->getClientOriginalExtension() === 'json'
                     ? json_decode($content, true)['content'] ?? $content
                     : $content,
                 'language' => 'vi',
                 'api_key' => null,
-                'gemini_settings' => $file->getClientOriginalExtension() === 'json' 
+                'gemini_settings' => $file->getClientOriginalExtension() === 'json'
                     ? json_decode($content, true)['settings'] ?? null
                     : null,
                 'is_active' => true,
