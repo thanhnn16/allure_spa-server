@@ -109,7 +109,13 @@ class AiChatConfig extends Model
         'top_p',
         'top_k',
         'metadata',
-        'last_used_at'
+        'last_used_at',
+        'safety_settings',
+        'function_declarations',
+        'tool_config',
+        'system_instructions',
+        'response_format',
+        'stop_sequences',
     ];
 
     protected $hidden = [
@@ -122,7 +128,11 @@ class AiChatConfig extends Model
         'is_active' => 'boolean',
         'temperature' => 'decimal:2',
         'top_p' => 'decimal:2',
-        'last_used_at' => 'datetime'
+        'last_used_at' => 'datetime',
+        'safety_settings' => 'array',
+        'function_declarations' => 'array',
+        'tool_config' => 'array',
+        'stop_sequences' => 'array',
     ];
 
     // Model types available
@@ -153,6 +163,111 @@ class AiChatConfig extends Model
         'vi' => 'Tiếng Việt',
         'en' => 'English',
         'ja' => '日本語'
+    ];
+
+    const FUNCTION_DECLARATIONS = [
+        [
+            'name' => 'search',
+            'description' => 'Search for products, services or all items',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'query' => [
+                        'type' => 'string',
+                        'description' => 'Search query'
+                    ],
+                    'type' => [
+                        'type' => 'string',
+                        'enum' => ['all', 'products', 'services'],
+                        'description' => 'Type of items to search for'
+                    ],
+                    'limit' => [
+                        'type' => 'integer',
+                        'description' => 'Maximum number of results',
+                        'default' => 10
+                    ]
+                ],
+                'required' => ['query', 'type']
+            ]
+        ],
+        [
+            'name' => 'getAvailableTimeSlots',
+            'description' => 'Get available time slots for a specific date',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'date' => [
+                        'type' => 'string',
+                        'description' => 'Date to check availability (YYYY-MM-DD format)'
+                    ]
+                ],
+                'required' => ['date']
+            ]
+        ],
+        [
+            'name' => 'createAppointment',
+            'description' => 'Create a new appointment',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'service_id' => [
+                        'type' => 'integer',
+                        'description' => 'ID of the service'
+                    ],
+                    'appointment_date' => [
+                        'type' => 'string',
+                        'description' => 'Date of appointment (YYYY-MM-DD format)'
+                    ],
+                    'time_slot_id' => [
+                        'type' => 'integer',
+                        'description' => 'ID of the selected time slot'
+                    ],
+                    'appointment_type' => [
+                        'type' => 'string',
+                        'enum' => ['consultation', 'treatment', 'follow_up']
+                    ],
+                    'note' => [
+                        'type' => 'string',
+                        'description' => 'Additional notes for the appointment'
+                    ]
+                ],
+                'required' => ['service_id', 'appointment_date', 'time_slot_id', 'appointment_type']
+            ]
+        ]
+    ];
+
+    // Safety settings mặc định
+    const SAFETY_SETTINGS = [
+        [
+            'category' => 'HARM_CATEGORY_HARASSMENT',
+            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+        ],
+        [
+            'category' => 'HARM_CATEGORY_HATE_SPEECH',
+            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+        ],
+        [
+            'category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+        ],
+        [
+            'category' => 'HARM_CATEGORY_DANGEROUS_CONTENT',
+            'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'
+        ]
+    ];
+
+    // Tool config mặc định
+    const DEFAULT_TOOL_CONFIG = [
+        'functionCallingConfig' => [
+            'mode' => 'ANY'
+        ]
+    ];
+
+    // Response formats
+    const RESPONSE_FORMATS = [
+        'text' => 'text/plain',
+        'json' => 'application/json',
+        'markdown' => 'text/markdown'
     ];
 
     public static function getTypes()
@@ -195,8 +310,30 @@ class AiChatConfig extends Model
                 'topP' => (float)$this->top_p,
                 'topK' => (int)$this->top_k,
                 'maxOutputTokens' => (int)$this->max_tokens,
+                'stopSequences' => $this->stop_sequences ?? [],
             ],
+            'safetySettings' => $this->safety_settings ?? self::SAFETY_SETTINGS,
+            'tools' => [
+                [
+                    'functionDeclarations' => $this->function_declarations ?? self::FUNCTION_DECLARATIONS
+                ]
+            ],
+            'toolConfig' => $this->tool_config ?? self::DEFAULT_TOOL_CONFIG,
+            'systemInstructions' => $this->system_instructions,
+            'responseMimeType' => $this->response_format ?? self::RESPONSE_FORMATS['text'],
             'metadata' => $this->metadata ?? []
         ];
+    }
+
+    // Helper method để lấy function declarations
+    public static function getFunctionDeclarations()
+    {
+        return self::FUNCTION_DECLARATIONS;
+    }
+
+    // Helper method để lấy safety settings
+    public static function getSafetySettings()
+    {
+        return self::SAFETY_SETTINGS;
     }
 }

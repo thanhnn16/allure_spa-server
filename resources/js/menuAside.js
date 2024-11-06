@@ -14,6 +14,11 @@ import {
     mdiFileDocument,
     mdiCellphone,
     mdiRobot,
+    mdiFileDocumentPlus,
+    mdiImport,
+    mdiExport,
+    mdiChartBar,
+    mdiViewCarousel,
 } from '@mdi/js'
 
 export default [
@@ -37,12 +42,14 @@ export default [
         icon: mdiBallot,
         menu: [
             {
-                label: 'Tạo hoá đơn mới',
-                route: 'invoices.create'
+                label: 'Danh sách hoá đơn',
+                route: 'invoices.index',
+                icon: mdiFileDocument
             },
             {
-                label: 'Danh sách hoá đơn',
-                route: 'invoices.index'
+                label: 'Tạo hoá đơn mới',
+                route: 'invoices.create',
+                icon: mdiFileDocumentPlus
             },
         ]
     },
@@ -55,6 +62,7 @@ export default [
         label: 'Quản lý liệu trình',
         icon: mdiListBox,
         route: 'services.index'
+
     },
     {
         label: 'Quản lý kho hàng',
@@ -62,11 +70,13 @@ export default [
         menu: [
             {
                 label: 'Nhập hàng',
-                route: 'stock-movements.imports'
+                route: 'stock-movements.imports',
+                icon: mdiImport
             },
             {
                 label: 'Xuất hàng',
-                route: 'stock-movements.exports'
+                route: 'stock-movements.exports',
+                icon: mdiExport
             },
         ]
     },
@@ -85,15 +95,18 @@ export default [
         menu: [
             {
                 label: 'Thông báo',
-                route: 'notifications.index'
+                route: 'notifications.index',
+                icon: mdiBell
             },
             {
                 label: 'Chat - Hỗ trợ trực tuyến',
-                route: 'chats.index'
+                route: 'chats.index',
+                icon: mdiChat
             },
             {
                 label: 'Banner App',
-                route: 'mobileapp.banners'
+                route: 'mobileapp.banners',
+                icon: mdiViewCarousel
             },
             {
                 label: 'Cấu hình AI',
@@ -108,35 +121,43 @@ export default [
         menu: [
             {
                 label: 'Báo cáo doanh thu',
-                route: 'reports.revenue'
+                route: 'reports.revenue',
+                icon: mdiChartBar
             },
             {
                 label: 'Báo cáo lợi nhuận',
-                route: 'reports.profit'
+                route: 'reports.profit',
+                icon: mdiChartBar
             },
             {
                 label: 'Báo cáo khách hàng',
-                route: 'reports.customers'
+                route: 'reports.customers',
+                icon: mdiAccountGroup
             },
             {
                 label: 'Báo cáo hàng tồn kho',
-                route: 'reports.stock'
+                route: 'reports.stock',
+                icon: mdiTable
             },
             {
                 label: 'Báo cáo nhân viên',
-                route: 'reports.staff'
+                route: 'reports.staff',
+                icon: mdiAccountMultiple
             },
             {
                 label: 'Báo cáo lịch hẹn',
-                route: 'reports.appointments'
+                route: 'reports.appointments',
+                icon: mdiCalendar
             },
             {
                 label: 'Báo cáo hoá đơn',
-                route: 'reports.invoices'
+                route: 'reports.invoices',
+                icon: mdiFileDocument
             },
             {
                 label: 'Báo cáo sử dụng AI',
-                route: 'reports.ai'
+                route: 'reports.ai',
+                icon: mdiRobot
             },
         ]
     },
