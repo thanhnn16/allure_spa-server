@@ -154,31 +154,30 @@ class AiConfigController extends BaseController
         try {
             $validated = $this->validateConfig($request);
 
-            // Ensure context is always string
-            if (isset($validated['context'])) {
-                if (is_array($validated['context'])) {
-                    $validated['context'] = json_encode($validated['context']);
-                }
-            }
-
-            // Handle JSON fields
+            // Xử lý các trường JSON
             $jsonFields = ['safety_settings', 'function_declarations', 'tool_config'];
             foreach ($jsonFields as $field) {
                 if (isset($validated[$field])) {
-                    try {
-                        // Kiểm tra và parse JSON string
-                        if (is_string($validated[$field])) {
-                            $parsedJson = json_decode($validated[$field], true);
-                            if (json_last_error() === JSON_ERROR_NONE) {
-                                $validated[$field] = $parsedJson;
-                            } else {
+                    // Nếu là string thì parse thành array
+                    if (is_string($validated[$field])) {
+                        try {
+                            $validated[$field] = json_decode($validated[$field], true);
+                            if (json_last_error() !== JSON_ERROR_NONE) {
                                 throw new \Exception("Invalid JSON format for {$field}");
                             }
+                        } catch (\Exception $e) {
+                            Log::error("JSON parsing error for {$field}: " . $e->getMessage());
+                            throw $e;
                         }
-                    } catch (\Exception $e) {
-                        Log::error("JSON parsing error for {$field}: " . $e->getMessage());
-                        throw $e;
                     }
+                    // Nếu là array thì giữ nguyên
+                }
+            }
+
+            // Xử lý context
+            if (isset($validated['context'])) {
+                if (is_array($validated['context'])) {
+                    $validated['context'] = json_encode($validated['context']);
                 }
             }
 
@@ -257,7 +256,7 @@ class AiConfigController extends BaseController
         return $request->validate([
             'ai_name' => 'required|string|max:255',
             'type' => 'required|string|in:system_prompt,vision_config,general',
-            'context' => 'required|string',
+            'context' => 'required',
             'api_key' => 'nullable|string|max:255',
             'language' => 'required|string|in:vi,en,ja',
             'gemini_settings' => 'nullable|array',
@@ -268,9 +267,21 @@ class AiConfigController extends BaseController
             'temperature' => 'numeric|min:0|max:1',
             'top_p' => 'numeric|min:0|max:1',
             'top_k' => 'integer|min:1|max:100',
-            'safety_settings' => 'nullable|string',
-            'function_declarations' => 'nullable|string',
-            'tool_config' => 'nullable|string',
+            'safety_settings' => ['nullable', function ($attribute, $value, $fail) {
+                if (!is_null($value) && !is_string($value) && !is_array($value)) {
+                    $fail('The ' . $attribute . ' must be a string or an array.');
+                }
+            }],
+            'function_declarations' => ['nullable', function ($attribute, $value, $fail) {
+                if (!is_null($value) && !is_string($value) && !is_array($value)) {
+                    $fail('The ' . $attribute . ' must be a string or an array.');
+                }
+            }],
+            'tool_config' => ['nullable', function ($attribute, $value, $fail) {
+                if (!is_null($value) && !is_string($value) && !is_array($value)) {
+                    $fail('The ' . $attribute . ' must be a string or an array.');
+                }
+            }],
             'system_instructions' => 'nullable|string',
             'response_format' => 'nullable|string|in:' . implode(',', array_values(AiChatConfig::RESPONSE_FORMATS)),
             'stop_sequences' => 'nullable|array',

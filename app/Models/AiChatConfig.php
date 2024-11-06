@@ -183,8 +183,7 @@ class AiChatConfig extends Model
                     ],
                     'limit' => [
                         'type' => 'integer',
-                        'description' => 'Maximum number of results',
-                        'default' => 10
+                        'description' => 'Maximum number of results'
                     ]
                 ],
                 'required' => ['query', 'type']
