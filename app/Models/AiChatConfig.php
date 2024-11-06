@@ -350,6 +350,57 @@ class AiChatConfig extends Model
                 ],
                 'required' => ['service_id', 'appointment_date', 'time_slot_id', 'appointment_type']
             ]
+        ],
+        [
+            'name' => 'getUserVouchers',
+            'description' => 'Get all vouchers of current user',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'status' => [
+                        'type' => 'string',
+                        'enum' => ['active', 'expired', 'all'],
+                        'description' => 'Filter vouchers by status'
+                    ]
+                ]
+            ]
+        ],
+        [
+            'name' => 'getUserInvoices',
+            'description' => 'Get all invoices of current user',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'status' => [
+                        'type' => 'string',
+                        'enum' => ['pending', 'paid', 'cancelled', 'all'],
+                        'description' => 'Filter invoices by status'
+                    ],
+                    'from_date' => [
+                        'type' => 'string',
+                        'description' => 'Start date (YYYY-MM-DD)'
+                    ],
+                    'to_date' => [
+                        'type' => 'string', 
+                        'description' => 'End date (YYYY-MM-DD)'
+                    ]
+                ]
+            ]
+        ],
+        [
+            'name' => 'getUserFavorites',
+            'description' => 'Get all favorites of current user',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'type' => [
+                        'type' => 'string',
+                        'enum' => ['products', 'services', 'all'],
+                        'description' => 'Type of favorites to get'
+                    ]
+                ],
+                'required' => ['type']
+            ]
         ]
     ];
 

@@ -160,6 +160,7 @@ Route::middleware('throttle:api')->group(function () {
         // AI Function routes
         Route::prefix('ai')->group(function () {
             Route::post('/function-call', [AiFunctionController::class, 'handleFunctionCall']);
+            Route::get('/available-functions', [AiFunctionController::class, 'getAvailableFunctions']);
         });
     });
 
