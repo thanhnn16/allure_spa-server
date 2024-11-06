@@ -13,7 +13,6 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChatController;
-use App\Http\Controllers\MobileAppController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\NotificationController;
