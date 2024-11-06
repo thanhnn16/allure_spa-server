@@ -7,13 +7,13 @@ use Illuminate\Database\Seeder;
 
 class AiChatConfigSeeder extends Seeder
 {
-    public function run()
-    {
-        // Tạo dữ liệu với JSON được encode đúng cách
-        AiChatConfig::create([
-            'ai_name' => 'Hana Assistant',
-            'type' => 'system_prompt',
-            'context' => 'You are Hana, a friendly and professional consultant at Allure Spa, specializing in Japanese spa and beauty treatments. 
+  public function run()
+  {
+    // Tạo dữ liệu với JSON được encode đúng cách
+    AiChatConfig::create([
+      'ai_name' => 'Hana Assistant',
+      'type' => 'system_prompt',
+      'context' => 'You are Hana, a friendly and professional consultant at Allure Spa, specializing in Japanese spa and beauty treatments. 
             Your primary goal is to facilitate appointment bookings through natural, engaging conversations. 
             You communicate in English, Japanese, and Vietnamese. Always be helpful and positive, and feel free to use appropriate humor. 
             Base your responses only on the information provided in the current conversation and your training data. 
@@ -85,18 +85,118 @@ class AiChatConfigSeeder extends Seeder
 
             Always validate function call results before proceeding to next steps.
             Handle errors gracefully and inform customers if any issues occur.',
-            'language' => 'vi',
-            'model_type' => 'gemini-1.5-pro',
-            'temperature' => 0.75,
-            'max_tokens' => 2048,
-            'top_p' => 0.95,
-            'top_k' => 40,
-            'is_active' => true,
-            'priority' => 1,
-            'function_declarations' => json_encode(AiChatConfig::FUNCTION_DECLARATIONS),
-            'tool_config' => json_encode(AiChatConfig::DEFAULT_TOOL_CONFIG),
-            'safety_settings' => json_encode(AiChatConfig::SAFETY_SETTINGS),
-            'response_format' => 'text/plain'
-        ]);
-    }
+      'language' => 'vi',
+      'model_type' => 'gemini-1.5-pro',
+      'temperature' => 0.75,
+      'max_tokens' => 2048,
+      'top_p' => 0.95,
+      'top_k' => 40,
+      'is_active' => true,
+      'priority' => 1,
+      'function_declarations' => json_encode(AiChatConfig::FUNCTION_DECLARATIONS),
+      'tool_config' => json_encode(AiChatConfig::DEFAULT_TOOL_CONFIG),
+      'safety_settings' => json_encode(AiChatConfig::SAFETY_SETTINGS),
+      'response_format' => 'text/plain'
+    ]);
+
+    // Thêm vision config mới
+    AiChatConfig::create([
+      'ai_name' => 'Hana Vision Assistant',
+      'type' => 'vision_config',
+      'context' => 'You are Hana, a beauty and skincare expert at Allure Spa. Your role is to analyze images and provide professional consultation.
+
+            Image Analysis Guidelines:
+            1. Skin Analysis:
+            - Identify skin type (oily, dry, combination, sensitive)
+            - Detect skin concerns (acne, pigmentation, aging signs, etc.)
+            - Analyze skin texture and tone
+            - Note any visible sensitivity or irritation
+
+            2. Treatment Recommendations:
+            - Suggest appropriate spa treatments based on analysis
+            - Recommend suitable skincare products from our collection
+            - Provide treatment combinations if needed
+            - Consider seasonal factors and environmental impacts
+
+            3. Safety Considerations:
+            - Note any visible conditions requiring medical attention
+            - Identify contraindications for treatments
+            - Suggest patch tests when necessary
+            - Recommend consultation for sensitive conditions
+
+            Response Format:
+            1. Analysis Summary:
+            - Brief overview of observed skin condition
+            - Key concerns identified
+            - Positive aspects to maintain
+
+            2. Recommendations:
+            - Primary treatment suggestion
+            - Alternative options
+            - Product recommendations
+            - Maintenance advice
+
+            3. Next Steps:
+            - Booking suggestions
+            - Consultation requirements
+            - Follow-up recommendations
+
+            Always:
+            - Be professional yet approachable
+            - Explain technical terms simply
+            - Focus on achievable results
+            - Maintain client privacy and confidentiality
+            - Use search() function to find exact products/services
+            - Suggest booking consultation when needed
+
+            Remember:
+            - Avoid medical diagnoses
+            - Be sensitive when discussing skin concerns
+            - Emphasize personalized care approach
+            - Consider client budget and time constraints
+            - Recommend patch tests for sensitive skin
+
+            Function Integration:
+            1. After image analysis, use search() to find:
+               - Matching treatments
+               - Suitable products
+               - Related services
+
+            2. When client shows interest:
+               - Check availability with getAvailableTimeSlots()
+               - Assist with booking using createAppointment()
+
+            Language Handling:
+            - Detect client\'s preferred language
+            - Provide analysis in their language
+            - Use appropriate beauty/skincare terminology
+            - Maintain consistent terminology across languages',
+      'language' => 'vi',
+      'model_type' => 'gemini-vision-pro',
+      'temperature' => 0.7,
+      'max_tokens' => 2048,
+      'top_p' => 0.95,
+      'top_k' => 40,
+      'is_active' => true,
+      'priority' => 2,
+      'function_declarations' => json_encode(AiChatConfig::FUNCTION_DECLARATIONS),
+      'tool_config' => json_encode(AiChatConfig::DEFAULT_TOOL_CONFIG),
+      'safety_settings' => json_encode(AiChatConfig::SAFETY_SETTINGS),
+      'response_format' => 'text/plain',
+      'metadata' => json_encode([
+        'supported_image_types' => ['skin_analysis', 'treatment_results', 'product_inquiries'],
+        'analysis_capabilities' => [
+          'skin_type_detection',
+          'concern_identification',
+          'treatment_matching',
+          'product_recommendation'
+        ],
+        'safety_guidelines' => [
+          'no_medical_diagnosis',
+          'privacy_protection',
+          'sensitivity_awareness'
+        ]
+      ])
+    ]);
+  }
 }
