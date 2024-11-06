@@ -21,6 +21,9 @@ import axios from 'axios'
 import { computed, reactive, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 
+// Thêm imports cho Dialog components
+import { Dialog, DialogPanel, DialogTitle, TransitionRoot } from '@headlessui/vue'
+
 const toast = useToast()
 
 // Add missing components
@@ -563,12 +566,7 @@ const updateGlobalApiKey = async () => {
                         <BaseButton label="Tải Lên" color="success" @click="openUploadModal" :icon="mdiUpload"
                             :loading="isLoading" />
                         <BaseButton label="Thêm Mới" color="info" @click="openEditModal()" :icon="mdiPlus" />
-                        <BaseButton 
-                            label="API Key" 
-                            color="warning" 
-                            @click="openApiKeyModal" 
-                            :icon="mdiKey"
-                        />
+                        <BaseButton label="API Key" color="warning" @click="openApiKeyModal" :icon="mdiKey" />
                     </div>
                 </div>
             </div>
@@ -667,29 +665,20 @@ const updateGlobalApiKey = async () => {
                     <div class="fixed inset-0 bg-black/30" />
                     <div class="fixed inset-0 overflow-y-auto">
                         <div class="flex min-h-full items-center justify-center p-4">
-                            <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all dark:bg-slate-900">
-                                <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+                            <DialogPanel
+                                class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all dark:bg-slate-900">
+                                <DialogTitle as="h3"
+                                    class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
                                     Cập Nhật API Key Chung
                                 </DialogTitle>
                                 <div class="mt-4">
-                                    <input
-                                        v-model="globalApiKey"
-                                        type="password"
+                                    <input v-model="globalApiKey" type="password"
                                         class="w-full rounded-lg border px-4 py-2 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                                        placeholder="Nhập API key..."
-                                    />
+                                        placeholder="Nhập API key..." />
                                 </div>
                                 <div class="mt-4 flex justify-end space-x-2">
-                                    <BaseButton
-                                        label="Hủy"
-                                        color="white"
-                                        @click="showApiKeyModal = false"
-                                    />
-                                    <BaseButton
-                                        label="Lưu"
-                                        color="success"
-                                        @click="updateGlobalApiKey"
-                                    />
+                                    <BaseButton label="Hủy" color="white" @click="showApiKeyModal = false" />
+                                    <BaseButton label="Lưu" color="success" @click="updateGlobalApiKey" />
                                 </div>
                             </DialogPanel>
                         </div>
