@@ -22,7 +22,25 @@ class AiConfigController extends BaseController
         $configs = $this->aiConfigService->getAllConfigs();
 
         if ($request->wantsJson()) {
-            return $this->respondWithJson($configs);
+            $configsWithApiKey = $configs->map(function ($config) {
+                return [
+                    'id' => $config->id,
+                    'ai_name' => $config->ai_name,
+                    'type' => $config->type,
+                    'context' => $config->context,
+                    'api_key' => $config->api_key,
+                    'language' => $config->language,
+                    'model_type' => $config->model_type,
+                    'temperature' => $config->temperature,
+                    'max_tokens' => $config->max_tokens,
+                    'top_p' => $config->top_p,
+                    'top_k' => $config->top_k,
+                    'priority' => $config->priority,
+                    'is_active' => $config->is_active,
+                    'gemini_settings' => $config->gemini_settings,
+                ];
+            });
+            return $this->respondWithJson($configsWithApiKey);
         }
 
         return Inertia::render('AiConfig/AiConfigView', [
