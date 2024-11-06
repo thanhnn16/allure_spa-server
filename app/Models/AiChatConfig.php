@@ -118,10 +118,6 @@ class AiChatConfig extends Model
         'stop_sequences',
     ];
 
-    protected $hidden = [
-        'api_key'
-    ];
-
     protected $casts = [
         'gemini_settings' => 'array',
         'metadata' => 'array',
@@ -206,8 +202,14 @@ class AiChatConfig extends Model
                         'items' => [
                             'type' => 'string',
                             'enum' => [
-                                'acne', 'aging', 'pigmentation', 'dryness', 
-                                'sensitivity', 'dullness', 'pores', 'wrinkles'
+                                'acne',
+                                'aging',
+                                'pigmentation',
+                                'dryness',
+                                'sensitivity',
+                                'dullness',
+                                'pores',
+                                'wrinkles'
                             ]
                         ],
                         'description' => 'List of skin concerns'
@@ -244,8 +246,12 @@ class AiChatConfig extends Model
                         'items' => [
                             'type' => 'string',
                             'enum' => [
-                                'relaxation', 'skin_improvement', 'anti_aging',
-                                'pain_relief', 'detox', 'slimming'
+                                'relaxation',
+                                'skin_improvement',
+                                'anti_aging',
+                                'pain_relief',
+                                'detox',
+                                'slimming'
                             ]
                         ],
                         'description' => 'Customer concerns and goals'
