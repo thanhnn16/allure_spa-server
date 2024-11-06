@@ -165,8 +165,19 @@ class AiConfigController extends BaseController
             $jsonFields = ['safety_settings', 'function_declarations', 'tool_config'];
             foreach ($jsonFields as $field) {
                 if (isset($validated[$field])) {
-                    if (is_string($validated[$field])) {
-                        $validated[$field] = json_decode($validated[$field], true);
+                    try {
+                        // Kiểm tra và parse JSON string
+                        if (is_string($validated[$field])) {
+                            $parsedJson = json_decode($validated[$field], true);
+                            if (json_last_error() === JSON_ERROR_NONE) {
+                                $validated[$field] = $parsedJson;
+                            } else {
+                                throw new \Exception("Invalid JSON format for {$field}");
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("JSON parsing error for {$field}: " . $e->getMessage());
+                        throw $e;
                     }
                 }
             }
@@ -257,9 +268,9 @@ class AiConfigController extends BaseController
             'temperature' => 'numeric|min:0|max:1',
             'top_p' => 'numeric|min:0|max:1',
             'top_k' => 'integer|min:1|max:100',
-            'safety_settings' => 'nullable',
-            'function_declarations' => 'nullable',
-            'tool_config' => 'nullable',
+            'safety_settings' => 'nullable|string',
+            'function_declarations' => 'nullable|string',
+            'tool_config' => 'nullable|string',
             'system_instructions' => 'nullable|string',
             'response_format' => 'nullable|string|in:' . implode(',', array_values(AiChatConfig::RESPONSE_FORMATS)),
             'stop_sequences' => 'nullable|array',
