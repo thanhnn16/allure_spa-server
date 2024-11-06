@@ -56,19 +56,42 @@ class AiFunctionCallingService
 
     protected function handleSearch($args)
     {
-        $query = $args['query'] ?? '';
-        $type = $args['type'] ?? 'all';
-        $limit = $args['limit'] ?? 10;
+        try {
+            $results = $this->searchService->search(
+                $args['query'],
+                $args['type'],
+                $args['limit'] ?? 10
+            );
 
-        return $this->searchService->search($query, $type, $limit);
+            return [
+                'success' => true,
+                'data' => $results
+            ];
+        } catch (\Exception $e) {
+            Log::error("Search error: {$e->getMessage()}");
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
     }
 
     protected function handleGetTimeSlots($args)
     {
-        $request = new \Illuminate\Http\Request();
-        $request->merge(['date' => $args['date']]);
-        
-        return $this->timeSlotController->getAvailableSlots($request);
+        try {
+            $slots = $this->timeSlotController->getAvailableSlots($args['date']);
+            
+            return [
+                'success' => true,
+                'data' => $slots
+            ];
+        } catch (\Exception $e) {
+            Log::error("Time slots error: {$e->getMessage()}");
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
     }
 
     protected function handleCreateAppointment($args)

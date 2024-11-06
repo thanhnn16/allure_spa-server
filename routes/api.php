@@ -19,6 +19,7 @@ use App\Http\Controllers\TimeSlotController;
 use App\Http\Controllers\FirebaseWebhookController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\AiConfigController;
+use App\Http\Controllers\AiFunctionController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -154,6 +155,11 @@ Route::middleware('throttle:api')->group(function () {
             Route::post('/upload', [AiConfigController::class, 'upload']);
             Route::post('/global-api-key', [AiConfigController::class, 'updateGlobalApiKey']);
             Route::get('/global-api-key', [AiConfigController::class, 'getGlobalApiKey']);
+        });
+
+        // AI Function routes
+        Route::prefix('ai')->group(function () {
+            Route::post('/function-call', [AiFunctionController::class, 'handleFunctionCall']);
         });
     });
 
