@@ -17,6 +17,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\TimeSlotController;
 use App\Http\Controllers\FirebaseWebhookController;
+use App\Http\Controllers\FavoriteController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -137,6 +138,10 @@ Route::middleware('throttle:api')->group(function () {
             Route::post('/{invoice}/payos', [PayOSController::class, 'createPaymentLinkForInvoice']);
             Route::post('/{invoiceId}/payos', [PayOSController::class, 'createPaymentLinkForInvoice']);
         });
+
+        // Favorite routes
+        Route::post('/favorites/toggle', [FavoriteController::class, 'toggle']);
+        Route::get('/favorites', [FavoriteController::class, 'index']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);
