@@ -152,6 +152,8 @@ Route::middleware('throttle:api')->group(function () {
             Route::put('/{id}', [AiConfigController::class, 'update']);
             Route::delete('/{id}', [AiConfigController::class, 'destroy']);
             Route::post('/upload', [AiConfigController::class, 'upload']);
+            Route::post('/global-api-key', [AiConfigController::class, 'updateGlobalApiKey']);
+            Route::get('/global-api-key', [AiConfigController::class, 'getGlobalApiKey']);
         });
     });
 

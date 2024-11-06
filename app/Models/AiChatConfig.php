@@ -151,6 +151,10 @@ class AiChatConfig extends Model
         'general' => [
             'name' => 'Cài Đặt Chung',
             'description' => 'Cấu hình chung cho model AI'
+        ],
+        'global_api_key' => [
+            'name' => 'API Key Chung',
+            'description' => 'Cấu hình API key dùng chung cho hệ thống'
         ]
     ];
 
@@ -383,6 +387,17 @@ class AiChatConfig extends Model
         'json' => 'application/json',
         'markdown' => 'text/markdown'
     ];
+
+    // Thêm constant mới
+    const GLOBAL_API_KEY_TYPE = 'global_api_key';
+
+    // Thêm scope để lấy global API key
+    public static function getGlobalApiKey()
+    {
+        return self::where('type', self::GLOBAL_API_KEY_TYPE)
+            ->where('is_active', true)
+            ->first()?->api_key;
+    }
 
     public static function getTypes()
     {

@@ -14,7 +14,8 @@ import {
     mdiPlus,
     mdiRobot,
     mdiRobotExcited,
-    mdiUpload
+    mdiUpload,
+    mdiKey
 } from '@mdi/js'
 import axios from 'axios'
 import { computed, reactive, ref, watch } from 'vue'
@@ -512,6 +513,33 @@ const confirmDelete = (config) => {
 watch(() => props.configs, (newConfigs) => {
     configsList.value = newConfigs;
 }, { immediate: true });
+
+// Thêm ref cho API key modal
+const showApiKeyModal = ref(false)
+const globalApiKey = ref('')
+
+// Thêm methods
+const openApiKeyModal = async () => {
+    try {
+        const response = await axios.get('/api/ai-configs/global-api-key')
+        globalApiKey.value = response.data.api_key || ''
+        showApiKeyModal.value = true
+    } catch (error) {
+        toast.error('Không thể lấy API key')
+    }
+}
+
+const updateGlobalApiKey = async () => {
+    try {
+        await axios.post('/api/ai-configs/global-api-key', {
+            api_key: globalApiKey.value
+        })
+        toast.success('Cập nhật API key thành công!')
+        showApiKeyModal.value = false
+    } catch (error) {
+        toast.error('Không thể cập nhật API key')
+    }
+}
 </script>
 
 <template>
@@ -535,6 +563,12 @@ watch(() => props.configs, (newConfigs) => {
                         <BaseButton label="Tải Lên" color="success" @click="openUploadModal" :icon="mdiUpload"
                             :loading="isLoading" />
                         <BaseButton label="Thêm Mới" color="info" @click="openEditModal()" :icon="mdiPlus" />
+                        <BaseButton 
+                            label="API Key" 
+                            color="warning" 
+                            @click="openApiKeyModal" 
+                            :icon="mdiKey"
+                        />
                     </div>
                 </div>
             </div>
@@ -626,6 +660,42 @@ watch(() => props.configs, (newConfigs) => {
 
             <PreviewModal v-if="showPreviewModal" :config="activeConfig" v-bind="modalProps"
                 @close="showPreviewModal = false" />
+
+            <!-- Thêm modal API key -->
+            <TransitionRoot appear :show="showApiKeyModal" as="template">
+                <Dialog as="div" @close="showApiKeyModal = false" class="relative z-50">
+                    <div class="fixed inset-0 bg-black/30" />
+                    <div class="fixed inset-0 overflow-y-auto">
+                        <div class="flex min-h-full items-center justify-center p-4">
+                            <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all dark:bg-slate-900">
+                                <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+                                    Cập Nhật API Key Chung
+                                </DialogTitle>
+                                <div class="mt-4">
+                                    <input
+                                        v-model="globalApiKey"
+                                        type="password"
+                                        class="w-full rounded-lg border px-4 py-2 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                                        placeholder="Nhập API key..."
+                                    />
+                                </div>
+                                <div class="mt-4 flex justify-end space-x-2">
+                                    <BaseButton
+                                        label="Hủy"
+                                        color="white"
+                                        @click="showApiKeyModal = false"
+                                    />
+                                    <BaseButton
+                                        label="Lưu"
+                                        color="success"
+                                        @click="updateGlobalApiKey"
+                                    />
+                                </div>
+                            </DialogPanel>
+                        </div>
+                    </div>
+                </Dialog>
+            </TransitionRoot>
         </SectionMain>
     </LayoutAuthenticated>
 </template>

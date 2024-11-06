@@ -12,7 +12,19 @@ class AiChatConfigService
      */
     public function getAllConfigs()
     {
-        return AiChatConfig::all();
+        // Lấy tất cả configs thông thường
+        $regularConfigs = AiChatConfig::whereNotIn('type', [AiChatConfig::GLOBAL_API_KEY_TYPE])->get();
+        
+        // Lấy global API key config
+        $globalApiKey = AiChatConfig::where('type', AiChatConfig::GLOBAL_API_KEY_TYPE)
+            ->where('is_active', true)
+            ->first()?->api_key;
+
+        // Thêm global API key vào metadata của mỗi config
+        return $regularConfigs->map(function ($config) use ($globalApiKey) {
+            $config->global_api_key = $globalApiKey;
+            return $config;
+        });
     }
 
     /**

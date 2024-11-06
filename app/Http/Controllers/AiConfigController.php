@@ -278,6 +278,7 @@ class AiConfigController extends BaseController
             'type' => $config->type,
             'context' => $config->context,
             'api_key' => $config->api_key,
+            'global_api_key' => $config->global_api_key ?? null,
             'language' => $config->language,
             'model_type' => $config->model_type,
             'temperature' => $config->temperature,
@@ -308,5 +309,62 @@ class AiConfigController extends BaseController
         return $configs->map(function ($config) {
             return $this->formatConfigForResponse($config);
         });
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/ai-configs/global-api-key",
+     *     summary="Cập nhật API key chung",
+     *     tags={"AI Configs"}
+     * )
+     */
+    public function updateGlobalApiKey(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'api_key' => 'required|string|max:255'
+            ]);
+
+            // Deactivate old global API key if exists
+            AiChatConfig::where('type', AiChatConfig::GLOBAL_API_KEY_TYPE)
+                ->update(['is_active' => false]);
+
+            // Create new global API key config
+            $config = $this->aiConfigService->createConfig([
+                'ai_name' => 'Global API Key',
+                'type' => AiChatConfig::GLOBAL_API_KEY_TYPE,
+                'api_key' => $validated['api_key'],
+                'context' => 'API key dùng chung cho hệ thống',
+                'is_active' => true,
+                'priority' => 999, // High priority
+                'language' => 'vi'
+            ]);
+
+            return response()->json([
+                'message' => 'Global API key updated successfully',
+                'api_key' => $config->api_key
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Global API key update failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to update global API key: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Thêm method để lấy global API key
+    public function getGlobalApiKey()
+    {
+        try {
+            $apiKey = AiChatConfig::getGlobalApiKey();
+            return response()->json([
+                'api_key' => $apiKey
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to get global API key: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to get global API key'
+            ], 500);
+        }
     }
 }
