@@ -17,11 +17,16 @@ class AiConfigController extends BaseController
         $this->aiConfigService = $aiConfigService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $configs = $this->aiConfigService->getAllConfigs();
+
+        if ($request->wantsJson()) {
+            return $this->respondWithJson($configs);
+        }
+
         return Inertia::render('AiConfig/AiConfigView', [
-            'configs' => $configs->map(function($config) {
+            'configs' => $configs->map(function ($config) {
                 return [
                     'id' => $config->id,
                     'ai_name' => $config->ai_name,
@@ -67,7 +72,7 @@ class AiConfigController extends BaseController
             }
 
             $config = $this->aiConfigService->createConfig($validated);
-            
+
             return response()->json([
                 'message' => 'Configuration created successfully',
                 'config' => $config,
@@ -105,7 +110,7 @@ class AiConfigController extends BaseController
             }
 
             $config = $this->aiConfigService->updateConfig($id, $validated);
-            
+
             return response()->json([
                 'message' => 'Configuration updated successfully',
                 'config' => $config,
@@ -123,7 +128,7 @@ class AiConfigController extends BaseController
     {
         try {
             $this->aiConfigService->deleteConfig($id);
-            
+
             return response()->json([
                 'message' => 'Configuration deleted successfully',
                 'configs' => $this->aiConfigService->getAllConfigs()
@@ -155,4 +160,4 @@ class AiConfigController extends BaseController
             return $this->respondWithError('Failed to upload configuration: ' . $e->getMessage());
         }
     }
-} 
+}
