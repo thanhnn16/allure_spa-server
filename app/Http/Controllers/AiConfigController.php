@@ -109,12 +109,21 @@ class AiConfigController extends BaseController
     {
         try {
             $validated = $this->validateConfig($request);
-            
-            // Xử lý các trường JSON
+
+            // Ensure context is always string
+            if (isset($validated['context'])) {
+                if (is_array($validated['context'])) {
+                    $validated['context'] = json_encode($validated['context']);
+                }
+            }
+
+            // Handle JSON fields
             $jsonFields = ['safety_settings', 'function_declarations', 'tool_config'];
             foreach ($jsonFields as $field) {
-                if (isset($validated[$field]) && is_string($validated[$field])) {
-                    $validated[$field] = json_decode($validated[$field], true);
+                if (isset($validated[$field])) {
+                    if (is_string($validated[$field])) {
+                        $validated[$field] = json_decode($validated[$field], true);
+                    }
                 }
             }
 
@@ -127,7 +136,9 @@ class AiConfigController extends BaseController
             ]);
         } catch (\Exception $e) {
             Log::error('Config creation failed: ' . $e->getMessage());
-            return $this->respondWithError('Failed to create configuration: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to create configuration: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -142,12 +153,21 @@ class AiConfigController extends BaseController
     {
         try {
             $validated = $this->validateConfig($request);
-            
-            // Xử lý các trường JSON
+
+            // Ensure context is always string
+            if (isset($validated['context'])) {
+                if (is_array($validated['context'])) {
+                    $validated['context'] = json_encode($validated['context']);
+                }
+            }
+
+            // Handle JSON fields
             $jsonFields = ['safety_settings', 'function_declarations', 'tool_config'];
             foreach ($jsonFields as $field) {
-                if (isset($validated[$field]) && is_string($validated[$field])) {
-                    $validated[$field] = json_decode($validated[$field], true);
+                if (isset($validated[$field])) {
+                    if (is_string($validated[$field])) {
+                        $validated[$field] = json_decode($validated[$field], true);
+                    }
                 }
             }
 
@@ -160,7 +180,9 @@ class AiConfigController extends BaseController
             ]);
         } catch (\Exception $e) {
             Log::error('Config update failed: ' . $e->getMessage());
-            return $this->respondWithError('Failed to update configuration: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to update configuration: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -207,7 +229,7 @@ class AiConfigController extends BaseController
             );
 
             return $this->respondWithJson(
-                $this->formatConfigForResponse($config), 
+                $this->formatConfigForResponse($config),
                 'Configuration uploaded successfully'
             );
         } catch (\Exception $e) {
@@ -235,11 +257,11 @@ class AiConfigController extends BaseController
             'temperature' => 'numeric|min:0|max:1',
             'top_p' => 'numeric|min:0|max:1',
             'top_k' => 'integer|min:1|max:100',
-            'safety_settings' => 'nullable|array',
-            'function_declarations' => 'nullable|array',
-            'tool_config' => 'nullable|array',
+            'safety_settings' => 'nullable',
+            'function_declarations' => 'nullable',
+            'tool_config' => 'nullable',
             'system_instructions' => 'nullable|string',
-            'response_format' => 'nullable|string|in:' . implode(',', array_keys(AiChatConfig::RESPONSE_FORMATS)),
+            'response_format' => 'nullable|string|in:' . implode(',', array_values(AiChatConfig::RESPONSE_FORMATS)),
             'stop_sequences' => 'nullable|array',
             'metadata' => 'nullable|array'
         ]);

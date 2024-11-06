@@ -1,34 +1,32 @@
 <script setup>
-import { ref, reactive, watch, computed } from 'vue'
-import {
-    mdiRobot,
-    mdiCog,
-    mdiImageSearch,
-    mdiClose,
-    mdiDelete,
-    mdiAlert,
-    mdiPencil,
-    mdiUpload,
-    mdiPlus,
-    mdiFile,
-    mdiRobotExcited,
-    mdiEye
-} from '@mdi/js'
-import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
-import SectionMain from '@/Components/SectionMain.vue'
-import CardBox from '@/Components/CardBox.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import BaseIcon from '@/Components/BaseIcon.vue'
-import { Head } from '@inertiajs/vue3'
-import NotificationBar from '@/Components/NotificationBar.vue'
+import CardBox from '@/Components/CardBox.vue'
+import SectionMain from '@/Components/SectionMain.vue'
+import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
+import { Head, router } from '@inertiajs/vue3'
+import {
+    mdiCog,
+    mdiDelete,
+    mdiEye,
+    mdiImageSearch,
+    mdiPencil,
+    mdiPlus,
+    mdiRobot,
+    mdiRobotExcited,
+    mdiUpload
+} from '@mdi/js'
 import axios from 'axios'
+import { computed, reactive, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 
+const toast = useToast()
+
 // Add missing components
-import EditModal from './EditModal.vue'
-import UploadModal from './UploadModal.vue'
 import DeleteModal from './DeleteModal.vue'
+import EditModal from './EditModal.vue'
 import PreviewModal from './PreviewModal.vue'
+import UploadModal from './UploadModal.vue'
 
 // Thêm định nghĩa tabs trước khi sử dụng
 const tabs = [
@@ -290,16 +288,7 @@ const modalProps = computed(() => ({
 
 // Cập nhật hàm openEditModal
 const openEditModal = (config = null) => {
-    editingConfig.value = config ? { ...config } : {
-        ...props.configTemplates[{
-            'system': 'system_prompt',
-            'vision': 'vision_config',
-            'general': 'general'
-        }[activeTab.value]],
-        safety_settings: props.defaultSafetySettings,
-        function_declarations: props.defaultFunctionDeclarations,
-        tool_config: props.defaultToolConfig
-    };
+    editingConfig.value = config;
     showEditModal.value = true;
 };
 
@@ -623,7 +612,11 @@ watch(() => props.configs, (newConfigs) => {
             </TransitionGroup>
 
             <!-- Modals -->
-            <EditModal v-if="showEditModal" :config="editingConfig" :fields="configFields" :config-types="configTypes" :model-types="modelTypes" :languages="languages" :response-formats="responseFormats" :default-safety-settings="defaultSafetySettings" :default-function-declarations="defaultFunctionDeclarations" :default-tool-config="defaultToolConfig" @close="closeEditModal" @submit="submitConfig" />
+            <EditModal v-if="showEditModal" :config="editingConfig" :fields="configFields" :config-types="configTypes"
+                :model-types="modelTypes" :languages="languages" :response-formats="responseFormats"
+                :default-safety-settings="defaultSafetySettings"
+                :default-function-declarations="defaultFunctionDeclarations" :default-tool-config="defaultToolConfig"
+                @close="closeEditModal" @submit="submitConfig" />
 
             <UploadModal v-if="showUploadModal" :config-types="configTypes" @close="closeUploadModal"
                 @upload="handleFileUpload" />

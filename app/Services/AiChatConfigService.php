@@ -81,7 +81,7 @@ class AiChatConfigService
         try {
             $config = AiChatConfig::findOrFail($id);
 
-            // Xử lý các trường JSON
+            // Xử lý các trường JSON (không bao gồm context)
             $jsonFields = ['safety_settings', 'function_declarations', 'tool_config'];
             foreach ($jsonFields as $field) {
                 if (isset($data[$field])) {
@@ -91,8 +91,13 @@ class AiChatConfigService
                 }
             }
 
+            // Đảm bảo context luôn là string
+            if (isset($data['context']) && is_array($data['context'])) {
+                $data['context'] = json_encode($data['context']);
+            }
+
             $config->update($data);
-            return $config;
+            return $config->fresh();
         } catch (\Exception $e) {
             Log::error('Error updating AI config: ' . $e->getMessage());
             throw $e;
@@ -136,5 +141,15 @@ class AiChatConfigService
             Log::error('Error handling config upload: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    // Helper function to check if a string is valid JSON
+    private function isJson($string)
+    {
+        if (!is_string($string)) {
+            return false;
+        }
+        json_decode($string);
+        return (json_last_error() === JSON_ERROR_NONE);
     }
 }

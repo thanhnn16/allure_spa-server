@@ -11,7 +11,7 @@
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex justify-between items-center">
                         <DialogTitle class="text-lg font-medium text-gray-900 dark:text-white">
-                            {{ isEditMode ? 'Chỉnh Sửa Cấu Hình' : 'Thêm Cấu Hình Mới' }}
+                            {{ modalTitle }}
                         </DialogTitle>
                         <button @click="$emit('close')"
                             class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
@@ -95,8 +95,8 @@
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700">
                     <div class="flex justify-end space-x-3">
                         <BaseButton type="button" label="Hủy" color="white" @click="$emit('close')" />
-                        <BaseButton type="submit" :label="isEditMode ? 'Cập Nhật' : 'Tạo Mới'" color="info"
-                            :loading="isSubmitting" @click="handleSubmit" />
+                        <BaseButton type="submit" :label="submitButtonText" color="info" :loading="isSubmitting"
+                            @click="handleSubmit" />
                     </div>
                 </div>
             </DialogPanel>
@@ -157,15 +157,13 @@
 </style>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
-import { mdiClose } from '@mdi/js'
 import BaseButton from '@/Components/BaseButton.vue'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import JsonEditor from '@/Components/JsonEditor.vue'
 import { useConfigValidation } from '@/Composables/useConfigValidation'
-import { router } from '@inertiajs/vue3'
-import axios from 'axios'
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
+import { mdiClose } from '@mdi/js'
+import { computed, reactive, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 
 const toast = useToast()
@@ -234,17 +232,22 @@ const jsonFields = computed(() =>
 
 // Thêm computed để kiểm tra mode
 const isEditMode = computed(() => {
-    return props.config !== null && Object.keys(props.config).length > 0
-})
+    return !!props.config?.id;
+});
 
-// Sửa lại phần khởi tạo defaultFormData
-const defaultFormData = {
+// Add modalTitle computed
+const modalTitle = computed(() => {
+    return isEditMode.value ? 'Chỉnh Sửa Cấu Hình' : 'Thêm Cấu Hình Mới';
+});
+
+// Update formData initialization with default values for new config
+const getDefaultFormData = () => ({
     ai_name: '',
     type: 'system_prompt',
     context: JSON.stringify({
         role: "assistant",
         description: "Mô tả về vai trò của AI",
-        instructions: "Hướng dẫn chi tiết cho AI",
+        instructions: "Hãy trả lời một cách chuyên nghiệp và thân thiện",
         custom_instructions: {
             system_instructions: "Bạn là một trợ lý AI thông minh...",
             user_instructions: "Hãy trả lời một cách chuyên nghiệp và thân thiện"
@@ -256,34 +259,56 @@ const defaultFormData = {
     max_tokens: 2048,
     top_p: 0.9,
     top_k: 40,
-    safety_settings: JSON.stringify(props.defaultSafetySettings || [], null, 2),
-    function_declarations: JSON.stringify(props.defaultFunctionDeclarations || [], null, 2),
-    tool_config: JSON.stringify(props.defaultToolConfig || {}, null, 2)
-};
+    safety_settings: JSON.stringify(props.defaultSafetySettings, null, 2),
+    function_declarations: JSON.stringify(props.defaultFunctionDeclarations, null, 2),
+    tool_config: JSON.stringify(props.defaultToolConfig, null, 2)
+});
 
-// Thêm hàm để format JSON string
-const formatJsonString = (value, defaultValue = null) => {
-    try {
-        if (typeof value === 'string') {
-            return JSON.stringify(JSON.parse(value), null, 2);
-        } else if (typeof value === 'object') {
-            return JSON.stringify(value, null, 2);
-        }
-        return JSON.stringify(defaultValue || {}, null, 2);
-    } catch (e) {
-        console.error('Error formatting JSON:', e);
-        return JSON.stringify(defaultValue || {}, null, 2);
-    }
-};
-
-// Cập nhật khởi tạo formData
+// Initialize formData
 const formData = reactive(
-    isEditMode.value ? { ...props.config } : { ...defaultFormData }
-)
+    isEditMode.value ? formatExistingConfig(props.config) : getDefaultFormData()
+);
+
+// Helper function to format existing config
+function formatExistingConfig(config) {
+    const data = { ...config };
+
+    // Ensure context is string
+    if (typeof data.context === 'object') {
+        data.context = JSON.stringify(data.context, null, 2);
+    }
+
+    // Format JSON fields
+    ['safety_settings', 'function_declarations', 'tool_config'].forEach(field => {
+        if (data[field]) {
+            data[field] = typeof data[field] === 'string'
+                ? data[field]
+                : JSON.stringify(data[field], null, 2);
+        }
+    });
+
+    return data;
+}
+
+// Watch for config changes
+watch(() => props.config, (newConfig) => {
+    if (newConfig?.id) {
+        // Edit mode - use existing config
+        Object.assign(formData, formatExistingConfig(newConfig));
+    } else {
+        // Create mode - reset to defaults
+        Object.assign(formData, getDefaultFormData());
+    }
+}, { immediate: true });
+
+// Update submit button text
+const submitButtonText = computed(() => {
+    return isEditMode.value ? 'Cập Nhật' : 'Tạo Mới';
+});
 
 // Thêm method để reset form
 const resetForm = () => {
-    Object.assign(formData, defaultFormData)
+    Object.assign(formData, getDefaultFormData())
     errors.value = {}
 }
 
@@ -387,33 +412,15 @@ const handleJsonError = (field, error) => {
 
 // Sửa lại hàm validateJsonFields
 const validateJsonFields = () => {
-    const jsonFields = ['context', 'safety_settings', 'function_declarations', 'tool_config'];
+    const jsonFields = ['safety_settings', 'function_declarations', 'tool_config'];
     let isValid = true;
 
     jsonFields.forEach(field => {
         try {
             if (formData[field]) {
                 let value = formData[field];
-
-                // Nếu là string nhưng không phải JSON, wrap nó vào một object
-                if (typeof value === 'string' && !isJsonString(value)) {
-                    if (field === 'context') {
-                        formData[field] = JSON.stringify({
-                            role: "assistant",
-                            description: "AI Assistant",
-                            instructions: value,
-                            custom_instructions: {
-                                system_instructions: value,
-                                user_instructions: ""
-                            }
-                        }, null, 2);
-                    }
-                } else if (typeof value === 'string') {
-                    // Nếu là JSON string, validate nó
+                if (typeof value === 'string') {
                     JSON.parse(value);
-                } else if (typeof value === 'object') {
-                    // Nếu là object, stringify để validate
-                    JSON.stringify(value);
                 }
                 delete jsonErrors.value[field];
             }
@@ -427,62 +434,52 @@ const validateJsonFields = () => {
     return isValid;
 };
 
+// Thêm hàm validateForm
+const validateForm = () => {
+    const { isValid, errors: validationErrors } = validateConfig(formData);
+
+    // Kiểm tra lỗi JSON
+    const isJsonValid = validateJsonFields();
+
+    if (!isValid || !isJsonValid) {
+        errors.value = validationErrors;
+        return false;
+    }
+
+    errors.value = {};
+    return true;
+};
+
 // Sửa lại hàm handleSubmit
 const handleSubmit = async () => {
     try {
-        isSubmitting.value = true;
-        errors.value = {};
-
-        if (!validateJsonFields()) {
-            isSubmitting.value = false;
-            return;
-        }
+        if (!validateForm()) return;
 
         const submitData = { ...formData };
-        ['context', 'safety_settings', 'function_declarations', 'tool_config'].forEach(key => {
-            try {
-                if (submitData[key]) {
-                    // Nếu là string, kiểm tra xem có phải JSON không
-                    if (typeof submitData[key] === 'string') {
-                        if (isJsonString(submitData[key])) {
-                            submitData[key] = JSON.parse(submitData[key]);
-                        } else if (key === 'context') {
-                            // Nếu là text thường, wrap vào object
-                            submitData[key] = {
-                                role: "assistant",
-                                description: "AI Assistant",
-                                instructions: submitData[key],
-                                custom_instructions: {
-                                    system_instructions: submitData[key],
-                                    user_instructions: ""
-                                }
-                            };
-                        }
-                    }
+
+        // Ensure context is valid JSON string if it's an object
+        if (typeof submitData.context === 'object') {
+            submitData.context = JSON.stringify(submitData.context);
+        }
+
+        // Parse JSON fields before submitting
+        ['safety_settings', 'function_declarations', 'tool_config'].forEach(field => {
+            if (submitData[field]) {
+                try {
+                    submitData[field] = JSON.parse(submitData[field]);
+                } catch (e) {
+                    throw new Error(`Invalid JSON in ${field}`);
                 }
-            } catch (e) {
-                console.error(`Error parsing ${key}:`, e);
-                throw new Error(`Invalid JSON format in ${key}`);
             }
         });
 
-        const url = isEditMode.value
-            ? `/api/ai-configs/${props.config.id}`
-            : '/api/ai-configs';
+        isSubmitting.value = true;
 
-        const response = await axios({
-            method: isEditMode.value ? 'put' : 'post',
-            url: url,
-            data: submitData
-        });
-
-        toast.success(isEditMode.value ? 'Cập nhật thành công!' : 'Tạo mới thành công!');
+        await emit('submit', submitData);
         emit('close');
-        router.reload();
 
     } catch (error) {
-        console.error('Submit error:', error);
-        toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra');
+        toast.error(error.message || 'Có lỗi xảy ra');
     } finally {
         isSubmitting.value = false;
     }
@@ -490,7 +487,7 @@ const handleSubmit = async () => {
 
 // Thêm watch để theo dõi các trường JSON
 watch(formData, (newData) => {
-    ['context', 'safety_settings', 'function_declarations', 'tool_config'].forEach(field => {
+    ['safety_settings', 'function_declarations', 'tool_config'].forEach(field => {
         if (newData[field]) {
             try {
                 if (typeof newData[field] === 'string') {
@@ -503,13 +500,4 @@ watch(formData, (newData) => {
         }
     });
 }, { deep: true });
-
-// Thêm watch để cập nhật form khi props.config thay đổi
-watch(() => props.config, (newConfig) => {
-    if (newConfig && Object.keys(newConfig).length > 0) {
-        Object.assign(formData, newConfig)
-    } else {
-        resetForm()
-    }
-}, { immediate: true })
 </script>
