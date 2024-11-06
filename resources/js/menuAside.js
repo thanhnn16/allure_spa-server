@@ -13,6 +13,7 @@ import {
     mdiChat,
     mdiFileDocument,
     mdiCellphone,
+    mdiRobot,
 } from '@mdi/js'
 
 export default [
@@ -93,6 +94,11 @@ export default [
             {
                 label: 'Banner App',
                 route: 'mobileapp.banners'
+            },
+            {
+                label: 'Cấu hình AI',
+                route: 'ai-config.index',
+                icon: mdiRobot
             },
         ]
     },

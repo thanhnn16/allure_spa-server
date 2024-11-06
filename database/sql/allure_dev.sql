@@ -631,9 +631,21 @@ CREATE TABLE banners (
 CREATE TABLE ai_chat_configs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     ai_name VARCHAR(255) NOT NULL,
+    type VARCHAR(255) NOT NULL default 'general',
     context TEXT NOT NULL,
+    api_key VARCHAR(255),
     language VARCHAR(50) NOT NULL,
     gemini_settings JSON,
+    is_active BOOLEAN DEFAULT TRUE,
+    priority INT DEFAULT 0,
+    version VARCHAR(10) DEFAULT '1.0.0',
+    model_type VARCHAR(50) DEFAULT 'gemini-1.5-pro',
+    max_tokens INT DEFAULT 2048,
+    temperature DECIMAL(3,2) DEFAULT 0.90,
+    top_p DECIMAL(3,2) DEFAULT 1.00,
+    top_k INT DEFAULT 40,
+    metadata JSON,
+    last_used_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

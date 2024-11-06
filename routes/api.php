@@ -18,6 +18,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\TimeSlotController;
 use App\Http\Controllers\FirebaseWebhookController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\AiConfigController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -143,6 +144,14 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/favorites/toggle', [FavoriteController::class, 'toggle']);
         Route::get('/favorites', [FavoriteController::class, 'index']);
         Route::get('/favorites/{type}', [FavoriteController::class, 'getByType']);
+
+        Route::prefix('ai-config')->group(function () {
+            Route::get('/', [AiConfigController::class, 'index']);
+            Route::post('/', [AiConfigController::class, 'store']);
+            Route::put('/{id}', [AiConfigController::class, 'update']);
+            Route::delete('/{id}', [AiConfigController::class, 'destroy']);
+            Route::post('/upload', [AiConfigController::class, 'upload']);
+        });
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

@@ -23,6 +23,8 @@ use App\Http\Controllers\ZaloAuthController;
 use App\Http\Controllers\PayOSController;
 use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\AiConfigController;
+use App\Http\Controllers\BannerController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -94,8 +96,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('notifications', NotificationController::class);
 
     // Mobile App routes
-    Route::get('mobileapp/banners', [MobileAppController::class, 'banners'])->name('mobileapp.banners');
-    Route::get('mobileapp/ai-config', [MobileAppController::class, 'index'])->name('mobileapp.ai-config');
+    Route::get('mobileapp/banners', [BannerController::class, 'banners'])->name('mobileapp.banners');
 
     // Report routes
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
@@ -158,6 +159,15 @@ Route::middleware('auth')->group(function () {
 
     // Address routes
     Route::resource('addresses', AddressController::class);
+
+    // AiConfig routes
+    Route::prefix('ai-config')->group(function () {
+        Route::get('/', [AiConfigController::class, 'index'])->name('ai-config.index');
+        Route::post('/', [AiConfigController::class, 'store'])->name('ai-config.store');
+        Route::put('/{id}', [AiConfigController::class, 'update'])->name('ai-config.update');
+        Route::delete('/{id}', [AiConfigController::class, 'destroy'])->name('ai-config.destroy');
+        Route::post('/upload', [AiConfigController::class, 'upload'])->name('ai-config.upload');
+    });
 });
 
 require __DIR__ . '/auth.php';
