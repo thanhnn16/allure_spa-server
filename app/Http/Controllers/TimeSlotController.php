@@ -20,13 +20,11 @@ class TimeSlotController extends BaseController
     {
         try {
             $date = $request->get('date', now()->toDateString());
-            $serviceId = $request->get('service_id');
 
             $timeSlots = TimeSlot::where('is_active', true)
                 ->orderBy('start_time')
                 ->get()
                 ->map(function ($slot) use ($date) {
-                    // Đếm số lượng cuộc hẹn hiện tại cho slot này
                     $currentBookings = $slot->appointments()
                         ->where('appointment_date', $date)
                         ->where('status', '!=', 'cancelled')

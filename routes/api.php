@@ -116,7 +116,7 @@ Route::middleware('throttle:api')->group(function () {
 
         // Add time slot routes
         Route::get('/time-slots', [TimeSlotController::class, 'index']);
-        Route::get('/time-slots/{timeSlot}', [TimeSlotController::class, 'show']);
+        Route::get('/time-slots/available', [TimeSlotController::class, 'getAvailableSlots']);
 
         // Product routes
         Route::put('/products/{product}', [ProductController::class, 'update'])->name('api.products.update');
