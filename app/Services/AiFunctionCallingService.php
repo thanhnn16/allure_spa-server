@@ -385,8 +385,14 @@ class AiFunctionCallingService
     protected function handleGetUserVouchers($args)
     {
         try {
+            // Lấy user_id từ args hoặc từ Auth::id()
+            $userId = $args['user_id'] ?? Auth::id();
+            if (!$userId) {
+                throw new \InvalidArgumentException("User ID is required");
+            }
+
             $query = UserVoucher::with(['voucher'])
-                ->where('user_id', Auth::id());
+                ->where('user_id', $userId);
 
             if (isset($args['status'])) {
                 $now = Carbon::now();
