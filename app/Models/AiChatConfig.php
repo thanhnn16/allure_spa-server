@@ -9,90 +9,158 @@ use Illuminate\Database\Eloquent\Model;
  * @OA\Schema(
  *     schema="AiChatConfig",
  *     title="Cấu hình Chat AI",
- *     description="Model quản lý các cài đặt cấu hình chat AI"
+ *     description="Model quản lý các cài đặt cấu hình chat AI",
+ *     @OA\Property(
+ *         property="ai_name",
+ *         type="string",
+ *         description="Tên cài đặt cấu hình"
+ *     ),
+ *     @OA\Property(
+ *         property="type",
+ *         type="string",
+ *         description="Loại cài đặt cấu hình"
+ *     ),
+ *     @OA\Property(
+ *         property="context",
+ *         type="string",
+ *         description="Mô tả về cài đặt cấu hình"
+ *     ),
+ *     @OA\Property(
+ *         property="api_key",
+ *         type="string",
+ *         description="API key"
+ *     ),
+ *     @OA\Property(
+ *         property="language",
+ *         type="string",
+ *         description="Ngôn ngữ của cài đặt cấu hình"
+ *     ),
+ *     @OA\Property(
+ *         property="gemini_settings",
+ *         type="array",
+ *         @OA\Items(
+ *             type="object",
+ *             @OA\Property(property="key", type="string"),
+ *             @OA\Property(property="value", type="string")
+ *         ),
+ *         description="Cài đặt Gemini"
+ *     ),
+ *     @OA\Property(
+ *         property="is_active",
+ *         type="boolean",
+ *         description="Trạng thái cấu hình"
+ *     ),
+ *     @OA\Property(
+ *         property="priority",
+ *         type="integer",
+ *         description="Độ ưu tiên cấu hình"
+ *     ),
+ *     @OA\Property(
+ *         property="version",
+ *         type="string",
+ *         description="Phiên bản cấu hình"
+ *     ),
+ *     @OA\Property(
+ *         property="model_type",
+ *         type="string",
+ *         description="Loại model"
+ *     ),
+ *     @OA\Property(
+ *         property="max_tokens",
+ *         type="integer",
+ *         description="Số lượng token tối đa"
+ *     ),
+ *     @OA\Property(
+ *         property="temperature",
+ *         type="number",
+ *         format="float",
+ *         description="Nhiệt độ"
+ *     ),
+ *     @OA\Property(
+ *         property="top_p",
+ *         type="number",
+ *         format="float",
+ *         description="Top P"
+ *     ),
+ *     @OA\Property(
+ *         property="top_k",
+ *         type="integer",
+ *         description="Top K"
+ *     ),
+ *     @OA\Property(
+ *         property="metadata",
+ *         type="array",
+ *         @OA\Items(
+ *             type="object",
+ *             @OA\Property(property="key", type="string"),
+ *             @OA\Property(property="value", type="string")
+ *         ),
+ *         description="Metadata"
+ *     ),
+ *     @OA\Property(
+ *         property="safety_settings",
+ *         type="array",
+ *         @OA\Items(
+ *             type="object",
+ *             @OA\Property(property="category", type="string"),
+ *             @OA\Property(property="threshold", type="string")
+ *         ),
+ *         description="Cài đặt an toàn"
+ *     ),
+ *     @OA\Property(
+ *         property="function_declarations",
+ *         type="array",
+ *         @OA\Items(
+ *             type="object",
+ *             @OA\Property(property="name", type="string"),
+ *             @OA\Property(property="description", type="string"),
+ *             @OA\Property(
+ *                 property="parameters",
+ *                 type="object",
+ *                 @OA\Property(property="type", type="string"),
+ *                 @OA\Property(property="properties", type="object"),
+ *                 @OA\Property(
+ *                     property="required",
+ *                     type="array",
+ *                     @OA\Items(type="string")
+ *                 )
+ *             )
+ *         ),
+ *         description="Khai báo functions"
+ *     ),
+ *     @OA\Property(
+ *         property="tool_config",
+ *         type="object",
+ *         description="Cấu hình công cụ"
+ *     ),
+ *     @OA\Property(
+ *         property="system_instructions",
+ *         type="string",
+ *         description="Hướng dẫn hệ thống"
+ *     ),
+ *     @OA\Property(
+ *         property="response_format",
+ *         type="string",
+ *         description="Định dạng phản hồi"
+ *     ),
+ *     @OA\Property(
+ *         property="stop_sequences",
+ *         type="array",
+ *         @OA\Items(type="string"),
+ *         description="Chuỗi dừng"
+ *     ),
+ *     @OA\Property(
+ *         property="last_used_at",
+ *         type="string",
+ *         format="date-time",
+ *         description="Thời gian sử dụng cuối"
+ *     )
  * )
  */
 class AiChatConfig extends Model
 {
     use HasFactory;
 
-    /**
-     * @OA\Property(
-     *     property="ai_name",
-     *     type="string", 
-     *     description="Tên cài đặt cấu hình"
-     * )
-     * @OA\Property(
-     *     property="type",
-     *     type="string",
-     *     description="Loại cài đặt cấu hình"
-     * )
-     * @OA\Property(
-     *     property="context",
-     *     type="string",
-     *     description="Mô tả về cài đặt cấu hình"
-     * )
-     * @OA\Property(
-     *     property="language",
-     *     type="string",
-     *     description="Ngôn ngữ của cài đặt cấu hình"
-     * )
-     * @OA\Property(
-     *     property="gemini_settings",
-     *     type="array",
-     *     description="Cài đặt Gemini ca cài đặt cấu hình"
-     * )
-     * @OA\Property(
-     *     property="is_active",
-     *     type="boolean",
-     *     description="Trạng thái cấu hình"
-     * )
-     * @OA\Property(
-     *     property="priority",
-     *     type="integer",
-     *     description="Độ ưu tiên cấu hình"
-     * )
-     * @OA\Property(
-     *     property="version",
-     *     type="string",
-     *     description="Phiên bản cấu hình"
-     * )
-     * @OA\Property(
-     *     property="model_type",
-     *     type="string",
-     *     description="Loại model"
-     * )
-     * @OA\Property(
-     *     property="max_tokens",
-     *     type="integer",
-     *     description="Số lượng token tối đa"
-     * )
-     * @OA\Property(
-     *     property="temperature",
-     *     type="number",
-     *     description="Nhiệt độ"
-     * )
-     * @OA\Property(
-     *     property="top_p",
-     *     type="number",
-     *     description="Top P"
-     * )
-     * @OA\Property(
-     *     property="top_k",
-     *     type="integer",
-     *     description="Top K"
-     * )
-     * @OA\Property(
-     *     property="metadata",
-     *     type="array",
-     *     description="Metadata"
-     * )
-     * @OA\Property(
-     *     property="last_used_at",
-     *     type="string",
-     *     description="Thời gian sử dụng"
-     * )
-     */
     protected $fillable = [
         'ai_name',
         'type',

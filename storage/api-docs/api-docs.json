@@ -351,6 +351,689 @@
                 ]
             }
         },
+        "/api/ai-configs": {
+            "get": {
+                "tags": [
+                    "AI Configs"
+                ],
+                "summary": "Lấy danh sách cấu hình AI",
+                "operationId": "dc230699f48797476f7e3d798480fab2",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                }
+            }
+        },
+        "/api/ai-config/store": {
+            "post": {
+                "tags": [
+                    "AI Configuration"
+                ],
+                "summary": "Store AI configuration",
+                "operationId": "25ea92368f3ad15ca1291f4e26e16dd7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "config"
+                                ],
+                                "properties": {
+                                    "config": {
+                                        "description": "AI configuration object",
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "AI configuration stored successfully"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/ai-config/update/{id}": {
+            "put": {
+                "tags": [
+                    "AI Configuration"
+                ],
+                "summary": "Update AI configuration",
+                "operationId": "577ee925ad593246049c10a9bf0cb0c4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "AI config ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "config"
+                                ],
+                                "properties": {
+                                    "config": {
+                                        "description": "AI configuration object",
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "AI configuration updated successfully"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "AI configuration not found"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 404
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/ai-config/delete/{id}": {
+            "delete": {
+                "tags": [
+                    "AI Configuration"
+                ],
+                "summary": "Delete AI configuration",
+                "operationId": "bee611fa2771719a3e4de15777ae3e3b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "AI config ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "AI configuration deleted successfully"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "AI configuration not found"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 404
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/ai-config/upload": {
+            "post": {
+                "tags": [
+                    "AI Configuration"
+                ],
+                "summary": "Upload AI configuration file",
+                "operationId": "d362413ebc7d268e6c3678961790a948",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "description": "Configuration file to upload",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "File uploaded successfully"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "file_path": {
+                                                    "type": "string"
+                                                },
+                                                "file_name": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The file field is required"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Error uploading file"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 500
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/ai-configs/global-api-key": {
+            "post": {
+                "tags": [
+                    "AI Configs"
+                ],
+                "summary": "Cập nhật API key chung",
+                "operationId": "bc55c8532bd260ee8933b0519789bfb9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "api_key"
+                                ],
+                                "properties": {
+                                    "api_key": {
+                                        "description": "Global API key",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Global API key updated successfully"
+                                        },
+                                        "api_key": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ai/function-call": {
+            "post": {
+                "tags": [
+                    "AI Functions"
+                ],
+                "summary": "Handle AI function calls",
+                "operationId": "45cc29f4265ca0bf7a7755161d968367",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "function",
+                                    "args"
+                                ],
+                                "properties": {
+                                    "function": {
+                                        "description": "Function name to call",
+                                        "type": "string"
+                                    },
+                                    "args": {
+                                        "description": "Function arguments",
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        },
+        "/api/ai/available-functions": {
+            "get": {
+                "tags": [
+                    "AI Functions"
+                ],
+                "summary": "Get list of available AI functions",
+                "operationId": "68ebf9f8b4cf20f2e70703ed166c63aa",
+                "responses": {
+                    "200": {
+                        "description": "List of available functions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/appointments": {
             "get": {
                 "tags": [
@@ -1300,6 +1983,7 @@
                                 ],
                                 "properties": {
                                     "type": {
+                                        "description": "Type of item to favorite",
                                         "type": "string",
                                         "enum": [
                                             "product",
@@ -1307,6 +1991,7 @@
                                         ]
                                     },
                                     "item_id": {
+                                        "description": "ID of product or service",
                                         "type": "integer"
                                     }
                                 },
@@ -1322,19 +2007,25 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "message": {
                                             "type": "string"
                                         },
                                         "status_code": {
-                                            "type": "integer"
-                                        },
-                                        "success": {
-                                            "type": "boolean"
+                                            "type": "integer",
+                                            "example": 200
                                         },
                                         "data": {
                                             "properties": {
                                                 "status": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "added",
+                                                        "removed"
+                                                    ]
                                                 },
                                                 "message": {
                                                     "type": "string"
@@ -1347,9 +2038,6 @@
                                 }
                             }
                         }
-                    },
-                    "422": {
-                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -1364,7 +2052,7 @@
                 "tags": [
                     "Favorites"
                 ],
-                "summary": "Get user's favorites",
+                "summary": "Get all user's favorites",
                 "operationId": "81123175f76259d611e2c337477dfa5f",
                 "responses": {
                     "200": {
@@ -1373,19 +2061,21 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "message": {
                                             "type": "string"
                                         },
                                         "status_code": {
-                                            "type": "integer"
-                                        },
-                                        "success": {
-                                            "type": "boolean"
+                                            "type": "integer",
+                                            "example": 200
                                         },
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/Favorite"
+                                                "$ref": "#/components/responses/FavoriteResponse"
                                             }
                                         }
                                     },
@@ -1407,20 +2097,15 @@
                 "tags": [
                     "Favorites"
                 ],
-                "summary": "Get user's favorites by type (products or services)",
+                "summary": "Get user's favorites by type",
                 "operationId": "3b68d5b825999ee1789aaaa9df128cde",
                 "parameters": [
                     {
                         "name": "type",
                         "in": "path",
-                        "description": "Type of favorites to retrieve",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "enum": [
-                                "product",
-                                "service"
-                            ]
+                            "type": "string"
                         }
                     }
                 ],
@@ -1431,14 +2116,16 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "message": {
                                             "type": "string"
                                         },
                                         "status_code": {
-                                            "type": "integer"
-                                        },
-                                        "success": {
-                                            "type": "boolean"
+                                            "type": "integer",
+                                            "example": 200
                                         },
                                         "data": {
                                             "type": "array",
@@ -1448,31 +2135,36 @@
                                                         "type": "integer"
                                                     },
                                                     "user_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "favorite_type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "product",
+                                                            "service"
+                                                        ]
+                                                    },
+                                                    "item_id": {
                                                         "type": "integer"
                                                     },
-                                                    "product_id": {
-                                                        "type": "integer",
-                                                        "nullable": true
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
                                                     },
-                                                    "service_id": {
-                                                        "type": "integer",
-                                                        "nullable": true
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
                                                     },
-                                                    "product": {
+                                                    "item_details": {
+                                                        "type": "object",
                                                         "oneOf": [
                                                             {
-                                                                "$ref": "#/components/schemas/Product"
-                                                            }
-                                                        ],
-                                                        "nullable": true
-                                                    },
-                                                    "service": {
-                                                        "oneOf": [
+                                                                "$ref": "#/components/schemas/ProductResponse"
+                                                            },
                                                             {
-                                                                "$ref": "#/components/schemas/Service"
+                                                                "$ref": "#/components/schemas/ServiceResponse"
                                                             }
-                                                        ],
-                                                        "nullable": true
+                                                        ]
                                                     }
                                                 },
                                                 "type": "object"
@@ -1485,7 +2177,27 @@
                         }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 422
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -3558,6 +4270,58 @@
                 },
                 "type": "object"
             },
+            "ProductResponse": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ServiceResponse": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "Address": {
                 "title": "Address",
                 "description": "Address model",
@@ -3622,20 +4386,163 @@
                 "type": "object"
             },
             "AiChatConfig": {
-                "title": "AI Chat Configuration",
-                "description": "Model representing AI chat configuration settings",
+                "title": "Cấu hình Chat AI",
+                "description": "Model quản lý các cài đặt cấu hình chat AI",
                 "properties": {
-                    "name": {
-                        "description": "The name of the configuration setting",
+                    "ai_name": {
+                        "description": "Tên cài đặt cấu hình",
                         "type": "string"
                     },
-                    "value": {
-                        "description": "The value of the configuration setting",
+                    "type": {
+                        "description": "Loại cài đặt cấu hình",
                         "type": "string"
                     },
-                    "description": {
-                        "description": "A description of the configuration setting",
+                    "context": {
+                        "description": "Mô tả về cài đặt cấu hình",
                         "type": "string"
+                    },
+                    "api_key": {
+                        "description": "API key",
+                        "type": "string"
+                    },
+                    "language": {
+                        "description": "Ngôn ngữ của cài đặt cấu hình",
+                        "type": "string"
+                    },
+                    "gemini_settings": {
+                        "description": "Cài đặt Gemini",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "is_active": {
+                        "description": "Trạng thái cấu hình",
+                        "type": "boolean"
+                    },
+                    "priority": {
+                        "description": "Độ ưu tiên cấu hình",
+                        "type": "integer"
+                    },
+                    "version": {
+                        "description": "Phiên bản cấu hình",
+                        "type": "string"
+                    },
+                    "model_type": {
+                        "description": "Loại model",
+                        "type": "string"
+                    },
+                    "max_tokens": {
+                        "description": "Số lượng token tối đa",
+                        "type": "integer"
+                    },
+                    "temperature": {
+                        "description": "Nhiệt độ",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "top_p": {
+                        "description": "Top P",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "top_k": {
+                        "description": "Top K",
+                        "type": "integer"
+                    },
+                    "metadata": {
+                        "description": "Metadata",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "safety_settings": {
+                        "description": "Cài đặt an toàn",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "category": {
+                                    "type": "string"
+                                },
+                                "threshold": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "function_declarations": {
+                        "description": "Khai báo functions",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "parameters": {
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "properties": {
+                                            "type": "object"
+                                        },
+                                        "required": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "tool_config": {
+                        "description": "Cấu hình công cụ",
+                        "type": "object"
+                    },
+                    "system_instructions": {
+                        "description": "Hướng dẫn hệ thống",
+                        "type": "string"
+                    },
+                    "response_format": {
+                        "description": "Định dạng phản hồi",
+                        "type": "string"
+                    },
+                    "stop_sequences": {
+                        "description": "Chuỗi dừng",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "last_used_at": {
+                        "description": "Thời gian sử dụng cuối",
+                        "type": "string",
+                        "format": "date-time"
                     }
                 },
                 "type": "object"
@@ -3943,39 +4850,6 @@
                     },
                     "updated_at": {
                         "description": "Last update timestamp",
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
-            "Favorite": {
-                "title": "Favorite",
-                "description": "Model đại diện cho mục yêu thích của người dùng",
-                "properties": {
-                    "id": {
-                        "description": "ID của mục yêu thích",
-                        "type": "integer"
-                    },
-                    "user_id": {
-                        "description": "ID của người dùng",
-                        "type": "integer"
-                    },
-                    "product_id": {
-                        "description": "ID của sản phẩm (nếu có)",
-                        "type": "integer"
-                    },
-                    "service_id": {
-                        "description": "ID của dịch vụ (nếu có)",
-                        "type": "integer"
-                    },
-                    "created_at": {
-                        "description": "Thời gian tạo",
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "description": "Thời gian cập nhật cuối cùng",
                         "type": "string",
                         "format": "date-time"
                     }
@@ -5389,6 +6263,50 @@
                 "type": "object"
             }
         },
+        "responses": {
+            "FavoriteResponse": {
+                "description": "Favorite model",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "id": {
+                                    "description": "ID của mục yêu thích",
+                                    "type": "integer"
+                                },
+                                "favorite_type": {
+                                    "description": "Loại mục yêu thích",
+                                    "type": "string",
+                                    "enum": [
+                                        "product",
+                                        "service"
+                                    ]
+                                },
+                                "item_id": {
+                                    "description": "ID của sản phẩm hoặc dịch vụ",
+                                    "type": "integer"
+                                },
+                                "user_id": {
+                                    "description": "ID của người dùng",
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "description": "Thời gian tạo",
+                                    "type": "string",
+                                    "format": "date-time"
+                                },
+                                "updated_at": {
+                                    "description": "Thời gian cập nhật cuối cùng",
+                                    "type": "string",
+                                    "format": "date-time"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
@@ -5413,6 +6331,18 @@
         {
             "name": "Address",
             "description": "Address"
+        },
+        {
+            "name": "AI Configs",
+            "description": "AI Configs"
+        },
+        {
+            "name": "AI Configuration",
+            "description": "AI Configuration"
+        },
+        {
+            "name": "AI Functions",
+            "description": "AI Functions"
         },
         {
             "name": "Authentication",

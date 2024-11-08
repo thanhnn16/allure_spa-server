@@ -10,10 +10,11 @@ class FavoriteService
     public function toggleFavorite($type, $itemId)
     {
         $userId = Auth::id();
-        $field = $type === 'product' ? 'product_id' : 'service_id';
         
+        // Check if favorite exists
         $favorite = Favorite::where('user_id', $userId)
-            ->where($field, $itemId)
+            ->where('favorite_type', $type)
+            ->where('item_id', $itemId)
             ->first();
 
         if ($favorite) {
@@ -24,9 +25,11 @@ class FavoriteService
             ];
         }
 
+        // Create new favorite
         Favorite::create([
             'user_id' => $userId,
-            $field => $itemId
+            'favorite_type' => $type,
+            'item_id' => $itemId
         ]);
 
         return [
@@ -37,23 +40,36 @@ class FavoriteService
 
     public function getUserFavorites()
     {
-        return Favorite::with(['product', 'service'])
-            ->where('user_id', Auth::id())
-            ->get();
+        return Favorite::where('user_id', Auth::id())
+            ->with(['product', 'service'])
+            ->get()
+            ->map(function ($favorite) {
+                // Thêm thông tin chi tiết của product hoặc service
+                if ($favorite->favorite_type === 'product') {
+                    $favorite->item_details = $favorite->product;
+                } else {
+                    $favorite->item_details = $favorite->service;
+                }
+                return $favorite;
+            });
     }
 
     public function getFavoritesByType($type)
     {
-        $query = Favorite::where('user_id', Auth::id());
-        
-        if ($type === 'product') {
-            return $query->whereNotNull('product_id')
-                ->with('product.media')
-                ->get();
-        }
-        
-        return $query->whereNotNull('service_id')
-            ->with('service.media')
-            ->get();
+        $favorites = Favorite::where('user_id', Auth::id())
+            ->where('favorite_type', $type)
+            ->with(['product', 'service'])
+            ->get()
+            ->map(function ($favorite) {
+                // Thêm thông tin chi tiết của product hoặc service
+                if ($favorite->favorite_type === 'product') {
+                    $favorite->item_details = $favorite->product;
+                } else {
+                    $favorite->item_details = $favorite->service;
+                }
+                return $favorite;
+            });
+
+        return $favorites;
     }
 }

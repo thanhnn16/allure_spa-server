@@ -100,9 +100,45 @@ class AiConfigController extends BaseController
 
     /**
      * @OA\Post(
-     *     path="/api/ai-configs",
-     *     summary="Tạo mới cấu hình AI",
-     *     tags={"AI Configs"}
+     *     path="/api/ai-config/store",
+     *     summary="Store AI configuration",
+     *     tags={"AI Configuration"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"config"},
+     *             @OA\Property(property="config", type="object", description="AI configuration object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="AI configuration stored successfully"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="status_code", type="integer", example=422)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Unauthorized"),
+     *             @OA\Property(property="status_code", type="integer", example=401)
+     *         )
+     *     )
      * )
      */
     public function store(Request $request)
@@ -144,9 +180,61 @@ class AiConfigController extends BaseController
 
     /**
      * @OA\Put(
-     *     path="/api/ai-configs/{id}",
-     *     summary="Cập nhật cấu hình AI",
-     *     tags={"AI Configs"}
+     *     path="/api/ai-config/update/{id}",
+     *     summary="Update AI configuration",
+     *     tags={"AI Configuration"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="AI config ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"config"},
+     *             @OA\Property(property="config", type="object", description="AI configuration object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="AI configuration updated successfully"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Not Found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="AI configuration not found"),
+     *             @OA\Property(property="status_code", type="integer", example=404)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="status_code", type="integer", example=422)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Unauthorized"),
+     *             @OA\Property(property="status_code", type="integer", example=401)
+     *         )
+     *     )
      * )
      */
     public function update(Request $request, $id)
@@ -198,9 +286,45 @@ class AiConfigController extends BaseController
 
     /**
      * @OA\Delete(
-     *     path="/api/ai-configs/{id}",
-     *     summary="Xóa cấu hình AI",
-     *     tags={"AI Configs"}
+     *     path="/api/ai-config/delete/{id}",
+     *     summary="Delete AI configuration",
+     *     tags={"AI Configuration"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="AI config ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="AI configuration deleted successfully"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Not Found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="AI configuration not found"),
+     *             @OA\Property(property="status_code", type="integer", example=404)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Unauthorized"),
+     *             @OA\Property(property="status_code", type="integer", example=401)
+     *         )
+     *     )
      * )
      */
     public function destroy($id)
@@ -220,9 +344,66 @@ class AiConfigController extends BaseController
 
     /**
      * @OA\Post(
-     *     path="/api/ai-configs/upload",
-     *     summary="Upload cấu hình AI từ file",
-     *     tags={"AI Configs"}
+     *     path="/api/ai-config/upload",
+     *     summary="Upload AI configuration file",
+     *     tags={"AI Configuration"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="file",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Configuration file to upload"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="File uploaded successfully"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="file_path", type="string"),
+     *                 @OA\Property(property="file_name", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="The file field is required"),
+     *             @OA\Property(property="status_code", type="integer", example=422)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Unauthorized"),
+     *             @OA\Property(property="status_code", type="integer", example=401)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Error uploading file"),
+     *             @OA\Property(property="status_code", type="integer", example=500)
+     *         )
+     *     )
      * )
      */
     public function upload(Request $request)
@@ -337,7 +518,36 @@ class AiConfigController extends BaseController
      * @OA\Post(
      *     path="/api/ai-configs/global-api-key",
      *     summary="Cập nhật API key chung",
-     *     tags={"AI Configs"}
+     *     tags={"AI Configs"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"api_key"},
+     *             @OA\Property(property="api_key", type="string", description="Global API key")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Global API key updated successfully"),
+     *             @OA\Property(property="api_key", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
      * )
      */
     public function updateGlobalApiKey(Request $request)

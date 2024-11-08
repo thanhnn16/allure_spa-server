@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Models\TimeSlot;
 use App\Models\Service;
+use App\Models\User;
 
 class AppointmentService
 {
@@ -56,15 +57,24 @@ class AppointmentService
             if ($existingBookings >= $timeSlot->max_bookings) {
                 return [
                     'status' => 422,
-                    'message' => 'Khung giờ này đã đầy',
+                    'message' => 'Khung giờ này đã đầy', 
                     'data' => null
                 ];
             }
 
+            // Find available staff if staff_id is null
+            $staffId = $data['staff_id'];
+            if (!$staffId) {
+                $staff = User::role('staff')->first();
+                if ($staff) {
+                    $staffId = $staff->id;
+                }
+            }
+
             $appointment = Appointment::create([
                 'user_id' => $data['user_id'],
-                'service_id' => $data['service_id'],
-                'staff_user_id' => $data['staff_id'],
+                'service_id' => $data['service_id'], 
+                'staff_user_id' => $staffId,
                 'appointment_date' => $data['appointment_date'],
                 'time_slot_id' => $data['time_slot_id'],
                 'appointment_type' => $data['appointment_type'],
