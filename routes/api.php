@@ -20,6 +20,7 @@ use App\Http\Controllers\FirebaseWebhookController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\AiConfigController;
 use App\Http\Controllers\AiFunctionController;
+use App\Http\Controllers\OrderController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -167,6 +168,15 @@ Route::middleware('throttle:api')->group(function () {
             Route::post('/function-call', [AiFunctionController::class, 'handleFunctionCall']);
             Route::get('/available-functions', [AiFunctionController::class, 'getAvailableFunctions']);
         });
+
+        // Order routes
+        Route::post('/orders', [OrderController::class, 'store']);
+        Route::post('/orders/{order}/payment', [PayOSController::class, 'createPaymentLink']);
+        Route::post('/orders/{order}/verify-payment', [PayOSController::class, 'verifyPayment']);
+        Route::get('/orders', [OrderController::class, 'index']);
+        Route::get('/orders/{order}', [OrderController::class, 'show']);
+        Route::put('/orders/{order}', [OrderController::class, 'update']);
+        Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

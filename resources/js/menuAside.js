@@ -38,6 +38,22 @@ export default [
         route: 'users.index'
     },
     {
+        label: 'Quản lý đơn hàng',
+        icon: mdiBallot,
+        menu: [
+            {
+                label: 'Đơn hàng mới',
+                route: 'orders.create',
+                icon: mdiFileDocumentPlus
+            },
+            {
+                label: 'Danh sách đơn hàng',
+                route: 'orders.index',
+                icon: mdiBallot
+            },
+        ]
+    },
+    {
         label: 'Quản lý hoá đơn',
         icon: mdiBallot,
         menu: [

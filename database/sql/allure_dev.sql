@@ -253,7 +253,7 @@ CREATE TABLE orders (
     payment_method_id INT UNSIGNED NOT NULL,
     voucher_id INT UNSIGNED,
     discount_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
-    status VARCHAR(255) NOT NULL DEFAULT 'pending',
+    status ENUM ('pending', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
