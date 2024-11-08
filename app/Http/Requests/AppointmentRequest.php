@@ -15,7 +15,7 @@ class AppointmentRequest extends FormRequest
     {
         return [
             'user_id' => 'required|exists:users,id',
-            'staff_id' => 'required|exists:users,id',
+            'staff_id' => 'nullable|exists:users,id',
             'service_id' => 'nullable|exists:services,id',
             'user_treatment_package_id' => 'nullable|exists:user_treatment_packages,id',
             'appointment_date' => 'required|date',
