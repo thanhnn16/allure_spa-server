@@ -3149,6 +3149,226 @@
                 }
             }
         },
+        "/api/products/{productId}/approved-ratings": {
+            "get": {
+                "tags": [
+                    "Ratings"
+                ],
+                "summary": "Lấy danh sách đánh giá đã duyệt của sản phẩm",
+                "operationId": "fb24355e66a4d849040ac6df62dcbef3",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Rating"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/services/{serviceId}/approved-ratings": {
+            "get": {
+                "tags": [
+                    "Ratings"
+                ],
+                "summary": "Lấy danh sách đánh giá đã duyệt của dịch vụ",
+                "operationId": "d142694892ca11ac978b32062d29705c",
+                "parameters": [
+                    {
+                        "name": "serviceId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Rating"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/ratings/from-order": {
+            "post": {
+                "tags": [
+                    "Ratings"
+                ],
+                "summary": "Tạo đánh giá từ đơn hàng",
+                "operationId": "923f1c72f0547b6e908a0903c45b719b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rating_type",
+                                    "item_id",
+                                    "stars"
+                                ],
+                                "properties": {
+                                    "rating_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "product",
+                                            "service"
+                                        ]
+                                    },
+                                    "item_id": {
+                                        "type": "integer"
+                                    },
+                                    "stars": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "comment": {
+                                        "type": "string"
+                                    },
+                                    "media_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Rating created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Rating"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - User hasn't purchased the item"
+                    }
+                }
+            }
+        },
+        "/api/ratings/{id}": {
+            "put": {
+                "tags": [
+                    "Ratings"
+                ],
+                "summary": "Cập nhật đánh giá",
+                "operationId": "ad9719d294e6307635669e7607d83650",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "stars": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "comment": {
+                                        "type": "string"
+                                    },
+                                    "media_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rating updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Rating"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Not owner of the rating"
+                    },
+                    "404": {
+                        "description": "Rating not found"
+                    }
+                }
+            }
+        },
         "/api/services": {
             "get": {
                 "tags": [

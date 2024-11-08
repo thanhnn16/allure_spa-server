@@ -96,6 +96,11 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/services/{serviceId}/ratings', [RatingController::class, 'getServiceRatings']);
         Route::post('/ratings', [RatingController::class, 'store']);
 
+        Route::get('/products/{productId}/approved-ratings', [RatingController::class, 'getApprovedProductRatings']);
+        Route::get('/services/{serviceId}/approved-ratings', [RatingController::class, 'getApprovedServiceRatings']);
+        Route::post('/ratings/from-order', [RatingController::class, 'storeFromOrder']);
+        Route::put('/ratings/{id}', [RatingController::class, 'update']);
+
         // Invoice routes
         Route::get('/invoices', [InvoiceController::class, 'index']);
         Route::post('/invoices', [InvoiceController::class, 'store']);

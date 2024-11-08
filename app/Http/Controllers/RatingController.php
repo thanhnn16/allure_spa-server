@@ -6,6 +6,8 @@ use App\Services\RatingService;
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateRatingRequest;
 use OpenApi\Annotations as OA;
+use App\Models\Rating;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @OA\Tag(
@@ -276,5 +278,172 @@ class RatingController extends BaseController
     {
         $rating = $this->ratingService->createRating($request->validated());
         return $this->respondWithJson($rating, 'Đánh giá đã được tạo thành công', 201);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/products/{productId}/approved-ratings",
+     *     summary="Lấy danh sách đánh giá đã duyệt của sản phẩm",
+     *     tags={"Ratings"},
+     *     @OA\Parameter(
+     *         name="productId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Rating")),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function getApprovedProductRatings($productId)
+    {
+        $ratings = $this->ratingService->getRatingsByProduct($productId, [
+            'status' => 'approved',
+            'per_page' => 10
+        ]);
+        return $this->respondWithJson($ratings, 'Danh sách đánh giá đã duyệt của sản phẩm');
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/services/{serviceId}/approved-ratings",
+     *     summary="Lấy danh sách đánh giá đã duyệt của dịch vụ",
+     *     tags={"Ratings"},
+     *     @OA\Parameter(
+     *         name="serviceId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Rating")),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function getApprovedServiceRatings($serviceId)
+    {
+        $ratings = $this->ratingService->getRatingsByService($serviceId, [
+            'status' => 'approved',
+            'per_page' => 10
+        ]);
+        return $this->respondWithJson($ratings, 'Danh sách đánh giá đã duyệt của dịch vụ');
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/ratings/from-order",
+     *     summary="Tạo đánh giá từ đơn hàng",
+     *     tags={"Ratings"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"rating_type", "item_id", "stars"},
+     *             @OA\Property(property="rating_type", type="string", enum={"product", "service"}),
+     *             @OA\Property(property="item_id", type="integer"),
+     *             @OA\Property(property="stars", type="integer", minimum=1, maximum=5),
+     *             @OA\Property(property="comment", type="string"),
+     *             @OA\Property(property="media_id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Rating created successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Rating")
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden - User hasn't purchased the item"
+     *     )
+     * )
+     */
+    public function storeFromOrder(Request $request)
+    {
+        $validated = $request->validate([
+            'rating_type' => 'required|in:product,service',
+            'item_id' => 'required|integer',
+            'stars' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string',
+            'media_id' => 'nullable|integer|exists:media,id'
+        ]);
+
+        try {
+            $rating = $this->ratingService->createRatingFromOrder($validated, Auth::user()->id);
+            return $this->respondWithJson($rating, 'Đánh giá đã được tạo thành công', 201);
+        } catch (\Exception $e) {
+            return $this->respondWithJson(null, $e->getMessage(), 403);
+        }
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/ratings/{id}",
+     *     summary="Cập nhật đánh giá",
+     *     tags={"Ratings"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="stars", type="integer", minimum=1, maximum=5),
+     *             @OA\Property(property="comment", type="string"),
+     *             @OA\Property(property="media_id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Rating updated successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Rating")
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden - Not owner of the rating"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Rating not found"
+     *     )
+     * )
+     */
+    public function update(Request $request, $id)
+    {
+        $rating = Rating::findOrFail($id);
+        
+        if ($rating->user_id !== Auth::user()->id) {
+            return $this->respondWithJson(null, 'Bạn không có quyền sửa đánh giá này', 403);
+        }
+
+        $validated = $request->validate([
+            'stars' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string',
+            'media_id' => 'nullable|integer|exists:media,id'
+        ]);
+
+        $rating = $this->ratingService->updateRating($rating, $validated);
+        return $this->respondWithJson($rating, 'Đánh giá đã được cập nhật thành công');
     }
 }

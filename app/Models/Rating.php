@@ -37,7 +37,12 @@ class Rating extends Model
         'comment',
         'image_id',
         'video_id',
-        'status'
+        'status',
+        'is_edited'
+    ];
+
+    protected $casts = [
+        'is_edited' => 'boolean'
     ];
 
     public function user()
@@ -45,24 +50,27 @@ class Rating extends Model
         return $this->belongsTo(User::class);
     }
 
+
+    public function item()
+    {
+        return $this->morphTo();
+    }
+
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'item_id')
+            ->where('rating_type', 'product');
     }
 
     public function service()
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Service::class, 'item_id')
+            ->where('rating_type', 'service');
     }
 
-    public function image()
+    public function media()
     {
-        return $this->belongsTo(Image::class);
-    }
-
-    public function video()
-    {
-        return $this->belongsTo(Video::class);
+        return $this->morphOne(Media::class, 'model');
     }
 
     public function scopePending($query)

@@ -89,7 +89,7 @@ class Service extends Model
 
     public function ratings()
     {
-        return $this->hasMany(Rating::class);
+        return $this->morphMany(Rating::class, 'item');
     }
 
     public function category()
