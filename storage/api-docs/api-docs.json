@@ -2025,13 +2025,13 @@
                 ]
             }
         },
-        "/api/orders/{order}/create-invoice": {
-            "post": {
+        "/api/orders/{order}/cancel": {
+            "delete": {
                 "tags": [
                     "Orders"
                 ],
-                "summary": "Tạo hóa đơn từ đơn hàng",
-                "operationId": "f3cf0ca3e3bf500f39aa505139a37afd",
+                "summary": "Hủy đơn hàng (dành cho khách hàng)",
+                "operationId": "d41497137376edcd71b25b633a6f08ac",
                 "parameters": [
                     {
                         "name": "order",
@@ -2047,7 +2047,7 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "note": {
+                                    "cancel_reason": {
                                         "type": "string",
                                         "nullable": true
                                     }
@@ -2059,7 +2059,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Tạo hóa đơn thành công",
+                        "description": "Hủy đơn hàng thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2070,9 +2070,6 @@
                                         },
                                         "message": {
                                             "type": "string"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Invoice"
                                         }
                                     },
                                     "type": "object"
@@ -2080,8 +2077,11 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "Không có quyền hủy đơn hàng này"
+                    },
                     "400": {
-                        "description": "Lỗi khi tạo hóa đơn"
+                        "description": "Không thể hủy đơn hàng ở trạng thái hiện tại"
                     }
                 },
                 "security": [

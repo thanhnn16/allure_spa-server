@@ -208,6 +208,107 @@ class OrderController extends BaseController
      * )
      */
 
+    /**
+     * @OA\Get(
+     *     path="/api/orders/my-orders",
+     *     summary="Lấy danh sách đơn hàng của người dùng hiện tại",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Lọc theo trạng thái đơn hàng",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"pending", "processing", "completed", "cancelled"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Order")),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
+     */
+
+    /**
+     * @OA\Put(
+     *     path="/api/orders/{order}/update-status",
+     *     summary="Cập nhật trạng thái đơn hàng (dành cho khách hàng)",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string", enum={"cancelled"}),
+     *             @OA\Property(property="cancel_reason", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cập nhật thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Order")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Không có quyền cập nhật đơn hàng này"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Không thể hủy đơn hàng ở trạng thái hiện tại"
+     *     )
+     * )
+     */
+
+    /**
+     * @OA\Delete(
+     *     path="/api/orders/{order}/cancel",
+     *     summary="Hủy đơn hàng (dành cho khách hàng)",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="cancel_reason", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Hủy đơn hàng thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Không có quyền hủy đơn hàng này"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Không thể hủy đơn hàng ở trạng thái hiện tại"
+     *     )
+     * )
+     */
+
     public function index()
     {
         $orders = Order::with(['user', 'invoice'])
@@ -406,5 +507,96 @@ class OrderController extends BaseController
             'paymentMethods' => PaymentMethod::all(),
             'vouchers' => Voucher::where('status', 'active')->get(),
         ]);
+    }
+
+    public function getMyOrders(Request $request)
+    {
+        try {
+            $orders = Order::with(['order_items', 'invoice'])
+                ->where('user_id', Auth::id())
+                ->when($request->status, function($query, $status) {
+                    return $query->where('status', $status);
+                })
+                ->latest()
+                ->paginate(10);
+
+            return $this->respondWithJson($orders, 'Lấy danh sách đơn hàng thành công');
+        } catch (\Exception $e) {
+            return $this->respondWithJson(null, $e->getMessage(), 500);
+        }
+    }
+
+    public function updateOrderStatus(Request $request, Order $order)
+    {
+        try {
+            // Kiểm tra quyền
+            if ($order->user_id !== Auth::id()) {
+                return $this->respondWithJson(null, 'Bạn không có quyền cập nhật đơn hàng này', 403);
+            }
+
+            // Validate request
+            $validated = $request->validate([
+                'status' => 'required|in:cancelled',
+                'cancel_reason' => 'nullable|string|max:500'
+            ]);
+
+            // Kiểm tra điều kiện hủy đơn
+            if ($order->status !== 'pending') {
+                return $this->respondWithJson(
+                    null, 
+                    'Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý', 
+                    400
+                );
+            }
+
+            // Cập nhật trạng thái
+            $order->update([
+                'status' => $validated['status'],
+                'note' => $validated['cancel_reason'] ?? null
+            ]);
+
+            return $this->respondWithJson(
+                $order->load(['order_items', 'invoice']),
+                'Cập nhật trạng thái đơn hàng thành công'
+            );
+
+        } catch (\Exception $e) {
+            return $this->respondWithJson(null, $e->getMessage(), 500);
+        }
+    }
+
+    public function cancelOrder(Request $request, Order $order)
+    {
+        try {
+            // Kiểm tra quyền
+            if ($order->user_id !== Auth::id()) {
+                return $this->respondWithJson(null, 'Bạn không có quyền hủy đơn hàng này', 403);
+            }
+
+            // Validate request
+            $validated = $request->validate([
+                'cancel_reason' => 'nullable|string|max:500'
+            ]);
+
+            // Kiểm tra điều kiện hủy đơn
+            if ($order->status !== 'pending') {
+                return $this->respondWithJson(
+                    null,
+                    'Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý',
+                    400
+                );
+            }
+
+            // Cập nhật trạng thái thành cancelled
+            $order->update([
+                'status' => 'cancelled',
+                'note' => $validated['cancel_reason'] ?? null
+            ]);
+
+            return $this->respondWithJson(null, 'Hủy đơn hàng thành công');
+
+        } catch (\Exception $e) {
+            return $this->respondWithJson(null, $e->getMessage(), 500);
+        }
     }
 }

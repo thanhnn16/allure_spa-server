@@ -169,16 +169,28 @@ Route::middleware('throttle:api')->group(function () {
         });
 
         // Order routes
-        Route::post('/orders', [OrderController::class, 'store']);
-        Route::post('/orders/{order}/payment', [PayOSController::class, 'createPaymentLink']);
-        Route::post('/orders/{order}/verify-payment', [PayOSController::class, 'verifyPayment']);
-        Route::get('/orders', [OrderController::class, 'index']);
-        Route::get('/orders/{order}', [OrderController::class, 'show']);
-        Route::put('/orders/{order}', [OrderController::class, 'update']);
-        Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
+        Route::prefix('orders')->group(function () {
+            // Basic CRUD operations
+            Route::get('/', [OrderController::class, 'index']);
+            Route::post('/', [OrderController::class, 'store']);
+            Route::get('/{order}', [OrderController::class, 'show']);
+            Route::put('/{order}', [OrderController::class, 'update']);
+            Route::delete('/{order}', [OrderController::class, 'destroy']);
 
-        // Thêm route tạo hóa đơn từ đơn hàng
-        Route::post('/orders/{order}/create-invoice', [OrderController::class, 'createInvoice']);
+            // Order status management
+            Route::put('/{order}/update-status', [OrderController::class, 'updateOrderStatus']);
+            Route::delete('/{order}/cancel', [OrderController::class, 'cancelOrder']);
+
+            // Payment related
+            Route::post('/{order}/payment', [PayOSController::class, 'createPaymentLink']);
+            Route::post('/{order}/verify-payment', [PayOSController::class, 'verifyPayment']);
+
+            // User specific
+            Route::get('/my-orders', [OrderController::class, 'getMyOrders']);
+
+            // Thêm route tạo hóa đơn từ đơn hàng
+            Route::post('/{order}/create-invoice', [OrderController::class, 'createInvoice']);
+        });
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);
