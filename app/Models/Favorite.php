@@ -26,7 +26,7 @@ class Favorite extends Model
 
     protected $fillable = [
         'favorite_type',
-        'item_id', 
+        'item_id',
         'user_id'
     ];
 
@@ -37,13 +37,11 @@ class Favorite extends Model
 
     public function product()
     {
-        return $this->belongsTo(Product::class, 'item_id')
-            ->where('favorite_type', 'product');
+        return $this->belongsTo(Product::class, 'item_id');
     }
 
-    public function service() 
+    public function service()
     {
-        return $this->belongsTo(Service::class, 'item_id')
-            ->where('favorite_type', 'service');
+        return $this->belongsTo(Service::class, 'item_id');
     }
 }

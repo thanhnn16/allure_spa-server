@@ -10,7 +10,7 @@ class FavoriteService
     public function toggleFavorite($type, $itemId)
     {
         $userId = Auth::id();
-        
+
         // Check if favorite exists
         $favorite = Favorite::where('user_id', $userId)
             ->where('favorite_type', $type)
@@ -58,13 +58,12 @@ class FavoriteService
     {
         $favorites = Favorite::where('user_id', Auth::id())
             ->where('favorite_type', $type)
-            ->with(['product', 'service'])
+            ->with($type === 'product' ? 'product' : 'service')
             ->get()
             ->map(function ($favorite) {
-                // Thêm thông tin chi tiết của product hoặc service
-                if ($favorite->favorite_type === 'product') {
+                if ($favorite->favorite_type === 'product' && $favorite->product) {
                     $favorite->item_details = $favorite->product;
-                } else {
+                } elseif ($favorite->favorite_type === 'service' && $favorite->service) {
                     $favorite->item_details = $favorite->service;
                 }
                 return $favorite;
