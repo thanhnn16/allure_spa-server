@@ -297,15 +297,20 @@ class AppointmentService
     public function getAppointmentsByUser($userId, array $filters = [])
     {
         try {
+            Log::info('Starting getAppointmentsByUser', [
+                'user_id' => $userId,
+                'filters' => $filters
+            ]);
+
             $query = Appointment::with(['service', 'staff', 'timeSlot'])
                 ->where('user_id', $userId);
 
-            // Filter by status
+            // Filter by status if provided and not empty
             if (!empty($filters['status'])) {
                 $query->where('status', strtolower($filters['status']));
             }
 
-            // Filter by appointment type
+            // Filter by appointment type if provided and not empty
             if (!empty($filters['appointment_type'])) {
                 $query->where('appointment_type', strtolower($filters['appointment_type']));
             }
@@ -318,39 +323,14 @@ class AppointmentService
                 $query->where('appointment_date', '<=', $filters['to_date']);
             }
 
-            // Thêm order by
+            // Add order by
             $query->orderBy('appointment_date', 'desc')
                 ->orderBy('created_at', 'desc');
 
             $appointments = $query->get();
 
-            $formattedAppointments = $appointments->map(function ($appointment) {
-                try {
-                    return [
-                        'id' => $appointment->id,
-                        'title' => $appointment->service->name ?? 'Cuộc hẹn',
-                        'start' => Carbon::parse($appointment->appointment_date . ' ' . optional($appointment->timeSlot)->start_time)
-                            ->setTimezone('Asia/Ho_Chi_Minh')
-                            ->format('Y-m-d H:i:s'),
-                        'end' => Carbon::parse($appointment->appointment_date . ' ' . optional($appointment->timeSlot)->end_time)
-                            ->setTimezone('Asia/Ho_Chi_Minh')
-                            ->format('Y-m-d H:i:s'),
-                        'service' => $appointment->service,
-                        'staff' => $appointment->staff,
-                        'status' => $appointment->status,
-                        'appointment_type' => $appointment->appointment_type,
-                        'note' => $appointment->note,
-                        'time_slot' => $appointment->timeSlot,
-                        'appointment_date' => $appointment->appointment_date,
-                    ];
-                } catch (\Exception $e) {
-                    Log::error('Error formatting single appointment: ' . $e->getMessage(), [
-                        'appointment_id' => $appointment->id,
-                        'error' => $e->getMessage()
-                    ]);
-                    return null;
-                }
-            })->filter()->values();
+            // Sử dụng accessor từ model
+            $formattedAppointments = $appointments->map->getFormattedAppointmentAttribute();
 
             return [
                 'status' => 200,
@@ -358,16 +338,16 @@ class AppointmentService
                 'data' => $formattedAppointments
             ];
         } catch (\Exception $e) {
-            Log::error('Error in getAppointmentsByUser: ' . $e->getMessage(), [
+            Log::error('Error in getAppointmentsByUser:', [
                 'user_id' => $userId,
-                'filters' => $filters,
+                'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
             return [
                 'status' => 500,
                 'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
-                'data' => null
+                'data' => []
             ];
         }
     }
