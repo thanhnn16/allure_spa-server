@@ -320,7 +320,7 @@ class AppointmentService
 
             // Thêm order by
             $query->orderBy('appointment_date', 'desc')
-                  ->orderBy('created_at', 'desc');
+                ->orderBy('created_at', 'desc');
 
             $appointments = $query->get();
 
@@ -330,7 +330,7 @@ class AppointmentService
             $formattedAppointments = $appointments->map(function ($appointment) {
                 // Log để debug từng appointment
                 Log::info('Processing appointment:', ['appointment' => $appointment->toArray()]);
-                
+
                 try {
                     return [
                         'id' => $appointment->id,
@@ -366,20 +366,18 @@ class AppointmentService
                 'message' => 'Lấy danh sách lịch hẹn thành công',
                 'data' => $formattedAppointments
             ];
-
         } catch (\Exception $e) {
             Log::error('Error in getAppointmentsByUser: ' . $e->getMessage(), [
                 'user_id' => $userId,
                 'filters' => $filters,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return [
                 'status' => 500,
-                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
+                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage(),
                 'data' => null
             ];
         }
     }
-
 }
