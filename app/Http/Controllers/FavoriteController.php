@@ -103,33 +103,45 @@ class FavoriteController extends BaseController
      *         name="type",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="string")
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={"product", "service"}
+     *         ),
+     *         description="Type of favorite items to retrieve"
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Success",
      *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="message", type="string", example=""),
      *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="user_id", type="string"),
-     *                     @OA\Property(property="favorite_type", type="string", enum={"product", "service"}),
-     *                     @OA\Property(property="item_id", type="integer"),
+     *                     @OA\Property(property="id", type="integer", example=62),
+     *                     @OA\Property(property="favorite_type", type="string", enum={"product", "service"}, example="service"),
+     *                     @OA\Property(property="item_id", type="integer", example=1),
+     *                     @OA\Property(property="user_id", type="string", example="03180146-1b90-42e0-b5d2-8519c20e647d"),
      *                     @OA\Property(property="created_at", type="string", format="date-time"),
      *                     @OA\Property(property="updated_at", type="string", format="date-time"),
      *                     @OA\Property(
-     *                         property="item_details",
+     *                         property="service",
      *                         type="object",
-     *                         oneOf={
-     *                             @OA\Schema(ref="#/components/schemas/ProductResponse"),
-     *                             @OA\Schema(ref="#/components/schemas/ServiceResponse")
-     *                         }
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="service_name", type="string", example="Chăm da Amino - Phù hợp mọi loại da"),
+     *                         @OA\Property(property="description", type="string", example="Liệu trình chăm sóc da mặt phù hợp cho mọi loại da"),
+     *                         @OA\Property(property="duration", type="integer", example=60),
+     *                         @OA\Property(property="category_id", type="integer", example=1),
+     *                         @OA\Property(property="single_price", type="integer", example=1350000),
+     *                         @OA\Property(property="combo_5_price", type="integer", example=5400000),
+     *                         @OA\Property(property="combo_10_price", type="integer", example=9450000),
+     *                         @OA\Property(property="validity_period", type="integer", example=365),
+     *                         @OA\Property(property="created_at", type="string", format="date-time", nullable=true),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time", nullable=true),
+     *                         @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
      *                     )
      *                 )
      *             )

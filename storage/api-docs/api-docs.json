@@ -1921,9 +1921,14 @@
                     {
                         "name": "type",
                         "in": "path",
+                        "description": "Type of favorite items to retrieve",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                                "product",
+                                "service"
+                            ]
                         }
                     }
                 ],
@@ -1934,36 +1939,41 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": ""
                                         },
                                         "status_code": {
                                             "type": "integer",
                                             "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         },
                                         "data": {
                                             "type": "array",
                                             "items": {
                                                 "properties": {
                                                     "id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "user_id": {
-                                                        "type": "string"
+                                                        "type": "integer",
+                                                        "example": 62
                                                     },
                                                     "favorite_type": {
                                                         "type": "string",
                                                         "enum": [
                                                             "product",
                                                             "service"
-                                                        ]
+                                                        ],
+                                                        "example": "service"
                                                     },
                                                     "item_id": {
-                                                        "type": "integer"
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "string",
+                                                        "example": "03180146-1b90-42e0-b5d2-8519c20e647d"
                                                     },
                                                     "created_at": {
                                                         "type": "string",
@@ -1973,16 +1983,61 @@
                                                         "type": "string",
                                                         "format": "date-time"
                                                     },
-                                                    "item_details": {
-                                                        "type": "object",
-                                                        "oneOf": [
-                                                            {
-                                                                "$ref": "#/components/schemas/ProductResponse"
+                                                    "service": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
                                                             },
-                                                            {
-                                                                "$ref": "#/components/schemas/ServiceResponse"
+                                                            "service_name": {
+                                                                "type": "string",
+                                                                "example": "Chăm da Amino - Phù hợp mọi loại da"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "Liệu trình chăm sóc da mặt phù hợp cho mọi loại da"
+                                                            },
+                                                            "duration": {
+                                                                "type": "integer",
+                                                                "example": 60
+                                                            },
+                                                            "category_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "single_price": {
+                                                                "type": "integer",
+                                                                "example": 1350000
+                                                            },
+                                                            "combo_5_price": {
+                                                                "type": "integer",
+                                                                "example": 5400000
+                                                            },
+                                                            "combo_10_price": {
+                                                                "type": "integer",
+                                                                "example": 9450000
+                                                            },
+                                                            "validity_period": {
+                                                                "type": "integer",
+                                                                "example": 365
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            },
+                                                            "deleted_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
                                                             }
-                                                        ]
+                                                        },
+                                                        "type": "object"
                                                     }
                                                 },
                                                 "type": "object"
