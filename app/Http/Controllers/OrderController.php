@@ -14,6 +14,200 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderController extends BaseController
 {
+    /**
+     * @OA\Tag(
+     *     name="Orders",
+     *     description="API Endpoints quản lý đơn hàng"
+     * )
+     */
+
+    /**
+     * @OA\Get(
+     *     path="/api/orders",
+     *     summary="Lấy danh sách đơn hàng",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Lọc theo trạng thái đơn hàng",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"pending", "processing", "completed", "cancelled"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query", 
+     *         description="Tìm kiếm theo tên khách hàng hoặc ID đơn hàng",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Order")),
+     *             @OA\Property(property="links", type="object"),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
+     */
+
+    /**
+     * @OA\Get(
+     *     path="/api/orders/{order}",
+     *     summary="Xem chi tiết đơn hàng",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         description="ID của đơn hàng",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thành công",
+     *         @OA\JsonContent(ref="#/components/schemas/Order")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Không tìm thấy đơn hàng"
+     *     )
+     * )
+     */
+
+    /**
+     * @OA\Post(
+     *     path="/api/orders",
+     *     summary="Tạo đơn hàng mới",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"user_id", "payment_method_id", "order_items", "total_amount", "discount_amount"},
+     *             @OA\Property(property="user_id", type="string", format="uuid", description="ID của người dùng"),
+     *             @OA\Property(property="payment_method_id", type="integer", description="ID phương thức thanh toán"),
+     *             @OA\Property(property="voucher_id", type="integer", nullable=true, description="ID voucher"),
+     *             @OA\Property(property="order_items", type="array", 
+     *                 @OA\Items(
+     *                     @OA\Property(property="item_type", type="string", enum={"product", "service"}),
+     *                     @OA\Property(property="item_id", type="integer"),
+     *                     @OA\Property(property="service_type", type="string", nullable=true, enum={"single", "combo_5", "combo_10"}),
+     *                     @OA\Property(property="quantity", type="integer", minimum=1),
+     *                     @OA\Property(property="price", type="number", format="float")
+     *                 )
+     *             ),
+     *             @OA\Property(property="total_amount", type="number", format="float"),
+     *             @OA\Property(property="discount_amount", type="number", format="float"),
+     *             @OA\Property(property="note", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Tạo đơn hàng thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/Order"),
+     *             @OA\Property(property="message", type="string", example="Đơn hàng đã được tạo thành công")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Dữ liệu không hợp lệ"
+     *     )
+     * )
+     */
+
+    /**
+     * @OA\Put(
+     *     path="/api/orders/{order}",
+     *     summary="Cập nhật trạng thái đơn hàng",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string", enum={"pending", "processing", "completed", "cancelled"}),
+     *             @OA\Property(property="note", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cập nhật thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Order")
+     *         )
+     *     )
+     * )
+     */
+
+    /**
+     * @OA\Delete(
+     *     path="/api/orders/{order}",
+     *     summary="Xóa đơn hàng",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Xóa thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Đơn hàng đã được xóa thành công")
+     *         )
+     *     )
+     * )
+     */
+
+    /**
+     * @OA\Post(
+     *     path="/api/orders/{order}/create-invoice",
+     *     summary="Tạo hóa đơn từ đơn hàng",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="note", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Tạo hóa đơn thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Invoice")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Lỗi khi tạo hóa đơn"
+     *     )
+     * )
+     */
+
     public function index()
     {
         $orders = Order::with(['user', 'invoice'])
