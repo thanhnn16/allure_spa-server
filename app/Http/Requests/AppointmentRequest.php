@@ -15,7 +15,6 @@ class AppointmentRequest extends FormRequest
     {
         return [
             'user_id' => 'required|exists:users,id',
-            'staff_id' => 'nullable|exists:users,id',
             'service_id' => 'nullable|exists:services,id',
             'user_treatment_package_id' => 'nullable|exists:user_treatment_packages,id',
             'appointment_date' => 'required|date',
@@ -30,7 +29,6 @@ class AppointmentRequest extends FormRequest
     {
         return [
             'user_id.required' => 'Vui lòng chọn khách hàng',
-            'staff_id.required' => 'Vui lòng chọn nhân viên',
             'appointment_date.required' => 'Vui lòng chọn ngày hẹn',
             'time_slot_id.required' => 'Vui lòng chọn khung giờ',
             'appointment_type.required' => 'Vui lòng chọn loại lịch hẹn',
