@@ -362,11 +362,10 @@ class AppointmentService
             Log::error('Lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage());
             return [
                 'status' => 500,
-                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
+                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage(),
                 'data' => null
             ];
         }
     }
 
-    // Implement other methods as needed...
 }
