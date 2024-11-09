@@ -176,6 +176,9 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/orders/{order}', [OrderController::class, 'show']);
         Route::put('/orders/{order}', [OrderController::class, 'update']);
         Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
+
+        // Thêm route tạo hóa đơn từ đơn hàng
+        Route::post('/orders/{order}/create-invoice', [OrderController::class, 'createInvoice']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

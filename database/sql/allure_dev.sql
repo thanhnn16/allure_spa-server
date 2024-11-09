@@ -254,6 +254,7 @@ CREATE TABLE orders (
     voucher_id INT UNSIGNED,
     discount_amount DECIMAL(10, 2) UNSIGNED DEFAULT 0,
     status ENUM ('pending', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'pending',
+    note TEXT,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,

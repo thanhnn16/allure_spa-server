@@ -32,11 +32,11 @@ class InvoiceService
             // Apply search filter
             if (!empty($filters['search'])) {
                 $search = $filters['search'];
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('id', 'LIKE', "%{$search}%")
-                      ->orWhereHas('user', function($q) use ($search) {
-                          $q->where('full_name', 'LIKE', "%{$search}%");
-                      });
+                        ->orWhereHas('user', function ($q) use ($search) {
+                            $q->where('full_name', 'LIKE', "%{$search}%");
+                        });
                 });
             }
 
@@ -90,7 +90,6 @@ class InvoiceService
 
             DB::commit();
             return $invoice->load(['order.items', 'user']);
-
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -104,21 +103,28 @@ class InvoiceService
 
             $oldStatus = $invoice->status;
             $newPaidAmount = $invoice->paid_amount + $data['payment_amount'];
-            
+
             $newStatus = 'pending';
             if ($newPaidAmount >= $invoice->total_amount) {
                 $newStatus = 'paid';
+
+                // Update order status to completed when invoice is fully paid
+                if ($invoice->order) {
+                    $invoice->order->update([
+                        'status' => 'completed'
+                    ]);
+                }
             } elseif ($newPaidAmount > 0) {
                 $newStatus = 'partial';
             }
 
-            // Cập nhật invoice
+            // Update invoice
             $invoice->update([
                 'paid_amount' => $newPaidAmount,
                 'status' => $newStatus,
             ]);
 
-            // Tạo lịch sử thanh toán với đầy đủ thông tin
+            // Create payment history
             PaymentHistory::create([
                 'invoice_id' => $invoice->id,
                 'old_payment_status' => $oldStatus,
@@ -131,7 +137,7 @@ class InvoiceService
             ]);
 
             DB::commit();
-            return $invoice->fresh(['paymentHistories']);
+            return $invoice->fresh(['paymentHistories', 'order']);
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;

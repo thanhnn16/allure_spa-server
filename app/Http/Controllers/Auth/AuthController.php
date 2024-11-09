@@ -55,6 +55,10 @@ class AuthController extends BaseController
                 ]);
 
                 $result = $this->authService->login($credentials);
+                
+                // Regenerate session after successful login
+                $request->session()->regenerate();
+                
                 return $this->respondWithJson($result, 'Đăng nhập thành công');
             } catch (\Exception $e) {
                 return $this->respondWithError($e->getMessage());

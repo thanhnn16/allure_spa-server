@@ -64,6 +64,8 @@ Route::middleware('auth')->group(function () {
 
     // Order routes
     Route::resource('orders', OrderController::class);
+    Route::post('/orders/{order}/create-invoice', [OrderController::class, 'createInvoice'])
+        ->name('orders.create-invoice');
 
     // Voucher routes
     Route::resource('vouchers', VoucherController::class);

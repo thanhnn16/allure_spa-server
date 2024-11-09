@@ -58,14 +58,14 @@ export default [
         icon: mdiBallot,
         menu: [
             {
-                label: 'Danh sách hoá đơn',
-                route: 'invoices.index',
-                icon: mdiFileDocument
-            },
-            {
                 label: 'Tạo hoá đơn mới',
                 route: 'invoices.create',
                 icon: mdiFileDocumentPlus
+            },
+            {
+                label: 'Danh sách hoá đơn',
+                route: 'invoices.index',
+                icon: mdiFileDocument
             },
         ]
     },

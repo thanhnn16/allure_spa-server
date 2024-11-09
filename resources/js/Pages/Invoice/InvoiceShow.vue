@@ -356,6 +356,51 @@
                             </table>
                         </div>
                     </div>
+
+                    <!-- Thêm section thông tin đơn hàng -->
+                    <div class="bg-white p-6 rounded-lg shadow mb-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold">Thông tin đơn hàng</h2>
+                            <!-- Thêm nút liên kết đến đơn hàng -->
+                            <Link v-if="invoice.order" 
+                                :href="route('orders.show', invoice.order.id)"
+                                class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-lg flex items-center transition-colors">
+                                <i class="mdi mdi-shopping-outline mr-2"></i>
+                                Xem đơn hàng #{{ invoice.order.id }}
+                            </Link>
+                        </div>
+                        
+                        <!-- Thêm thông tin tổng quan về đơn hàng -->
+                        <div v-if="invoice.order" class="grid grid-cols-2 gap-6">
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Trạng thái đơn hàng:</span>
+                                    <span :class="getOrderStatusClass(invoice.order.status)">
+                                        {{ getOrderStatusText(invoice.order.status) }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Ngày tạo đơn:</span>
+                                    <span class="font-medium">{{ formatDateTime(invoice.order.created_at) }}</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Tổng tiền hàng:</span>
+                                    <span class="font-medium">{{ formatCurrency(invoice.order.total_amount) }}</span>
+                                </div>
+                                <div v-if="invoice.order.discount_amount > 0" class="flex justify-between text-green-600">
+                                    <span>Giảm giá:</span>
+                                    <span class="font-medium">-{{ formatCurrency(invoice.order.discount_amount) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hiển thị thông báo nếu không có đơn hàng liên kết -->
+                        <div v-else class="text-center py-4 text-gray-500">
+                            Hóa đơn này không liên kết với đơn hàng nào
+                        </div>
+                    </div>
                 </div>
             </SectionMain>
         </LayoutAuthenticated>
@@ -397,7 +442,7 @@ import SectionMain from '@/Components/SectionMain.vue'
 import PrintInvoiceTemplate from '@/Components/PrintInvoiceTemplate.vue'
 import { ref, watch, computed } from 'vue'
 import axios from 'axios'
-import { useToast } from "vue-toastification" // Import useToast
+import { useToast } from "vue-toastification"
 
 export default {
     components: {
@@ -708,6 +753,27 @@ export default {
             }
         }
 
+        const getOrderStatusClass = (status) => {
+            const baseClasses = 'px-2 py-1 rounded-full text-sm font-medium';
+            const statusClasses = {
+                'pending': `${baseClasses} bg-yellow-100 text-yellow-800`,
+                'processing': `${baseClasses} bg-blue-100 text-blue-800`,
+                'completed': `${baseClasses} bg-green-100 text-green-800`,
+                'cancelled': `${baseClasses} bg-red-100 text-red-800`
+            };
+            return statusClasses[status] || `${baseClasses} bg-gray-100 text-gray-800`;
+        };
+
+        const getOrderStatusText = (status) => {
+            const statusTexts = {
+                'pending': 'Chờ xử lý',
+                'processing': 'Đang xử lý',
+                'completed': 'Hoàn thành',
+                'cancelled': 'Đã hủy'
+            };
+            return statusTexts[status] || 'Không xác định';
+        };
+
         return {
             paymentAmount,
             paymentMethod,
@@ -735,6 +801,8 @@ export default {
             canCancel,
             confirmCancelInvoice,
             cancelInvoice,
+            getOrderStatusClass,
+            getOrderStatusText,
         }
     }
 }

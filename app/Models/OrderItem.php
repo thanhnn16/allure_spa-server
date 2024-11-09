@@ -44,6 +44,19 @@ class OrderItem extends Model
         'discount_type' => 'string',
     ];
 
+    // Thêm accessor để lấy tên item
+    protected $appends = ['item_name'];
+
+    public function getItemNameAttribute()
+    {
+        if ($this->item_type === 'product') {
+            return $this->product?->name;
+        } elseif ($this->item_type === 'service') {
+            return $this->service?->service_name;
+        }
+        return null;
+    }
+
     public function order()
     {
         return $this->belongsTo(Order::class);
