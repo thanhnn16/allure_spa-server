@@ -327,7 +327,7 @@ export default {
                 form.value.total_amount = calculateFinalTotal()
                 form.value.discount_amount = calculateDiscount()
 
-                const response = await axios.post('/api/orders', form.value)
+                const response = await axios.post('/orders', form.value)
 
                 toast.success('Đơn hàng đã được tạo thành công!')
 

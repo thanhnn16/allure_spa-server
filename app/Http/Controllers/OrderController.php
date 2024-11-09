@@ -12,7 +12,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
-class OrderController extends Controller
+class OrderController extends BaseController
 {
     public function index()
     {
@@ -91,28 +91,36 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         try {
+            // Validate request
             $validatedData = $request->validate([
                 'user_id' => 'required|exists:users,id',
-                'voucher_id' => 'nullable|exists:vouchers,id',
                 'payment_method_id' => 'required|exists:payment_methods,id',
+                'voucher_id' => 'nullable|exists:vouchers,id',
                 'order_items' => 'required|array|min:1',
                 'order_items.*.item_type' => 'required|in:product,service',
-                'order_items.*.item_id' => 'required|integer',
+                'order_items.*.item_id' => 'required',
                 'order_items.*.service_type' => 'nullable|in:single,combo_5,combo_10',
                 'order_items.*.quantity' => 'required|integer|min:1',
                 'order_items.*.price' => 'required|numeric|min:0',
-                'note' => 'nullable|string',
                 'total_amount' => 'required|numeric|min:0',
                 'discount_amount' => 'required|numeric|min:0',
+                'note' => 'nullable|string'
             ]);
 
+            DB::beginTransaction();
+
+            // Determine initial status based on request type
+            $initialStatus = $request->expectsJson() ? 'pending' : 'confirmed';
+
+            // Create order
             $order = Order::create([
                 'user_id' => $validatedData['user_id'],
                 'total_amount' => $validatedData['total_amount'],
                 'payment_method_id' => $validatedData['payment_method_id'],
                 'voucher_id' => $validatedData['voucher_id'],
                 'discount_amount' => $validatedData['discount_amount'],
-                'status' => 'pending',
+                'note' => $validatedData['note'],
+                'status' => $initialStatus
             ]);
 
             // Create order items
@@ -127,12 +135,36 @@ class OrderController extends Controller
                 ]);
             }
 
+            DB::commit();
+
+            $order->load(['order_items', 'user']);
+
+            // Return response based on request type
+            if ($request->expectsJson()) {
+                return $this->respondWithJson(
+                    $order,
+                    'Đơn hàng đã được tạo thành công',
+                    201
+                );
+            }
+
             return response()->json([
                 'success' => true,
-                'data' => $order->load(['order_items', 'user']),
+                'data' => $order,
                 'message' => 'Đơn hàng đã được tạo thành công'
             ], 201);
+
         } catch (\Exception $e) {
+            DB::rollBack();
+            
+            if ($request->expectsJson()) {
+                return $this->respondWithJson(
+                    null,
+                    $e->getMessage(),
+                    500
+                );
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
