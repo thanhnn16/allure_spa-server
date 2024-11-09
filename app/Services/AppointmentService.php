@@ -324,13 +324,7 @@ class AppointmentService
 
             $appointments = $query->get();
 
-            // Log để debug
-            Log::info('Raw appointments:', ['appointments' => $appointments->toArray()]);
-
             $formattedAppointments = $appointments->map(function ($appointment) {
-                // Log để debug từng appointment
-                Log::info('Processing appointment:', ['appointment' => $appointment->toArray()]);
-
                 try {
                     return [
                         'id' => $appointment->id,
@@ -358,9 +352,6 @@ class AppointmentService
                 }
             })->filter()->values();
 
-            // Log kết quả cuối cùng
-            Log::info('Formatted appointments:', ['formatted' => $formattedAppointments->toArray()]);
-
             return [
                 'status' => 200,
                 'message' => 'Lấy danh sách lịch hẹn thành công',
@@ -375,7 +366,7 @@ class AppointmentService
 
             return [
                 'status' => 500,
-                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage(),
+                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
                 'data' => null
             ];
         }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AuthErrorCode;
 use App\Services\AppointmentService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -193,8 +194,8 @@ class AppointmentController extends BaseController
         }
 
         return redirect()->route('appointments.index')
-        ->with('success', $result['message'])
-        ->with('appointment', $result['data']);
+            ->with('success', $result['message'])
+            ->with('appointment', $result['data']);
     }
 
     /**
@@ -243,10 +244,10 @@ class AppointmentController extends BaseController
     public function update(Request $request, $id)
     {
         $result = $this->appointmentService->updateAppointment($id, $request->all());
-        
+
         // Log để debug
         Log::info('Update appointment response:', $result);
-        
+
         return $this->respondWithJson($result['data'], $result['message'], $result['status']);
     }
 
@@ -280,19 +281,19 @@ class AppointmentController extends BaseController
     public function show(Request $request, $id)
     {
         $result = $this->appointmentService->getAppointmentDetails($id);
-        
+
         // Nếu là request API thì trả về JSON
         if ($request->expectsJson()) {
             return response()->json($result);
         }
-        
+
         // Nếu không phải API request thì render trang chi tiết bằng Inertia
         if ($result['status'] === 200) {
             return $this->respondWithInertia('Calendar/Components/AppointmentDetails', [
                 'appointment' => $result['data']->load(['user', 'service', 'staff', 'timeSlot'])
             ]);
         }
-        
+
         // Nếu có lỗi thì redirect về trang danh sách với thông báo
         return redirect()->route('appointments.index')->with('error', $result['message']);
     }
@@ -528,7 +529,7 @@ class AppointmentController extends BaseController
     {
         $user = Auth::user();
         if (!$user) {
-            return $this->respondWithJson(null, 'Unauthorized', 401);
+            return $this->respondWithError(AuthErrorCode::UNAUTHORIZED_ACCESS->value);
         }
 
         $filters = [
@@ -537,8 +538,13 @@ class AppointmentController extends BaseController
             'from_date' => $request->from_date,
             'to_date' => $request->to_date
         ];
-        
+
         $result = $this->appointmentService->getAppointmentsByUser($user->id, $filters);
+
+        if ($result['status'] !== 200) {
+            return $this->respondWithError(AuthErrorCode::SERVER_ERROR->value);
+        }
+
         return $this->respondWithJson($result['data'], $result['message'], $result['status']);
     }
 }
