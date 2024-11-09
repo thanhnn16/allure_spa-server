@@ -526,6 +526,11 @@ class AppointmentController extends BaseController
      */
     public function getMyAppointments(Request $request)
     {
+        $user = Auth::user();
+        if (!$user) {
+            return $this->respondWithJson(null, 'Unauthorized', 401);
+        }
+
         $filters = [
             'status' => $request->status,
             'appointment_type' => $request->appointment_type,
@@ -533,7 +538,7 @@ class AppointmentController extends BaseController
             'to_date' => $request->to_date
         ];
         
-        $result = $this->appointmentService->getAppointmentsByUser(Auth::id(), $filters);
+        $result = $this->appointmentService->getAppointmentsByUser($user->id, $filters);
         return $this->respondWithJson($result['data'], $result['message'], $result['status']);
     }
 }
