@@ -64,7 +64,8 @@ class AppointmentService
 
             // Find available staff
             $staffId = null;
-            $staff = User::role('staff')->first();
+            $staff = User::where('role', 'staff')
+                ->first();
             if ($staff) {
                 $staffId = $staff->id;
             }
