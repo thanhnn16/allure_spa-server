@@ -59,15 +59,7 @@ class FavoriteService
         $favorites = Favorite::where('user_id', Auth::id())
             ->where('favorite_type', $type)
             ->with($type === 'product' ? 'product' : 'service')
-            ->get()
-            ->map(function ($favorite) {
-                if ($favorite->favorite_type === 'product' && $favorite->product) {
-                    $favorite->item_details = $favorite->product;
-                } elseif ($favorite->favorite_type === 'service' && $favorite->service) {
-                    $favorite->item_details = $favorite->service;
-                }
-                return $favorite;
-            });
+            ->get();
 
         return $favorites;
     }
