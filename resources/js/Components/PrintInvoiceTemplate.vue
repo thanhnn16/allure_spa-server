@@ -38,9 +38,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, index) in invoice.order?.items" 
-              :key="item.id" 
-              class="border-b border-gray-100 hover:bg-gray-50">
+          <tr v-for="(item, index) in invoice.order?.items" :key="item.id"
+            class="border-b border-gray-100 hover:bg-gray-50">
             <td class="py-3 text-center text-gray-600">{{ index + 1 }}</td>
             <td class="py-3 text-gray-800">
               <div class="font-medium">{{ getItemName(item) }}</div>
@@ -56,13 +55,11 @@
               {{ formatCurrency(item.price * item.quantity) }}
             </td>
             <td class="py-3">
-              <span v-if="item.service_type" 
-                    class="inline-block px-2 py-0.5 text-xs rounded-full font-medium" 
-                    :class="{
-                      'bg-blue-50 text-blue-700': item.service_type === 'single',
-                      'bg-green-50 text-green-700': item.service_type === 'combo_5',
-                      'bg-purple-50 text-purple-700': item.service_type === 'combo_10'
-                    }">
+              <span v-if="item.service_type" class="inline-block px-2 py-0.5 text-xs rounded-full font-medium" :class="{
+                'bg-blue-50 text-blue-700': item.service_type === 'single',
+                'bg-green-50 text-green-700': item.service_type === 'combo_5',
+                'bg-purple-50 text-purple-700': item.service_type === 'combo_10'
+              }">
                 {{ formatServiceType(item.service_type) }}
               </span>
             </td>
@@ -130,26 +127,22 @@ export default {
       required: true
     }
   },
-  mounted() {
-    console.log('Invoice data:', this.invoice);
-    console.log('Order items:', this.invoice.order?.items);
-  },
   methods: {
     formatCurrency(value) {
-      return new Intl.NumberFormat('vi-VN', { 
-        style: 'currency', 
-        currency: 'VND' 
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
       }).format(value)
     },
     formatServiceType(type) {
       if (!type) return '';
-      
+
       const types = {
         'single': 'Đơn lẻ',
         'combo_5': 'Combo 5 lần',
         'combo_10': 'Combo 10 lần'
       };
-      
+
       return types[type] || type;
     },
     formatDate(date) {
@@ -175,140 +168,143 @@ export default {
 
 <style>
 .print-template {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 15mm;
-    margin: 0 auto;
-    background: white;
-    font-size: 9pt; /* Giảm font size tổng thể */
+  width: 210mm;
+  min-height: 297mm;
+  padding: 15mm;
+  margin: 0 auto;
+  background: white;
+  font-size: 9pt;
+  /* Giảm font size tổng thể */
 }
 
 /* Tối ưu spacing */
 .print-template .mb-6 {
-    margin-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 /* Header tối ưu */
 .print-template .h-16 {
-    height: 3rem;
+  height: 3rem;
 }
 
 /* Bảng tối ưu */
 .print-template table {
-    font-size: 9pt;
+  font-size: 9pt;
 }
 
 .print-template th,
 .print-template td {
-    padding: 4px 8px;
+  padding: 4px 8px;
 }
 
 /* Tối ưu khoảng cách các phần */
 .print-template .border-b-2 {
-    margin: 0.5rem 0;
+  margin: 0.5rem 0;
 }
 
 /* Tối ưu phần summary */
 .print-template .border {
-    padding: 0.5rem;
+  padding: 0.5rem;
 }
 
 .print-template .py-2 {
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
 }
 
 /* Footer tối ưu */
 .print-template .mt-8 {
-    margin-top: 1rem;
+  margin-top: 1rem;
 }
 
 /* Modern table styles */
 .print-template table {
-    border-spacing: 0;
-    font-size: 9pt;
+  border-spacing: 0;
+  font-size: 9pt;
 }
 
 .print-template th {
-    font-weight: 500;
+  font-weight: 500;
 }
 
-.print-template td, 
+.print-template td,
 .print-template th {
-    padding: 8px 12px;
-    vertical-align: middle;
+  padding: 8px 12px;
+  vertical-align: middle;
 }
 
 .print-template tbody tr {
-    transition: background-color 0.2s;
+  transition: background-color 0.2s;
 }
 
 /* Ensure proper printing of background colors */
 @media print {
-    .print-template {
-        width: 100%;
-        height: auto; /* Thay đổi từ 100% thành auto */
-        padding: 15mm;
-        margin: 0;
-        position: relative; /* Thay đổi từ fixed thành relative */
-        top: 0;
-        left: 0;
-        background: white;
-        page-break-after: avoid;
-        page-break-inside: avoid;
-    }
+  .print-template {
+    width: 100%;
+    height: auto;
+    /* Thay đổi từ 100% thành auto */
+    padding: 15mm;
+    margin: 0;
+    position: relative;
+    /* Thay đổi từ fixed thành relative */
+    top: 0;
+    left: 0;
+    background: white;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
 
-    /* Đảm bảo bảng không bị ngắt trang giữa chừng */
-    table {
-        page-break-inside: avoid;
-    }
+  /* Đảm bảo bảng không bị ngắt trang giữa chừng */
+  table {
+    page-break-inside: avoid;
+  }
 
-    /* Đảm bảo màu sắc */
-    .print-template * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
+  /* Đảm bảo màu sắc */
+  .print-template * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 
-    @page {
-        size: A4;
-        margin: 0;
-    }
+  @page {
+    size: A4;
+    margin: 0;
+  }
 
-    /* Modern table styles */
-    .print-template table {
-        border-spacing: 0;
-        font-size: 9pt;
-    }
+  /* Modern table styles */
+  .print-template table {
+    border-spacing: 0;
+    font-size: 9pt;
+  }
 
-    .print-template th {
-        font-weight: 500;
-    }
+  .print-template th {
+    font-weight: 500;
+  }
 
-    .print-template td, 
-    .print-template th {
-        padding: 8px 12px;
-        vertical-align: middle;
-    }
+  .print-template td,
+  .print-template th {
+    padding: 8px 12px;
+    vertical-align: middle;
+  }
 
-    .print-template tbody tr {
-        transition: background-color 0.2s;
-    }
+  .print-template tbody tr {
+    transition: background-color 0.2s;
+  }
 
-    /* Ensure proper printing of background colors */
-    .print-template .bg-gray-50 {
-        background-color: #f9fafb !important;
-    }
-    
-    .print-template .bg-blue-50 {
-        background-color: #eff6ff !important;
-    }
-    
-    .print-template .bg-green-50 {
-        background-color: #f0fdf4 !important;
-    }
-    
-    .print-template .bg-purple-50 {
-        background-color: #faf5ff !important;
-    }
+  /* Ensure proper printing of background colors */
+  .print-template .bg-gray-50 {
+    background-color: #f9fafb !important;
+  }
+
+  .print-template .bg-blue-50 {
+    background-color: #eff6ff !important;
+  }
+
+  .print-template .bg-green-50 {
+    background-color: #f0fdf4 !important;
+  }
+
+  .print-template .bg-purple-50 {
+    background-color: #faf5ff !important;
+  }
 }
 </style>

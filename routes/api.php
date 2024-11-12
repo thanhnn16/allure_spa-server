@@ -202,6 +202,9 @@ Route::middleware('throttle:api')->group(function () {
             Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
             Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
         });
+
+        // Add new route for stats
+        Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

@@ -468,15 +468,6 @@ export default {
         const paymentType = ref('partial')
         const toast = useToast()
 
-        // Thêm console.log để kiểm tra toàn bộ invoice object
-        console.log('Full Invoice Object:', props.invoice);
-        
-        // Kiểm tra cụ thể phần voucher
-        console.log('Voucher Data:', props.invoice.voucher);
-        
-        // Kiểm tra số tiền giảm giá
-        console.log('Discount Amount:', props.invoice.discount_amount);
-
         // Watch for payment type changes
         watch(paymentType, (newType) => {
             if (newType === 'full') {
@@ -669,22 +660,12 @@ export default {
         }
 
         const getDetailedVoucherDescription = (voucher) => {
-            // Log chi tiết khi hàm được gọi
-            console.log('Voucher in getDetailedVoucherDescription:', voucher);
-            
             if (!voucher) {
-                console.log('No voucher provided');
                 return '';
             }
             
             let description = '';
             
-            // Log các giá trị được sử dụng
-            console.log('Discount Type:', voucher.discount_type);
-            console.log('Discount Value:', voucher.discount_value);
-            console.log('Min Order Amount:', voucher.min_order_amount);
-            console.log('Start Date:', voucher.start_date);
-            console.log('End Date:', voucher.end_date);
             
             if (voucher.discount_type === 'percentage') {
                 description = `Giảm ${voucher.discount_value}% `;
@@ -699,9 +680,6 @@ export default {
             if (voucher.start_date && voucher.end_date) {
                 description += ` (Có hiệu lực: ${formatDateTime(voucher.start_date)} - ${formatDateTime(voucher.end_date)})`;
             }
-            
-            // Log kết quả cuối cùng
-            console.log('Final Description:', description);
             
             return description || voucher.description || '';
         }

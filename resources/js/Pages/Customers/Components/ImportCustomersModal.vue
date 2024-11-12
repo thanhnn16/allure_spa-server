@@ -67,13 +67,11 @@ const confirmImport = () => {
         return
     }
 
-    console.log('Starting import process')
     importStatus.value = 'Đang xử lý...'
     form.post(route('users.import'), {
         preserveState: true,
         preserveScroll: true,
         onSuccess: (response) => {
-            console.log('Import successful', response)
             emit('update:modelValue', false)
             emit('imported', response)
         },

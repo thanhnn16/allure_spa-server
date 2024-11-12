@@ -75,8 +75,6 @@ const registerServiceWorker = async () => {
             });
 
             if (token) {
-                console.log('FCM Token:', token);
-                // Thêm device_type vào request
                 await axios.post('/api/fcm/token', {
                     token,
                     device_type: 'web'

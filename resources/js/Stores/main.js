@@ -30,7 +30,6 @@ export const useMainStore = defineStore('main', () => {
     try {
       const response = await axios.get('/api/user/info')
       if (response.data.success) {
-        console.log(response.data.data)
         setUser(response.data.data)
       }
     } catch (error) {

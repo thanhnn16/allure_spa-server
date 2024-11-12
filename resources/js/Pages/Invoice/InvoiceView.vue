@@ -168,13 +168,6 @@ export default {
 
     const searchTimeout = ref(null)
 
-    onMounted(() => {
-      console.log('Invoices data:', props.invoices)
-      if (props.error) {
-        console.error('Error:', props.error)
-      }
-    })
-
     onBeforeUnmount(() => {
       if (searchTimeout.value) clearTimeout(searchTimeout.value)
     })
@@ -253,8 +246,6 @@ export default {
 
     const testPayOS = async () => {
       try {
-        console.log('Initiating PayOS test payment...');
-        
         // Get current origin for return URLs
         const origin = window.location.origin;
         
@@ -265,11 +256,7 @@ export default {
             cancelUrl: `${origin}/cancel`
         });
         
-        console.log('PayOS response:', response.data);
-
         if (response.data.success && response.data.checkoutUrl) {
-            console.log('Redirecting to:', response.data.checkoutUrl);
-            // Store orderCode in localStorage if needed
             if (response.data.orderCode) {
                 localStorage.setItem('payos_order_code', response.data.orderCode);
             }

@@ -27,8 +27,6 @@ const props = defineProps({
     upcomingBirthdays: Number
 })
 
-console.log('CustomersView - Users prop:', props.users)
-
 const showingUpcomingBirthdays = ref(props.filters?.upcoming_birthdays || false)
 const showingDeletedUsers = ref(props.filters?.show_deleted || false)
 const showFilters = ref(false)
@@ -65,7 +63,6 @@ const handlePerPageChange = () => {
 }
 
 const hasUsers = computed(() => {
-    console.log('CustomersView - hasUsers:', props.users?.data?.length > 0)
     return props.users?.data?.length > 0
 })
 
@@ -86,7 +83,6 @@ const toggleUpcomingBirthdays = () => {
 const toggleDeletedUsers = () => {
     form.show_deleted = !form.show_deleted
     showingDeletedUsers.value = form.show_deleted
-    console.log('Toggled deleted users:', form.show_deleted)
     applyFilters()
 }
 
@@ -128,9 +124,6 @@ const importErrors = ref([])
 const importStats = ref(null)
 
 onMounted(() => {
-    console.log('Page props:', page.props)
-    console.log('Flash messages:', page.props.flash)
-
     if (page.props.flash.importErrors) {
         showImportErrors.value = true
         importErrors.value = page.props.flash.importErrors

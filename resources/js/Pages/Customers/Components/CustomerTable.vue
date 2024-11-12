@@ -24,17 +24,9 @@ const items = ref([])
 
 watch(() => props.items, (newItems) => {
   items.value = newItems
-  console.log('CustomerTable - Items updated:', items.value)
 }, { immediate: true, deep: true })
 
-console.log('CustomerTable - Items:', items.value)
-
-onMounted(() => {
-  console.log('CustomerTable - Items (mounted):', items.value)
-})
-
 const hasItems = computed(() => {
-  console.log('CustomerTable - hasItems:', items.value.length > 0)
   return items.value.length > 0
 })
 

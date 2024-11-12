@@ -111,7 +111,7 @@ const loadMessages = async (chatId, page = 1, append = false) => {
 
         // Đợi DOM cập nhật
         await nextTick();
-        
+
         // Force cuộn xuống dưới khi là lần đầu load hoặc load trang đầu tiên
         if (isFirstLoad.value || !append) {
             scrollToBottom(true);
@@ -234,7 +234,7 @@ const scrollToBottom = (force = false) => {
     if (messageContainer.value) {
         const container = messageContainer.value;
         const isScrolledNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        
+
         // Cuộn xuống nếu force = true hoặc đang ở gần cuối
         if (force || isScrolledNearBottom) {
             nextTick(() => {
@@ -270,11 +270,6 @@ const formatDateTime = (datetime) => {
     }).format(date);
 };
 
-// Thêm watch để theo dõi thay đổi của messages
-watch(messages, (newMessages) => {
-    console.log('Messages changed:', newMessages);
-}, { deep: true });
-
 // Thêm hàm xử lý scroll để tải thêm tin nhắn
 const handleScroll = debounce(async (e) => {
     const container = e.target
@@ -282,9 +277,9 @@ const handleScroll = debounce(async (e) => {
     if (container.scrollTop <= 100 && hasMoreMessages.value && !isLoadingMore.value) {
         const nextPage = currentPage.value + 1
         const previousHeight = container.scrollHeight
-        
+
         await loadMessages(selectedChat.value.id, nextPage, true)
-        
+
         // Giữ nguyên vị trí scroll sau khi tải thêm tin nhắn
         const newHeight = container.scrollHeight
         container.scrollTop = newHeight - previousHeight
@@ -347,7 +342,7 @@ const handleScroll = debounce(async (e) => {
                                         <div class="text-sm text-gray-500 truncate">
                                             {{ chat.messages && chat.messages.length > 0
                                                 ? chat.messages[0].message
-                                            : 'Bắt đầu cuộc trò chuyện' }}
+                                                : 'Bắt đầu cuộc trò chuyện' }}
                                         </div>
                                     </div>
                                     <div v-if="hasUnreadMessages(chat)"
@@ -377,16 +372,15 @@ const handleScroll = debounce(async (e) => {
                         </div>
 
                         <!-- Messages -->
-                        <div 
-                            ref="messageContainer" 
-                            class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
-                            @scroll="handleScroll"
-                        >
+                        <div ref="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+                            @scroll="handleScroll">
                             <!-- Thêm loading indicator cho "Load more" -->
                             <div v-if="isLoadingMore" class="flex justify-center py-2">
-                                <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                <div
+                                    class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin">
+                                </div>
                             </div>
-                            
+
                             <div v-if="isLoading" class="flex justify-center">
                                 <div
                                     class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">

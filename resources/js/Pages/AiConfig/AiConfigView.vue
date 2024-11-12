@@ -90,19 +90,6 @@ const props = defineProps({
     }
 });
 
-// Add logging to check props
-console.log('AiConfigView Props:', {
-    configs: props.configs,
-    configTypes: props.configTypes,
-    modelTypes: props.modelTypes,
-    languages: props.languages,
-    responseFormats: props.responseFormats,
-    defaultSafetySettings: props.defaultSafetySettings,
-    defaultFunctionDeclarations: props.defaultFunctionDeclarations,
-    defaultToolConfig: props.defaultToolConfig,
-    configTemplates: props.configTemplates
-});
-
 // Add reactive configs state
 const configsList = ref(props.configs);
 const activeConfig = ref(null);
