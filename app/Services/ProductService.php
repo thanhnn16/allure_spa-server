@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductPriceHistory;
+use App\Models\StockMovement;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -13,13 +14,16 @@ class ProductService
 {
     protected $mediaService;
     protected $priceHistoryService;
+    protected $stockMovementService;
 
     public function __construct(
         MediaService $mediaService,
-        ProductPriceHistoryService $priceHistoryService
+        ProductPriceHistoryService $priceHistoryService,
+        StockMovementService $stockMovementService
     ) {
         $this->mediaService = $mediaService;
         $this->priceHistoryService = $priceHistoryService;
+        $this->stockMovementService = $stockMovementService;
     }
 
     public function getProducts($request)
@@ -141,5 +145,41 @@ class ProductService
     public function searchProducts($searchTerm)
     {
         return Product::where('product_name', 'like', "%{$searchTerm}%")->with('media')->get();
+    }
+
+    /**
+     * Adjust stock quantity
+     */
+    public function adjustStock(Product $product, int $quantity, string $type, string $note = null)
+    {
+        return $this->stockMovementService->createMovement($product, $quantity, $type, $note);
+    }
+
+    /**
+     * Check if product has sufficient stock
+     */
+    public function checkStock(Product $product, int $quantity): bool
+    {
+        return $this->stockMovementService->hasSufficientStock($product, $quantity);
+    }
+
+    /**
+     * Reduce stock when order is placed
+     */
+    public function reduceStock(Product $product, int $quantity, string $note = null)
+    {
+        if (!$this->checkStock($product, $quantity)) {
+            throw new \Exception("Insufficient stock for product: {$product->name}");
+        }
+
+        return $this->adjustStock($product, $quantity, 'out', $note);
+    }
+
+    /**
+     * Increase stock for returns or new inventory
+     */
+    public function increaseStock(Product $product, int $quantity, string $note = null)
+    {
+        return $this->adjustStock($product, $quantity, 'in', $note);
     }
 }

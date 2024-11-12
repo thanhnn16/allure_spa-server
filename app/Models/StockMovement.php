@@ -25,8 +25,22 @@ class StockMovement extends Model
 {
     use HasFactory;
 
+    public const TYPE_IN = 'in';
+    public const TYPE_OUT = 'out';
+
     protected $fillable = [
-        'product_id', 'quantity', 'type', 'reason', 'reference_id', 'reference_type'
+        'product_id',
+        'quantity',
+        'type',
+        'reason',
+        'reference_id',
+        'reference_type',
+        'stock_after_movement',
+        'note'
+    ];
+
+    protected $casts = [
+        'type' => 'string'
     ];
 
     public function product()

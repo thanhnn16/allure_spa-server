@@ -19,6 +19,7 @@ import {
     mdiExport,
     mdiChartBar,
     mdiViewCarousel,
+    mdiPackageVariant,
 } from '@mdi/js'
 
 export default [
@@ -85,14 +86,9 @@ export default [
         icon: mdiTable,
         menu: [
             {
-                label: 'Nhập hàng',
-                route: 'stock-movements.imports',
+                label: 'Nhập xuất kho',
+                route: 'stock-movements.index',
                 icon: mdiImport
-            },
-            {
-                label: 'Xuất hàng',
-                route: 'stock-movements.exports',
-                icon: mdiExport
             },
         ]
     },

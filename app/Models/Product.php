@@ -111,4 +111,84 @@ class Product extends Model
             ]
         ];
     }
+
+    /**
+     * Check if product has sufficient stock
+     */
+    public function hasStock(int $quantity): bool
+    {
+        return $this->quantity >= $quantity;
+    }
+
+    /**
+     * Get latest stock movement
+     */
+    public function latestStockMovement()
+    {
+        return $this->stockMovements()->latest()->first();
+    }
+
+    /**
+     * Get stock movements between dates
+     */
+    public function getStockMovementsBetween($startDate, $endDate)
+    {
+        return $this->stockMovements()
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->get();
+    }
+
+    public function getCurrentStock(): int 
+    {
+        return $this->quantity;
+    }
+
+    public function getStockMovementHistory()
+    {
+        return $this->stockMovements()
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    public function getLastStockMovement()
+    {
+        return $this->stockMovements()
+            ->latest()
+            ->first();
+    }
+
+    public function getStockHistory($startDate = null, $endDate = null)
+    {
+        $query = $this->stockMovements()
+            ->select([
+                'created_at',
+                'type',
+                'quantity',
+                'stock_after_movement',
+                'note'
+            ]);
+        
+        if ($startDate) {
+            $query->where('created_at', '>=', $startDate);
+        }
+        
+        if ($endDate) {
+            $query->where('created_at', '<=', $endDate);
+        }
+        
+        return $query->orderBy('created_at')->get();
+    }
+
+    public function validateStockConsistency()
+    {
+        $lastMovement = $this->stockMovements()
+            ->latest()
+            ->first();
+        
+        if ($lastMovement) {
+            return $this->quantity === $lastMovement->stock_after_movement;
+        }
+        
+        return $this->quantity === 0;
+    }
 }

@@ -7,6 +7,8 @@ use App\Models\OrderItem;
 use App\Models\Invoice;
 use App\Models\PaymentMethod;
 use App\Models\Voucher;
+use App\Models\Product;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -309,6 +311,14 @@ class OrderController extends BaseController
      * )
      */
 
+
+    protected $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
     public function index()
     {
         $orders = Order::with(['user', 'invoice'])
@@ -367,7 +377,6 @@ class OrderController extends BaseController
                 'message' => 'Cập nhật trạng thái đơn hàng thành công',
                 'data' => $order
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -407,6 +416,15 @@ class OrderController extends BaseController
             // Determine initial status based on request type
             $initialStatus = $request->expectsJson() ? 'pending' : 'confirmed';
 
+            foreach ($request->items as $item) {
+                if ($item['type'] === 'product') {
+                    $product = Product::findOrFail($item['id']);
+                    if (!$this->productService->checkStock($product, $item['quantity'])) {
+                        throw new \Exception("Insufficient stock for product: {$product->name}");
+                    }
+                }
+            }
+
             // Create order
             $order = Order::create([
                 'user_id' => $validatedData['user_id'],
@@ -430,40 +448,23 @@ class OrderController extends BaseController
                 ]);
             }
 
-            DB::commit();
-
-            $order->load(['order_items', 'user']);
-
-            // Return response based on request type
-            if ($request->expectsJson()) {
-                return $this->respondWithJson(
-                    $order,
-                    'Đơn hàng đã được tạo thành công',
-                    201
-                );
+            // Reduce stock for each product
+            foreach ($request->items as $item) {
+                if ($item['type'] === 'product') {
+                    $product = Product::findOrFail($item['id']);
+                    $this->productService->reduceStock(
+                        $product,
+                        $item['quantity'],
+                        "Order #{$order->id}"
+                    );
+                }
             }
 
-            return response()->json([
-                'success' => true,
-                'data' => $order,
-                'message' => 'Đơn hàng đã được tạo thành công'
-            ], 201);
-
+            DB::commit();
+            return $this->respondWithJson($order, 'Order created successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            if ($request->expectsJson()) {
-                return $this->respondWithJson(
-                    null,
-                    $e->getMessage(),
-                    500
-                );
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+            return $this->respondWithError($e->getMessage());
         }
     }
 
@@ -514,7 +515,7 @@ class OrderController extends BaseController
         try {
             $orders = Order::with(['order_items', 'invoice'])
                 ->where('user_id', Auth::id())
-                ->when($request->status, function($query, $status) {
+                ->when($request->status, function ($query, $status) {
                     return $query->where('status', $status);
                 })
                 ->latest()
@@ -543,8 +544,8 @@ class OrderController extends BaseController
             // Kiểm tra điều kiện hủy đơn
             if ($order->status !== 'pending') {
                 return $this->respondWithJson(
-                    null, 
-                    'Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý', 
+                    null,
+                    'Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý',
                     400
                 );
             }
@@ -559,7 +560,6 @@ class OrderController extends BaseController
                 $order->load(['order_items', 'invoice']),
                 'Cập nhật trạng thái đơn hàng thành công'
             );
-
         } catch (\Exception $e) {
             return $this->respondWithJson(null, $e->getMessage(), 500);
         }
@@ -594,7 +594,6 @@ class OrderController extends BaseController
             ]);
 
             return $this->respondWithJson(null, 'Hủy đơn hàng thành công');
-
         } catch (\Exception $e) {
             return $this->respondWithJson(null, $e->getMessage(), 500);
         }
