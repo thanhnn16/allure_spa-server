@@ -59,19 +59,20 @@ class StockMovementController extends Controller
         try {
             $product = Product::findOrFail($validated['product_id']);
 
-            // Create structured note
-            $note = [
+            // Tạo structured note dưới dạng array
+            $structuredNote = [
                 'user' => Auth::user()->full_name,
                 'reason' => $request->input('reason'),
                 'reference' => $request->input('reference_number'),
                 'comment' => $request->input('note')
             ];
 
+            // Chuyển note thành JSON string trước khi lưu
             $movement = $this->stockMovementService->createMovement(
                 $product,
                 $validated['quantity'],
                 $validated['type'],
-                json_encode($note)
+                json_encode($structuredNote) // Encode thành JSON string
             );
 
             return response()->json([
