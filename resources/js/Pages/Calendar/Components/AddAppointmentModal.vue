@@ -42,8 +42,7 @@
                                 <option value="">Chọn gói điều trị</option>
                                 <option v-for="treatmentPackage in userTreatmentPackages" :key="treatmentPackage.id"
                                     :value="treatmentPackage.id">
-                                    {{ treatmentPackage.treatment ? treatmentPackage.treatment.name : 'Unknown
-                                    Treatment' }}
+                                    {{ treatmentPackage.treatment ? treatmentPackage.treatment.name : 'Unknown Treatment' }}
                                     - Còn lại: {{ treatmentPackage.remaining_sessions }} buổi
                                 </option>
                             </select>
