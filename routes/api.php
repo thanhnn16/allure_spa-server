@@ -58,7 +58,10 @@ Route::middleware('throttle:api')->group(function () {
     Route::post('/zalo/generate-code-verifier', [ZaloAuthController::class, 'generateCodeVerifier']);
     Route::post('/zalo/callback', [ZaloAuthController::class, 'callback']);
 
+
     Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/fcm/token', [AuthController::class, 'storeFcmToken']);
+
         // Appointment routes
         Route::get('/appointments', [AppointmentController::class, 'index']);
         Route::get('/appointments/my-appointments', [AppointmentController::class, 'getMyAppointments']);

@@ -48,15 +48,39 @@ const registerServiceWorker = async () => {
                 scope: '/'
             });
 
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                const token = await getToken(messaging, {
-                    vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-                    serviceWorkerRegistration: registration
-                });
+            // Check if notifications are blocked
+            if (Notification.permission === 'denied') {
+                console.warn('Notifications are blocked. Please enable them in browser settings.');
+                return;
+            }
 
-                // Send token to server
-                await axios.post('/api/fcm/token', { token });
+            // Only request permission if it's not already granted
+            if (Notification.permission !== 'granted') {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    console.warn('Notification permission not granted');
+                    return;
+                }
+            }
+
+            const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+            if (!vapidKey) {
+                throw new Error('VAPID key is missing');
+            }
+
+            // Get token only if permission is granted
+            const token = await getToken(messaging, {
+                vapidKey: vapidKey,
+                serviceWorkerRegistration: registration
+            });
+
+            if (token) {
+                console.log('FCM Token:', token);
+                // Thêm device_type vào request
+                await axios.post('/api/fcm/token', {
+                    token,
+                    device_type: 'web'
+                });
             }
         }
     } catch (error) {

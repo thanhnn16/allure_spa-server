@@ -12,18 +12,24 @@ import BaseDivider from '@/Components/BaseDivider.vue'
 import { mdiPlus, mdiMinus, mdiTableSearch, mdiFileExcel, mdiFilter, mdiFilterOff } from '@mdi/js'
 import { useToast } from "vue-toastification";
 
+// Định nghĩa props
 const props = defineProps({
-    stockMovements: {
-        type: Object,
-        required: true
-    },
-    filters: {
-        type: Object,
-        default: () => ({})
-    },
     products: {
         type: Array,
         default: () => []
+    },
+    stockMovements: {
+        type: Object,
+        default: () => ({
+            data: [],
+            from: 0,
+            to: 0,
+            total: 0,
+            current_page: 1,
+            last_page: 1,
+            prev_page_url: null,
+            next_page_url: null
+        })
     }
 })
 
@@ -66,22 +72,23 @@ const formatPrice = (price) => {
     }).format(price)
 }
 
-const submitForm = async () => {
+const submitForm = async (formType) => {
     isLoading.value = true
     try {
+        const currentForm = formType === 'in' ? inForm.value : outForm.value
         const formData = {
-            product_id: form.value.product_id.value || form.value.product_id,
-            quantity: form.value.quantity,
-            type: form.value.type.value,
-            reason: form.value.reason,
-            reference_number: form.value.reference_number,
-            note: form.value.note
+            product_id: currentForm.product_id.value || currentForm.product_id,
+            quantity: currentForm.quantity,
+            type: currentForm.type.value,
+            reason: currentForm.reason,
+            reference_number: currentForm.reference_number,
+            note: currentForm.note
         }
 
-        await router.post(route('stock-movements.store'), formData, {
+        router.post(route('stock-movements.store'), formData, {
             onSuccess: () => {
                 toast.success('Tạo phiếu kho thành công');
-                form.value = {
+                currentForm.value = {
                     product_id: '',
                     quantity: '',
                     type: { value: 'in', label: 'Nhập kho' },
@@ -155,6 +162,29 @@ const filteredMovements = computed(() => {
             movement.reference_number?.toLowerCase().includes(searchLower)
     })
 })
+
+// Thêm ref cho việc hiển thị form
+const showInForm = ref(true)
+const showOutForm = ref(true)
+
+// Tách form thành 2 form riêng biệt
+const inForm = ref({
+    product_id: '',
+    quantity: '',
+    type: { value: 'in', label: 'Nhập kho' },
+    reason: '',
+    reference_number: '',
+    note: ''
+})
+
+const outForm = ref({
+    product_id: '',
+    quantity: '',
+    type: { value: 'out', label: 'Xuất kho' },
+    reason: '',
+    reference_number: '',
+    note: ''
+})
 </script>
 
 <template>
@@ -205,132 +235,192 @@ const filteredMovements = computed(() => {
                 </div>
             </CardBox>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Form Card -->
+            <!-- Form Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Nhập kho form -->
                 <CardBox class="hover:shadow-lg transition-all">
-                    <div class="mb-4">
-                        <h2 class="text-lg font-semibold text-gray-800">Thêm giao dịch mới</h2>
-                        <p class="text-gray-600 text-sm">Nhập thông tin để tạo giao dịch nhập/xuất kho</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-800">Nhập kho</h2>
+                            <p class="text-gray-600 text-sm">Tạo phiếu nhập kho mới</p>
+                        </div>
+                        <BaseButton @click="showInForm = !showInForm" :icon="showInForm ? mdiMinus : mdiPlus"
+                            color="info" small />
                     </div>
-                    <form @submit.prevent="submitForm" class="space-y-4">
+
+                    <form v-show="showInForm" @submit.prevent="submitForm('in')" class="space-y-4">
                         <FormField label="Sản phẩm" :error="errors.product_id">
-                            <FormControl v-model="form.product_id" type="select" :options="formattedProducts"
-                                value-prop="id" placeholder="Chọn sản phẩm" />
+                            <FormControl v-model="inForm.product_id" type="select" :options="formattedProducts"
+                                placeholder="Chọn sản phẩm cần nhập kho" />
                         </FormField>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <FormField label="Loại" :error="errors.type">
-                                <FormControl v-model="form.type" type="select" :options="stockTypes"
-                                    value-prop="value" />
-                            </FormField>
-
-                            <FormField label="Số lượng" :error="errors.quantity">
-                                <FormControl v-model="form.quantity" type="number" min="1" />
-                            </FormField>
-                        </div>
+                        <FormField label="Số lượng" :error="errors.quantity">
+                            <FormControl v-model="inForm.quantity" type="number" min="1"
+                                placeholder="Nhập số lượng sản phẩm" />
+                        </FormField>
 
                         <FormField label="Lý do" :error="errors.reason">
-                            <FormControl v-model="form.reason" />
+                            <FormControl v-model="inForm.reason"
+                                placeholder="VD: Nhập hàng từ nhà cung cấp, Điều chỉnh tồn kho..." />
                         </FormField>
 
                         <FormField label="Số tham chiếu" :error="errors.reference_number">
-                            <FormControl v-model="form.reference_number" />
+                            <FormControl v-model="inForm.reference_number"
+                                placeholder="VD: Số hóa đơn, số PO, số phiếu nhập kho..." />
                         </FormField>
 
                         <FormField label="Ghi chú" :error="errors.note">
-                            <FormControl v-model="form.note" type="textarea" rows="3" />
+                            <FormControl v-model="inForm.note" type="textarea" rows="3"
+                                placeholder="Thông tin bổ sung về đợt nhập kho này..." />
                         </FormField>
 
                         <BaseButtons>
-                            <BaseButton type="submit" color="info" :loading="isLoading"
-                                :icon="form.type.value === 'in' ? mdiPlus : mdiMinus"
-                                :label="form.type.value === 'in' ? 'Nhập kho' : 'Xuất kho'" />
+                            <BaseButton type="submit" color="info" :loading="isLoading" :icon="mdiPlus"
+                                label="Nhập kho" />
                         </BaseButtons>
                     </form>
                 </CardBox>
 
-                <!-- Table Card -->
-                <CardBox class="lg:col-span-2 hover:shadow-lg transition-all">
-                    <div class="mb-4">
-                        <div class="flex justify-between items-center">
-                            <h2 class="text-lg font-semibold text-gray-800">Lịch sử giao dịch</h2>
-                            <!-- Search input -->
-                            <div class="relative">
-                                <input v-model="searchQuery" type="text" placeholder="Tìm kiếm..."
-                                    class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                                <span class="absolute left-3 top-2.5 text-gray-400">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </span>
-                            </div>
+                <!-- Xuất kho form -->
+                <CardBox class="hover:shadow-lg transition-all">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-800">Xuất kho</h2>
+                            <p class="text-gray-600 text-sm">Tạo phiếu xuất kho mới</p>
                         </div>
+                        <BaseButton @click="showOutForm = !showOutForm" :icon="showOutForm ? mdiMinus : mdiPlus"
+                            color="danger" small />
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th class="text-left">Thời gian</th>
-                                    <th class="text-left">Sản phẩm</th>
-                                    <th class="text-left">Loại</th>
-                                    <th class="text-right">Số lượng</th>
-                                    <th class="text-right">Tồn kho</th>
-                                    <th class="text-left">Ghi chú</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template v-if="filteredMovements.length">
-                                    <tr v-for="movement in filteredMovements" :key="movement.id"
-                                        class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                        <td>{{ formattedDate(movement.created_at) }}</td>
-                                        <td>{{ movement.product.name }}</td>
-                                        <td>
-                                            <span class="px-2 py-1 rounded-full text-sm" :class="{
-                                                'bg-green-100 text-green-800': movement.type === 'in',
-                                                'bg-red-100 text-red-800': movement.type === 'out'
-                                            }">
-                                                {{ movement.type === 'in' ? 'Nhập' : 'Xuất' }}
-                                            </span>
-                                        </td>
-                                        <td class="text-right">{{ movement.quantity }}</td>
-                                        <td class="text-right">{{ movement.stock_after_movement }}</td>
-                                        <td class="text-sm text-gray-600">{{ formatNote(movement.note) }}</td>
-                                    </tr>
-                                </template>
-                                <tr v-else>
-                                    <td colspan="6" class="py-8 text-center text-gray-500">
-                                        <div class="flex flex-col items-center">
-                                            <svg class="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                                            </svg>
-                                            <p class="font-medium">Không có dữ liệu</p>
-                                            <p class="text-sm">Chưa có giao dịch nào được thực hiện</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <form v-show="showOutForm" @submit.prevent="submitForm('out')" class="space-y-4">
+                        <FormField label="Sản phẩm" :error="errors.product_id">
+                            <FormControl v-model="outForm.product_id" type="select" :options="formattedProducts"
+                                placeholder="Chọn sản phẩm cần xuất kho" />
+                        </FormField>
 
-                    <!-- Pagination -->
-                    <div class="mt-4 flex items-center justify-between">
-                        <div class="text-sm text-gray-600">
-                            Hiển thị {{ stockMovements.from || 0 }}-{{ stockMovements.to || 0 }}
-                            trên tổng số {{ stockMovements.total || 0 }} bản ghi
-                        </div>
-                        <div class="flex space-x-2">
-                            <BaseButton v-for="link in stockMovements.links" :key="link.label"
-                                :color="link.active ? 'info' : 'white'" :disabled="!link.url"
-                                @click="router.get(link.url)" :label="link.label"
-                                class="hover:shadow-md transition-all" />
-                        </div>
-                    </div>
+                        <FormField label="Số lượng" :error="errors.quantity">
+                            <FormControl v-model="outForm.quantity" type="number" min="1"
+                                placeholder="Nhập số lượng cần xuất" />
+                        </FormField>
+
+                        <FormField label="Lý do" :error="errors.reason">
+                            <FormControl v-model="outForm.reason"
+                                placeholder="VD: Xuất cho đơn hàng, Hàng hỏng, Điều chỉnh tồn..." />
+                        </FormField>
+
+                        <FormField label="Số tham chiếu" :error="errors.reference_number">
+                            <FormControl v-model="outForm.reference_number"
+                                placeholder="VD: Mã đơn hàng, số phiếu xuất kho..." />
+                        </FormField>
+
+                        <FormField label="Ghi chú" :error="errors.note">
+                            <FormControl v-model="outForm.note" type="textarea" rows="3"
+                                placeholder="Thông tin bổ sung về đợt xuất kho này..." />
+                        </FormField>
+
+                        <BaseButtons>
+                            <BaseButton type="submit" color="danger" :loading="isLoading" :icon="mdiMinus"
+                                label="Xuất kho" />
+                        </BaseButtons>
+                    </form>
                 </CardBox>
             </div>
+
+            <!-- Table Card - Full width -->
+            <CardBox class="hover:shadow-lg transition-all">
+                <div class="mb-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-gray-800">Lịch sử giao dịch</h2>
+                        <!-- Search input -->
+                        <div class="relative">
+                            <input v-model="searchQuery" type="text" placeholder="Tìm kiếm..."
+                                class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            <span class="absolute left-3 top-2.5 text-gray-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th class="text-left">Thời gian</th>
+                                <th class="text-left">Sản phẩm</th>
+                                <th class="text-left">Loại</th>
+                                <th class="text-right">Số lượng</th>
+                                <th class="text-right">Tồn kho</th>
+                                <th class="text-left">Ghi chú</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template v-if="filteredMovements.length">
+                                <tr v-for="movement in filteredMovements" :key="movement.id"
+                                    class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td>{{ formattedDate(movement.created_at) }}</td>
+                                    <td>{{ movement.product.name }}</td>
+                                    <td>
+                                        <span class="px-2 py-1 rounded-full text-sm" :class="{
+                                            'bg-green-100 text-green-800': movement.type === 'in',
+                                            'bg-red-100 text-red-800': movement.type === 'out'
+                                        }">
+                                            {{ movement.type === 'in' ? 'Nhập' : 'Xuất' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-right">{{ movement.quantity }}</td>
+                                    <td class="text-right">{{ movement.stock_after_movement }}</td>
+                                    <td class="text-sm text-gray-600">{{ formatNote(movement.note) }}</td>
+                                </tr>
+                            </template>
+                            <tr v-else>
+                                <td colspan="6" class="py-8 text-center text-gray-500">
+                                    <div class="flex flex-col items-center">
+                                        <svg class="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                        </svg>
+                                        <p class="font-medium">Không có dữ liệu</p>
+                                        <p class="text-sm">Chưa có giao dịch nào được thực hiện</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Sửa lại pagination -->
+                <div class="mt-4 flex items-center justify-between">
+                    <div class="text-sm text-gray-600">
+                        Hiển thị {{ stockMovements.from || 0 }}-{{ stockMovements.to || 0 }}
+                        trên tổng số {{ stockMovements.total || 0 }} bản ghi
+                    </div>
+                    <nav class="flex space-x-2">
+                        <BaseButton :disabled="!stockMovements.prev_page_url"
+                            @click="router.get(stockMovements.prev_page_url)" color="white"
+                            class="hover:shadow-md transition-all">
+                            Trước
+                        </BaseButton>
+
+                        <BaseButton v-for="page in stockMovements.last_page" :key="page"
+                            :color="page === stockMovements.current_page ? 'info' : 'white'"
+                            @click="router.get(`${route('stock-movements.index')}?page=${page}`)"
+                            class="hover:shadow-md transition-all">
+                            {{ page }}
+                        </BaseButton>
+
+                        <BaseButton :disabled="!stockMovements.next_page_url"
+                            @click="router.get(stockMovements.next_page_url)" color="white"
+                            class="hover:shadow-md transition-all">
+                            Sau
+                        </BaseButton>
+                    </nav>
+                </div>
+            </CardBox>
         </SectionMain>
     </LayoutAuthenticated>
 </template>

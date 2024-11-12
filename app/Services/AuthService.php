@@ -121,6 +121,11 @@ class AuthService
     public function storeFcmToken(string $userId, string $token, string $deviceType): array
     {
         try {
+            // Validate device type
+            if (!in_array($deviceType, ['android', 'ios', 'web'])) {
+                throw new \Exception('Invalid device type');
+            }
+
             $fcmToken = $this->fcmTokenService->storeFcmToken(
                 $userId,
                 $token,
@@ -133,7 +138,10 @@ class AuthService
                 'status_code' => 200
             ];
         } catch (\Exception $e) {
-            Log::error('Error storing FCM token: ' . $e->getMessage());
+            Log::error('Error storing FCM token: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'device_type' => $deviceType
+            ]);
             throw new \Exception(AuthErrorCode::SERVER_ERROR->value);
         }
     }

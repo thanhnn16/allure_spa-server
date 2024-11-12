@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { useToast } from "vue-toastification"
 import { useRouter } from 'vue-router'
+import { getMessaging, getToken, onMessage } from 'firebase/messaging'
+import { initializeApp } from 'firebase/app'
 
 export const useNotificationStore = defineStore('notification', {
     state: () => ({
@@ -53,19 +55,36 @@ export const useNotificationStore = defineStore('notification', {
         // Request FCM permission and get token
         async initializeFCM() {
             try {
-                const messaging = firebase.messaging()
+                const firebaseConfig = {
+                    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+                    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+                    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+                    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+                    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+                    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+                    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+                }
+
+                const app = initializeApp(firebaseConfig)
+                const messaging = getMessaging(app)
 
                 const permission = await Notification.requestPermission()
                 if (permission === 'granted') {
-                    const token = await messaging.getToken()
+                    const token = await getToken(messaging, {
+                        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
+                    })
+
                     this.fcmToken = token
 
-                    // Send token to backend
-                    await axios.post('/api/fcm/token', { token })
+                    // Thêm device_type vào request
+                    await axios.post('/api/fcm/token', {
+                        token,
+                        device_type: 'web'  // Thêm device_type
+                    })
                 }
             } catch (error) {
                 console.error('FCM initialization failed:', error)
             }
         }
     }
-}) 
+})

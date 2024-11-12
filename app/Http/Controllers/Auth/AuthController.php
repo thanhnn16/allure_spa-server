@@ -55,7 +55,7 @@ class AuthController extends BaseController
                 ]);
 
                 $result = $this->authService->login($credentials);
-                
+
                 return $this->respondWithJson($result, 'Đăng nhập thành công');
             } catch (\Exception $e) {
                 return $this->respondWithError($e->getMessage());
@@ -182,12 +182,12 @@ class AuthController extends BaseController
 
     /**
      * @OA\Post(
-     *     path="/api/auth/fcm-token",
+     *     path="/api/fcm/token",
      *     summary="Lưu token FCM cho người dùng",
-     *     description="Lưu token FCM và loại thiết bị cho người dùng đã xác thực",
+     *     description="Lưu token FCM và loại thiết bị cho người dùng đã xác thực (hỗ trợ cả web và mobile)",
      *     operationId="storeFcmToken", 
      *     tags={"Authentication"},
-     *     security={{ "bearerAuth": {} }},
+     *     security={{ "bearerAuth": {}, "cookieAuth": {} }},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -196,53 +196,50 @@ class AuthController extends BaseController
      *             @OA\Property(
      *                 property="device_type", 
      *                 type="string", 
-     *                 example="android", 
-     *                 description="Loại thiết bị (android/ios)",
-     *                 enum={"android", "ios"}
+     *                 example="web", 
+     *                 description="Loại thiết bị (android/ios/web)",
+     *                 enum={"android", "ios", "web"}
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Token FCM đã được lưu thành công",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="FCM token stored successfully"),
-     *             @OA\Property(property="status_code", type="integer", example=200),
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="user_id", type="string", example="550e8400-e29b-41d4-a716-446655440000"),
-     *                 @OA\Property(property="token", type="string", example="fMxn8H2zQ9G...."),
-     *                 @OA\Property(property="device_type", type="string", example="android"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time")
-     *             )
-     *         )
+     *         description="Token FCM đã được lưu thành công"
      *     ),
      *     @OA\Response(
-     *         response=422,
-     *         description="Dữ liệu không hợp lệ"
+     *         response=401,
+     *         description="Chưa xác thực"
      *     )
      * )
      */
     public function storeFcmToken(Request $request)
     {
-        $validated = $request->validate([
-            'token' => 'required|string',
-            'device_type' => 'required|string|in:android,ios'
-        ]);
-
         try {
+            $validated = $request->validate([
+                'token' => 'required|string',
+                'device_type' => 'required|string|in:android,ios,web'
+            ]);
+
+            $userId = Auth::guard('web')->check()
+                ? Auth::guard('web')->id()
+                : Auth::guard('sanctum')->id();
+
+            if (!$userId) {
+                return $this->respondWithError('Unauthorized', 401);
+            }
+
             $result = $this->authService->storeFcmToken(
-                Auth::id(),
+                $userId,
                 $validated['token'],
                 $validated['device_type']
             );
 
             return $this->respondWithJson($result['data'], $result['message']);
         } catch (\Exception $e) {
+            Log::error('FCM Token Store Error:', [
+                'error' => $e->getMessage(),
+                'user' => Auth::user()?->id
+            ]);
             return $this->respondWithError($e->getMessage());
         }
     }

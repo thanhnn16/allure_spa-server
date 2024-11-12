@@ -24,6 +24,8 @@ use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\AiConfigController;
 use App\Http\Controllers\BannerController;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\File;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -170,21 +172,23 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/firebase-messaging-sw.js', function () {
-    $config = [
-        'apiKey' => config('firebase.api_key'),
-        'authDomain' => config('firebase.auth_domain'),
-        'projectId' => config('firebase.project_id'),
-        'storageBucket' => config('firebase.storage_bucket'),
-        'messagingSenderId' => config('firebase.messaging_sender_id'),
-        'appId' => config('firebase.app_id'),
-        'measurementId' => config('firebase.measurement_id'),
-    ];
+    $config = Config::get('firebase');
 
-    $content = view('firebase-messaging-sw', compact('config'))->render();
+    // Convert config to JavaScript object
+    $firebaseConfig = json_encode([
+        'apiKey' => $config['api_key'],
+        'authDomain' => $config['auth_domain'],
+        'projectId' => $config['project_id'],
+        'storageBucket' => $config['storage_bucket'],
+        'messagingSenderId' => $config['messaging_sender_id'],
+        'appId' => $config['app_id'],
+    ]);
+
+    $content = File::get(public_path('firebase-messaging-sw.js'));
+    $content = str_replace('FIREBASE_CONFIG', $firebaseConfig, $content);
 
     return response($content)
-        ->header('Content-Type', 'application/javascript')
-        ->header('Service-Worker-Allowed', '/');
+        ->header('Content-Type', 'application/javascript');
 });
 
 require __DIR__ . '/auth.php';
