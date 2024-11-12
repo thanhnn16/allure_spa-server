@@ -58,17 +58,20 @@ class AppointmentService
         return DB::transaction(function () use ($data) {
             // Check if time slot is available
             $timeSlot = TimeSlot::findOrFail($data['time_slot_id']);
+            $requestedSlots = $data['slots'] ?? 1;
 
             // Count existing bookings for this date and time slot
             $existingBookings = Appointment::where('appointment_date', $data['appointment_date'])
                 ->where('time_slot_id', $data['time_slot_id'])
                 ->where('status', '!=', 'cancelled')
-                ->count();
+                ->sum('slots');
 
-            if ($existingBookings >= $timeSlot->max_bookings) {
+            $remainingSlots = $timeSlot->max_bookings - $existingBookings;
+
+            if ($requestedSlots > $remainingSlots) {
                 return [
                     'status' => 422,
-                    'message' => 'Khung giờ này đã đầy',
+                    'message' => 'Không đủ slot trống trong khung giờ này',
                     'data' => null
                 ];
             }
@@ -90,6 +93,7 @@ class AppointmentService
                 'appointment_type' => $data['appointment_type'],
                 'status' => $data['status'],
                 'note' => $data['note'] ?? null,
+                'slots' => $requestedSlots,
             ]);
 
             // Load relationships for notification

@@ -36,6 +36,7 @@ class Appointment extends Model
         'appointment_type',
         'status',
         'note',
+        'slots',
     ];
 
     protected $casts = [
@@ -45,6 +46,7 @@ class Appointment extends Model
     protected $attributes = [
         'appointment_type' => 'others',
         'status' => 'pending',
+        'slots' => 1,
     ];
 
     public function user()

@@ -17,8 +17,10 @@
                   <div class="col-span-6 sm:col-span-3">
                     <label for="status" class="block text-sm font-medium text-gray-700">Trạng thái</label>
                     <select id="status" v-model="form.status" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                      <option value="pending">Chờ xử lý</option>
-                      <option value="processing">Đang xử lý</option>
+                      <option value="pending">Chờ xác nhận</option>
+                      <option value="confirmed">Đã xác nhận</option>
+                      <option value="shipping">Đang giao hàng</option>
+                      <option value="delivered">Đã giao hàng</option>
                       <option value="completed">Hoàn thành</option>
                       <option value="cancelled">Đã hủy</option>
                     </select>

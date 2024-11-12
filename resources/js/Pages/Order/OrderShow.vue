@@ -229,6 +229,8 @@
               class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text">
               <option value="pending">Chờ xác nhận</option>
               <option value="confirmed">Đã xác nhận</option>
+              <option value="shipping">Đang giao hàng</option>
+              <option value="delivered">Đã giao hàng</option>
               <option value="completed">Hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
             </select>
@@ -336,6 +338,8 @@ export default {
       const statusClasses = {
         'pending': `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-400`,
         'confirmed': `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-400`,
+        'shipping': `${baseClasses} bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-400`,
+        'delivered': `${baseClasses} bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-400`,
         'completed': `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400`,
         'cancelled': `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400`
       }
@@ -346,6 +350,8 @@ export default {
       const statusClasses = {
         'pending': 'bg-yellow-400',
         'confirmed': 'bg-blue-400',
+        'shipping': 'bg-purple-400',
+        'delivered': 'bg-indigo-400',
         'completed': 'bg-green-400',
         'cancelled': 'bg-red-400'
       }
@@ -456,6 +462,8 @@ export default {
       const statusTexts = {
         'pending': 'Chờ xác nhận',
         'confirmed': 'Đã xác nhận',
+        'shipping': 'Đang giao hàng',
+        'delivered': 'Đã giao hàng',
         'completed': 'Hoàn thành',
         'cancelled': 'Đã hủy'
       }

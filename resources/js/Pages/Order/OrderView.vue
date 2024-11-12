@@ -25,6 +25,8 @@
               <option value="">Tất cả trạng thái</option>
               <option value="pending">Chờ xác nhận</option>
               <option value="confirmed">Đã xác nhận</option>
+              <option value="shipping">Đang giao hàng</option>
+              <option value="delivered">Đã giao hàng</option>
               <option value="completed">Hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
             </select>
@@ -220,6 +222,10 @@ export default {
           return 'Chờ xác nhận';
         case 'confirmed':
           return 'Đã xác nhận';
+        case 'shipping':
+          return 'Đang giao hàng';
+        case 'delivered':
+          return 'Đã giao hàng';
         case 'completed':
           return 'Hoàn thành';
         case 'cancelled':
@@ -280,6 +286,8 @@ export default {
       const statusClasses = {
         'pending': `${baseClasses} dark:bg-yellow-900/50 dark:text-yellow-400 bg-yellow-100 text-yellow-800`,
         'confirmed': `${baseClasses} dark:bg-blue-900/50 dark:text-blue-400 bg-blue-100 text-blue-800`,
+        'shipping': `${baseClasses} dark:bg-purple-900/50 dark:text-purple-400 bg-purple-100 text-purple-800`,
+        'delivered': `${baseClasses} dark:bg-indigo-900/50 dark:text-indigo-400 bg-indigo-100 text-indigo-800`,
         'completed': `${baseClasses} dark:bg-green-900/50 dark:text-green-400 bg-green-100 text-green-800`,
         'cancelled': `${baseClasses} dark:bg-red-900/50 dark:text-red-400 bg-red-100 text-red-800`
       };
@@ -290,6 +298,8 @@ export default {
       const dotClasses = {
         'pending': 'bg-yellow-400',
         'confirmed': 'bg-blue-400',
+        'shipping': 'bg-purple-400',
+        'delivered': 'bg-indigo-400',
         'completed': 'bg-green-400',
         'cancelled': 'bg-red-400'
       };

@@ -104,18 +104,21 @@ class TimeSlotController extends BaseController
                 ->orderBy('start_time')
                 ->get()
                 ->map(function ($slot) use ($date) {
-                    $currentBookings = $slot->appointments()
+                    $bookedSlots = $slot->appointments()
                         ->where('appointment_date', $date)
                         ->where('status', '!=', 'cancelled')
-                        ->count();
+                        ->sum('slots');
+
+                    $availableSlots = $slot->max_bookings - $bookedSlots;
 
                     return [
                         'id' => $slot->id,
                         'start_time' => $slot->start_time,
                         'end_time' => $slot->end_time,
-                        'available' => $currentBookings < min(2, $slot->max_bookings),
-                        'current_bookings' => $currentBookings,
-                        'max_bookings' => min(2, $slot->max_bookings)
+                        'available' => $availableSlots > 0,
+                        'available_slots' => $availableSlots,
+                        'booked_slots' => $bookedSlots,
+                        'max_bookings' => $slot->max_bookings
                     ];
                 })
                 ->filter(function ($slot) {

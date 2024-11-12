@@ -139,7 +139,7 @@ class OrderController extends BaseController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"status"},
-     *             @OA\Property(property="status", type="string", enum={"pending", "processing", "completed", "cancelled"}),
+     *             @OA\Property(property="status", type="string", enum={"pending", "confirmed", "shipping", "delivered", "completed", "cancelled"}),
      *             @OA\Property(property="note", type="string", nullable=true)
      *         )
      *     ),
@@ -363,7 +363,7 @@ class OrderController extends BaseController
     {
         try {
             $validated = $request->validate([
-                'status' => 'required|in:pending,processing,completed,cancelled',
+                'status' => 'required|in:pending,confirmed,shipping,delivered,completed,cancelled',
                 'note' => 'nullable|string'
             ]);
 

@@ -347,6 +347,10 @@ export default {
             }).format(value)
         }
 
+        const canUpdateStatus = computed(() => {
+            return ['pending', 'confirmed', 'shipping', 'delivered'].includes(props.order.status)
+        })
+
         return {
             form,
             userSearch,
@@ -363,6 +367,7 @@ export default {
             calculateFinalTotal,
             formatCurrency,
             submitForm,
+            canUpdateStatus,
         }
     }
 }

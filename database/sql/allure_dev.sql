@@ -488,6 +488,7 @@ CREATE TABLE appointments (
     ) NOT NULL DEFAULT 'others',
     status ENUM ('pending', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'pending',
     note TEXT,
+    slots INT UNSIGNED NOT NULL DEFAULT 1,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
