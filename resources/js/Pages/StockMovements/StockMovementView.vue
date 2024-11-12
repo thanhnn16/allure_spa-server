@@ -10,6 +10,7 @@ import FormField from '@/Components/FormField.vue'
 import FormControl from '@/Components/FormControl.vue'
 import BaseDivider from '@/Components/BaseDivider.vue'
 import { mdiPlus, mdiMinus, mdiTableSearch, mdiFileExcel, mdiFilter, mdiFilterOff } from '@mdi/js'
+import { useToast } from "vue-toastification";
 
 const props = defineProps({
     stockMovements: {
@@ -46,6 +47,8 @@ const showFilters = ref(false)
 const errors = ref({})
 const isLoading = ref(false)
 
+const toast = useToast();
+
 // Format sản phẩm để hiển thị
 const formattedProducts = computed(() => {
     return props.products.map(product => ({
@@ -74,20 +77,29 @@ const submitForm = async () => {
             reference_number: form.value.reference_number,
             note: form.value.note
         }
-        router.post(route('stock-movements.store'), formData)
-        form.value = {
-            product_id: '',
-            quantity: '',
-            type: { value: 'in', label: 'Nhập kho' },
-            reason: '',
-            reference_number: '',
-            note: ''
-        }
-        errors.value = {}
+
+        await router.post(route('stock-movements.store'), formData, {
+            onSuccess: () => {
+                toast.success('Tạo phiếu kho thành công');
+                form.value = {
+                    product_id: '',
+                    quantity: '',
+                    type: { value: 'in', label: 'Nhập kho' },
+                    reason: '',
+                    reference_number: '',
+                    note: ''
+                };
+                router.reload();
+            },
+            onError: (errors) => {
+                toast.error(errors.message || 'Có lỗi xảy ra');
+            }
+        });
     } catch (e) {
-        errors.value = e.response?.data?.errors || {}
+        toast.error(e.message || 'Có lỗi xảy ra');
+    } finally {
+        isLoading.value = false
     }
-    isLoading.value = false
 }
 
 const applyFilters = () => {

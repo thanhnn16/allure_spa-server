@@ -7,50 +7,53 @@ use App\Models\StockMovement;
 use App\Models\Product;
 use App\Services\StockMovementService;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
+use Inertia\Response;
+use Illuminate\Http\JsonResponse;
 
-class StockMovementController extends Controller
+class StockMovementController extends BaseController
 {
-    protected $stockMovementService;
+    protected StockMovementService $stockMovementService;
 
     public function __construct(StockMovementService $stockMovementService)
     {
         $this->stockMovementService = $stockMovementService;
     }
 
-    public function index(Request $request)
+    /**
+     * Display a listing of stock movements
+     */
+    public function index(Request $request): Response|JsonResponse
     {
         $movements = StockMovement::with(['product'])
-            ->when($request->product_id, function ($q) use ($request) {
-                return $q->where('product_id', $request->product_id);
-            })
-            ->when($request->type, function ($q) use ($request) {
-                return $q->where('type', $request->type);
-            })
+            ->when($request->product_id, fn($q) => $q->where('product_id', $request->product_id))
+            ->when($request->type, fn($q) => $q->where('type', $request->type))
             ->latest()
             ->paginate(15);
 
-        $products = Product::select(['id', 'name', 'quantity'])
+        $products = Product::select(['id', 'name', 'quantity', 'price'])
             ->orderBy('name')
             ->get();
 
         if ($request->wantsJson()) {
-            return response()->json($movements);
+            return $this->respondWithJson($movements);
         }
 
-        return Inertia::render('StockMovements/StockMovementView', [
+        return $this->respondWithInertia('StockMovements/StockMovementView', [
             'stockMovements' => $movements,
             'products' => $products,
             'filters' => $request->only(['product_id', 'type'])
         ]);
     }
 
-    public function store(Request $request)
+    /**
+     * Store a newly created stock movement
+     */
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
-            'type' => 'required|in:in,out',
+            'type' => 'required|in:' . StockMovement::TYPE_IN . ',' . StockMovement::TYPE_OUT,
             'note' => 'nullable|string|max:1000',
             'reason' => 'nullable|string|max:255',
             'reference_number' => 'nullable|string|max:255'
@@ -59,13 +62,7 @@ class StockMovementController extends Controller
         try {
             $product = Product::findOrFail($validated['product_id']);
 
-            // Tạo structured note
-            $structuredNote = [
-                'user' => Auth::user()->full_name,
-                'reason' => $validated['reason'],
-                'reference' => $validated['reference_number'],
-                'comment' => $validated['note']
-            ];
+            $structuredNote = $this->prepareStructuredNote($validated);
 
             $movement = $this->stockMovementService->createMovement(
                 $product,
@@ -74,14 +71,30 @@ class StockMovementController extends Controller
                 json_encode($structuredNote)
             );
 
-            return response()->json([
-                'message' => 'Stock movement created successfully',
-                'data' => $movement
-            ]);
+            return $this->respondWithJson(
+                $movement,
+                'Stock movement created successfully',
+                201
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 400);
+            return $this->respondWithJson(
+                null,
+                $e->getMessage(),
+                400
+            );
         }
+    }
+
+    /**
+     * Prepare structured note for stock movement
+     */
+    private function prepareStructuredNote(array $validated): array
+    {
+        return [
+            'user' => Auth::user()->full_name,
+            'reason' => $validated['reason'] ?? null,
+            'reference' => $validated['reference_number'] ?? null,
+            'comment' => $validated['note'] ?? null
+        ];
     }
 }
