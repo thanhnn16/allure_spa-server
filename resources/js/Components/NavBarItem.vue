@@ -7,7 +7,8 @@ import UserAvatarCurrentUser from '@/Components/UserAvatarCurrentUser.vue'
 import NavBarMenuList from '@/Components/NavBarMenuList.vue'
 import BaseDivider from '@/Components/BaseDivider.vue'
 import { usePage } from '@inertiajs/vue3'
-import { mdiChevronDown, mdiChevronUp } from '@mdi/js'
+import { mdiChevronDown, mdiChevronUp, mdiBell } from '@mdi/js'
+import { useNotificationStore } from '@/Stores/notificationStore'
 
 const props = defineProps({
     item: {
@@ -94,6 +95,8 @@ onBeforeUnmount(() => {
         window.removeEventListener('click', forceClose)
     }
 })
+
+const notificationStore = useNotificationStore()
 </script>
 
 <template>
@@ -110,7 +113,13 @@ onBeforeUnmount(() => {
                 :avatar-url="item.avatarUrl" 
                 size="sm"
                 class="mr-3 inline-flex" />
-            <BaseIcon v-else-if="item.icon" :path="item.icon" class="transition-colors w-6 h-6 mr-3" />
+            <div v-if="item.icon === mdiBell" class="relative">
+                <BaseIcon :path="item.icon" class="transition-colors w-6 h-6 mr-3" />
+                <span v-if="notificationStore.unreadCount" 
+                      class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                    {{ notificationStore.unreadCount }}
+                </span>
+            </div>
             <span class="px-2 transition-colors" :class="{ 'lg:hidden': item.isDesktopNoLabel && item.icon }">{{
                 itemLabel }}</span>
             <BaseIcon v-if="item.menu" :path="isDropdownActive ? mdiChevronUp : mdiChevronDown"

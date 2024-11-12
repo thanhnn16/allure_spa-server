@@ -9,6 +9,9 @@ import { createPinia } from 'pinia';
 import axios from 'axios';
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
+import { initializeApp } from 'firebase/app'
+import { getMessaging, onMessage } from 'firebase/messaging'
+import { useNotificationStore } from '@/Stores/notificationStore'
 
 const appName = import.meta.env.VITE_APP_NAME || 'AllureSpa';
 
@@ -23,17 +26,39 @@ if (token) {
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.withCredentials = true;
 
+const firebaseConfig = {
+    // Your Firebase config here
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    // ... other config
+}
+
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig)
+const messaging = getMessaging(firebaseApp)
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
         const pinia = createPinia();
-        return createApp({ render: () => h(App, props) })
+        const app = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
             .use(pinia)
             .use(Toast)
-            .mount(el);
+
+        // Initialize FCM after app creation
+        const notificationStore = useNotificationStore()
+        notificationStore.initializeFCM()
+
+        // Handle foreground messages
+        onMessage(messaging, (payload) => {
+            notificationStore.handleFCMMessage(payload)
+        })
+
+        return app.mount(el);
     },
     progress: {
         color: '#4B5563',

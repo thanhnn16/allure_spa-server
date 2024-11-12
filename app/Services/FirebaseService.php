@@ -7,6 +7,7 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use App\Models\ChatMessage;
 use App\Events\NewMessage;
+use App\Models\User;
 
 class FirebaseService
 {
@@ -70,6 +71,36 @@ class FirebaseService
             return $chatMessage;
         } catch (\Exception $e) {
             Log::error('Failed to handle incoming Firebase message: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function sendNotificationToAdmin($title, $body, $data = [])
+    {
+        try {
+            // Get all admin FCM tokens from database
+            $adminTokens = User::whereHas('roles', function ($query) {
+                $query->where('name', 'admin');
+            })->whereNotNull('fcm_token')
+              ->pluck('fcm_token')
+              ->toArray();
+
+            if (empty($adminTokens)) {
+                Log::info('No admin tokens found for notification');
+                return;
+            }
+
+            // Send to multiple tokens
+            $message = CloudMessage::new()
+                ->withNotification([
+                    'title' => $title,
+                    'body' => $body
+                ])
+                ->withData($data);
+
+            $this->messaging->sendMulticast($message, $adminTokens);
+        } catch (\Exception $e) {
+            Log::error('Failed to send admin notification: ' . $e->getMessage());
             throw $e;
         }
     }
