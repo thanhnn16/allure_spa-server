@@ -169,13 +169,17 @@ const formatNote = (noteJson) => {
                 <CardBox>
                     <form @submit.prevent="submitForm" class="space-y-4">
                         <FormField label="Sản phẩm" :error="errors.product_id">
-                            <FormControl v-model="form.product_id" type="select" :options="formattedProducts"
+                            <FormControl v-model="form.product_id" 
+                                type="select" 
+                                :options="formattedProducts"
                                 placeholder="Chọn sản phẩm" />
                         </FormField>
 
                         <div class="grid grid-cols-2 gap-4">
                             <FormField label="Loại" :error="errors.type">
-                                <FormControl v-model="form.type" type="select" :options="stockTypes" />
+                                <FormControl v-model="form.type" 
+                                    type="select" 
+                                    :options="stockTypes" />
                             </FormField>
 
                             <FormField label="Số lượng" :error="errors.quantity">
