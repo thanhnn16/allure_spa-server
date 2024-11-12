@@ -70,10 +70,20 @@ class ProductService
             'category', 
             'media',
             'priceHistory' => function($query) {
-                $query->orderBy('effective_from', 'desc'); // Sắp xếp theo thời gian mới nhất
+                $query->orderBy('effective_from', 'desc');
             },
-            'attributes'
-        ])->findOrFail($id);
+            'attributes',
+            'ratings' => function($query) {
+                $query->where('status', 'approved');
+            }
+        ])
+        ->withCount(['ratings as total_ratings' => function($query) {
+            $query->where('status', 'approved');
+        }])
+        ->withAvg(['ratings as average_rating' => function($query) {
+            $query->where('status', 'approved');
+        }], 'stars')
+        ->findOrFail($id);
     }
 
     public function updateProduct($id, array $data)

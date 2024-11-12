@@ -44,6 +44,8 @@ class Product extends Model
 
     protected $morphClass = 'product';
 
+    protected $appends = ['rating_summary'];
+
     public function category()
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
@@ -88,5 +90,23 @@ class Product extends Model
     public function ratings()
     {
         return $this->morphMany(Rating::class, 'item');
+    }
+
+    public function getRatingSummaryAttribute()
+    {
+        // Get approved ratings only
+        $approvedRatings = $this->ratings()->where('status', 'approved');
+        
+        return [
+            'average_rating' => round($this->average_rating, 1) ?? 0,
+            'total_ratings' => $this->total_ratings ?? 0,
+            'rating_distribution' => [
+                5 => $approvedRatings->where('stars', 5)->count(),
+                4 => $approvedRatings->where('stars', 4)->count(),
+                3 => $approvedRatings->where('stars', 3)->count(),
+                2 => $approvedRatings->where('stars', 2)->count(),
+                1 => $approvedRatings->where('stars', 1)->count(),
+            ]
+        ];
     }
 }
