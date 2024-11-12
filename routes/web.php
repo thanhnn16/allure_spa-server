@@ -90,8 +90,6 @@ Route::middleware('auth')->group(function () {
 
     // Stock Movement routes
     Route::resource('stock-movements', StockMovementController::class);
-    Route::get('stock-movements/imports', [StockMovementController::class, 'imports'])->name('stock-movements.imports');
-    Route::get('stock-movements/exports', [StockMovementController::class, 'exports'])->name('stock-movements.exports');
 
     // Notification routes
     Route::resource('notifications', NotificationController::class);
