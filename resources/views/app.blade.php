@@ -13,6 +13,7 @@
     @inertiaHead
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="manifest" href="/manifest.json">
 </head>
 
 <body class="font-sans antialiased">

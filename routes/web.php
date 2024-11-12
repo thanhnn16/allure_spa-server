@@ -171,4 +171,22 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+Route::get('/firebase-messaging-sw.js', function () {
+    $config = [
+        'apiKey' => config('firebase.api_key'),
+        'authDomain' => config('firebase.auth_domain'),
+        'projectId' => config('firebase.project_id'),
+        'storageBucket' => config('firebase.storage_bucket'),
+        'messagingSenderId' => config('firebase.messaging_sender_id'),
+        'appId' => config('firebase.app_id'),
+        'measurementId' => config('firebase.measurement_id'),
+    ];
+
+    $content = view('firebase-messaging-sw', compact('config'))->render();
+
+    return response($content)
+        ->header('Content-Type', 'application/javascript')
+        ->header('Service-Worker-Allowed', '/');
+});
+
 require __DIR__ . '/auth.php';
