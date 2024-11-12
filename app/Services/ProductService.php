@@ -74,14 +74,17 @@ class ProductService
             },
             'attributes',
             'ratings' => function($query) {
-                $query->where('status', 'approved');
+                $query->where('status', 'approved')
+                      ->where('rating_type', 'product');
             }
         ])
         ->withCount(['ratings as total_ratings' => function($query) {
-            $query->where('status', 'approved');
+            $query->where('status', 'approved')
+                  ->where('rating_type', 'product');
         }])
         ->withAvg(['ratings as average_rating' => function($query) {
-            $query->where('status', 'approved');
+            $query->where('status', 'approved')
+                  ->where('rating_type', 'product');
         }], 'stars')
         ->findOrFail($id);
     }
