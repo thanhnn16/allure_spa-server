@@ -29,7 +29,7 @@ const props = defineProps({
 const form = ref({
     product_id: '',
     quantity: '',
-    type: 'in',
+    type: { value: 'in', label: 'Nhập kho' },
     reason: '',
     reference_number: '',
     note: ''
@@ -50,7 +50,7 @@ const isLoading = ref(false)
 const formattedProducts = computed(() => {
     return props.products.map(product => ({
         ...product,
-        label: `${product.name} (${formatPrice(product.price)} - Tồn: ${product.quantity})`,
+        label: `${product.name} (${formatPrice(product.price || 0)} - Tồn: ${product.quantity})`,
         value: product.id
     }))
 })
@@ -67,18 +67,18 @@ const submitForm = async () => {
     isLoading.value = true
     try {
         const formData = {
-            product_id: form.value.product_id,
+            product_id: form.value.product_id.value || form.value.product_id,
             quantity: form.value.quantity,
-            type: form.value.type,
+            type: form.value.type.value,
             reason: form.value.reason,
             reference_number: form.value.reference_number,
             note: form.value.note
         }
-        await router.post(route('stock-movements.store'), formData)
+        router.post(route('stock-movements.store'), formData)
         form.value = {
             product_id: '',
             quantity: '',
-            type: 'in',
+            type: { value: 'in', label: 'Nhập kho' },
             reason: '',
             reference_number: '',
             note: ''
@@ -231,8 +231,8 @@ const filteredMovements = computed(() => {
 
                         <BaseButtons>
                             <BaseButton type="submit" color="info" :loading="isLoading"
-                                :icon="form.type === 'in' ? mdiPlus : mdiMinus"
-                                :label="form.type === 'in' ? 'Nhập kho' : 'Xuất kho'" />
+                                :icon="form.type.value === 'in' ? mdiPlus : mdiMinus"
+                                :label="form.type.value === 'in' ? 'Nhập kho' : 'Xuất kho'" />
                         </BaseButtons>
                     </form>
                 </CardBox>
