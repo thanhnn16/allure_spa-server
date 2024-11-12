@@ -416,15 +416,6 @@ class OrderController extends BaseController
             // Determine initial status based on request type
             $initialStatus = $request->expectsJson() ? 'pending' : 'confirmed';
 
-            foreach ($request->items as $item) {
-                if ($item['type'] === 'product') {
-                    $product = Product::findOrFail($item['id']);
-                    if (!$this->productService->checkStock($product, $item['quantity'])) {
-                        throw new \Exception("Insufficient stock for product: {$product->name}");
-                    }
-                }
-            }
-
             // Create order
             $order = Order::create([
                 'user_id' => $validatedData['user_id'],
@@ -446,12 +437,10 @@ class OrderController extends BaseController
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                 ]);
-            }
 
-            // Reduce stock for each product
-            foreach ($request->items as $item) {
-                if ($item['type'] === 'product') {
-                    $product = Product::findOrFail($item['id']);
+                // Reduce stock only for products
+                if ($item['item_type'] === 'product') {
+                    $product = Product::findOrFail($item['item_id']);
                     $this->productService->reduceStock(
                         $product,
                         $item['quantity'],
@@ -461,7 +450,7 @@ class OrderController extends BaseController
             }
 
             DB::commit();
-            return $this->respondWithJson($order, 'Order created successfully');
+            return $this->respondWithJson($order->load('order_items'), 'Order created successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->respondWithError($e->getMessage());
