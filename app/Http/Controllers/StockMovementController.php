@@ -50,8 +50,10 @@ class StockMovementController extends Controller
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
-            'type' => 'required|in:'.StockMovement::TYPE_IN.','.StockMovement::TYPE_OUT,
-            'note' => 'nullable|string|max:1000'
+            'type' => 'required|in:in,out',
+            'note' => 'nullable|string|max:1000',
+            'reason' => 'nullable|string|max:255',
+            'reference_number' => 'nullable|string|max:255'
         ]);
 
         try {
