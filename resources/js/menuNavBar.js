@@ -6,7 +6,6 @@ import {
 export default [
   {
     isCurrentUser: true,
-
   },
   {
     icon: mdiThemeLightDark,
@@ -17,5 +16,7 @@ export default [
     icon: mdiBell,
     label: 'Thông báo',
     isDesktopNoLabel: false,
+    menu: [],
+    isNotification: true
   }
 ]

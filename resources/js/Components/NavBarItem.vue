@@ -1,6 +1,5 @@
 <script setup>
-import UserAvatar from '@/Components/UserAvatar.vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import UserAvatarCurrentUser from '@/Components/UserAvatarCurrentUser.vue'
@@ -97,6 +96,34 @@ onBeforeUnmount(() => {
 })
 
 const notificationStore = useNotificationStore()
+
+const notificationMenu = computed(() => {
+    if (props.item.isNotification) {
+        return notificationStore.notifications.map(notification => ({
+            label: notification.title,
+            description: notification.body,
+            icon: notification.type === 'new_order' ? 'mdiPackage' :
+                notification.type === 'new_appointment' ? 'mdiCalendar' :
+                    notification.type === 'new_review' ? 'mdiStar' : 'mdiBell',
+            timestamp: notification.timestamp,
+            isRead: notification.read,
+            onClick: () => {
+                // Xử lý click vào từng thông báo
+                if (notification.type === 'new_order') {
+                    router.push(`/admin/orders/${notification.data.order_id}`)
+                } else if (notification.type === 'new_appointment') {
+                    router.push(`/admin/appointments/${notification.data.appointment_id}`)
+                } else if (notification.type === 'new_review') {
+                    router.push(`/admin/reviews/${notification.data.review_id}`)
+                }
+                // Đánh dấu thông báo đã đọc
+                notificationStore.markAsRead(notification.id)
+            }
+        }))
+    }
+    return props.item.menu || []
+})
+
 </script>
 
 <template>
@@ -107,16 +134,12 @@ const notificationStore = useNotificationStore()
             'bg-gray-100 dark:bg-slate-800 lg:bg-transparent lg:dark:bg-transparent p-3 lg:p-0':
                 item.menu
         }">
-            <UserAvatarCurrentUser 
-                v-if="item.isCurrentUser" 
-                :fullName="item.fullName || ''" 
-                :avatar-url="item.avatarUrl" 
-                size="sm"
-                class="mr-3 inline-flex" />
+            <UserAvatarCurrentUser v-if="item.isCurrentUser" :fullName="item.fullName || ''"
+                :avatar-url="item.avatarUrl" size="sm" class="mr-3 inline-flex" />
             <div v-if="item.icon === mdiBell" class="relative">
                 <BaseIcon :path="item.icon" class="transition-colors w-6 h-6 mr-3" />
-                <span v-if="notificationStore.unreadCount" 
-                      class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                <span v-if="notificationStore.unreadCount"
+                    class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                     {{ notificationStore.unreadCount }}
                 </span>
             </div>
@@ -125,10 +148,40 @@ const notificationStore = useNotificationStore()
             <BaseIcon v-if="item.menu" :path="isDropdownActive ? mdiChevronUp : mdiChevronDown"
                 class="hidden lg:inline-flex transition-colors" />
         </div>
-        <div v-if="item.menu"
-            class="text-sm border-b border-gray-100 lg:border lg:bg-white lg:absolute lg:top-full lg:left-0 lg:min-w-full lg:z-20 lg:rounded-lg lg:shadow-lg lg:dark:bg-slate-800 dark:border-slate-700"
+        <div v-if="item.menu || item.isNotification"
+            class="text-sm border-b border-gray-100 lg:border lg:bg-white lg:absolute lg:top-full lg:right-0 lg:min-w-[300px] lg:z-20 lg:rounded-lg lg:shadow-lg lg:dark:bg-slate-800 dark:border-slate-700"
             :class="{ 'lg:hidden': !isDropdownActive }">
-            <NavBarMenuList :menu="item.menu" @menu-click="menuClickDropdown" />
+            <div v-if="item.isNotification">
+                <div v-if="notificationMenu.length === 0" class="p-4 text-center text-gray-500">
+                    Không có thông báo mới
+                </div>
+                <div v-else class="max-h-[400px] overflow-y-auto">
+                    <div v-for="(notification, index) in notificationMenu" :key="index" @click="notification.onClick"
+                        class="p-4 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer border-b last:border-b-0 dark:border-slate-700">
+                        <div class="flex items-start">
+                            <BaseIcon :path="notification.icon" class="w-5 h-5 mr-3 mt-1" />
+                            <div class="flex-1">
+                                <div class="font-medium"
+                                    :class="{ 'text-gray-900 dark:text-white': !notification.isRead, 'text-gray-500': notification.isRead }">
+                                    {{ notification.label }}
+                                </div>
+                                <div class="text-sm text-gray-500">{{ notification.description }}</div>
+                                <div class="text-xs text-gray-400 mt-1">
+                                    {{ new Date(notification.timestamp).toLocaleString() }}
+                                </div>
+                            </div>
+                            <div v-if="!notification.isRead" class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-2 border-t dark:border-slate-700">
+                    <button @click="notificationStore.markAllAsRead()"
+                        class="w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:hover:text-white py-1">
+                        Đánh dấu tất cả là đã đọc
+                    </button>
+                </div>
+            </div>
+            <NavBarMenuList v-else :menu="item.menu" @menu-click="menuClickDropdown" />
         </div>
     </component>
 </template>

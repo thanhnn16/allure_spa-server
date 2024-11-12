@@ -21,6 +21,7 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\AiConfigController;
 use App\Http\Controllers\AiFunctionController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\NotificationController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -190,6 +191,13 @@ Route::middleware('throttle:api')->group(function () {
 
             // Thêm route tạo hóa đơn từ đơn hàng
             Route::post('/{order}/create-invoice', [OrderController::class, 'createInvoice']);
+        });
+
+        // Notification routes
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [NotificationController::class, 'index']);
+            Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+            Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
         });
     });
 
