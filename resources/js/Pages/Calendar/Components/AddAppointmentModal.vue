@@ -42,7 +42,8 @@
                                 <option value="">Chọn gói điều trị</option>
                                 <option v-for="treatmentPackage in userTreatmentPackages" :key="treatmentPackage.id"
                                     :value="treatmentPackage.id">
-                                    {{ treatmentPackage.treatment ? treatmentPackage.treatment.name : 'Unknown Treatment' }}
+                                    {{ treatmentPackage.treatment ? treatmentPackage.treatment.name : 'Unknown
+                                    Treatment' }}
                                     - Còn lại: {{ treatmentPackage.remaining_sessions }} buổi
                                 </option>
                             </select>
@@ -79,6 +80,21 @@
                                 <option value="confirmed">Đã xác nhận</option>
                                 <option value="cancelled">Đã hủy</option>
                             </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="slots" class="block text-sm font-medium text-gray-700 mb-1">
+                                Số lượng slot
+                                <span class="text-xs text-gray-500">(Tối đa 2 slot/khung giờ)</span>
+                            </label>
+                            <select v-model="form.slots" id="slots"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <option :value="1">1 slot</option>
+                                <option :value="2">2 slot</option>
+                            </select>
+                            <p v-if="selectedTimeSlot" class="mt-1 text-sm text-gray-500">
+                                Số slot còn trống: {{ getAvailableSlots }}
+                            </p>
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center justify-between mb-4 space-y-4 md:space-y-0">
@@ -150,12 +166,12 @@ const emit = defineEmits(['close', 'save', 'appointmentAdded'])
 
 // Định nghĩa constants
 const APPOINTMENT_TYPES = {
-    FACIAL: 'facial',           
-    MASSAGE: 'massage',         
-    WEIGHT_LOSS: 'weight_loss', 
+    FACIAL: 'facial',
+    MASSAGE: 'massage',
+    WEIGHT_LOSS: 'weight_loss',
     HAIR_REMOVAL: 'hair_removal',
     CONSULTATION: 'consultation',
-    OTHERS: 'others'            
+    OTHERS: 'others'
 };
 
 // Định nghĩa mapping
@@ -189,7 +205,8 @@ const resetForm = () => {
         time_slot_id: props.selectedTimeSlot?.timeSlotId || '',
         appointment_type: 'consultation',
         status: 'pending',
-        note: ''
+        note: '',
+        slots: 1
     };
     selectedUser.value = null;
     userSearch.value = '';
@@ -204,7 +221,8 @@ const form = ref({
     time_slot_id: props.selectedTimeSlot?.timeSlotId || '',
     appointment_type: 'consultation',
     status: 'pending',
-    note: ''
+    note: '',
+    slots: 1
 });
 
 // Computed properties
@@ -223,16 +241,16 @@ const appointmentTypes = computed(() => {
             .find(mapping => mapping.value === form.value.appointment_type)?.label || 'Khác';
 
         const baseTypes = [
-            { 
-                value: form.value.appointment_type, 
+            {
+                value: form.value.appointment_type,
                 label: currentTypeLabel // Sử dụng label đã tìm được
             },
             { value: APPOINTMENT_TYPES.CONSULTATION, label: 'Tư vấn' },
             { value: APPOINTMENT_TYPES.OTHERS, label: 'Khác' }
         ];
-        
+
         // Remove duplicates based on value
-        return baseTypes.filter((type, index, self) => 
+        return baseTypes.filter((type, index, self) =>
             index === self.findIndex(t => t.value === type.value)
         );
     }
@@ -516,6 +534,24 @@ function validateForm() {
         }
     }
 
+    // Kiểm tra slots
+    if (!form.value.slots || form.value.slots < 1 || form.value.slots > 2) {
+        errors.value.slots = ['Số lượng slot phải từ 1-2'];
+        isValid = false;
+    }
+
+    // Kiểm tra số slot có vượt quá slot trống không
+    if (form.value.time_slot_id) {
+        const selectedSlot = timeSlots.value.find(slot => slot.id === form.value.time_slot_id);
+        if (selectedSlot) {
+            const availableSlots = selectedSlot.max_bookings - selectedSlot.booked_slots;
+            if (form.value.slots > availableSlots) {
+                errors.value.slots = [`Chỉ còn ${availableSlots} slot trống`];
+                isValid = false;
+            }
+        }
+    }
+
     return isValid;
 }
 
@@ -530,7 +566,8 @@ function validateAndSubmit() {
             time_slot_id: form.value.time_slot_id,
             appointment_type: form.value.appointment_type,
             status: form.value.status,
-            note: form.value.note || ''
+            note: form.value.note || '',
+            slots: form.value.slots
         };
 
         submitAppointment(formData);
@@ -547,21 +584,22 @@ function submitAppointment(formData) {
         appointment_type: formData.appointment_type,
         status: formData.status,
         note: formData.note,
+        slots: formData.slots
     })
-    .then(response => {
-        // Emit cả save và appointmentAdded events
-        emit('save', formData);
-        emit('appointmentAdded');
-        props.closeModal();
-    })
-    .catch(error => {
-        console.error('Error creating appointment:', error.response ? error.response.data : error);
-        if (error.response?.data?.errors) {
-            errors.value = error.response.data.errors;
-        }
-        // Thêm emit error event nếu cần
-        // emit('error', error.response?.data?.errors || 'Có lỗi xảy ra khi tạo lịch hẹn');
-    });
+        .then(response => {
+            // Emit cả save và appointmentAdded events
+            emit('save', formData);
+            emit('appointmentAdded');
+            props.closeModal();
+        })
+        .catch(error => {
+            console.error('Error creating appointment:', error.response ? error.response.data : error);
+            if (error.response?.data?.errors) {
+                errors.value = error.response.data.errors;
+            }
+            // Thêm emit error event nếu cần
+            // emit('error', error.response?.data?.errors || 'Có lỗi xảy ra khi tạo lịch hẹn');
+        });
 }
 
 // Add this after other watch statements
@@ -573,13 +611,24 @@ const isFormValid = computed(() => {
         form.value.user_id &&
         form.value.service_id &&
         form.value.appointment_date &&
-        form.value.time_slot_id
+        form.value.time_slot_id &&
+        form.value.slots >= 1 &&
+        form.value.slots <= 2
     );
 });
 
 // Thêm watch cho các giá trị quan trọng
 watch(() => form.value, (newValue) => {
 }, { deep: true });
+
+const getAvailableSlots = computed(() => {
+    if (!form.value.time_slot_id) return 0;
+
+    const selectedSlot = timeSlots.value.find(slot => slot.id === form.value.time_slot_id);
+    if (!selectedSlot) return 0;
+
+    return selectedSlot.max_bookings - selectedSlot.booked_slots;
+});
 </script>
 
 <style scoped>
