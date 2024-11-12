@@ -15,6 +15,17 @@ use App\Models\User;
 
 class AppointmentService
 {
+    protected $firebaseService;
+    protected $notificationService;
+
+    public function __construct(
+        FirebaseService $firebaseService,
+        NotificationService $notificationService
+    ) {
+        $this->firebaseService = $firebaseService;
+        $this->notificationService = $notificationService;
+    }
+
     public function getAppointments($request)
     {
         $query = Appointment::with([
@@ -81,12 +92,32 @@ class AppointmentService
                 'note' => $data['note'] ?? null,
             ]);
 
+            // Load relationships for notification
+            $appointment->load(['user', 'service', 'timeSlot']);
+
+            // Send notification to admin
+            $this->notificationService->notifyAdmins(
+                'Lịch hẹn mới',
+                "Khách hàng {$appointment->user->full_name} đặt lịch {$appointment->service->name} vào ngày {$appointment->appointment_date}",
+                'new_appointment',
+                [
+                    'appointment_id' => $appointment->id,
+                    'user_id' => $appointment->user_id,
+                    'service_id' => $appointment->service_id,
+                    'appointment_date' => $appointment->appointment_date,
+                    'time_slot' => [
+                        'start' => $appointment->timeSlot->start_time,
+                        'end' => $appointment->timeSlot->end_time
+                    ]
+                ]
+            );
+
             event(new AppointmentCreated($appointment));
 
             return [
                 'status' => 200,
                 'message' => 'Đặt lịch thành công',
-                'data' => $appointment->load(['user', 'service', 'timeSlot'])
+                'data' => $appointment
             ];
         });
     }
