@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, defineProps, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { mdiEye, mdiTrashCan } from '@mdi/js'
 import CardBoxModal from '@/Components/CardBoxModal.vue'
 import TableCheckboxCell from '@/Components/TableCheckboxCell.vue'

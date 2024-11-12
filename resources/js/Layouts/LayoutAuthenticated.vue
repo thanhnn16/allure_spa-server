@@ -16,6 +16,7 @@ import {
     mdiForwardburger,
     mdiBackburger
 } from '@mdi/js'
+import SectionMain from '@/Components/SectionMain.vue'
 
 const layoutAsidePadding = 'xl:pl-78'
 
@@ -71,10 +72,14 @@ const menuClick = (event, item) => {
                 isAsideMobileExpanded ? 'left-0' : '-left-78',
                 { 'lg:left-0': !isAsideLgActive },
                 'transition-all duration-300 ease-in-out'
-            ]" :menu="menuAside" :is-aside-mobile-expanded="isAsideMobileExpanded" :is-aside-lg-active="isAsideLgActive"
-                @menu-click="menuClick" @aside-lg-close-click="isAsideLgActive = false" />
+            ]" :menu="menuAside" :is-aside-mobile-expanded="isAsideMobileExpanded"
+                :is-aside-lg-active="isAsideLgActive" @menu-click="menuClick"
+                @aside-lg-close-click="isAsideLgActive = false" />
 
-            <slot />
+            <SectionMain :is-aside-lg-active="isAsideLgActive">
+                <slot />
+            </SectionMain>
+
             <FooterBar>
                 Cần hỗ trợ? Gọi ngay:
                 <a href="tel:0346542636" target="_blank" class="text-blue-600">0346542636 - Thành</a>

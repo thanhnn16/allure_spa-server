@@ -309,14 +309,15 @@ const statusColors = [
 
 <template>
     <LayoutAuthenticated>
+
         <Head title="Lịch hẹn" />
         <SectionMain>
             <!-- Status legend với dark mode support -->
             <div class="mb-4 flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-lg shadow">
                 <span class="font-semibold dark:text-slate-200">Trạng thái:</span>
                 <div class="flex gap-4">
-                    <div v-for="item in statusColors" :key="item.status" 
-                         class="flex items-center gap-2 dark:text-slate-300">
+                    <div v-for="item in statusColors" :key="item.status"
+                        class="flex items-center gap-2 dark:text-slate-300">
                         <div class="w-4 h-4 rounded" :style="{ backgroundColor: item.color }"></div>
                         <span>{{ item.status }}</span>
                     </div>
@@ -327,16 +328,10 @@ const statusColors = [
                 <FullCalendar ref="calendarRef" :options="calendarOptions" class="custom-calendar" />
             </div>
         </SectionMain>
-        
-        <AddAppointmentModal 
-            :show="showModal" 
-            :appointments="appointments" 
-            :selectedTimeSlot="selectedTimeSlot"
-            @close="closeModal" 
-            @save="saveAppointment" 
-            @appointmentAdded="handleAppointmentAdded"
-            :closeModal="closeModal" 
-        />
+
+        <AddAppointmentModal :show="showModal" :appointments="appointments" :selectedTimeSlot="selectedTimeSlot"
+            @close="closeModal" @save="saveAppointment" @appointmentAdded="handleAppointmentAdded"
+            :closeModal="closeModal" />
     </LayoutAuthenticated>
 </template>
 
