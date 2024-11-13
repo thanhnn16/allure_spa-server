@@ -78,7 +78,7 @@ class Voucher extends Model
     public function getFormattedDiscountAttribute()
     {
         if ($this->discount_type === 'percentage') {
-            return (int)$this->discount_value . ' %';
+            return (int)$this->discount_value . '%';
         }
         return number_format($this->discount_value, 0, ',', '.') . ' ₫';
     }
