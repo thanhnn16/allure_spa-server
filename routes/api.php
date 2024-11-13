@@ -22,6 +22,7 @@ use App\Http\Controllers\AiConfigController;
 use App\Http\Controllers\AiFunctionController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\VoucherController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -205,6 +206,14 @@ Route::middleware('throttle:api')->group(function () {
 
         // Add new route for stats
         Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+
+        // Voucher routes
+        Route::prefix('vouchers')->group(function () {
+            Route::post('/assign', [VoucherController::class, 'assignToUser']);
+            Route::get('/user/{userId}', [VoucherController::class, 'getUserVouchers']);
+            Route::post('/return', [VoucherController::class, 'returnVoucher']);
+            Route::get('/my-vouchers', [VoucherController::class, 'getMyVouchers']);
+        });
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

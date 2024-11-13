@@ -71,6 +71,10 @@ Route::middleware('auth')->group(function () {
 
     // Voucher routes
     Route::resource('vouchers', VoucherController::class);
+    Route::prefix('vouchers')->group(function () {
+        Route::post('/assign-to-user', [VoucherController::class, 'assignToUser']);
+        Route::get('/user/{userId}/vouchers', [VoucherController::class, 'getUserVouchers']);
+    });
 
     // Service routes
     Route::resource('services', ServiceController::class);
