@@ -6,7 +6,7 @@ import SectionMain from '@/Components/SectionMain.vue'
 import CardBox from '@/Components/CardBox.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import { useNotificationStore } from '@/Stores/notificationStore'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { mdiBell, mdiPackage, mdiCalendar, mdiStar, mdiBellOff, mdiCheckAll } from '@mdi/js'
 import BaseIcon from '@/Components/BaseIcon.vue'
@@ -34,7 +34,28 @@ const fetchNotifications = async () => {
     try {
         loading.value = true
         const response = await axios.get('/api/notifications')
-        notifications.value = response.data.data || []
+        
+        let notificationData = []
+        
+        if (response.data) {
+            if (Array.isArray(response.data.data)) {
+                notificationData = response.data.data
+            } else if (Array.isArray(response.data)) {
+                notificationData = response.data
+            } else if (Array.isArray(response.data.notifications)) {
+                notificationData = response.data.notifications
+            }
+        }
+
+        notifications.value = notificationData.map(notification => ({
+            id: notification.id,
+            title: notification.title || '',
+            content: notification.content || '',
+            type: notification.type || 'default',
+            is_read: !!notification.is_read,
+            created_at: notification.created_at || new Date().toISOString(),
+        }))
+
     } catch (error) {
         console.error('Error fetching notifications:', error)
         notifications.value = []
@@ -47,23 +68,44 @@ onMounted(() => {
     fetchNotifications()
 })
 
-const handleNotificationClick = (notification) => {
-    if (notification.type === 'new_order') {
-        router.push(`/admin/orders`)
-    } else if (notification.type === 'new_appointment') {
-        router.push(`/admin/appointments`)
-    } else if (notification.type === 'new_review') {
-        router.push(`/admin/reviews`)
+const handleNotificationClick = async (notification) => {
+    try {
+        await axios.post(`/notifications/${notification.id}/mark-as-read`)
+        notification.is_read = true
+        if (notification.type === 'new_order') {
+            router.push(`/admin/orders`)
+        } else if (notification.type === 'new_appointment') {
+            router.push(`/admin/appointments`)
+        } else if (notification.type === 'new_review') {
+            router.push(`/admin/reviews`)
+        }
+    } catch (error) {
+        console.error('Error marking notification as read:', error)
     }
-    notificationStore.markAsRead(notification.id)
 }
 
 const markAllAsRead = async () => {
-    await notificationStore.markAllAsRead()
-    notifications.value = notifications.value.map(notification => ({
-        ...notification,
-        is_read: true
-    }))
+    try {
+        await axios.post('/notifications/mark-all-as-read')
+        notifications.value = notifications.value.map(notification => ({
+            ...notification,
+            is_read: true
+        }))
+    } catch (error) {
+        console.error('Error marking all as read:', error)
+    }
+}
+
+const formatNotificationDate = (dateString) => {
+    try {
+        if (!dateString) return 'Invalid date'
+        const date = parseISO(dateString)
+        if (isNaN(date.getTime())) return 'Invalid date'
+        return formatDistanceToNow(date, { addSuffix: true, locale: vi })
+    } catch (error) {
+        console.error('Error formatting date:', error)
+        return 'Invalid date'
+    }
 }
 </script>
 
@@ -123,9 +165,7 @@ const markAllAsRead = async () => {
                                     {{ notification.content }}
                                 </p>
                                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                    {{ formatDistanceToNow(new Date(notification.created_at), {
-                                        addSuffix: true, locale:
-                                    vi }) }}
+                                    {{ formatNotificationDate(notification.created_at) }}
                                 </p>
                             </div>
                         </div>
