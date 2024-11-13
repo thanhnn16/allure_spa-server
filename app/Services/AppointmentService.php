@@ -84,6 +84,11 @@ class AppointmentService
             // Find available staff
             $staffId = null;
             $staff = User::where('role', 'staff')
+                ->whereDoesntHave('appointments', function ($query) use ($data, $timeSlot) {
+                    $query->where('appointment_date', $data['appointment_date'])
+                        ->where('time_slot_id', $data['time_slot_id'])
+                        ->where('status', '!=', 'cancelled');
+                })
                 ->first();
             if ($staff) {
                 $staffId = $staff->id;
@@ -114,6 +119,7 @@ class AppointmentService
                     'user_id' => $appointment->user_id,
                     'service_id' => $appointment->service_id,
                     'appointment_date' => $appointment->appointment_date,
+                    'slots' => $appointment->slots,
                     'time_slot' => [
                         'start' => $appointment->timeSlot->start_time,
                         'end' => $appointment->timeSlot->end_time
