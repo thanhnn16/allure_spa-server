@@ -208,7 +208,23 @@ class VoucherController extends Controller
     {
         try {
             $userId = Auth::id();
-            
+            return $this->getUserVouchers($userId);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Get vouchers for a specific user
+     * 
+     * @param string $userId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getUserVouchers(string $userId)
+    {
+        try {
             $vouchers = UserVoucher::with(['voucher' => function($query) {
                 $query->select([
                     'id',
