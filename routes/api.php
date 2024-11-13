@@ -135,8 +135,8 @@ Route::middleware('throttle:api')->group(function () {
         // Profile route
         Route::get('/profile', [UserController::class, 'profile']);
 
-        // Add new route for uploading avatar
-        Route::post('/users/upload-avatar', [UserController::class, 'uploadAvatar']);
+        // Sửa route upload avatar từ /users/upload-avatar thành /user/avatar
+        Route::post('/user/avatar', [UserController::class, 'uploadAvatar']);
 
         // PayOS routes
         Route::prefix('payos')->group(function () {

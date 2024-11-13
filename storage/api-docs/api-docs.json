@@ -4001,7 +4001,7 @@
                     "User"
                 ],
                 "summary": "Lấy thông tin người dùng",
-                "description": "Truy xuất thông tin chi tiết của người dùng đã xác thực",
+                "description": "Truy xuất thông tin chi ti��t của người dùng đã xác thực",
                 "operationId": "getUserInfo",
                 "responses": {
                     "200": {

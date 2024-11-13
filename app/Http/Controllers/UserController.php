@@ -349,7 +349,7 @@ class UserController extends BaseController
      * @OA\Get(
      *     path="/api/user/info",
      *     summary="Lấy thông tin người dùng",
-     *     description="Truy xuất thông tin chi tiết của người dùng đã xác thực",
+     *     description="Truy xuất thông tin chi ti��t của người dùng đã xác thực",
      *     operationId="getUserInfo",
      *     tags={"User"},
      *     security={{ "bearerAuth": {} }},
