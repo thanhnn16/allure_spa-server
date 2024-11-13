@@ -10,7 +10,9 @@ import {
   mdiChartPie,
   mdiAccountDetails,
   mdiTrendingUp,
-  mdiStore
+  mdiStore,
+  mdiClockOutline,
+  mdiChartLineVariant
 } from '@mdi/js'
 import LineChart from '@/Components/Charts/LineChart.vue'
 import SectionMain from '@/Components/SectionMain.vue'
@@ -247,6 +249,16 @@ const statsTabs = computed(() => [
 ])
 
 const isAsideLgActive = ref(true)
+
+const hasStatsData = computed(() => {
+  const currentTabData = {
+    'overview': statsData.value.peakHours?.length || statsData.value.popularServices?.length,
+    'services': statsData.value.cancelledServices?.length,
+    'products': statsData.value.bestSellingProducts?.length || statsData.value.lowStockProducts?.length,
+    'customers': statsData.value.topCustomers?.length
+  }
+  return currentTabData[activeStatsTab.value] > 0
+})
 </script>
 
 <template>
@@ -315,105 +327,160 @@ const isAsideLgActive = ref(true)
       </SectionTitleLineWithButton>
 
       <CardBox class="mb-6">
-        <div class="border-b dark:border-slate-700 mb-4">
+        <div class="border-b dark:border-slate-700 mb-4 h-12">
           <div class="flex space-x-4">
-            <button v-for="tab in statsTabs" :key="tab.id" @click="activeStatsTab = tab.id"
-              class="pb-2 px-4 transition-all duration-200" :class="[
-                activeStatsTab === tab.id
-                  ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-              ]">
+            <button 
+              v-for="tab in statsTabs" 
+              :key="tab.id" 
+              @click="activeStatsTab = tab.id"
+              class="pb-2 px-6 transition-all duration-200 relative"
+              :class="[
+                'hover:text-blue-600 dark:hover:text-blue-400',
+                activeStatsTab === tab.id 
+                  ? 'text-blue-600 dark:text-blue-400' 
+                  : 'text-gray-500 dark:text-gray-400'
+              ]"
+            >
               <div class="flex items-center space-x-2">
                 <BaseIcon :path="tab.icon" class="w-5 h-5" />
                 <span>{{ tab.label }}</span>
               </div>
+              <div 
+                class="absolute bottom-0 left-0 w-full h-0.5 transition-all duration-200"
+                :class="[
+                  activeStatsTab === tab.id 
+                    ? 'bg-blue-500 scale-100' 
+                    : 'bg-transparent scale-0'
+                ]"
+              ></div>
             </button>
           </div>
         </div>
 
-        <div v-if="activeStatsTab === 'overview'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="p-4 border rounded-lg dark:border-slate-700">
-            <h4 class="font-semibold mb-3 dark:text-white">Thời điểm đông khách</h4>
-            <div class="space-y-2">
-              <div v-for="(peak, index) in statsData.peakHours" :key="index" class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">{{ peak.time }}</span>
-                <div class="flex items-center space-x-2">
-                  <div class="h-2 bg-blue-500 rounded" :style="{ width: `${peak.percentage}%` }"></div>
-                  <span class="text-sm text-gray-500">{{ peak.count }} khách</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-4 border rounded-lg dark:border-slate-700">
-            <h4 class="font-semibold mb-3 dark:text-white">Dịch vụ phổ biến</h4>
-            <div class="space-y-2">
-              <div v-for="service in statsData.popularServices" :key="service.id"
-                class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">{{ service.name }}</span>
-                <span class="text-sm text-gray-500">{{ service.bookings }} lượt đặt</span>
-              </div>
-            </div>
-          </div>
+        <div v-if="loading" class="flex items-center justify-center h-64">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
 
-        <div v-if="activeStatsTab === 'services'" class="grid grid-cols-1 gap-4">
-          <div class="p-4 border rounded-lg dark:border-slate-700">
-            <h4 class="font-semibold mb-3 dark:text-white">Dịch vụ bị hủy nhiều</h4>
-            <div class="space-y-2">
-              <div v-for="service in statsData.cancelledServices" :key="service.id"
-                class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">{{ service.name }}</span>
-                <div class="flex items-center space-x-4">
-                  <span class="text-sm text-gray-500">{{ service.cancelled_count }} lần hủy</span>
-                  <span class="text-sm text-red-500">{{ service.cancel_rate }}%</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div 
+          v-else-if="!hasStatsData" 
+          class="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400"
+        >
+          <BaseIcon :path="mdiChartLineVariant" class="w-16 h-16 mb-4 opacity-50" />
+          <p>Không có dữ liệu thống kê cho khoảng thời gian này</p>
+          <BaseButton 
+            :icon="mdiReload" 
+            label="Tải lại" 
+            color="info" 
+            class="mt-4" 
+            @click="fetchStatsData" 
+          />
         </div>
 
-        <div v-if="activeStatsTab === 'products'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="p-4 border rounded-lg dark:border-slate-700">
-            <h4 class="font-semibold mb-3 dark:text-white">Sản phẩm bán chạy</h4>
-            <div class="space-y-2">
-              <div v-for="product in statsData.bestSellingProducts" :key="product.id"
-                class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">{{ product.name }}</span>
-                <span class="text-sm text-gray-500">{{ product.sold }} đã bán</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-4 border rounded-lg dark:border-slate-700">
-            <h4 class="font-semibold mb-3 dark:text-white">Sản phẩm sắp hết hàng</h4>
-            <div class="space-y-2">
-              <div v-for="product in statsData.lowStockProducts" :key="product.id"
-                class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">{{ product.name }}</span>
-                <span class="text-sm text-red-500">Còn {{ product.stock }} sản phẩm</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="activeStatsTab === 'customers'" class="grid grid-cols-1 gap-4">
-          <div class="p-4 border rounded-lg dark:border-slate-700">
-            <h4 class="font-semibold mb-3 dark:text-white">Khách hàng thân thiết</h4>
-            <div class="space-y-2">
-              <div v-for="customer in statsData.topCustomers" :key="customer.id"
-                class="flex justify-between items-center">
-                <div class="flex items-center space-x-2">
-                  <UserAvatar :fullName="customer.name" size="sm" />
-                  <span class="text-gray-600 dark:text-gray-400">{{ customer.name }}</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                  <span class="text-sm text-gray-500">{{ customer.total_spent }}đ</span>
-                  <span class="text-sm text-gray-500">{{ customer.visit_count }} lần ghé</span>
+        <div class="min-h-[400px]">
+          <TransitionGroup name="fade">
+            <div v-if="activeStatsTab === 'overview' && hasStatsData" key="overview" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="p-6 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-100 dark:border-slate-700">
+                <h4 class="font-semibold mb-4 dark:text-white flex items-center">
+                  <BaseIcon :path="mdiClockOutline" class="w-5 h-5 mr-2" />
+                  Thời điểm đông khách
+                </h4>
+                <div class="space-y-3">
+                  <div v-for="(peak, index) in statsData.peakHours" :key="index" class="flex flex-col">
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="text-gray-600 dark:text-gray-400">{{ peak.time }}</span>
+                      <span class="text-sm text-gray-500">{{ peak.count }} khách</span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div 
+                        class="h-full bg-blue-500 rounded-full transition-all duration-500"
+                        :style="{ width: `${peak.percentage}%` }"
+                      ></div>
+                    </div>
+                  </div>
                 </div>
               </div>
+              
+              <div class="p-6 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-100 dark:border-slate-700">
+                <h4 class="font-semibold mb-4 dark:text-white flex items-center">
+                  <BaseIcon :path="mdiTrendingUp" class="w-5 h-5 mr-2" />
+                  Dịch vụ phổ biến
+                </h4>
+                <div class="space-y-3">
+                  <div v-for="service in statsData.popularServices" :key="service.id" class="flex flex-col">
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="text-gray-600 dark:text-gray-400">{{ service.name }}</span>
+                      <span class="text-sm text-gray-500">{{ service.bookings }} lượt đặt</span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div 
+                        class="h-full bg-green-500 rounded-full transition-all duration-500"
+                        :style="{ width: `${service.percentage}%` }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+
+            <div v-if="activeStatsTab === 'services' && hasStatsData" key="services" class="grid grid-cols-1 gap-4">
+              <div class="p-4 border rounded-lg dark:border-slate-700">
+                <h4 class="font-semibold mb-3 dark:text-white">Dịch vụ bị hủy nhiều</h4>
+                <div class="space-y-2">
+                  <div v-for="service in statsData.cancelledServices" :key="service.id"
+                    class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-400">{{ service.name }}</span>
+                    <div class="flex items-center space-x-4">
+                      <span class="text-sm text-gray-500">{{ service.cancelled_count }} lần hủy</span>
+                      <span class="text-sm text-red-500">{{ service.cancel_rate }}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="activeStatsTab === 'products' && hasStatsData" key="products" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="p-4 border rounded-lg dark:border-slate-700">
+                <h4 class="font-semibold mb-3 dark:text-white">Sản phẩm bán chạy</h4>
+                <div class="space-y-2">
+                  <div v-for="product in statsData.bestSellingProducts" :key="product.id"
+                    class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-400">{{ product.name }}</span>
+                    <span class="text-sm text-gray-500">{{ product.sold }} đã bán</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-4 border rounded-lg dark:border-slate-700">
+                <h4 class="font-semibold mb-3 dark:text-white">Sản phẩm sắp hết hàng</h4>
+                <div class="space-y-2">
+                  <div v-for="product in statsData.lowStockProducts" :key="product.id"
+                    class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-400">{{ product.name }}</span>
+                    <span class="text-sm text-red-500">Còn {{ product.stock }} sản phẩm</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="activeStatsTab === 'customers' && hasStatsData" key="customers" class="grid grid-cols-1 gap-4">
+              <div class="p-4 border rounded-lg dark:border-slate-700">
+                <h4 class="font-semibold mb-3 dark:text-white">Khách hàng thân thiết</h4>
+                <div class="space-y-2">
+                  <div v-for="customer in statsData.topCustomers" :key="customer.id"
+                    class="flex justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                      <UserAvatar :fullName="customer.name" size="sm" />
+                      <span class="text-gray-600 dark:text-gray-400">{{ customer.name }}</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                      <span class="text-sm text-gray-500">{{ customer.total_spent }}đ</span>
+                      <span class="text-sm text-gray-500">{{ customer.visit_count }} lần ghé</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TransitionGroup>
         </div>
       </CardBox>
 
@@ -428,3 +495,15 @@ const isAsideLgActive = ref(true)
     </SectionMain>
   </LayoutAuthenticated>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
