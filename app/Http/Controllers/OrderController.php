@@ -338,7 +338,7 @@ class OrderController extends BaseController
                 'order_items.*.quantity' => 'required|integer|min:1',
                 'order_items.*.price' => 'required|numeric|min:0',
                 'total_amount' => 'required|numeric|min:0',
-                'discount_amount' => 'required|numeric|min:0',
+                'discount_amount' => 'nullable|numeric|min:0',
                 'note' => 'nullable|string'
             ]);
 
@@ -347,14 +347,14 @@ class OrderController extends BaseController
             // Determine initial status based on request type
             $initialStatus = $request->expectsJson() ? 'pending' : 'confirmed';
 
-            // Create order
+            // Create order with default values for optional fields
             $order = Order::create([
                 'user_id' => $validatedData['user_id'] ?? Auth::user()->id,
                 'total_amount' => $validatedData['total_amount'],
                 'payment_method_id' => $validatedData['payment_method_id'],
-                'voucher_id' => $validatedData['voucher_id'],
-                'discount_amount' => $validatedData['discount_amount'],
-                'note' => $validatedData['note'],
+                'voucher_id' => $validatedData['voucher_id'] ?? null,
+                'discount_amount' => $validatedData['discount_amount'] ?? 0,
+                'note' => $validatedData['note'] ?? null,
                 'status' => $initialStatus
             ]);
 
