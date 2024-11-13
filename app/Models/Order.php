@@ -8,18 +8,26 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * @OA\Schema(
  *     schema="Order",
- *     title="Đơn hàng",
- *     description="Mô hình đơn hàng",
- *     @OA\Property(property="id", type="integer", format="int64", description="ID đơn hàng"),
- *     @OA\Property(property="user_id", type="string", format="uuid", description="ID người dùng"),
- *     @OA\Property(property="total_amount", type="number", format="float", description="Tổng số tiền của đơn hàng"),
- *     @OA\Property(property="shipping_address_id", type="integer", format="int64", description="ID địa chỉ giao hàng"),
- *     @OA\Property(property="payment_method_id", type="integer", format="int64", description="ID phương thức thanh toán"),
- *     @OA\Property(property="voucher_id", type="integer", format="int64", description="ID voucher"),
- *     @OA\Property(property="discount_amount", type="number", format="float", description="Số tiền giảm giá"),
- *     @OA\Property(property="status", type="string", description="Trạng thái của đơn hàng"),
- *     @OA\Property(property="created_at", type="string", format="date-time", description="Thời gian tạo"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", description="Thời gian cập nhật cuối cùng")
+ *     title="Order",
+ *     description="Order model",
+ *     @OA\Property(property="id", type="integer", format="int64", description="Order ID"),
+ *     @OA\Property(property="user_id", type="string", format="uuid", description="User ID"),
+ *     @OA\Property(property="total_amount", type="number", format="float", description="Total order amount"),
+ *     @OA\Property(property="shipping_address_id", type="integer", description="Shipping address ID"),
+ *     @OA\Property(property="payment_method_id", type="integer", description="Payment method ID"),
+ *     @OA\Property(property="voucher_id", type="integer", nullable=true, description="Voucher ID"),
+ *     @OA\Property(property="discount_amount", type="number", format="float", description="Discount amount"),
+ *     @OA\Property(property="status", type="string", enum={"pending", "confirmed", "shipping", "delivered", "completed", "cancelled"}, description="Order status"),
+ *     @OA\Property(property="note", type="string", nullable=true, description="Order note"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="Created timestamp"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", description="Last updated timestamp"),
+ *     @OA\Property(
+ *         property="order_items",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/OrderItem")
+ *     ),
+ *     @OA\Property(property="user", ref="#/components/schemas/User"),
+ *     @OA\Property(property="invoice", ref="#/components/schemas/Invoice")
  * )
  */
 class Order extends Model
