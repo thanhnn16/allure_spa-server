@@ -8,6 +8,7 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use App\Models\ChatMessage;
 use App\Events\NewMessage;
 use App\Models\User;
+use App\Models\FcmToken;
 
 class FirebaseService
 {
@@ -78,10 +79,12 @@ class FirebaseService
     public function sendNotificationToAdmin($title, $body, $data = [])
     {
         try {
-            // Get all admin FCM tokens from database
-            $adminTokens = User::where('role', 'admin')
-                ->whereNotNull('fcm_token')
-                ->pluck('fcm_token')
+            // Get all admin FCM tokens from fcm_tokens table through relationship
+            $adminTokens = FcmToken::whereHas('user', function ($query) {
+                $query->where('role', 'admin')
+                    ->whereNull('deleted_at');
+            })
+                ->pluck('token')  // Lấy token từ bảng fcm_tokens
                 ->toArray();
 
             if (empty($adminTokens)) {
