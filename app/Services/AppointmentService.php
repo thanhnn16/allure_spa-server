@@ -56,84 +56,93 @@ class AppointmentService
     public function createAppointment($data)
     {
         return DB::transaction(function () use ($data) {
-            // Nếu không có user_id, lấy từ user đang đăng nhập
-            if (!isset($data['user_id'])) {
-                $data['user_id'] = Auth::user()->id;
-            }
+            try {
+                // Check if time slot is available
+                $timeSlot = TimeSlot::findOrFail($data['time_slot_id']);
+                $requestedSlots = $data['slots'] ?? 1;
 
-            // Check if time slot is available
-            $timeSlot = TimeSlot::findOrFail($data['time_slot_id']);
-            $requestedSlots = $data['slots'] ?? 1;
+                // Count existing bookings for this date and time slot
+                $existingBookings = Appointment::where('appointment_date', $data['appointment_date'])
+                    ->where('time_slot_id', $data['time_slot_id'])
+                    ->where('status', '!=', 'cancelled')
+                    ->sum('slots');
 
-            // Count existing bookings for this date and time slot
-            $existingBookings = Appointment::where('appointment_date', $data['appointment_date'])
-                ->where('time_slot_id', $data['time_slot_id'])
-                ->where('status', '!=', 'cancelled')
-                ->sum('slots');
+                $remainingSlots = $timeSlot->max_bookings - $existingBookings;
 
-            $remainingSlots = $timeSlot->max_bookings - $existingBookings;
+                if ($requestedSlots > $remainingSlots) {
+                    return [
+                        'status' => 422,
+                        'message' => 'Không đủ slot trống trong khung giờ này',
+                        'data' => null
+                    ];
+                }
 
-            if ($requestedSlots > $remainingSlots) {
+                // Xác định user_id
+                $userId = $data['user_id'] ?? Auth::id();
+                if (!$userId) {
+                    throw new \Exception('Không tìm thấy thông tin người dùng');
+                }
+
+                // Find available staff - Sửa lại phần này
+                $availableStaff = User::query()
+                    ->where('role', 'staff') // Kiểm tra trực tiếp trên cột role
+                    ->whereDoesntHave('appointments', function ($query) use ($data) {
+                        $query->where('appointment_date', $data['appointment_date'])
+                            ->where('time_slot_id', $data['time_slot_id'])
+                            ->where('status', '!=', 'cancelled');
+                    })
+                    ->first();
+
+                $staffId = $availableStaff ? $availableStaff->id : null;
+
+                $appointment = Appointment::create([
+                    'user_id' => $userId,
+                    'service_id' => $data['service_id'],
+                    'staff_user_id' => $staffId,
+                    'appointment_date' => $data['appointment_date'],
+                    'time_slot_id' => $data['time_slot_id'],
+                    'appointment_type' => $data['appointment_type'],
+                    'status' => $data['status'],
+                    'note' => $data['note'] ?? null,
+                    'slots' => $requestedSlots,
+                ]);
+
+                // Load relationships
+                $appointment->load(['user', 'service', 'timeSlot']);
+
+                // Gửi thông báo nếu có notification service
+                if (isset($this->notificationService)) {
+                    $this->notificationService->notifyAdmins(
+                        'Lịch hẹn mới',
+                        "Khách hàng {$appointment->user->full_name} đặt lịch {$appointment->service->name} vào ngày {$appointment->appointment_date}",
+                        'new_appointment',
+                        [
+                            'appointment_id' => $appointment->id,
+                            'user_id' => $appointment->user_id,
+                            'service_id' => $appointment->service_id,
+                            'appointment_date' => $appointment->appointment_date,
+                            'slots' => $appointment->slots,
+                            'time_slot' => [
+                                'start' => $appointment->timeSlot->start_time,
+                                'end' => $appointment->timeSlot->end_time
+                            ]
+                        ]
+                    );
+                }
+
+                // Trigger event
+                event(new AppointmentCreated($appointment));
+
                 return [
-                    'status' => 422,
-                    'message' => 'Không đủ slot trống trong khung giờ này',
-                    'data' => null
+                    'status' => 200,
+                    'message' => 'Đặt lịch thành công',
+                    'data' => $appointment
                 ];
+
+            } catch (\Exception $e) {
+                \Log::error('Error creating appointment: ' . $e->getMessage());
+                throw $e;
             }
-
-            // Find available staff
-            $staffId = null;
-            $staff = User::where('role', 'staff')
-                ->whereDoesntHave('appointments', function ($query) use ($data, $timeSlot) {
-                    $query->where('appointment_date', $data['appointment_date'])
-                        ->where('time_slot_id', $data['time_slot_id'])
-                        ->where('status', '!=', 'cancelled');
-                })
-                ->first();
-            if ($staff) {
-                $staffId = $staff->id;
-            }
-
-            $appointment = Appointment::create([
-                'user_id' => $data['user_id'],
-                'service_id' => $data['service_id'],
-                'staff_user_id' => $staffId,
-                'appointment_date' => $data['appointment_date'],
-                'time_slot_id' => $data['time_slot_id'],
-                'appointment_type' => $data['appointment_type'],
-                'status' => $data['status'],
-                'note' => $data['note'] ?? null,
-                'slots' => $requestedSlots,
-            ]);
-
-            // Load relationships for notification
-            $appointment->load(['user', 'service', 'timeSlot']);
-
-            // Send notification to admin
-            $this->notificationService->notifyAdmins(
-                'Lịch hẹn mới',
-                "Khách hàng {$appointment->user->full_name} đặt lịch {$appointment->service->name} vào ngày {$appointment->appointment_date}",
-                'new_appointment',
-                [
-                    'appointment_id' => $appointment->id,
-                    'user_id' => $appointment->user_id,
-                    'service_id' => $appointment->service_id,
-                    'appointment_date' => $appointment->appointment_date,
-                    'slots' => $appointment->slots,
-                    'time_slot' => [
-                        'start' => $appointment->timeSlot->start_time,
-                        'end' => $appointment->timeSlot->end_time
-                    ]
-                ]
-            );
-
-            event(new AppointmentCreated($appointment));
-
-            return [
-                'status' => 200,
-                'message' => 'Đặt lịch thành công',
-                'data' => $appointment
-            ];
         });
     }
 
