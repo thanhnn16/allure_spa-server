@@ -14,19 +14,30 @@ class OrderService
         try {
             DB::beginTransaction();
 
-            // Determine initial status based on source
-            $initialStatus = request()->is('api/*') ? 'pending' : 'confirmed';
-
-            $order = Order::create([
-                'user_id' => $data['user_id'] ?? Auth::user()->id,
+            // Validate and prepare data
+            $orderData = [
+                'user_id' => Auth::user()->id,
                 'total_amount' => $data['total_amount'],
                 'payment_method_id' => $data['payment_method_id'],
-                'voucher_id' => $data['voucher_id'] ?? null,
-                'discount_amount' => $data['discount_amount'] ?? 0,
-                'note' => $data['note'] ?? null,
-                'status' => $initialStatus,
-            ]);
+                'status' => request()->is('api/*') ? 'pending' : 'confirmed',
+            ];
 
+            // Optional fields
+            if (isset($data['voucher_id'])) {
+                $orderData['voucher_id'] = $data['voucher_id'];
+            }
+
+            if (isset($data['discount_amount'])) {
+                $orderData['discount_amount'] = $data['discount_amount'];
+            }
+
+            if (isset($data['note'])) {
+                $orderData['note'] = $data['note'];
+            }
+
+            $order = Order::create($orderData);
+
+            // Create order items
             foreach ($data['order_items'] as $item) {
                 OrderItem::create([
                     'order_id' => $order->id,
