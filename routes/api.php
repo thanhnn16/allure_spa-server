@@ -212,6 +212,9 @@ Route::middleware('throttle:api')->group(function () {
             Route::get('/my-vouchers', [VoucherController::class, 'getMyVouchers']);
             Route::get('/user/{userId}', [VoucherController::class, 'getUserVouchers']);
         });
+
+        // Sửa lại route cập nhật user profile
+        Route::put('/user/profile', [UserController::class, 'updateProfile']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

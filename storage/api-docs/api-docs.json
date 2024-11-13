@@ -4246,6 +4246,87 @@
                 ]
             }
         },
+        "/api/user/profile": {
+            "put": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Cập nhật thông tin cá nhân",
+                "description": "Cập nhật thông tin cá nhân của người dùng đã xác thực",
+                "operationId": "updateProfile",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Nguyễn Văn A"
+                                    },
+                                    "phone_number": {
+                                        "type": "string",
+                                        "example": "0123456789"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "example@email.com"
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "example": "male"
+                                    },
+                                    "date_of_birth": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "1990-01-01"
+                                    },
+                                    "skin_condition": {
+                                        "type": "string",
+                                        "example": "normal"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cập nhật thông tin thành công"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/vouchers/my-vouchers": {
             "get": {
                 "tags": [

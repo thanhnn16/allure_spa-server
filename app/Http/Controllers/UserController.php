@@ -527,4 +527,62 @@ class UserController extends BaseController
             );
         }
     }
+
+    /**
+     * Update user profile
+     * 
+     * @OA\Put(
+     *     path="/api/user/profile",
+     *     summary="Cập nhật thông tin cá nhân",
+     *     description="Cập nhật thông tin cá nhân của người dùng đã xác thực",
+     *     operationId="updateProfile",
+     *     tags={"User"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="full_name", type="string", example="Nguyễn Văn A"),
+     *             @OA\Property(property="phone_number", type="string", example="0123456789"),
+     *             @OA\Property(property="email", type="string", example="example@email.com"),
+     *             @OA\Property(property="gender", type="string", example="male"),
+     *             @OA\Property(property="date_of_birth", type="string", format="date", example="1990-01-01"),
+     *             @OA\Property(property="skin_condition", type="string", example="normal")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Cập nhật thông tin thành công"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/User")
+     *         )
+     *     )
+     * )
+     */
+    public function updateProfile(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            $validated = $request->validate([
+                'full_name' => 'sometimes|string|max:255',
+                'phone_number' => 'sometimes|string|max:20|unique:users,phone_number,' . $user->id,
+                'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
+                'gender' => 'sometimes|in:male,female,other',
+                'date_of_birth' => 'sometimes|date',
+                'skin_condition' => 'sometimes|string|max:255'
+            ]);
+
+            $user = $this->userService->updateUser($user->id, $validated);
+
+            return $this->respondWithJson($user, 'Cập nhật thông tin thành công');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->respondWithJson(null, $e->getMessage(), 422);
+        } catch (\Exception $e) {
+            Log::error('Update profile error: ' . $e->getMessage());
+            return $this->respondWithJson(null, 'Có lỗi xảy ra khi cập nhật thông tin', 500);
+        }
+    }
 }
