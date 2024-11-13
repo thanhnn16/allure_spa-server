@@ -1,8 +1,8 @@
 <script setup>
-import { ref, reactive, computed, defineComponent, h, onMounted } from 'vue'
+import { ref, reactive, computed, defineComponent, h, onMounted, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 import {
-    mdiAccount, mdiPackageVariant, mdiReceipt, mdiGift, mdiClose, mdiDelete,
+    mdiAccount, mdiPackageVariant, mdiReceipt, mdiGift, mdiDelete,
     mdiAlert, mdiPencil, mdiTicketPercent, mdiCamera
 } from '@mdi/js'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
@@ -94,15 +94,6 @@ const closeDeleteModal = () => {
     showDeleteModal.value = false
 }
 
-const closeModalOnOutsideClick = (event, modalRef) => {
-    if (event.target === modalRef) {
-        if (modalRef.id === 'editModal') {
-            closeEditModal()
-        } else if (modalRef.id === 'deleteModal') {
-            closeDeleteModal()
-        }
-    }
-}
 
 const updateUser = async () => {
     try {
@@ -115,16 +106,6 @@ const updateUser = async () => {
     }
 }
 
-const deleteUser = async () => {
-    try {
-        const response = await axios.delete(`/users/${props.user.id}`)
-        notification.value = { type: 'success', message: response.data.message }
-        window.location.href = '/users'
-    } catch (error) {
-        notification.value = { type: 'danger', message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa người dùng' }
-    }
-    closeDeleteModal()
-}
 
 const formattedDate = (date) => {
     if (!date) return '';
@@ -149,67 +130,12 @@ const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('vi-VN');
-};
 
-const formatVoucherType = (type) => {
-    switch (type) {
-        case 'percentage':
-            return 'Phần trăm';
-        case 'fixed':
-            return 'Giá trị cố định';
-        default:
-            return 'Không xác định';
-    }
-};
 
-const formatVoucherValue = (type, value) => {
-    if (type === 'percentage') {
-        return `${value}%`;
-    } else if (type === 'fixed') {
-        return formatCurrency(value);
-    }
-    return value;
-};
 
-const isVoucherActive = (voucher) => {
-    if (!voucher?.pivot?.remaining_uses) return false;
-    const now = new Date();
-    const endDate = new Date(voucher.end_date);
-    return endDate > now && voucher.pivot.remaining_uses > 0;
-};
 
-const formatInvoiceStatus = (status) => {
-    switch (status) {
-        case 'completed':
-            return 'Đã hoàn thành';
-        case 'pending':
-            return 'Đang xử lý';
-        case 'cancelled':
-            return 'Đã hủy';
-        default:
-            return 'Không xác định';
-    }
-};
 
-const formatPaymentMethod = (method) => {
-    switch (method) {
-        case 'cash':
-            return 'Tiền mặt';
-        case 'card':
-            return 'Thẻ';
-        case 'transfer':
-            return 'Chuyển khoản';
-        default:
-            return 'Khác';
-    }
-};
 
-const isTreatmentActive = (treatment) => {
-    return treatment.completed_sessions < treatment.total_sessions;
-};
 
 const basicInfo = computed(() => [
     { label: 'Họ và tên', value: safeUser.value.full_name },
@@ -316,11 +242,6 @@ const formatAddressType = (type) => {
     }
 }
 
-const handleAvatarError = (event) => {
-    const target = event.target
-    target.style.display = 'none'
-    target.parentElement.querySelector('div').style.display = 'flex'
-}
 
 const handleAvatarUpload = async (event) => {
     const file = event.target.files[0]
@@ -354,18 +275,6 @@ const handleAvatarUpload = async (event) => {
     }
 }
 
-const openAssignVoucherModal = async () => {
-    try {
-        const response = await axios.get('/vouchers')
-        availableVouchers.value = response.data.data
-        showAssignVoucherModal.value = true
-    } catch (error) {
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Không thể tải danh sách voucher'
-        }
-    }
-}
 
 const closeAssignVoucherModal = () => {
     showAssignVoucherModal.value = false;
@@ -415,11 +324,6 @@ const createAndAssignVoucher = async () => {
         }
 
         // Then assign it to the user
-        const assignResponse = await axios.post('/vouchers/assign-to-user', {
-            user_id: props.user.id,
-            voucher_id: createResponse.data.data.id,
-            total_uses: voucherForm.total_uses || 1
-        });
 
         // Refresh vouchers list
         const userVouchersResponse = await axios.get(`/vouchers/user/${props.user.id}/vouchers`);
@@ -509,6 +413,32 @@ onMounted(() => {
 
 // Add isAsideLgActive ref
 const isAsideLgActive = ref(true)
+
+// Thêm watch để theo dõi thay đổi của availableVouchers
+watch(availableVouchers, (newValue) => {
+    console.log('availableVouchers changed:', newValue);
+});
+
+const loadAvailableVouchers = async () => {
+    try {
+        const response = await axios.get('/vouchers');
+        console.log('Available vouchers response:', response.data);
+        if (response.data.success) {
+            availableVouchers.value = response.data.data;
+        }
+    } catch (error) {
+        console.error('Error loading vouchers:', error);
+        notification.value = {
+            type: 'danger',
+            message: error.response?.data?.message || 'Không thể tải danh sách voucher'
+        };
+    }
+};
+
+const openAssignVoucherModal = async () => {
+    showAssignVoucherModal.value = true;
+    await loadAvailableVouchers();
+};
 </script>
 <template>
     <LayoutAuthenticated>
@@ -651,7 +581,7 @@ const isAsideLgActive = ref(true)
             <div v-if="activeTab === 'vouchers'" class="space-y-4">
                 <div class="flex justify-between items-center">
                     <h3 class="text-lg font-medium">Danh sách voucher</h3>
-                    <BaseButton label="Gán voucher" color="info" @click="showAssignVoucherModal = true"
+                    <BaseButton label="Gán voucher" color="info" @click="openAssignVoucherModal"
                         :icon="mdiTicketPercent" />
                 </div>
 
@@ -662,7 +592,7 @@ const isAsideLgActive = ref(true)
                 <div v-else v-for="voucher in safeUser.vouchers" :key="voucher.id"
                     class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6 mb-4 border-l-4"
                     :class="voucher.is_active ? 'border-green-500' : 'border-gray-300 dark:border-gray-600'">
-                    
+
                     <!-- Voucher header -->
                     <div class="flex justify-between items-start">
                         <div>
@@ -685,21 +615,21 @@ const isAsideLgActive = ref(true)
                     <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
                         <div>
                             <p class="text-gray-600 dark:text-gray-400">
-                                Đơn tối thiểu: 
+                                Đơn tối thiểu:
                                 <span class="font-medium">{{ voucher.min_order_value_formatted }}</span>
                             </p>
                             <p class="text-gray-600 dark:text-gray-400">
-                                Giảm tối đa: 
+                                Giảm tối đa:
                                 <span class="font-medium">{{ voucher.max_discount_amount_formatted }}</span>
                             </p>
                         </div>
                         <div class="text-right">
                             <p class="text-gray-600 dark:text-gray-400">
-                                Bắt đầu: 
+                                Bắt đầu:
                                 <span class="font-medium">{{ voucher.start_date_formatted }}</span>
                             </p>
                             <p class="text-gray-600 dark:text-gray-400">
-                                Kết thúc: 
+                                Kết thúc:
                                 <span class="font-medium">{{ voucher.end_date_formatted }}</span>
                             </p>
                         </div>
@@ -707,13 +637,8 @@ const isAsideLgActive = ref(true)
 
                     <!-- Action buttons -->
                     <div class="mt-4 flex justify-end">
-                        <BaseButton 
-                            v-if="voucher.remaining_uses > 0"
-                            label="Trả lại voucher"
-                            color="danger"
-                            small
-                            @click="returnVoucher(voucher.id)"
-                        />
+                        <BaseButton v-if="voucher.remaining_uses > 0" label="Trả lại voucher" color="danger" small
+                            @click="returnVoucher(voucher.id)" />
                     </div>
                 </div>
             </div>
@@ -862,23 +787,22 @@ const isAsideLgActive = ref(true)
                                 <div v-if="!showCreateVoucherForm">
                                     <form @submit.prevent="assignVoucher" class="space-y-4">
                                         <!-- Existing voucher selection -->
-                                        <div v-if="availableVouchers.length > 0">
+                                        <div>
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                 Chọn Voucher có sẵn
                                             </label>
                                             <select v-model="voucherForm.voucher_id" class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                                 dark:bg-slate-800 dark:text-white focus:border-blue-500 
                                                 focus:ring-blue-500">
+                                                <option value="">-- Chọn voucher --</option>
                                                 <option v-for="voucher in availableVouchers" :key="voucher.id"
                                                     :value="voucher.id">
                                                     {{ voucher.code }} -
-                                                    {{ formatVoucherValue(voucher.type, voucher.value) }}
+                                                    {{ voucher.discount_type === 'percentage' ?
+                                                        `${voucher.discount_value}%` :
+                                                        formatCurrency(voucher.discount_value) }}
                                                 </option>
                                             </select>
-                                        </div>
-
-                                        <div v-else class="text-center py-4 text-gray-500">
-                                            Chưa có voucher nào khả dụng
                                         </div>
 
                                         <div>
@@ -898,7 +822,7 @@ const isAsideLgActive = ref(true)
                                                 <BaseButton type="button" label="Hủy" color="white"
                                                     @click="closeAssignVoucherModal" />
                                                 <BaseButton type="submit" label="Xác nhận" color="info"
-                                                    :disabled="!availableVouchers.length" />
+                                                    :disabled="!voucherForm.voucher_id" />
                                             </div>
                                         </div>
                                     </form>

@@ -209,6 +209,7 @@ Route::middleware('throttle:api')->group(function () {
 
         // Voucher routes
         Route::prefix('vouchers')->group(function () {
+            Route::get('/', [VoucherController::class, 'index']);
             Route::get('/my-vouchers', [VoucherController::class, 'getMyVouchers']);
             Route::get('/user/{userId}', [VoucherController::class, 'getUserVouchers']);
         });

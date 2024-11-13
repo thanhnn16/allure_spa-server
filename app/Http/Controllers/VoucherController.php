@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Voucher;
 use App\Models\UserVoucher;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use OpenApi\Annotations as OA;
 
 class VoucherController extends BaseController
@@ -31,18 +32,26 @@ class VoucherController extends BaseController
                     $query->where('is_unlimited', true)
                         ->orWhere(function ($q) {
                             $q->where('is_unlimited', false)
-                                ->whereRaw('usage_limit > used_times');
+                                ->whereRaw('used_times < usage_limit');
                         });
                 })
                 ->orderBy('created_at', 'desc')
                 ->get();
 
+            Log::info('Fetched vouchers:', ['count' => $vouchers->count(), 'vouchers' => $vouchers]);
+
             return response()->json([
-                'data' => $vouchers
+                'success' => true,
+                'data' => $vouchers,
+                'message' => ''
             ]);
         } catch (\Exception $e) {
+            Log::error('Error fetching vouchers:', ['error' => $e->getMessage()]);
+            
             return response()->json([
-                'message' => $e->getMessage()
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data' => null
             ], 400);
         }
     }
