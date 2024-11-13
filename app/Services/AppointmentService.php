@@ -140,7 +140,7 @@ class AppointmentService
                 ];
 
             } catch (\Exception $e) {
-                \Log::error('Error creating appointment: ' . $e->getMessage());
+                Log::error('Error creating appointment: ' . $e->getMessage());
                 throw $e;
             }
         });
