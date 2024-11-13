@@ -573,13 +573,19 @@ class UserController extends BaseController
                 'gender' => 'sometimes|in:male,female,other',
                 'date_of_birth' => 'sometimes|date',
                 'skin_condition' => 'sometimes|string|max:255'
+            ], [
+                'gender.in' => 'Giới tính phải là một trong các giá trị: male, female, other',
+                'email.email' => 'Email không đúng định dạng',
+                'email.unique' => 'Email đã được sử dụng',
+                'phone_number.unique' => 'Số điện thoại đã được sử dụng',
+                'date_of_birth.date' => 'Ngày sinh không đúng định dạng'
             ]);
 
             $user = $this->userService->updateUser($user->id, $validated);
 
             return $this->respondWithJson($user, 'Cập nhật thông tin thành công');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return $this->respondWithJson(null, $e->getMessage(), 422);
+            return $this->respondWithJson(null, $e->errors()[array_key_first($e->errors())][0], 422);
         } catch (\Exception $e) {
             Log::error('Update profile error: ' . $e->getMessage());
             return $this->respondWithJson(null, 'Có lỗi xảy ra khi cập nhật thông tin', 500);
