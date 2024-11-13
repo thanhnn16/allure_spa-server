@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -12,7 +12,6 @@ import SectionMain from '@/Components/SectionMain.vue'
 import AddAppointmentModal from '@/Pages/Calendar/Components/AddAppointmentModal.vue'
 import { useForm } from '@inertiajs/vue3'
 import axios from 'axios'
-import { parseISO } from 'date-fns'
 import tippy from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
 import { useToast } from "vue-toastification"
@@ -158,19 +157,21 @@ function handleDateSelect(selectInfo) {
     const selectedStart = new Date(selectInfo.start)
     const selectedHour = selectedStart.getHours().toString().padStart(2, '0')
     const selectedMinute = selectedStart.getMinutes().toString().padStart(2, '0')
-    const selectedTimeString = `${selectedHour}:${selectedMinute}:00`
 
     const matchingTimeSlot = props.timeSlots.find(slot => {
-        return slot.start_time === selectedTimeString
+        // So sánh chỉ phần giờ và phút
+        const slotTime = slot.start_time.substring(0, 5)  // "HH:mm"
+        const selectedTime = `${selectedHour}:${selectedMinute}`  // "HH:mm"
+        return slotTime === selectedTime
     })
 
     if (!matchingTimeSlot) {
-        alert('Vui lòng chọn khung giờ hợp lệ')
+        toast.error('Vui lòng chọn đúng khung giờ')
         return
     }
 
     if (matchingTimeSlot.current_bookings >= matchingTimeSlot.max_bookings) {
-        alert('Khung giờ này đã đầy')
+        toast.error('Khung giờ này đã đầy')
         return
     }
 
@@ -305,13 +306,16 @@ const statusColors = [
     { status: 'Đã hủy', class: 'status-cancelled', color: '#ef4444' },
     { status: 'Hoàn thành', class: 'status-completed', color: '#3b82f6' }
 ]
+
+// Thêm prop isAsideLgActive
+const isAsideLgActive = ref(true)
 </script>
 
 <template>
     <LayoutAuthenticated>
 
         <Head title="Lịch hẹn" />
-        <SectionMain>
+        <SectionMain :is-aside-lg-active="isAsideLgActive">
             <!-- Status legend với dark mode support -->
             <div class="mb-4 flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-lg shadow">
                 <span class="font-semibold dark:text-slate-200">Trạng thái:</span>

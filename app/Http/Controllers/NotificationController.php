@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class NotificationController extends BaseController
 {
@@ -19,13 +20,19 @@ class NotificationController extends BaseController
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $notifications = Notification::where('user_id', Auth::user()->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return $this->respondWithJson($notifications);
+        if ($request->wantsJson()) {
+            return $this->respondWithJson($notifications);
+        }
+
+        return Inertia::render('Notifications/Index', [
+            'notifications' => $notifications
+        ]);
     }
 
     /**

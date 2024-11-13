@@ -6,7 +6,7 @@ import UserAvatarCurrentUser from '@/Components/UserAvatarCurrentUser.vue'
 import NavBarMenuList from '@/Components/NavBarMenuList.vue'
 import BaseDivider from '@/Components/BaseDivider.vue'
 import { usePage } from '@inertiajs/vue3'
-import { mdiChevronDown, mdiChevronUp, mdiBell, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js'
+import { mdiChevronDown, mdiChevronUp, mdiBell, mdiWeatherNight, mdiWeatherSunny, mdiBellOffOutline } from '@mdi/js'
 import { useNotificationStore } from '@/Stores/notificationStore'
 import { useLayoutStore } from '@/Stores/layoutStore'
 
@@ -159,13 +159,10 @@ const darkModeIcon = computed(() => {
                     {{ notificationStore.unreadCount }}
                 </span>
             </div>
-            <BaseIcon 
-                v-else-if="item.icon" 
-                :path="darkModeIcon" 
-                class="transition-colors w-6 h-6 mr-3"
-                :class="{'text-yellow-500': !layoutStore.isDark && item.isToggleLightDark,
-                        'text-blue-500': layoutStore.isDark && item.isToggleLightDark}" 
-            />
+            <BaseIcon v-else-if="item.icon" :path="darkModeIcon" class="transition-colors w-6 h-6 mr-3" :class="{
+                'text-yellow-500': !layoutStore.isDark && item.isToggleLightDark,
+                'text-blue-500': layoutStore.isDark && item.isToggleLightDark
+            }" />
             <span class="px-2 transition-colors" :class="{ 'lg:hidden': item.isDesktopNoLabel && item.icon }">
                 {{ itemLabel }}
             </span>
@@ -176,33 +173,60 @@ const darkModeIcon = computed(() => {
             class="text-sm border-b border-gray-100 lg:border lg:bg-white lg:absolute lg:top-full lg:right-0 lg:min-w-[300px] lg:z-20 lg:rounded-lg lg:shadow-lg lg:dark:bg-slate-800 dark:border-slate-700"
             :class="{ 'lg:hidden': !isDropdownActive }">
             <div v-if="item.isNotification">
-                <div v-if="notificationMenu.length === 0" class="p-4 text-center text-gray-500">
-                    Không có thông báo mới
+                <div v-if="notificationMenu.length === 0" class="p-8 text-center">
+                    <BaseIcon :path="mdiBellOffOutline"
+                        class="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
+                    <p class="text-gray-500 dark:text-gray-400">Không có thông báo mới</p>
                 </div>
-                <div v-else class="max-h-[400px] overflow-y-auto">
+                <div v-else class="max-h-[400px] overflow-y-auto divide-y dark:divide-slate-700">
                     <div v-for="(notification, index) in notificationMenu" :key="index" @click="notification.onClick"
-                        class="p-4 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer border-b last:border-b-0 dark:border-slate-700">
-                        <div class="flex items-start">
-                            <BaseIcon :path="notification.icon" class="w-5 h-5 mr-3 mt-1" />
-                            <div class="flex-1">
-                                <div class="font-medium"
-                                    :class="{ 'text-gray-900 dark:text-white': !notification.isRead, 'text-gray-500': notification.isRead }">
-                                    {{ notification.label }}
-                                </div>
-                                <div class="text-sm text-gray-500">{{ notification.description }}</div>
-                                <div class="text-xs text-gray-400 mt-1">
-                                    {{ new Date(notification.timestamp).toLocaleString() }}
-                                </div>
+                        class="p-4 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors duration-200">
+                        <div class="flex items-start space-x-3">
+                            <div :class="{
+                                'p-2 rounded-full': true,
+                                'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300': notification.type === 'new_order',
+                                'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300': notification.type === 'new_appointment',
+                                'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300': notification.type === 'new_review'
+                            }">
+                                <BaseIcon :path="notification.icon" class="w-5 h-5" />
                             </div>
-                            <div v-if="!notification.isRead" class="w-2 h-2 bg-blue-500 rounded-full"></div>
+
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between">
+                                    <p class="font-medium truncate" :class="{
+                                        'text-gray-900 dark:text-white': !notification.isRead,
+                                        'text-gray-500 dark:text-gray-400': notification.isRead
+                                    }">
+                                        {{ notification.label }}
+                                    </p>
+                                    <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
+                                        {{ new Date(notification.timestamp).toLocaleTimeString([], {
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        }) }}
+                                    </span>
+                                </div>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                                    {{ notification.description }}
+                                </p>
+                            </div>
+
+                            <div v-if="!notification.isRead"
+                                class="w-2.5 h-2.5 bg-blue-500 rounded-full flex-shrink-0" />
                         </div>
                     </div>
                 </div>
-                <div class="p-2 border-t dark:border-slate-700">
-                    <button @click="notificationStore.markAllAsRead()"
-                        class="w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:hover:text-white py-1">
-                        Đánh dấu tất cả là đã đọc
-                    </button>
+                <div class="p-4 border-t dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
+                    <div class="flex justify-between items-center">
+                        <button @click="notificationStore.markAllAsRead()"
+                            class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-200">
+                            Đánh dấu tất cả là đã đọc
+                        </button>
+                        <Link href="/notifications"
+                            class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors duration-200">
+                        Xem tất cả
+                        </Link>
+                    </div>
                 </div>
             </div>
             <NavBarMenuList v-else :menu="item.menu" @menu-click="menuClickDropdown" />
