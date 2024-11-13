@@ -94,7 +94,11 @@ class TimeSlotController extends BaseController
     public function getAvailableSlots(Request $request)
     {
         $request->validate([
-            'date' => 'required|date|after_or_equal:today',
+            'date' => 'required|date|after_or_equal:' . now()->format('Y-m-d'),
+        ], [
+            'date.required' => 'Vui lòng chọn ngày',
+            'date.date' => 'Ngày không hợp lệ',
+            'date.after_or_equal' => 'Ngày phải từ hôm nay trở đi'
         ]);
 
         try {

@@ -187,15 +187,26 @@ class AppointmentController extends BaseController
      */
     public function store(AppointmentRequest $request)
     {
-        $result = $this->appointmentService->createAppointment($request->validated());
+        try {
+            $data = $request->validated();
+            $result = $this->appointmentService->createAppointment($data);
+            
+            if ($result['status'] === 422) {
+                return response()->json([
+                    'message' => $result['message']
+                ], 422);
+            }
 
-        if ($request->expectsJson()) {
-            return $this->respondWithJson($result['data'], $result['message'], $result['status']);
+            return response()->json([
+                'message' => 'Đặt lịch hẹn thành công',
+                'data' => $result['data']
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Có lỗi xảy ra khi đặt lịch hẹn',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return redirect()->route('appointments.index')
-            ->with('success', $result['message'])
-            ->with('appointment', $result['data']);
     }
 
     /**
