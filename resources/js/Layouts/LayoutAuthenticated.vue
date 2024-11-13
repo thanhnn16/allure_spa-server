@@ -1,8 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import menuAside from '@/menuAside.js'
 import menuNavBar from '@/menuNavBar.js'
-import { useDarkModeStore } from '@/Stores/darkMode.js'
+import { useLayoutStore } from '@/Stores/layoutStore'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import FormControl from '@/Components/FormControl.vue'
 import NavBar from '@/Components/NavBar.vue'
@@ -18,18 +18,18 @@ import {
 } from '@mdi/js'
 import SectionMain from '@/Components/SectionMain.vue'
 
-const darkModeStore = useDarkModeStore()
+const layoutStore = useLayoutStore()
 
 // Thêm state để quản lý menu
 const isAsideMobileExpanded = ref(false)
-const isAsideLgActive = ref(false)
+const isAsideLgActive = computed(() => layoutStore.isAsideLgActive)
 
 // Thêm method để toggle menu
 const toggleMenu = () => {
-    if (window.innerWidth < 1024) {
-        isAsideMobileExpanded.value = !isAsideMobileExpanded.value
+    if (window.innerWidth >= 1024) {
+        layoutStore.toggleAside()
     } else {
-        isAsideLgActive.value = !isAsideLgActive.value
+        isAsideMobileExpanded.value = !isAsideMobileExpanded.value
     }
 }
 
@@ -40,7 +40,7 @@ router.on('navigate', () => {
 
 const menuClick = (event, item) => {
     if (item.isToggleLightDark) {
-        darkModeStore.set()
+        layoutStore.toggleDarkMode()
     }
 }
 </script>

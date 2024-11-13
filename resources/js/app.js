@@ -12,6 +12,7 @@ import "vue-toastification/dist/index.css";
 import { initializeApp } from 'firebase/app'
 import { getMessaging, onMessage, getToken } from 'firebase/messaging'
 import { useNotificationStore } from '@/Stores/notificationStore'
+import { useLayoutStore } from '@/Stores/layoutStore'
 
 const appName = import.meta.env.VITE_APP_NAME || 'AllureSpa';
 
@@ -96,6 +97,10 @@ createInertiaApp({
             .use(ZiggyVue)
             .use(pinia)
             .use(Toast)
+
+        // Initialize layout settings
+        const layoutStore = useLayoutStore()
+        layoutStore.initDarkMode()
 
         // Register service worker after app creation
         registerServiceWorker();

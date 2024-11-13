@@ -6,8 +6,9 @@ import UserAvatarCurrentUser from '@/Components/UserAvatarCurrentUser.vue'
 import NavBarMenuList from '@/Components/NavBarMenuList.vue'
 import BaseDivider from '@/Components/BaseDivider.vue'
 import { usePage } from '@inertiajs/vue3'
-import { mdiChevronDown, mdiChevronUp, mdiBell } from '@mdi/js'
+import { mdiChevronDown, mdiChevronUp, mdiBell, mdiWeatherNight, mdiWeatherSunny } from '@mdi/js'
 import { useNotificationStore } from '@/Stores/notificationStore'
+import { useLayoutStore } from '@/Stores/layoutStore'
 
 const props = defineProps({
     item: {
@@ -63,7 +64,15 @@ const itemLabel = computed(() =>
 
 const isDropdownActive = ref(false)
 
+const layoutStore = useLayoutStore()
+
 const menuClick = (event) => {
+    if (props.item.isToggleLightDark) {
+        event.preventDefault()
+        layoutStore.toggleDarkMode()
+        return
+    }
+
     emit('menu-click', event, props.item)
 
     if (props.item.menu) {
@@ -124,6 +133,13 @@ const notificationMenu = computed(() => {
     return props.item.menu || []
 })
 
+const darkModeIcon = computed(() => {
+    if (props.item.isToggleLightDark) {
+        return layoutStore.isDark ? mdiWeatherNight : mdiWeatherSunny
+    }
+    return props.item.icon
+})
+
 </script>
 
 <template>
@@ -136,15 +152,23 @@ const notificationMenu = computed(() => {
         }">
             <UserAvatarCurrentUser v-if="item.isCurrentUser" :fullName="item.fullName || ''"
                 :avatar-url="item.avatarUrl" size="sm" class="mr-3 inline-flex" />
-            <div v-if="item.icon === mdiBell" class="relative">
+            <div v-else-if="item.icon === mdiBell" class="relative">
                 <BaseIcon :path="item.icon" class="transition-colors w-6 h-6 mr-3" />
                 <span v-if="notificationStore.unreadCount"
                     class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                     {{ notificationStore.unreadCount }}
                 </span>
             </div>
-            <span class="px-2 transition-colors" :class="{ 'lg:hidden': item.isDesktopNoLabel && item.icon }">{{
-                itemLabel }}</span>
+            <BaseIcon 
+                v-else-if="item.icon" 
+                :path="darkModeIcon" 
+                class="transition-colors w-6 h-6 mr-3"
+                :class="{'text-yellow-500': !layoutStore.isDark && item.isToggleLightDark,
+                        'text-blue-500': layoutStore.isDark && item.isToggleLightDark}" 
+            />
+            <span class="px-2 transition-colors" :class="{ 'lg:hidden': item.isDesktopNoLabel && item.icon }">
+                {{ itemLabel }}
+            </span>
             <BaseIcon v-if="item.menu" :path="isDropdownActive ? mdiChevronUp : mdiChevronDown"
                 class="hidden lg:inline-flex transition-colors" />
         </div>

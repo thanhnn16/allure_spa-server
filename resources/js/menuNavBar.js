@@ -1,5 +1,5 @@
 import {
-  mdiThemeLightDark,
+  mdiWeatherSunny,
   mdiBell
 } from '@mdi/js'
 
@@ -8,7 +8,7 @@ export default [
     isCurrentUser: true,
   },
   {
-    icon: mdiThemeLightDark,
+    icon: mdiWeatherSunny,
     label: 'Giao diện',
     isToggleLightDark: true
   },
