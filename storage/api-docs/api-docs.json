@@ -2032,14 +2032,14 @@
                 ]
             }
         },
-        "/api/orders/{order}/cancel": {
-            "delete": {
+        "/api/orders/{order}/update-status": {
+            "put": {
                 "tags": [
                     "Orders"
                 ],
-                "summary": "Cancel order",
-                "description": "Cancel an existing order",
-                "operationId": "8bfd787b44dd3adf55be6e76f393726e",
+                "summary": "Update order status",
+                "description": "Update status of an existing order",
+                "operationId": "2a890af7c59d61716f9d13ea7085c1ce",
                 "parameters": [
                     {
                         "name": "order",
@@ -2052,10 +2052,20 @@
                     }
                 ],
                 "requestBody": {
+                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
+                                "required": [
+                                    "status"
+                                ],
                                 "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "cancelled"
+                                        ]
+                                    },
                                     "cancel_reason": {
                                         "type": "string",
                                         "nullable": true
@@ -2068,7 +2078,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Order cancelled successfully",
+                        "description": "Status updated successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2079,6 +2089,9 @@
                                         },
                                         "message": {
                                             "type": "string"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Order"
                                         }
                                     },
                                     "type": "object"
