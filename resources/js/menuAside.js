@@ -84,13 +84,7 @@ export default [
     {
         label: 'Quản lý kho hàng',
         icon: mdiTable,
-        menu: [
-            {
-                label: 'Nhập xuất kho',
-                route: 'stock-movements.index',
-                icon: mdiImport
-            },
-        ]
+        route: 'stock-movements.index',
     },
     {
         label: 'Quản lý nhân viên',
