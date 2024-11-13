@@ -51,7 +51,7 @@ class FirebaseService
         try {
             // Extract message data from payload
             $data = $payload['data'] ?? [];
-            
+
             // Validate required fields
             if (empty($data['chat_id']) || empty($data['sender_id']) || empty($data['message'])) {
                 throw new \Exception('Invalid message payload');
@@ -79,11 +79,10 @@ class FirebaseService
     {
         try {
             // Get all admin FCM tokens from database
-            $adminTokens = User::whereHas('roles', function ($query) {
-                $query->where('name', 'admin');
-            })->whereNotNull('fcm_token')
-              ->pluck('fcm_token')
-              ->toArray();
+            $adminTokens = User::where('role', 'admin')
+                ->whereNotNull('fcm_token')
+                ->pluck('fcm_token')
+                ->toArray();
 
             if (empty($adminTokens)) {
                 Log::info('No admin tokens found for notification');
