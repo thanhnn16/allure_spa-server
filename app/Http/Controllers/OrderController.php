@@ -24,6 +24,45 @@ class OrderController extends BaseController
      */
 
     /**
+     * @OA\Schema(
+     *     schema="OrderRequest",
+     *     required={"user_id", "payment_method_id", "order_items", "total_amount", "discount_amount"},
+     *     @OA\Property(property="user_id", type="string", format="uuid"),
+     *     @OA\Property(property="payment_method_id", type="integer"),
+     *     @OA\Property(property="voucher_id", type="integer", nullable=true),
+     *     @OA\Property(property="total_amount", type="number", format="float"),
+     *     @OA\Property(property="discount_amount", type="number", format="float"),
+     *     @OA\Property(property="note", type="string", nullable=true),
+     *     @OA\Property(
+     *         property="order_items",
+     *         type="array",
+     *         @OA\Items(ref="#/components/schemas/OrderItemRequest")
+     *     )
+     * )
+     */
+
+    /**
+     * @OA\Schema(
+     *     schema="OrderItemRequest",
+     *     required={"item_type", "item_id", "quantity", "price"},
+     *     @OA\Property(property="item_type", type="string", enum={"product", "service"}),
+     *     @OA\Property(property="item_id", type="integer"),
+     *     @OA\Property(property="service_type", type="string", nullable=true, enum={"single", "combo_5", "combo_10"}),
+     *     @OA\Property(property="quantity", type="integer", minimum=1),
+     *     @OA\Property(property="price", type="number", format="float")
+     * )
+     */
+
+    /**
+     * @OA\Schema(
+     *     schema="OrderResponse",
+     *     @OA\Property(property="success", type="boolean"),
+     *     @OA\Property(property="message", type="string"),
+     *     @OA\Property(property="data", ref="#/components/schemas/Order")
+     * )
+     */
+
+    /**
      * @OA\Get(
      *     path="/api/orders",
      *     summary="Lấy danh sách đơn hàng",
@@ -34,11 +73,11 @@ class OrderController extends BaseController
      *         in="query",
      *         description="Lọc theo trạng thái đơn hàng",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"pending", "processing", "completed", "cancelled"})
+     *         @OA\Schema(type="string", enum={"pending", "confirmed", "shipping", "delivered", "completed", "cancelled"})
      *     ),
      *     @OA\Parameter(
      *         name="search",
-     *         in="query", 
+     *         in="query",
      *         description="Tìm kiếm theo tên khách hàng hoặc ID đơn hàng",
      *         required=false,
      *         @OA\Schema(type="string")
@@ -51,7 +90,8 @@ class OrderController extends BaseController
      *             @OA\Property(property="links", type="object"),
      *             @OA\Property(property="meta", type="object")
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response=401, description="Chưa xác thực")
      * )
      */
 
@@ -88,44 +128,27 @@ class OrderController extends BaseController
      *     security={{ "sanctum": {} }},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"user_id", "payment_method_id", "order_items", "total_amount", "discount_amount"},
-     *             @OA\Property(property="user_id", type="string", format="uuid", description="ID của người dùng"),
-     *             @OA\Property(property="payment_method_id", type="integer", description="ID phương thức thanh toán"),
-     *             @OA\Property(property="voucher_id", type="integer", nullable=true, description="ID voucher"),
-     *             @OA\Property(property="order_items", type="array", 
-     *                 @OA\Items(
-     *                     @OA\Property(property="item_type", type="string", enum={"product", "service"}),
-     *                     @OA\Property(property="item_id", type="integer"),
-     *                     @OA\Property(property="service_type", type="string", nullable=true, enum={"single", "combo_5", "combo_10"}),
-     *                     @OA\Property(property="quantity", type="integer", minimum=1),
-     *                     @OA\Property(property="price", type="number", format="float")
-     *                 )
-     *             ),
-     *             @OA\Property(property="total_amount", type="number", format="float"),
-     *             @OA\Property(property="discount_amount", type="number", format="float"),
-     *             @OA\Property(property="note", type="string", nullable=true)
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/OrderRequest")
      *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Tạo đơn hàng thành công",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", ref="#/components/schemas/Order"),
-     *             @OA\Property(property="message", type="string", example="Đơn hàng đã được tạo thành công")
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/OrderResponse")
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Dữ liệu không hợp lệ"
+     *         description="Dữ liệu không hợp lệ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
      *     )
      * )
      */
 
     /**
      * @OA\Put(
-     *     path="/api/orders/{order}",
+     *     path="/api/orders/{order}/update-status",
      *     summary="Cập nhật trạng thái đơn hàng",
      *     tags={"Orders"},
      *     security={{ "sanctum": {} }},
@@ -139,19 +162,16 @@ class OrderController extends BaseController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"status"},
-     *             @OA\Property(property="status", type="string", enum={"pending", "confirmed", "shipping", "delivered", "completed", "cancelled"}),
-     *             @OA\Property(property="note", type="string", nullable=true)
+     *             @OA\Property(property="status", type="string", enum={"cancelled"}),
+     *             @OA\Property(property="cancel_reason", type="string", nullable=true)
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Cập nhật thành công",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Order")
-     *         )
-     *     )
+     *         @OA\JsonContent(ref="#/components/schemas/OrderResponse")
+     *     ),
+     *     @OA\Response(response=403, description="Không có quyền")
      * )
      */
 
