@@ -25,9 +25,9 @@ class UserVoucher extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 
-        'voucher_id', 
-        'remaining_uses', 
+        'user_id',
+        'voucher_id',
+        'remaining_uses',
         'total_uses'
     ];
 

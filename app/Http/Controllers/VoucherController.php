@@ -247,11 +247,6 @@ class VoucherController extends BaseController
                 ]);
             }])
                 ->where('user_id', $userId)
-                ->whereHas('voucher', function ($query) {
-                    $query->where('status', 'active')
-                        ->where('end_date', '>', now());
-                })
-                ->where('remaining_uses', '>', 0)
                 ->get()
                 ->map(function ($userVoucher) {
                     $voucher = $userVoucher->voucher;
