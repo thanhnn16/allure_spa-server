@@ -3,7 +3,10 @@ import { ref, reactive, computed, defineComponent, h, onMounted, watch } from 'v
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 import {
     mdiAccount, mdiPackageVariant, mdiReceipt, mdiGift, mdiDelete,
-    mdiAlert, mdiPencil, mdiTicketPercent, mdiCamera
+    mdiAlert, mdiPencil, mdiTicketPercent, mdiCamera,
+    mdiCheckCircle,
+    mdiProgressClock,
+    mdiCalendarClock,
 } from '@mdi/js'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
@@ -439,6 +442,81 @@ const openAssignVoucherModal = async () => {
     showAssignVoucherModal.value = true;
     await loadAvailableVouchers();
 };
+
+const formatOrderStatus = (status) => {
+    switch (status) {
+        case 'pending':
+            return 'Chờ xử lý';
+        case 'processing':
+            return 'Đang xử lý';
+        case 'completed':
+            return 'Hoàn thành';
+        case 'cancelled':
+            return 'Đã hủy';
+        default:
+            return status;
+    }
+};
+
+const cancelOrder = async (orderId) => {
+    if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
+
+    try {
+        const response = await axios.delete(`/api/orders/${orderId}/cancel`);
+
+        // Refresh user data to get updated orders
+        const userResponse = await axios.get(`/users/${props.user.id}`);
+        Object.assign(props.user, userResponse.data.data);
+
+        notification.value = {
+            type: 'success',
+            message: 'Đã hủy đơn hàng thành công'
+        };
+    } catch (error) {
+        notification.value = {
+            type: 'danger',
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi hủy đơn hàng'
+        };
+    }
+};
+
+const userServicePackages = computed(() => {
+    return safeUser.value.user_service_packages?.filter(p => p.status !== 'completed') || [];
+});
+
+const completedPackages = computed(() => {
+    return safeUser.value.user_service_packages?.filter(p => p.status === 'completed') || [];
+});
+
+const completedTreatments = computed(() => {
+    return completedPackages.value.length;
+});
+
+const activeTreatments = computed(() => {
+    return userServicePackages.value.length;
+});
+
+const nextTreatmentDate = computed(() => {
+    const nextAppointment = userServicePackages.value
+        .map(p => p.next_appointment)
+        .filter(Boolean)
+        .sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date))[0];
+
+    return nextAppointment ? formattedDate(nextAppointment.appointment_date) : null;
+});
+
+const formatPackageStatus = (status) => {
+    switch (status) {
+        case 'active':
+            return 'Đang thực hiện';
+        case 'pending':
+            return 'Chờ bắt đầu';
+        case 'completed':
+            return 'Hoàn thành';
+        default:
+            return status;
+    }
+};
 </script>
 <template>
     <LayoutAuthenticated>
@@ -640,6 +718,110 @@ const openAssignVoucherModal = async () => {
                         <BaseButton v-if="voucher.remaining_uses > 0" label="Trả lại voucher" color="danger" small
                             @click="returnVoucher(voucher.id)" />
                     </div>
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div v-if="activeTab === 'invoices'" class="space-y-6">
+                <!-- Header -->
+                <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-4">
+                    <h3 class="text-lg font-medium dark:text-white">Lịch sử đơn hàng</h3>
+                </div>
+
+                <!-- Orders List -->
+                <div v-if="safeUser.orders?.length" class="space-y-4">
+                    <div v-for="order in safeUser.orders" :key="order.id"
+                        class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
+                        <!-- Order Header -->
+                        <div class="p-4 border-b dark:border-slate-700 flex justify-between items-center">
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    Mã đơn hàng: #{{ order.id }}
+                                </p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    {{ formattedDate(order.created_at) }}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <span :class="{
+                                    'px-2 py-1 text-xs font-medium rounded-full': true,
+                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': order.status === 'pending',
+                                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': order.status === 'processing',
+                                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': order.status === 'completed',
+                                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': order.status === 'cancelled'
+                                }">
+                                    {{ formatOrderStatus(order.status) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Order Items -->
+                        <div class="p-4 space-y-3">
+                            <div v-for="item in order.order_items" :key="item.id"
+                                class="flex justify-between items-center py-2">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <img v-if="item.product?.image_url" :src="item.product.image_url"
+                                            :alt="item.product?.name" class="w-12 h-12 object-cover rounded-md">
+                                        <div v-else
+                                            class="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-md flex items-center justify-center">
+                                            <BaseIcon :path="mdiPackageVariant"
+                                                class="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium dark:text-white">
+                                            {{ item.product?.name || item.service?.name || 'Sản phẩm đã xóa' }}
+                                        </p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            {{ formatCurrency(item.price) }} x {{ item.quantity }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <p class="font-medium dark:text-white">
+                                    {{ formatCurrency(item.price * item.quantity) }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Order Summary -->
+                        <div class="p-4 bg-gray-50 dark:bg-slate-800 space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600 dark:text-gray-400">Tạm tính</span>
+                                <span class="dark:text-white">{{ formatCurrency(order.total_amount) }}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600 dark:text-gray-400">Giảm giá</span>
+                                <span class="text-green-600 dark:text-green-400">
+                                    -{{ formatCurrency(order.discount_amount) }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between font-medium pt-2 border-t dark:border-slate-700">
+                                <span class="dark:text-white">Tổng cộng</span>
+                                <span class="text-lg text-primary-600 dark:text-primary-400">
+                                    {{ formatCurrency(order.total_amount - order.discount_amount) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Order Actions -->
+                        <div v-if="order.status === 'pending'"
+                            class="p-4 border-t dark:border-slate-700 flex justify-end space-x-3">
+                            <BaseButton label="Hủy đơn" color="danger" @click="cancelOrder(order.id)"
+                                :loading="order.loading" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div v-else class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-8 text-center">
+                    <BaseIcon :path="mdiReceipt" class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
+                    <h3 class="mt-4 text-lg font-medium dark:text-white">
+                        Chưa có đơn hàng nào
+                    </h3>
+                    <p class="mt-2 text-gray-600 dark:text-gray-400">
+                        Khách hàng chưa thực hiện đơn hàng nào.
+                    </p>
                 </div>
             </div>
 
@@ -948,6 +1130,172 @@ const openAssignVoucherModal = async () => {
                     </div>
                 </Dialog>
             </TransitionRoot>
+
+            <!-- Treatments Tab -->
+            <div v-if="activeTab === 'treatments'" class="space-y-6">
+                <!-- Header with Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <CardBox class="!p-6 dark:bg-slate-900">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 dark:bg-green-900">
+                                <BaseIcon :path="mdiCheckCircle" class="w-6 h-6 text-green-600 dark:text-green-400" />
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Liệu trình hoàn thành</p>
+                                <p class="text-2xl font-semibold dark:text-white">
+                                    {{ completedTreatments }}
+                                </p>
+                            </div>
+                        </div>
+                    </CardBox>
+
+                    <CardBox class="!p-6 dark:bg-slate-900">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
+                                <BaseIcon :path="mdiProgressClock" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Đang thực hiện</p>
+                                <p class="text-2xl font-semibold dark:text-white">
+                                    {{ activeTreatments }}
+                                </p>
+                            </div>
+                        </div>
+                    </CardBox>
+
+                    <CardBox class="!p-6 dark:bg-slate-900">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
+                                <BaseIcon :path="mdiCalendarClock"
+                                    class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Buổi điều trị tiếp theo</p>
+                                <p class="text-lg font-semibold dark:text-white">
+                                    {{ nextTreatmentDate || 'Chưa có lịch' }}
+                                </p>
+                            </div>
+                        </div>
+                    </CardBox>
+                </div>
+
+                <!-- Active Treatments -->
+                <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
+                    <div class="p-4 border-b dark:border-slate-700">
+                        <h3 class="text-lg font-medium dark:text-white">Liệu trình đang thực hiện</h3>
+                    </div>
+
+                    <div v-if="userServicePackages?.length" class="divide-y dark:divide-slate-700">
+                        <div v-for="packageTreatment in userServicePackages" :key="packageTreatment.id"
+                            class="p-4 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 class="font-medium dark:text-white">{{ packageTreatment.service.name }}</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        Gói {{ packageTreatment.package_type }}
+                                    </p>
+                                </div>
+                                <div :class="{
+                                    'px-3 py-1 rounded-full text-sm font-medium': true,
+                                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': packageTreatment.status === 'active',
+                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': packageTreatment.status === 'pending',
+                                    'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200': packageTreatment.status === 'completed'
+                                }">
+                                    {{ formatPackageStatus(packageTreatment.status) }}
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="mb-4">
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600 dark:text-gray-400">
+                                        Tiến độ: {{ packageTreatment.used_sessions }}/{{ packageTreatment.total_sessions
+                                        }} buổi
+                                    </span>
+                                    <span class="text-gray-600 dark:text-gray-400">
+                                        {{ Math.round((packageTreatment.used_sessions / packageTreatment.total_sessions)
+                                            * 100) }}%
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                    <div class="bg-blue-600 h-2.5 rounded-full dark:bg-blue-500"
+                                        :style="`width: ${(packageTreatment.used_sessions / packageTreatment.total_sessions) * 100}%`">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Treatment History -->
+                            <div class="space-y-3">
+                                <p class="text-sm font-medium dark:text-white">Lịch sử điều trị</p>
+                                <div class="space-y-2">
+                                    <div v-for="session in packageTreatment.treatment_sessions" :key="session.id"
+                                        class="flex items-center space-x-3 text-sm">
+                                        <div class="w-20 text-gray-600 dark:text-gray-400">
+                                            {{ formattedDate(session.treatment_date) }}
+                                        </div>
+                                        <div class="flex-1 dark:text-white">
+                                            {{ session.note || 'Không có ghi chú' }}
+                                        </div>
+                                        <div class="text-gray-600 dark:text-gray-400">
+                                            Thực hiện bởi: {{ session.staff?.full_name || 'N/A' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Next Appointment -->
+                            <div v-if="packageTreatment.next_appointment"
+                                class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                                <div class="flex items-center">
+                                    <BaseIcon :path="mdiCalendarClock"
+                                        class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                    <span class="ml-2 text-sm text-blue-800 dark:text-blue-200">
+                                        Lịch hẹn tiếp theo: {{
+                                            formattedDate(packageTreatment.next_appointment.appointment_date)
+                                        }}
+                                        {{ packageTreatment.next_appointment.appointment_time }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div v-else class="p-6 text-center text-gray-600 dark:text-gray-400">
+                        Chưa có liệu trình nào đang thực hiện
+                    </div>
+                </div>
+
+                <!-- Treatment History -->
+                <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
+                    <div class="p-4 border-b dark:border-slate-700">
+                        <h3 class="text-lg font-medium dark:text-white">Lịch sử liệu trình</h3>
+                    </div>
+
+                    <div v-if="completedPackages?.length" class="divide-y dark:divide-slate-700">
+                        <div v-for="packageCompleted in completedPackages" :key="packageCompleted.id"
+                            class="p-4 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-medium dark:text-white">{{ packageCompleted.service.name }}</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        Hoàn thành ngày: {{ formattedDate(packageCompleted.completed_at) }}
+                                    </p>
+                                </div>
+                                <div class="text-sm">
+                                    <span class="text-gray-600 dark:text-gray-400">
+                                        {{ packageCompleted.total_sessions }} buổi
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="p-6 text-center text-gray-600 dark:text-gray-400">
+                        Chưa có liệu trình nào hoàn thành
+                    </div>
+                </div>
+            </div>
         </SectionMain>
     </LayoutAuthenticated>
 </template>
