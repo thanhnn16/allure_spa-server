@@ -68,11 +68,6 @@ class OrderController extends BaseController
 
 
 
-
-
-
-
-
     protected $productService;
 
     public function __construct(ProductService $productService)
@@ -125,7 +120,7 @@ class OrderController extends BaseController
      * )
      */
 
-    public function index()
+    public function index(Request $request)
     {
         $orders = Order::with(['user', 'invoice'])
             ->when(request('status'), function ($query, $status) {
@@ -138,6 +133,10 @@ class OrderController extends BaseController
             })
             ->latest()
             ->paginate(10);
+
+        if ($request->expectsJson()) {
+            return $this->respondWithJson($orders, 'Lấy danh sách đơn hàng thành công');
+        }
 
         return Inertia::render('Order/OrderView', [
             'orders' => $orders
