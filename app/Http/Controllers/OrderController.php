@@ -122,6 +122,10 @@ class OrderController extends BaseController
 
     public function index(Request $request)
     {
+        if (Auth::user()->role !== 'admin') {
+            return $this->respondWithError('Bạn không có quyền truy cập', 403);
+        }
+
         $orders = Order::with(['user', 'invoice'])
             ->when(request('status'), function ($query, $status) {
                 return $query->where('status', $status);
