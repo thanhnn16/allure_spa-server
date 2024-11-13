@@ -2032,53 +2032,44 @@
                 ]
             }
         },
-        "/api/orders/{order}/update-status": {
-            "put": {
+        "/api/orders": {
+            "get": {
                 "tags": [
                     "Orders"
                 ],
-                "summary": "Update order status",
-                "description": "Update status of an existing order",
-                "operationId": "2a890af7c59d61716f9d13ea7085c1ce",
+                "summary": "Lấy danh sách đơn hàng",
+                "operationId": "getOrders",
                 "parameters": [
                     {
-                        "name": "order",
-                        "in": "path",
-                        "description": "Order ID",
-                        "required": true,
+                        "name": "status",
+                        "in": "query",
+                        "description": "Lọc theo trạng thái đơn hàng",
+                        "required": false,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "confirmed",
+                                "shipping",
+                                "delivered",
+                                "completed",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Tìm kiếm theo tên khách hàng hoặc ID đơn hàng",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "status"
-                                ],
-                                "properties": {
-                                    "status": {
-                                        "type": "string",
-                                        "enum": [
-                                            "cancelled"
-                                        ]
-                                    },
-                                    "cancel_reason": {
-                                        "type": "string",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "Status updated successfully",
+                        "description": "Successful operation",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2091,7 +2082,78 @@
                                             "type": "string"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/Order"
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Order"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/orders/{order}/cancel": {
+            "delete": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Hủy đơn hàng (dành cho khách hàng)",
+                "operationId": "8bfd787b44dd3adf55be6e76f393726e",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "cancel_reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Hủy đơn hàng thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
                                         }
                                     },
                                     "type": "object"
@@ -2100,10 +2162,10 @@
                         }
                     },
                     "403": {
-                        "description": "Forbidden"
+                        "description": "Không có quyền hủy đơn hàng này"
                     },
-                    "404": {
-                        "description": "Order not found"
+                    "400": {
+                        "description": "Không thể hủy đơn hàng ở trạng thái hiện tại"
                     }
                 },
                 "security": [
