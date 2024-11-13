@@ -26,12 +26,11 @@ class OrderController extends BaseController
     /**
      * @OA\Schema(
      *     schema="OrderRequest",
-     *     required={"user_id", "payment_method_id", "order_items", "total_amount", "discount_amount"},
-     *     @OA\Property(property="user_id", type="string", format="uuid"),
+     *     required={"payment_method_id", "order_items", "total_amount"},
      *     @OA\Property(property="payment_method_id", type="integer"),
      *     @OA\Property(property="voucher_id", type="integer", nullable=true),
      *     @OA\Property(property="total_amount", type="number", format="float"),
-     *     @OA\Property(property="discount_amount", type="number", format="float"),
+     *     @OA\Property(property="discount_amount", type="number", format="float", nullable=true),
      *     @OA\Property(property="note", type="string", nullable=true),
      *     @OA\Property(
      *         property="order_items",
@@ -58,7 +57,11 @@ class OrderController extends BaseController
      *     schema="OrderResponse",
      *     @OA\Property(property="success", type="boolean"),
      *     @OA\Property(property="message", type="string"),
-     *     @OA\Property(property="data", ref="#/components/schemas/Order")
+     *     @OA\Property(
+     *         property="data",
+     *         type="object",
+     *         ref="#/components/schemas/Order"
+     *     )
      * )
      */
 
@@ -288,22 +291,23 @@ class OrderController extends BaseController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"user_id", "payment_method_id", "order_items", "total_amount"},
-     *             @OA\Property(property="user_id", type="string", format="uuid"),
-     *             @OA\Property(property="payment_method_id", type="integer"),
-     *             @OA\Property(property="voucher_id", type="integer", nullable=true),
-     *             @OA\Property(property="total_amount", type="number", format="float"),
-     *             @OA\Property(property="discount_amount", type="number", format="float"),
-     *             @OA\Property(property="note", type="string", nullable=true),
+     *             required={"payment_method_id", "order_items", "total_amount"},
+     *             @OA\Property(property="payment_method_id", type="integer", description="Payment method ID"),
+     *             @OA\Property(property="voucher_id", type="integer", nullable=true, description="Optional voucher ID"),
+     *             @OA\Property(property="total_amount", type="number", format="float", description="Total order amount"),
+     *             @OA\Property(property="discount_amount", type="number", format="float", nullable=true, description="Optional discount amount"),
+     *             @OA\Property(property="note", type="string", nullable=true, description="Optional order note"),
      *             @OA\Property(
      *                 property="order_items",
      *                 type="array",
+     *                 description="Array of order items",
      *                 @OA\Items(
-     *                     @OA\Property(property="item_type", type="string", enum={"product", "service"}),
-     *                     @OA\Property(property="item_id", type="integer"),
-     *                     @OA\Property(property="service_type", type="string", nullable=true),
-     *                     @OA\Property(property="quantity", type="integer", minimum=1),
-     *                     @OA\Property(property="price", type="number", format="float")
+     *                     required={"item_type", "item_id", "quantity", "price"},
+     *                     @OA\Property(property="item_type", type="string", enum={"product", "service"}, description="Type of item"),
+     *                     @OA\Property(property="item_id", type="integer", description="ID of product or service"),
+     *                     @OA\Property(property="service_type", type="string", nullable=true, enum={"single", "combo_5", "combo_10"}, description="Service type if item_type is service"),
+     *                     @OA\Property(property="quantity", type="integer", minimum=1, description="Quantity of item"),
+     *                     @OA\Property(property="price", type="number", format="float", description="Price per item")
      *                 )
      *             )
      *         )
@@ -317,8 +321,23 @@ class OrderController extends BaseController
      *             @OA\Property(property="data", ref="#/components/schemas/Order")
      *         )
      *     ),
-     *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=401, description="Unauthenticated")
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="The given data was invalid"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Unauthenticated")
+     *         )
+     *     )
      * )
      */
 
