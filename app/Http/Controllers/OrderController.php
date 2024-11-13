@@ -14,15 +14,15 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * @OA\Tag(
+ *     name="Orders",
+ *     description="API Endpoints quản lý đơn hàng"
+ * )
+ */
+
 class OrderController extends BaseController
 {
-    /**
-     * @OA\Tag(
-     *     name="Orders",
-     *     description="API Endpoints quản lý đơn hàng"
-     * )
-     */
-
     /**
      * @OA\Schema(
      *     schema="OrderRequest",

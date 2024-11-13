@@ -6716,6 +6716,10 @@
             "description": "API Endpoints của Appointment"
         },
         {
+            "name": "Orders",
+            "description": "API Endpoints quản lý đơn hàng"
+        },
+        {
             "name": "Ratings",
             "description": "API Endpoints để quản lý đánh giá"
         },
@@ -6746,10 +6750,6 @@
         {
             "name": "Favorites",
             "description": "Favorites"
-        },
-        {
-            "name": "Orders",
-            "description": "Orders"
         },
         {
             "name": "Products",
