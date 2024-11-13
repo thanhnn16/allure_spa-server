@@ -328,7 +328,7 @@ class OrderController extends BaseController
         try {
             // Validate request
             $validatedData = $request->validate([
-                'user_id' => 'required|exists:users,id',
+                'user_id' => 'nullable|exists:users,id',
                 'payment_method_id' => 'required|exists:payment_methods,id',
                 'voucher_id' => 'nullable|exists:vouchers,id',
                 'order_items' => 'required|array|min:1',
@@ -349,7 +349,7 @@ class OrderController extends BaseController
 
             // Create order
             $order = Order::create([
-                'user_id' => $validatedData['user_id'],
+                'user_id' => $validatedData['user_id'] ?? Auth::user()->id,
                 'total_amount' => $validatedData['total_amount'],
                 'payment_method_id' => $validatedData['payment_method_id'],
                 'voucher_id' => $validatedData['voucher_id'],
