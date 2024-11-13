@@ -27,15 +27,25 @@ const asideLgCloseClick = (event) => {
   emit('aside-lg-close-click', event)
 }
 
-// Watch screen size changes
-const handleResize = () => {
+// Add debounce function
+const debounce = (fn, delay) => {
+  let timeoutId
+  return (...args) => {
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => fn(...args), delay)
+  }
+}
+
+// Update handleResize with debounce
+const handleResize = debounce(() => {
   screenWidth.value = window.innerWidth
-  if (screenWidth.value < 1024) {
-    if (props.isAsideLgActive) {
+  if (screenWidth.value >= 1024) {
+    // Trên desktop, đóng overlay nếu đang mở
+    if (props.isAsideMobileExpanded) {
       emit('aside-lg-close-click')
     }
   }
-}
+}, 250)
 
 // Add resize listener
 onMounted(() => {
@@ -52,23 +62,15 @@ onUnmounted(() => {
 
 <template>
   <div>
-    <AsideMenuLayer
-      :menu="menu"
-      :class="[
-        'fixed top-0 z-40 h-screen w-64',
-        isAsideMobileExpanded ? 'left-0' : '-left-64',
-        { 'lg:left-0': isAsideLgActive },
-        { 'lg:-left-64': !isAsideLgActive },
-        'transition-all duration-300 ease-in-out'
-      ]"
-      @menu-click="menuClick"
-      @aside-lg-close-click="asideLgCloseClick"
-    />
+    <AsideMenuLayer :menu="menu" :class="[
+      'fixed top-0 z-40 h-screen w-64',
+      isAsideMobileExpanded ? 'left-0' : '-left-64',
+      { 'lg:left-0': isAsideLgActive },
+      { 'lg:-left-64': !isAsideLgActive },
+      'transition-all duration-300 ease-in-out'
+    ]" @menu-click="menuClick" @aside-lg-close-click="asideLgCloseClick" />
 
-    <OverlayLayer
-      v-show="isAsideMobileExpanded || (isAsideLgActive && screenWidth < 1024)"
-      z-index="z-30"
-      @overlay-click="asideLgCloseClick"
-    />
+    <OverlayLayer v-show="isAsideMobileExpanded || (isAsideLgActive && screenWidth < 1024)" z-index="z-30"
+      @overlay-click="asideLgCloseClick" />
   </div>
 </template>

@@ -11,11 +11,11 @@ defineProps({
 
 <template>
   <section 
-    class="p-6 transition-all duration-300 ease-in-out" 
+    class="p-6 transition-all duration-300 ease-in-out will-change-transform" 
     :class="[
       containerMaxW,
-      { 'lg:ml-64': isAsideLgActive },
-      { 'lg:ml-0': !isAsideLgActive }
+      { 'lg:ml-64 transform': isAsideLgActive },
+      { 'lg:ml-0 transform': !isAsideLgActive }
     ]"
   >
     <slot />

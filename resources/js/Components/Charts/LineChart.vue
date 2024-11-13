@@ -15,10 +15,6 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  chartData: {
-    type: Object,
-    required: true
-  },
   options: {
     type: Object,
     default: () => ({

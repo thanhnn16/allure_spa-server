@@ -43,15 +43,14 @@ const asideLgCloseClick = (event) => {
 </script>
 
 <template>
-  <div> <!-- Added a single root node -->
+  <div>
     <aside 
-      class="lg:py-2 lg:pl-2 w-78 fixed flex z-40 top-0 h-screen transition-all duration-300 ease-in-out"
+      class="lg:py-2 lg:pl-2 w-78 fixed flex z-999 top-16 h-[calc(100vh-7rem)] transition-all duration-300 ease-in-out"
     >
       <div class="aside lg:rounded-2xl flex-1 flex flex-col overflow-hidden dark:bg-slate-900 bg-white shadow-lg">
-        <!-- Header with close button -->
         <div class="flex items-center h-14 px-4 border-b dark:border-slate-800">
           <div class="flex-1">
-            <b class="font-black">Allure Spa</b>
+            <b class="font-black text-xl text-center flex justify-center">Allure Spa</b>
           </div>
           <button 
             class="hidden lg:inline-block xl:hidden p-3 hover:text-blue-500"
@@ -61,7 +60,6 @@ const asideLgCloseClick = (event) => {
           </button>
         </div>
 
-        <!-- Menu content -->
         <div class="flex-1 overflow-y-auto aside-scrollbars">
           <AsideMenuList 
             :menu="menu" 

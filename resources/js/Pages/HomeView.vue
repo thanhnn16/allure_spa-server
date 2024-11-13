@@ -26,8 +26,46 @@ import axios from 'axios'
 import { router } from '@inertiajs/vue3'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import UserAvatar from '@/Components/UserAvatar.vue'
+import { Chart } from 'chart.js/auto'
+import {
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js'
 
-const chartData = ref(null)
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+)
+
+const chartData = ref({
+  labels: [],
+  datasets: [{
+    label: 'Doanh thu',
+    data: [],
+    fill: true,
+    borderColor: '#10B981',
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    tension: 0.4,
+    borderWidth: 2,
+    pointRadius: 4,
+    pointBackgroundColor: '#10B981',
+    pointBorderColor: '#fff',
+    pointBorderWidth: 2,
+    pointHoverRadius: 6,
+  }]
+})
 
 const newUsers = ref([])
 const userCount = ref(0)
@@ -48,14 +86,14 @@ const fetchDashboardData = async () => {
     salesAmount.value = response.data.salesAmount
     orderCount.value = response.data.orderCount
     salesData.value = response.data.salesData
-    
+
     if (response.data.salesData && response.data.salesData.length > 0) {
       updateChartData()
     }
-    
+
     console.log('Sales Data:', response.data.salesData)
     console.log('Chart Data:', chartData.value)
-    
+
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
   } finally {
@@ -139,40 +177,20 @@ const chartOptions = computed(() => ({
 const updateChartData = () => {
   if (!salesData.value || !Array.isArray(salesData.value) || salesData.value.length === 0) {
     console.log('No sales data available')
-    chartData.value = null
-    return
-  }
-
-  const labels = salesData.value.map(item => item.date)
-  const data = salesData.value.map(item => parseFloat(item.total_sales))
-
-  console.log('Labels:', labels)
-  console.log('Data:', data)
-
-  if (!labels.length || !data.length) {
-    console.log('No valid data after transformation')
-    chartData.value = null
     return
   }
 
   chartData.value = {
-    labels: labels,
-    datasets: [
-      {
-        label: 'Doanh thu',
-        data: data,
-        fill: true,
-        borderColor: mainStore.isDark ? '#10B981' : '#10B981',
-        backgroundColor: mainStore.isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
-        tension: 0.4,
-        borderWidth: 2,
-        pointRadius: 4,
-        pointBackgroundColor: '#10B981',
-        pointBorderColor: mainStore.isDark ? '#1E293B' : '#fff',
-        pointBorderWidth: 2,
-        pointHoverRadius: 6,
-      }
-    ]
+    labels: salesData.value.map(item => item.date),
+    datasets: [{
+      ...chartData.value.datasets[0],
+      data: salesData.value.map(item => parseFloat(item.total_sales)),
+      borderColor: mainStore.isDark ? '#10B981' : '#10B981',
+      backgroundColor: mainStore.isDark
+        ? 'rgba(16, 185, 129, 0.2)'
+        : 'rgba(16, 185, 129, 0.1)',
+      pointBorderColor: mainStore.isDark ? '#1E293B' : '#fff'
+    }]
   }
 }
 
@@ -186,10 +204,7 @@ watch(() => mainStore.isDark, () => {
 }, { immediate: true });
 
 const hasChartData = computed(() => {
-  return chartData.value !== null && 
-         chartData.value.datasets && 
-         chartData.value.datasets[0].data && 
-         chartData.value.datasets[0].data.length > 0
+  return chartData.value.datasets[0].data.length > 0
 })
 
 const viewAllCustomers = () => {
@@ -230,13 +245,15 @@ const statsTabs = computed(() => [
   { id: 'products', label: 'Sản phẩm', icon: mdiCartOutline },
   { id: 'customers', label: 'Khách hàng', icon: mdiAccountMultiple }
 ])
+
+const isAsideLgActive = ref(true)
 </script>
 
 <template>
   <LayoutAuthenticated>
 
     <Head title="Dashboard" />
-    <SectionMain>
+    <SectionMain :is-aside-lg-active="isAsideLgActive">
       <SectionTitleLineWithButton :icon="mdiChartTimelineVariant" title="Tổng quan" main>
       </SectionTitleLineWithButton>
 

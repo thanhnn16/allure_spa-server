@@ -18,8 +18,6 @@ import {
 } from '@mdi/js'
 import SectionMain from '@/Components/SectionMain.vue'
 
-const layoutAsidePadding = 'xl:pl-78'
-
 const darkModeStore = useDarkModeStore()
 
 // Thêm state để quản lý menu
@@ -28,13 +26,16 @@ const isAsideLgActive = ref(false)
 
 // Thêm method để toggle menu
 const toggleMenu = () => {
-    isAsideMobileExpanded.value = !isAsideMobileExpanded.value
+    if (window.innerWidth < 1024) {
+        isAsideMobileExpanded.value = !isAsideMobileExpanded.value
+    } else {
+        isAsideLgActive.value = !isAsideLgActive.value
+    }
 }
 
 // Reset menu state khi navigate
 router.on('navigate', () => {
     isAsideMobileExpanded.value = false
-    isAsideLgActive.value = false
 })
 
 const menuClick = (event, item) => {
@@ -46,18 +47,20 @@ const menuClick = (event, item) => {
 
 <template>
     <div :class="{ 'overflow-hidden lg:overflow-visible': isAsideMobileExpanded }">
-        <div :class="[layoutAsidePadding, { 'ml-78 lg:ml-0': isAsideMobileExpanded }]"
-            class="pt-14 min-h-screen w-screen transition-position lg:w-auto bg-gray-50 dark:bg-slate-800 dark:text-slate-100">
-
-            <!-- Navbar với burger button -->
-            <NavBar :menu="menuNavBar" :class="[layoutAsidePadding, { 'ml-78 lg:ml-0': isAsideMobileExpanded }, 'z-50']"
-                @menu-click="menuClick">
-                <!-- Burger button cho mobile -->
-                <NavBarItemPlain display="flex lg:hidden" @click.prevent="toggleMenu">
-                    <BaseIcon :path="isAsideMobileExpanded ? mdiBackburger : mdiForwardburger" size="24" />
+        <div :class="[
+            'pt-14 min-h-screen w-screen transition-position lg:w-auto bg-gray-50 dark:bg-slate-800 dark:text-slate-100',
+            { 'lg:ml-78': isAsideLgActive }
+        ]">
+            <!-- Navbar -->
+            <NavBar :menu="menuNavBar" class="fixed w-full top-0 z-50" @menu-click="menuClick">
+                <!-- Burger button -->
+                <NavBarItemPlain display="flex" @click.prevent="toggleMenu">
+                    <BaseIcon 
+                        :path="isAsideMobileExpanded || isAsideLgActive ? mdiBackburger : mdiForwardburger" 
+                        size="24" 
+                    />
                 </NavBarItemPlain>
 
-                <!-- Burger button cho desktop -->
                 <NavBarItemPlain display="hidden lg:flex xl:hidden" @click.prevent="isAsideLgActive = true">
                     <BaseIcon :path="mdiMenu" size="24" />
                 </NavBarItemPlain>
@@ -67,23 +70,29 @@ const menuClick = (event, item) => {
                 </NavBarItemPlain>
             </NavBar>
 
-            <!-- AsideMenu với các props mới -->
-            <AsideMenu v-bind:class="[
+            <!-- AsideMenu -->
+            <AsideMenu :class="[
                 isAsideMobileExpanded ? 'left-0' : '-left-78',
-                { 'lg:left-0': !isAsideLgActive },
-                'transition-all duration-300 ease-in-out'
+                isAsideLgActive ? 'lg:left-0' : 'lg:-left-78',
+                'fixed top-0 h-screen z-40 transition-all duration-300 ease-in-out'
             ]" :menu="menuAside" :is-aside-mobile-expanded="isAsideMobileExpanded"
                 :is-aside-lg-active="isAsideLgActive" @menu-click="menuClick"
                 @aside-lg-close-click="isAsideLgActive = false" />
 
-            <SectionMain :is-aside-lg-active="isAsideLgActive">
-                <slot />
-            </SectionMain>
+            <!-- Main content -->
+            <div :class="[
+                isAsideLgActive ? 'lg:ml-78' : 'lg:ml-0',
+                'transition-all duration-300 ease-in-out'
+            ]">
+                <SectionMain :is-aside-lg-active="isAsideLgActive">
+                    <slot />
+                </SectionMain>
 
-            <FooterBar>
-                Cần hỗ trợ? Gọi ngay:
-                <a href="tel:0346542636" target="_blank" class="text-blue-600">0346542636 - Thành</a>
-            </FooterBar>
+                <FooterBar>
+                    Cần hỗ trợ? Gọi ngay:
+                    <a href="tel:0346542636" target="_blank" class="text-blue-600">0346542636 - Thành</a>
+                </FooterBar>
+            </div>
         </div>
     </div>
 </template>
