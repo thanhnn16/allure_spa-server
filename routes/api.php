@@ -178,6 +178,7 @@ Route::middleware('throttle:api')->group(function () {
             // Basic CRUD operations
             Route::get('/', [OrderController::class, 'index']);
             Route::post('/', [OrderController::class, 'store']);
+            Route::get('/my-orders', [OrderController::class, 'getMyOrders']);
             Route::get('/{order}', [OrderController::class, 'show']);
             Route::put('/{order}', [OrderController::class, 'update']);
             Route::delete('/{order}', [OrderController::class, 'destroy']);
