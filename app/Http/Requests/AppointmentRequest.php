@@ -14,13 +14,13 @@ class AppointmentRequest extends FormRequest
     public function rules()
     {
         return [
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'nullable|exists:users,id',
             'service_id' => 'nullable|exists:services,id',
             'user_treatment_package_id' => 'nullable|exists:user_treatment_packages,id',
-            'appointment_date' => 'required|date|after_or_equal:' . now()->format('Y-m-d'),
+            'appointment_date' => 'required|date',
             'time_slot_id' => 'required|exists:time_slots,id',
-            'appointment_type' => 'required|string|in:service,package,others',
-            'status' => 'required|in:pending,confirmed,cancelled,completed',
+            'appointment_type' => 'required|string',
+            'status' => 'nullable|in:pending,confirmed,cancelled',
             'note' => 'nullable|string',
             'slots' => 'required|integer|min:1|max:2',
         ];
@@ -29,17 +29,13 @@ class AppointmentRequest extends FormRequest
     public function messages()
     {
         return [
-            'user_id.required' => 'Vui lòng chọn khách hàng',
             'user_id.exists' => 'Khách hàng không tồn tại',
             'service_id.exists' => 'Dịch vụ không tồn tại',
             'user_treatment_package_id.exists' => 'Gói điều trị không tồn tại',
-            'appointment_date.required' => 'Vui lòng chọn ngày hẹn',
             'appointment_date.date' => 'Ngày hẹn không hợp lệ',
-            'appointment_date.after_or_equal' => 'Ngày hẹn phải từ hôm nay trở đi',
             'time_slot_id.required' => 'Vui lòng chọn khung giờ',
             'time_slot_id.exists' => 'Khung giờ không tồn tại',
             'appointment_type.required' => 'Vui lòng chọn loại cuộc hẹn',
-            'appointment_type.in' => 'Loại cuộc hẹn không hợp lệ',
             'status.required' => 'Vui lòng chọn trạng thái',
             'status.in' => 'Trạng thái không hợp lệ',
             'slots.required' => 'Vui lòng nhập số lượng slot',

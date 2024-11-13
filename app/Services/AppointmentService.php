@@ -56,6 +56,11 @@ class AppointmentService
     public function createAppointment($data)
     {
         return DB::transaction(function () use ($data) {
+            // Nếu không có user_id, lấy từ user đang đăng nhập
+            if (!isset($data['user_id'])) {
+                $data['user_id'] = Auth::user()->id;
+            }
+
             // Check if time slot is available
             $timeSlot = TimeSlot::findOrFail($data['time_slot_id']);
             $requestedSlots = $data['slots'] ?? 1;
