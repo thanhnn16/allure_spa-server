@@ -4342,6 +4342,18 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": ""
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
                                         "data": {
                                             "type": "array",
                                             "items": {
@@ -4442,6 +4454,18 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Unauthenticated."
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 401
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
                                         }
                                     },
                                     "type": "object"
@@ -4458,6 +4482,18 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Error message"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 400
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
                                         }
                                     },
                                     "type": "object"

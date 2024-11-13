@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AuthErrorCode;
 use App\Services\VoucherService;
 use Illuminate\Http\Request;
 use App\Models\Voucher;
@@ -9,7 +10,7 @@ use App\Models\UserVoucher;
 use Illuminate\Support\Facades\Auth;
 use OpenApi\Annotations as OA;
 
-class VoucherController extends Controller
+class VoucherController extends BaseController
 {
     protected $voucherService;
 
@@ -165,7 +166,12 @@ class VoucherController extends Controller
      *         response=200,
      *         description="Successful operation",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array",
+     *             @OA\Property(property="message", type="string", example=""),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
      *                 @OA\Items(
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="code", type="string", example="SUMMER2024"),
@@ -192,14 +198,20 @@ class VoucherController extends Controller
      *         response=401,
      *         description="Unauthenticated",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *             @OA\Property(property="message", type="string", example="Unauthenticated."),
+     *             @OA\Property(property="status_code", type="integer", example=401),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="data", type="null", example=null)
      *         )
      *     ),
      *     @OA\Response(
      *         response=400,
      *         description="Bad request",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Error message")
+     *             @OA\Property(property="message", type="string", example="Error message"),
+     *             @OA\Property(property="status_code", type="integer", example=400),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="data", type="null", example=null)
      *         )
      *     )
      * )
@@ -208,24 +220,7 @@ class VoucherController extends Controller
     {
         try {
             $userId = Auth::id();
-            return $this->getUserVouchers($userId);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 400);
-        }
-    }
-
-    /**
-     * Get vouchers for a specific user
-     * 
-     * @param string $userId
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getUserVouchers(string $userId)
-    {
-        try {
-            $vouchers = UserVoucher::with(['voucher' => function($query) {
+            $vouchers = UserVoucher::with(['voucher' => function ($query) {
                 $query->select([
                     'id',
                     'code',
@@ -242,35 +237,97 @@ class VoucherController extends Controller
                     'used_times'
                 ]);
             }])
-            ->where('user_id', $userId)
-            ->whereHas('voucher', function ($query) {
-                $query->where('status', 'active')
-                    ->where('end_date', '>', now());
-            })
-            ->where('remaining_uses', '>', 0)
-            ->get()
-            ->map(function ($userVoucher) {
-                $voucher = $userVoucher->voucher;
-                return [
-                    'id' => $voucher->id,
-                    'code' => $voucher->code,
-                    'description' => $voucher->description,
-                    'discount_type' => $voucher->discount_type,
-                    'discount_value' => $voucher->discount_value,
-                    'min_order_value' => $voucher->min_order_value,
-                    'max_discount_amount' => $voucher->max_discount_amount,
-                    'formatted_discount' => $voucher->formatted_discount,
-                    'min_order_value_formatted' => $voucher->min_order_value_formatted,
-                    'max_discount_amount_formatted' => $voucher->max_discount_amount_formatted,
-                    'start_date' => $voucher->start_date,
-                    'end_date' => $voucher->end_date,
-                    'start_date_formatted' => $voucher->start_date_formatted,
-                    'end_date_formatted' => $voucher->end_date_formatted,
-                    'is_active' => $voucher->is_active,
-                    'remaining_uses' => $userVoucher->remaining_uses,
-                    'total_uses' => $userVoucher->total_uses,
-                ];
-            });
+                ->where('user_id', $userId)
+                ->whereHas('voucher', function ($query) {
+                    $query->where('status', 'active')
+                        ->where('end_date', '>', now());
+                })
+                ->where('remaining_uses', '>', 0)
+                ->get()
+                ->map(function ($userVoucher) {
+                    $voucher = $userVoucher->voucher;
+                    return [
+                        'id' => $voucher->id,
+                        'code' => $voucher->code,
+                        'description' => $voucher->description,
+                        'discount_type' => $voucher->discount_type,
+                        'discount_value' => $voucher->discount_value,
+                        'min_order_value' => $voucher->min_order_value,
+                        'max_discount_amount' => $voucher->max_discount_amount,
+                        'formatted_discount' => $voucher->formatted_discount,
+                        'min_order_value_formatted' => $voucher->min_order_value_formatted,
+                        'max_discount_amount_formatted' => $voucher->max_discount_amount_formatted,
+                        'start_date' => $voucher->start_date,
+                        'end_date' => $voucher->end_date,
+                        'start_date_formatted' => $voucher->start_date_formatted,
+                        'end_date_formatted' => $voucher->end_date_formatted,
+                        'is_active' => $voucher->is_active,
+                        'remaining_uses' => $userVoucher->remaining_uses,
+                        'total_uses' => $userVoucher->total_uses,
+                    ];
+                });
+
+            return $this->respondWithJson($vouchers);
+        } catch (\Exception $e) {
+            return $this->respondWithError(AuthErrorCode::SERVER_ERROR->value);
+        }
+    }
+
+    /**
+     * Get vouchers for a specific user
+     * 
+     * @param string $userId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getUserVouchers(string $userId)
+    {
+        try {
+            $vouchers = UserVoucher::with(['voucher' => function ($query) {
+                $query->select([
+                    'id',
+                    'code',
+                    'description',
+                    'discount_type',
+                    'discount_value',
+                    'min_order_value',
+                    'max_discount_amount',
+                    'start_date',
+                    'end_date',
+                    'status',
+                    'is_unlimited',
+                    'usage_limit',
+                    'used_times'
+                ]);
+            }])
+                ->where('user_id', $userId)
+                ->whereHas('voucher', function ($query) {
+                    $query->where('status', 'active')
+                        ->where('end_date', '>', now());
+                })
+                ->where('remaining_uses', '>', 0)
+                ->get()
+                ->map(function ($userVoucher) {
+                    $voucher = $userVoucher->voucher;
+                    return [
+                        'id' => $voucher->id,
+                        'code' => $voucher->code,
+                        'description' => $voucher->description,
+                        'discount_type' => $voucher->discount_type,
+                        'discount_value' => $voucher->discount_value,
+                        'min_order_value' => $voucher->min_order_value,
+                        'max_discount_amount' => $voucher->max_discount_amount,
+                        'formatted_discount' => $voucher->formatted_discount,
+                        'min_order_value_formatted' => $voucher->min_order_value_formatted,
+                        'max_discount_amount_formatted' => $voucher->max_discount_amount_formatted,
+                        'start_date' => $voucher->start_date,
+                        'end_date' => $voucher->end_date,
+                        'start_date_formatted' => $voucher->start_date_formatted,
+                        'end_date_formatted' => $voucher->end_date_formatted,
+                        'is_active' => $voucher->is_active,
+                        'remaining_uses' => $userVoucher->remaining_uses,
+                        'total_uses' => $userVoucher->total_uses,
+                    ];
+                });
 
             return response()->json([
                 'data' => $vouchers
