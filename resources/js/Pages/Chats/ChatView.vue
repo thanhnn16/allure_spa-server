@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick, computed, watch } from 'vue'
+import { ref, onMounted, nextTick, computed, watch, onUnmounted } from 'vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import { usePage, Head } from '@inertiajs/vue3'
 import axios from 'axios'
@@ -172,6 +172,30 @@ onMounted(() => {
     if (selectedChat.value) {
         subscribeToChat(selectedChat.value.id)
     }
+
+    // Lắng nghe sự kiện refresh tin nhắn
+    window.addEventListener('refresh-chat-messages', (event) => {
+        if (selectedChat.value?.id === event.detail.chatId) {
+            loadMessages(selectedChat.value.id, 1)
+        }
+    })
+})
+
+// Cleanup event listener
+onUnmounted(() => {
+    // Cleanup Echo listener cho chat hiện tại
+    if (selectedChat.value?.id) {
+        Echo.leave(`chat.${selectedChat.value.id}`)
+    }
+
+    // Reset các ref về giá trị mặc định
+    selectedChat.value = null
+    messages.value = []
+    suggestedUsers.value = []
+    searchQuery.value = ''
+
+    // Cleanup event listener
+    window.removeEventListener('refresh-chat-messages', null)
 })
 
 // Cập nhật hàm subscribeToChat

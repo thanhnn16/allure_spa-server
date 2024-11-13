@@ -14,11 +14,16 @@ import {
     mdiMenu,
     mdiClose,
     mdiForwardburger,
-    mdiBackburger
+    mdiBackburger,
+    mdiBell,
+    mdiBellOutline
 } from '@mdi/js'
 import SectionMain from '@/Components/SectionMain.vue'
+import { useNotificationStore } from '@/Stores/notificationStore'
+import axios from 'axios'
 
 const layoutStore = useLayoutStore()
+const notificationStore = useNotificationStore()
 
 // Thêm state để quản lý menu
 const isAsideMobileExpanded = ref(false)
@@ -43,6 +48,28 @@ const menuClick = (event, item) => {
         layoutStore.toggleDarkMode()
     }
 }
+
+// Thêm hàm markAsRead
+const markAsRead = async (notification) => {
+    try {
+        await axios.post(`/notifications/${notification.id}/mark-as-read`)
+        notification.read = true
+        notificationStore.unreadCount--
+    } catch (error) {
+        console.error('Error marking notification as read:', error)
+    }
+}
+
+// Thêm hàm markAllAsRead
+const markAllAsRead = async () => {
+    try {
+        await axios.post('/notifications/mark-all-as-read')
+        notificationStore.notifications.forEach(n => n.read = true)
+        notificationStore.unreadCount = 0
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error)
+    }
+}
 </script>
 
 <template>
@@ -55,10 +82,8 @@ const menuClick = (event, item) => {
             <NavBar :menu="menuNavBar" class="fixed w-full top-0 z-50" @menu-click="menuClick">
                 <!-- Burger button -->
                 <NavBarItemPlain display="flex" @click.prevent="toggleMenu">
-                    <BaseIcon 
-                        :path="isAsideMobileExpanded || isAsideLgActive ? mdiBackburger : mdiForwardburger" 
-                        size="24" 
-                    />
+                    <BaseIcon :path="isAsideMobileExpanded || isAsideLgActive ? mdiBackburger : mdiForwardburger"
+                        size="24" />
                 </NavBarItemPlain>
 
                 <NavBarItemPlain display="hidden lg:flex xl:hidden" @click.prevent="isAsideLgActive = true">

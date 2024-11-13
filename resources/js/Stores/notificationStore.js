@@ -14,42 +14,41 @@ export const useNotificationStore = defineStore('notification', {
         // Handle incoming FCM messages
         handleFCMMessage(payload) {
             const toast = useToast()
-            const router = useRouter()
+            
+            // Kiểm tra và lấy nội dung thông báo
+            const title = payload.notification?.title || 'Thông báo mới'
+            const body = payload.notification?.body || payload.data?.message || ''
+            const type = payload.data?.type || 'info'
 
-            // Add notification to state
-            this.notifications.unshift({
-                id: payload.data.notification_id,
-                title: payload.notification.title,
-                body: payload.notification.body,
-                type: payload.data.type,
-                data: payload.data,
-                timestamp: new Date(),
-                read: false
+            // Thêm notification vào state
+            if (payload.data?.notification_id) {
+                this.notifications.unshift({
+                    id: payload.data.notification_id,
+                    title: title,
+                    body: body,
+                    type: type,
+                    data: payload.data,
+                    timestamp: new Date(),
+                    read: false
+                })
+                this.unreadCount++
+            }
+
+            // Hiển thị toast với nội dung đầy đủ
+            toast({
+                type: type,
+                title: title,
+                message: body,
+                timeout: 5000,
+                onClick: () => {
+                    if (payload.data?.chat_id) {
+                        // Refresh chat messages if needed
+                        window.dispatchEvent(new CustomEvent('refresh-chat-messages', {
+                            detail: { chatId: payload.data.chat_id }
+                        }))
+                    }
+                }
             })
-
-            // Update unread count
-            this.unreadCount++
-
-            // Show toast with action based on type
-            const actions = {
-                new_appointment: () => router.push(`/admin/appointments/${payload.data.appointment_id}`),
-                new_order: () => router.push(`/admin/orders/${payload.data.order_id}`),
-                new_review: () => router.push(`/admin/reviews/${payload.data.review_id}`)
-            }
-
-            const options = {
-                title: payload.notification.title,
-                message: payload.notification.body,
-                onClick: actions[payload.data.type]
-            }
-
-            // Add icon and style based on type
-            if (payload.data.type === 'new_appointment') {
-                options.type = 'info'
-                options.timeout = 8000 // Show longer for appointments
-            }
-
-            toast(options)
         },
 
         // Request FCM permission and get token

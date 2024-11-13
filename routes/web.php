@@ -99,6 +99,8 @@ Route::middleware('auth')->group(function () {
 
     // Notification routes
     Route::resource('notifications', NotificationController::class);
+    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
 
     // Mobile App routes
     Route::get('mobileapp/banners', [BannerController::class, 'banners'])->name('mobileapp.banners');
