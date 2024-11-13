@@ -84,20 +84,26 @@ class AppointmentService
                 }
 
                 // Find available staff
-                $availableStaff = User::query()
-                    ->where('role', 'staff')
+                $availableStaff = User::where('role', 'staff')
+                    ->where('deleted_at', null)
                     ->first();
 
-                $staffId = $availableStaff ? $availableStaff->id : null;
+                if (!$availableStaff) {
+                    return [
+                        'status' => 422,
+                        'message' => 'Không tìm thấy nhân viên phù hợp',
+                        'data' => null
+                    ];
+                }
 
                 $appointment = Appointment::create([
                     'user_id' => $userId,
                     'service_id' => $data['service_id'],
-                    'staff_id' => $staffId,
+                    'staff_user_id' => $availableStaff->id,
                     'appointment_date' => $data['appointment_date'],
                     'time_slot_id' => $data['time_slot_id'],
                     'appointment_type' => $data['appointment_type'],
-                    'status' => $data['status'],
+                    'status' => $data['status'] ?? 'pending',
                     'note' => $data['note'] ?? null,
                     'slots' => $requestedSlots,
                 ]);
