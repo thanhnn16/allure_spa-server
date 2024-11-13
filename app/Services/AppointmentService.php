@@ -83,14 +83,9 @@ class AppointmentService
                     throw new \Exception('Không tìm thấy thông tin người dùng');
                 }
 
-                // Find available staff - Sửa lại phần này
+                // Find available staff
                 $availableStaff = User::query()
-                    ->where('role', 'staff') // Kiểm tra trực tiếp trên cột role
-                    ->whereDoesntHave('appointments', function ($query) use ($data) {
-                        $query->where('appointment_date', $data['appointment_date'])
-                            ->where('time_slot_id', $data['time_slot_id'])
-                            ->where('status', '!=', 'cancelled');
-                    })
+                    ->where('role', 'staff')
                     ->first();
 
                 $staffId = $availableStaff ? $availableStaff->id : null;
@@ -98,7 +93,7 @@ class AppointmentService
                 $appointment = Appointment::create([
                     'user_id' => $userId,
                     'service_id' => $data['service_id'],
-                    'staff_user_id' => $staffId,
+                    'staff_id' => $staffId,
                     'appointment_date' => $data['appointment_date'],
                     'time_slot_id' => $data['time_slot_id'],
                     'appointment_type' => $data['appointment_type'],
@@ -138,7 +133,6 @@ class AppointmentService
                     'message' => 'Đặt lịch thành công',
                     'data' => $appointment
                 ];
-
             } catch (\Exception $e) {
                 Log::error('Error creating appointment: ' . $e->getMessage());
                 throw $e;
