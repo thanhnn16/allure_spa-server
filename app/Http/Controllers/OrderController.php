@@ -62,262 +62,16 @@ class OrderController extends BaseController
      * )
      */
 
-    
 
-    /**
-     * @OA\Get(
-     *     path="/api/orders/{order}",
-     *     operationId="getOrderById",
-     *     summary="Xem chi tiết đơn hàng",
-     *     tags={"Orders"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="order",
-     *         in="path",
-     *         required=true,
-     *         description="Order ID",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful operation",
-     *         @OA\JsonContent(ref="#/components/schemas/Order")
-     *     )
-     * )
-     */
 
-    /**
-     * @OA\Post(
-     *     path="/api/orders",
-     *     summary="Create new order",
-     *     description="Create a new order with items",
-     *     tags={"Orders"},
-     *     security={{ "sanctum": {} }},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"user_id", "payment_method_id", "order_items", "total_amount"},
-     *             @OA\Property(property="user_id", type="string", format="uuid"),
-     *             @OA\Property(property="payment_method_id", type="integer"),
-     *             @OA\Property(property="voucher_id", type="integer", nullable=true),
-     *             @OA\Property(property="total_amount", type="number", format="float"),
-     *             @OA\Property(property="discount_amount", type="number", format="float"),
-     *             @OA\Property(property="note", type="string", nullable=true),
-     *             @OA\Property(
-     *                 property="order_items",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     @OA\Property(property="item_type", type="string", enum={"product", "service"}),
-     *                     @OA\Property(property="item_id", type="integer"),
-     *                     @OA\Property(property="service_type", type="string", nullable=true),
-     *                     @OA\Property(property="quantity", type="integer", minimum=1),
-     *                     @OA\Property(property="price", type="number", format="float")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Order created successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Order created successfully"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Order")
-     *         )
-     *     ),
-     *     @OA\Response(response=422, description="Validation error"),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
 
-    /**
-     * @OA\Put(
-     *     path="/api/orders/{order}",
-     *     operationId="updateOrder",
-     *     summary="Cập nhật đơn hàng",
-     *     tags={"Orders"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(
-     *         name="order",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string"),
-     *             @OA\Property(property="note", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Order updated successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/OrderResponse")
-     *     )
-     * )
-     */
 
-    /**
-     * @OA\Delete(
-     *     path="/api/orders/{order}",
-     *     summary="Xóa đơn hàng",
-     *     tags={"Orders"},
-     *     security={{ "sanctum": {} }},
-     *     @OA\Parameter(
-     *         name="order",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Xóa thành công",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Đơn hàng đã được xóa thành công")
-     *         )
-     *     )
-     * )
-     */
 
-    /**
-     * @OA\Post(
-     *     path="/api/orders/{order}/create-invoice",
-     *     summary="Tạo hóa đơn từ đơn hàng",
-     *     tags={"Orders"},
-     *     security={{ "sanctum": {} }},
-     *     @OA\Parameter(
-     *         name="order",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(
-     *             @OA\Property(property="note", type="string", nullable=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Tạo hóa đơn thành công",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Invoice")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Lỗi khi tạo hóa đơn"
-     *     )
-     * )
-     */
 
-    /**
-     * @OA\Get(
-     *     path="/api/orders/my-orders",
-     *     summary="Get current user's orders",
-     *     description="Retrieve list of orders for authenticated user",
-     *     tags={"Orders"},
-     *     security={{ "sanctum": {} }},
-     *     @OA\Parameter(
-     *         name="status",
-     *         in="query",
-     *         description="Filter by order status",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"pending", "confirmed", "shipping", "delivered", "completed", "cancelled"})
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful operation",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Orders retrieved successfully"),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/Order")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(response=401, description="Unauthenticated")
-     * )
-     */
 
-    /**
-     * @OA\Put(
-     *     path="/api/orders/{order}/update-status",
-     *     summary="Update order status",
-     *     description="Update status of an existing order",
-     *     tags={"Orders"},
-     *     security={{ "sanctum": {} }},
-     *     @OA\Parameter(
-     *         name="order",
-     *         in="path",
-     *         required=true,
-     *         description="Order ID",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"status"},
-     *             @OA\Property(property="status", type="string", enum={"cancelled"}),
-     *             @OA\Property(property="cancel_reason", type="string", nullable=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Status updated successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Order")
-     *         )
-     *     ),
-     *     @OA\Response(response=403, description="Forbidden"),
-     *     @OA\Response(response=404, description="Order not found")
-     * )
-     */
 
-    /**
-     * @OA\Delete(
-     *     path="/api/orders/{order}/cancel",
-     *     summary="Hủy đơn hàng (dành cho khách hàng)",
-     *     tags={"Orders"},
-     *     security={{ "sanctum": {} }},
-     *     @OA\Parameter(
-     *         name="order",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(
-     *             @OA\Property(property="cancel_reason", type="string", nullable=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Hủy đơn hàng thành công",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Không có quyền hủy đơn hàng này"
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Không thể hủy đơn hàng ở trạng thái hiện tại"
-     *     )
-     * )
-     */
 
-    
-    
+
 
     protected $productService;
 
@@ -390,6 +144,29 @@ class OrderController extends BaseController
         ]);
     }
 
+
+    /**
+     * @OA\Get(
+     *     path="/api/orders/{order}",
+     *     operationId="getOrderById",
+     *     summary="Xem chi tiết đơn hàng",
+     *     tags={"Orders"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         description="Order ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(ref="#/components/schemas/Order")
+     *     )
+     * )
+     */
+
     public function show(Order $order)
     {
         $order->load([
@@ -411,7 +188,36 @@ class OrderController extends BaseController
         ]);
     }
 
-   
+
+
+    /**
+     * @OA\Put(
+     *     path="/api/orders/{order}",
+     *     operationId="updateOrder",
+     *     summary="Cập nhật đơn hàng",
+     *     tags={"Orders"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string"),
+     *             @OA\Property(property="note", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Order updated successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/OrderResponse")
+     *     )
+     * )
+     */
+
 
     public function update(Request $request, Order $order)
     {
@@ -440,11 +246,78 @@ class OrderController extends BaseController
         }
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/orders/{order}",
+     *     summary="Xóa đơn hàng",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Xóa thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Đơn hàng đã được xóa thành công")
+     *         )
+     *     )
+     * )
+     */
+
     public function destroy(Order $order)
     {
         $order->delete();
         return redirect()->route('orders.index')->with('success', 'Đơn hàng đã được xóa thành công.');
     }
+
+
+    /**
+     * @OA\Post(
+     *     path="/api/orders",
+     *     summary="Create new order",
+     *     description="Create a new order with items",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"user_id", "payment_method_id", "order_items", "total_amount"},
+     *             @OA\Property(property="user_id", type="string", format="uuid"),
+     *             @OA\Property(property="payment_method_id", type="integer"),
+     *             @OA\Property(property="voucher_id", type="integer", nullable=true),
+     *             @OA\Property(property="total_amount", type="number", format="float"),
+     *             @OA\Property(property="discount_amount", type="number", format="float"),
+     *             @OA\Property(property="note", type="string", nullable=true),
+     *             @OA\Property(
+     *                 property="order_items",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="item_type", type="string", enum={"product", "service"}),
+     *                     @OA\Property(property="item_id", type="integer"),
+     *                     @OA\Property(property="service_type", type="string", nullable=true),
+     *                     @OA\Property(property="quantity", type="integer", minimum=1),
+     *                     @OA\Property(property="price", type="number", format="float")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Order created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Order created successfully"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Order")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
 
 
     public function store(Request $request)
@@ -512,6 +385,41 @@ class OrderController extends BaseController
         }
     }
 
+
+    /**
+     * @OA\Post(
+     *     path="/api/orders/{order}/create-invoice",
+     *     summary="Tạo hóa đơn từ đơn hàng",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="note", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Tạo hóa đơn thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Invoice")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Lỗi khi tạo hóa đơn"
+     *     )
+     * )
+     */
+
+
     public function createInvoice(Order $order)
     {
         try {
@@ -554,6 +462,38 @@ class OrderController extends BaseController
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/orders/my-orders",
+     *     summary="Get current user's orders",
+     *     description="Retrieve list of orders for authenticated user",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by order status",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"pending", "confirmed", "shipping", "delivered", "completed", "cancelled"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Orders retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Order")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+
+
     public function getMyOrders(Request $request)
     {
         try {
@@ -570,6 +510,44 @@ class OrderController extends BaseController
             return $this->respondWithJson(null, $e->getMessage(), 500);
         }
     }
+
+
+    /**
+     * @OA\Put(
+     *     path="/api/orders/{order}/update-status",
+     *     summary="Update order status",
+     *     description="Update status of an existing order",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         description="Order ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string", enum={"cancelled"}),
+     *             @OA\Property(property="cancel_reason", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Status updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Order")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=404, description="Order not found")
+     * )
+     */
+
 
     public function updateOrderStatus(Request $request, Order $order)
     {
@@ -608,6 +586,42 @@ class OrderController extends BaseController
             return $this->respondWithJson(null, $e->getMessage(), 500);
         }
     }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/orders/{order}/cancel",
+     *     summary="Hủy đơn hàng (dành cho khách hàng)",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="cancel_reason", type="string", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Hủy đơn hàng thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Không có quyền hủy đơn hàng này"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Không thể hủy đơn hàng ở trạng thái hiện tại"
+     *     )
+     * )
+     */
 
     public function cancelOrder(Request $request, Order $order)
     {
