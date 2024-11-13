@@ -24,13 +24,15 @@ class NotificationController extends BaseController
     {
         $notifications = Notification::where('user_id', Auth::user()->id)
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->get();
 
         if ($request->wantsJson()) {
-            return $this->respondWithJson($notifications);
+            return $this->respondWithJson([
+                'data' => $notifications
+            ]);
         }
 
-        return Inertia::render('Notifications/Index', [
+        return $this->respondWithInertia('Notifications/Index', [
             'notifications' => $notifications
         ]);
     }

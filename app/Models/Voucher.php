@@ -70,7 +70,7 @@ class Voucher extends Model
     public function getIsActiveAttribute()
     {
         $now = now();
-        return $this->status === 'active' 
+        return $this->status === 'active'
             && $now->between($this->start_date, $this->end_date)
             && ($this->is_unlimited || $this->used_times < $this->usage_limit);
     }
@@ -78,7 +78,7 @@ class Voucher extends Model
     public function getFormattedDiscountAttribute()
     {
         if ($this->discount_type === 'percentage') {
-            return $this->discount_value . '%';
+            return (int)$this->discount_value . ' %';
         }
         return number_format($this->discount_value, 0, ',', '.') . ' ₫';
     }
