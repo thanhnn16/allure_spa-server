@@ -212,6 +212,7 @@ Route::middleware('throttle:api')->group(function () {
             Route::get('/', [VoucherController::class, 'index']);
             Route::get('/my-vouchers', [VoucherController::class, 'getMyVouchers']);
             Route::get('/user/{userId}', [VoucherController::class, 'getUserVouchers']);
+            Route::post('/{id}/toggle-status', [VoucherController::class, 'toggleStatus']);
         });
 
         // Sửa lại route cập nhật user profile

@@ -47,7 +47,7 @@ class VoucherController extends BaseController
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching vouchers:', ['error' => $e->getMessage()]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -375,6 +375,29 @@ class VoucherController extends BaseController
             ]);
         } catch (\Exception $e) {
             return response()->json([
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Toggle voucher status
+     */
+    public function toggleStatus(string $id)
+    {
+        try {
+            $voucher = Voucher::findOrFail($id);
+            $voucher->status = $voucher->status === 'active' ? 'inactive' : 'active';
+            $voucher->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã cập nhật trạng thái voucher',
+                'data' => $voucher
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
                 'message' => $e->getMessage()
             ], 400);
         }

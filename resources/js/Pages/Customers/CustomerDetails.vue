@@ -81,6 +81,9 @@ const newVoucherForm = reactive({
     status: 'active'
 })
 
+const showVoucherDetailModal = ref(false)
+const selectedVoucher = ref(null)
+
 const openEditModal = () => {
     showEditModal.value = true
 }
@@ -517,6 +520,43 @@ const formatPackageStatus = (status) => {
             return status;
     }
 };
+
+const openVoucherDetailModal = (voucher) => {
+    selectedVoucher.value = voucher
+    showVoucherDetailModal.value = true
+}
+
+const closeVoucherDetailModal = () => {
+    showVoucherDetailModal.value = false
+    selectedVoucher.value = null
+}
+
+const toggleVoucherStatus = async (voucherId) => {
+    try {
+        const response = await axios.post(`/api/vouchers/${voucherId}/toggle-status`)
+        if (response.data.success) {
+            // Update the voucher status in the list
+            const voucherIndex = props.user.vouchers.findIndex(v => v.id === voucherId)
+            if (voucherIndex !== -1) {
+                props.user.vouchers[voucherIndex] = response.data.data
+            }
+            // Update selected voucher if modal is open
+            if (selectedVoucher.value?.id === voucherId) {
+                selectedVoucher.value = response.data.data
+            }
+            
+            notification.value = {
+                type: 'success',
+                message: response.data.message
+            }
+        }
+    } catch (error) {
+        notification.value = {
+            type: 'danger',
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái voucher'
+        }
+    }
+}
 </script>
 <template>
     <LayoutAuthenticated>
@@ -714,11 +754,103 @@ const formatPackageStatus = (status) => {
                     </div>
 
                     <!-- Action buttons -->
-                    <div class="mt-4 flex justify-end">
-                        <BaseButton v-if="voucher.remaining_uses > 0" label="Trả lại voucher" color="danger" small
-                            @click="returnVoucher(voucher.id)" />
+                    <div class="mt-4 flex justify-end space-x-2">
+                        <BaseButton 
+                            label="Chi tiết" 
+                            color="info" 
+                            small 
+                            @click="openVoucherDetailModal(voucher)" 
+                        />
+                        <BaseButton 
+                            v-if="voucher.remaining_uses > 0" 
+                            label="Trả lại voucher" 
+                            color="danger" 
+                            small 
+                            @click="returnVoucher(voucher.id)" 
+                        />
                     </div>
                 </div>
+
+                <!-- Voucher Detail Modal -->
+                <TransitionRoot appear :show="showVoucherDetailModal" as="template">
+                    <Dialog as="div" @close="closeVoucherDetailModal" class="relative z-50">
+                        <div class="fixed inset-0 overflow-y-auto">
+                            <div class="flex min-h-full items-center justify-center p-4">
+                                <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl 
+                                    bg-white dark:bg-slate-900 p-6 shadow-xl transition-all">
+                                    <DialogTitle as="h3" class="text-lg font-medium leading-6 
+                                        text-gray-900 dark:text-white mb-4">
+                                        Chi tiết Voucher
+                                    </DialogTitle>
+
+                                    <div v-if="selectedVoucher" class="space-y-4">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h4 class="font-medium dark:text-white">{{ selectedVoucher.code }}</h4>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                    {{ selectedVoucher.description || 'Không có mô tả' }}
+                                                </p>
+                                            </div>
+                                            <div :class="{
+                                                'px-2 py-1 text-xs font-medium rounded-full': true,
+                                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': selectedVoucher.status === 'active',
+                                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': selectedVoucher.status === 'inactive'
+                                            }">
+                                                {{ selectedVoucher.status === 'active' ? 'Đang kích hoạt' : 'Đã vô hiệu' }}
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <p class="text-gray-600 dark:text-gray-400">Loại giảm giá</p>
+                                                <p class="font-medium dark:text-white">
+                                                    {{ selectedVoucher.discount_type === 'percentage' ? 'Phần trăm' : 'Số tiền cố định' }}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p class="text-gray-600 dark:text-gray-400">Giá trị giảm</p>
+                                                <p class="font-medium dark:text-white">{{ selectedVoucher.formatted_discount }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-gray-600 dark:text-gray-400">Đơn tối thiểu</p>
+                                                <p class="font-medium dark:text-white">{{ selectedVoucher.min_order_value_formatted }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-gray-600 dark:text-gray-400">Giảm tối đa</p>
+                                                <p class="font-medium dark:text-white">{{ selectedVoucher.max_discount_amount_formatted }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-gray-600 dark:text-gray-400">Ngày bắt đầu</p>
+                                                <p class="font-medium dark:text-white">{{ selectedVoucher.start_date_formatted }}</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-gray-600 dark:text-gray-400">Ngày kết thúc</p>
+                                                <p class="font-medium dark:text-white">{{ selectedVoucher.end_date_formatted }}</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="pt-4 border-t dark:border-gray-700">
+                                            <div class="flex justify-between space-x-3">
+                                                <BaseButton 
+                                                    type="button" 
+                                                    :label="selectedVoucher.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'" 
+                                                    :color="selectedVoucher.status === 'active' ? 'danger' : 'success'"
+                                                    @click="toggleVoucherStatus(selectedVoucher.id)" 
+                                                />
+                                                <BaseButton 
+                                                    type="button" 
+                                                    label="Đóng" 
+                                                    color="white" 
+                                                    @click="closeVoucherDetailModal" 
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </DialogPanel>
+                            </div>
+                        </div>
+                    </Dialog>
+                </TransitionRoot>
             </div>
 
             <!-- Orders Tab -->
@@ -1196,7 +1328,7 @@ const formatPackageStatus = (status) => {
                                     </p>
                                 </div>
                                 <div :class="{
-                                    'px-3 py-1 rounded-full text-sm font-medium': true,
+                                    'px-3 py-1 text-xs font-medium rounded-full': true,
                                     'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': packageTreatment.status === 'active',
                                     'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': packageTreatment.status === 'pending',
                                     'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200': packageTreatment.status === 'completed'
