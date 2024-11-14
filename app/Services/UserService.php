@@ -62,7 +62,9 @@ class UserService
             'addresses',
             'userServicePackages.service_combo.service',
             'invoices',
-            'vouchers'
+            'vouchers',
+            'orders.order_items.product',
+            'orders.order_items.service'
         ])->findOrFail($id);
     }
 
