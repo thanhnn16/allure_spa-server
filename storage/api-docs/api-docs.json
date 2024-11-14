@@ -1564,6 +1564,200 @@
                 }
             }
         },
+        "/api/my-appointments": {
+            "get": {
+                "tags": [
+                    "Appointments"
+                ],
+                "summary": "Lấy danh sách lịch hẹn của người dùng đăng nhập",
+                "operationId": "fd56fec6e983568de3507870a12a14ac",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Lọc theo trạng thái",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "confirmed",
+                                "cancelled",
+                                "completed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "Lọc từ ngày (Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "Lọc đến ngày (Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lấy danh sách lịch hẹn thành công"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Facial Treatment"
+                                                    },
+                                                    "start": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-03-20 09:00:00"
+                                                    },
+                                                    "end": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-03-20 10:00:00"
+                                                    },
+                                                    "service": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Facial Treatment"
+                                                            },
+                                                            "price": {
+                                                                "type": "number",
+                                                                "example": 500000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "staff": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "full_name": {
+                                                                "type": "string",
+                                                                "example": "Staff Name"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "confirmed"
+                                                    },
+                                                    "appointment_type": {
+                                                        "type": "string",
+                                                        "example": "facial"
+                                                    },
+                                                    "note": {
+                                                        "type": "string",
+                                                        "example": "Customer note"
+                                                    },
+                                                    "time_slot": {
+                                                        "properties": {
+                                                            "start_time": {
+                                                                "type": "string",
+                                                                "example": "09:00:00"
+                                                            },
+                                                            "end_time": {
+                                                                "type": "string",
+                                                                "example": "10:00:00"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa xác thực",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đã xảy ra lỗi khi lấy danh sách lịch hẹn"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 500
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/auth/login": {
             "post": {
                 "tags": [
@@ -2121,40 +2315,49 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "user_id",
                                     "payment_method_id",
                                     "order_items",
                                     "total_amount"
                                 ],
                                 "properties": {
-                                    "user_id": {
-                                        "type": "string",
-                                        "format": "uuid"
-                                    },
                                     "payment_method_id": {
+                                        "description": "Payment method ID",
                                         "type": "integer"
                                     },
                                     "voucher_id": {
+                                        "description": "Optional voucher ID",
                                         "type": "integer",
                                         "nullable": true
                                     },
                                     "total_amount": {
+                                        "description": "Total order amount",
                                         "type": "number",
                                         "format": "float"
                                     },
                                     "discount_amount": {
+                                        "description": "Optional discount amount",
                                         "type": "number",
-                                        "format": "float"
+                                        "format": "float",
+                                        "nullable": true
                                     },
                                     "note": {
+                                        "description": "Optional order note",
                                         "type": "string",
                                         "nullable": true
                                     },
                                     "order_items": {
+                                        "description": "Array of order items",
                                         "type": "array",
                                         "items": {
+                                            "required": [
+                                                "item_type",
+                                                "item_id",
+                                                "quantity",
+                                                "price"
+                                            ],
                                             "properties": {
                                                 "item_type": {
+                                                    "description": "Type of item",
                                                     "type": "string",
                                                     "enum": [
                                                         "product",
@@ -2162,17 +2365,26 @@
                                                     ]
                                                 },
                                                 "item_id": {
+                                                    "description": "ID of product or service",
                                                     "type": "integer"
                                                 },
                                                 "service_type": {
+                                                    "description": "Service type if item_type is service",
                                                     "type": "string",
+                                                    "enum": [
+                                                        "single",
+                                                        "combo_5",
+                                                        "combo_10"
+                                                    ],
                                                     "nullable": true
                                                 },
                                                 "quantity": {
+                                                    "description": "Quantity of item",
                                                     "type": "integer",
                                                     "minimum": 1
                                                 },
                                                 "price": {
+                                                    "description": "Price per item",
                                                     "type": "number",
                                                     "format": "float"
                                                 }
@@ -2211,10 +2423,47 @@
                         }
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthenticated"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
