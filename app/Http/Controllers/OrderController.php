@@ -178,6 +178,9 @@ class OrderController extends BaseController
         ]);
 
         if ($request->expectsJson()) {
+            if ($order->user_id !== Auth::user()->id) {
+                return $this->respondWithError('Bạn không có quyền truy cập', 403);
+            }
             return $this->respondWithJson($order, 'Lấy chi tiết đơn hàng thành công');
         }
 
