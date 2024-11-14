@@ -66,11 +66,6 @@ class OrderController extends BaseController
      */
 
 
-
-
-
-
-
     protected $productService;
 
     public function __construct(ProductService $productService)
@@ -173,7 +168,7 @@ class OrderController extends BaseController
      * )
      */
 
-    public function show(Order $order)
+    public function show(Request $request, Order $order)
     {
         $order->load([
             'user',
@@ -181,6 +176,11 @@ class OrderController extends BaseController
             'order_items.service',
             'invoice'
         ]);
+
+        if ($request->expectsJson()) {
+            return $this->respondWithJson($order, 'Lấy chi tiết đơn hàng thành công');
+        }
+
         return Inertia::render('Order/OrderShow', [
             'order' => $order
         ]);
