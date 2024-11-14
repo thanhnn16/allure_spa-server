@@ -5,7 +5,6 @@ namespace App\Events;
 use App\Models\Appointment;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -41,4 +40,4 @@ class AppointmentCreated implements ShouldBroadcast
             'appointment' => $this->appointment->load(['user', 'service', 'timeSlot']),
         ];
     }
-} 
+}

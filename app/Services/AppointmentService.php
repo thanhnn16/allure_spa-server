@@ -90,7 +90,7 @@ class AppointmentService
 
                 // Find available staff
                 $availableStaff = User::where('role', 'staff')
-                    ->where('deleted_at', null)
+                    ->whereNull('deleted_at')
                     ->first();
 
                 if (!$availableStaff) {
@@ -145,7 +145,13 @@ class AppointmentService
                     'data' => $appointment
                 ];
             } catch (\Exception $e) {
-                Log::error('Error creating appointment: ' . $e->getMessage());
+                // Ghi log chi tiết lỗi
+                Log::error('Error creating appointment:', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'data' => $data
+                ]);
+                
                 throw new \Exception('Có lỗi xảy ra khi đặt lịch hẹn: ' . $e->getMessage());
             }
         });
