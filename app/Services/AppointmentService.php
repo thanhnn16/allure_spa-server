@@ -163,59 +163,30 @@ class AppointmentService
 
     public function updateAppointment($id, $data)
     {
-        $validator = Validator::make($data, [
-            'staff_id' => 'sometimes|exists:users,id',
-            'appointment_date' => 'sometimes|date',
-            'time_slot_id' => 'sometimes|exists:time_slots,id',
-            'status' => 'sometimes|in:pending,confirmed,cancelled,completed',
-            'note' => 'nullable|string',
-            'appointment_type' => 'sometimes|string',
-        ]);
-
-        if ($validator->fails()) {
-            return ['status' => 422, 'message' => 'Validation failed', 'data' => $validator->errors()];
-        }
-
         try {
             $appointment = Appointment::findOrFail($id);
             $oldStatus = $appointment->status;
 
-            // If changing time slot, check availability
-            if (isset($data['time_slot_id']) && isset($data['appointment_date'])) {
-                $timeSlot = TimeSlot::findOrFail($data['time_slot_id']);
-                $existingBookings = Appointment::where('appointment_date', $data['appointment_date'])
-                    ->where('time_slot_id', $data['time_slot_id'])
-                    ->where('id', '!=', $id)
-                    ->where('status', '!=', 'cancelled')
-                    ->count();
-
-                if ($existingBookings >= $timeSlot->max_bookings) {
-                    return [
-                        'status' => 422,
-                        'message' => 'Khung giờ này đã đầy',
-                        'data' => null
-                    ];
-                }
-            }
-
+            // Chỉ cập nhật các trường được phép
             $updateData = array_filter([
                 'staff_user_id' => $data['staff_id'] ?? null,
                 'appointment_date' => $data['appointment_date'] ?? null,
                 'time_slot_id' => $data['time_slot_id'] ?? null,
-                'status' => $data['status'] ?? null,
+                'status' => strtolower($data['status'] ?? null), // Đảm bảo status luôn là chữ thường
                 'note' => $data['note'] ?? null,
                 'appointment_type' => $data['appointment_type'] ?? null,
             ]);
 
+            // Cập nhật appointment
             $appointment->update($updateData);
 
-            // Load relationships cần thiết
+            // Load relationships
             $appointment->load(['user', 'service', 'staff', 'timeSlot']);
 
             // Gửi thông báo khi trạng thái thay đổi
             if (isset($data['status']) && $data['status'] !== $oldStatus) {
                 $statusMessage = $this->getStatusMessage($data['status']);
-                
+
                 // Thông báo cho khách hàng
                 $this->notificationService->createNotification([
                     'user_id' => $appointment->user_id,
@@ -242,14 +213,21 @@ class AppointmentService
             return [
                 'status' => 200,
                 'message' => 'Cập nhật lịch hẹn thành công',
-                'data' => $appointment
+                'data' => $appointment,
+                'success' => true
             ];
         } catch (\Exception $e) {
-            Log::error('Lỗi cập nhật lịch hẹn: ' . $e->getMessage());
+            Log::error('Error updating appointment:', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return [
                 'status' => 500,
                 'message' => 'Đã xảy ra lỗi khi cập nhật lịch hẹn',
-                'data' => null
+                'data' => null,
+                'success' => false
             ];
         }
     }
