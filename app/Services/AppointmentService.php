@@ -28,6 +28,10 @@ class AppointmentService
 
     public function getAppointments($request)
     {
+        if (Auth::user()->role !== 'admin') {
+            throw new \Exception('Unauthorized access');
+        }
+
         $query = Appointment::with([
             'user',
             'service',
@@ -35,7 +39,7 @@ class AppointmentService
             'timeSlot'
         ]);
 
-        // Thêm filter theo thời gian
+        // Add date range filter
         if ($request->has('start_date') && $request->has('end_date')) {
             $query->whereBetween('appointment_date', [
                 $request->start_date,
@@ -43,9 +47,9 @@ class AppointmentService
             ]);
         }
 
-        // Thêm filter theo trạng thái
+        // Add status filter
         if ($request->has('status')) {
-            $query->where('status', $request->status);
+            $query->where('status', strtolower($request->status));
         }
 
         return $query->orderBy('appointment_date')
@@ -419,6 +423,50 @@ class AppointmentService
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
+            ]);
+
+            return [
+                'status' => 500,
+                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
+                'data' => []
+            ];
+        }
+    }
+
+    public function getMyAppointments($userId, array $filters = [])
+    {
+        try {
+            $query = Appointment::with(['service', 'staff', 'timeSlot'])
+                ->where('user_id', $userId);
+
+            // Filter by status
+            if (!empty($filters['status'])) {
+                $query->where('status', strtolower($filters['status']));
+            }
+
+            // Filter by date range
+            if (!empty($filters['from_date'])) {
+                $query->where('appointment_date', '>=', $filters['from_date']);
+            }
+            if (!empty($filters['to_date'])) {
+                $query->where('appointment_date', '<=', $filters['to_date']);
+            }
+
+            // Add sorting
+            $query->orderBy('appointment_date', 'desc')
+                ->orderBy('created_at', 'desc');
+
+            $appointments = $query->get();
+
+            return [
+                'status' => 200,
+                'message' => 'Lấy danh sách lịch hẹn thành công',
+                'data' => $appointments->map->getFormattedAppointmentAttribute()
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error in getMyAppointments:', [
+                'user_id' => $userId,
+                'error' => $e->getMessage()
             ]);
 
             return [

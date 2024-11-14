@@ -70,6 +70,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/appointments/{appointment}', [AppointmentController::class, 'show']);
         Route::put('/appointments/{appointment}', [AppointmentController::class, 'update']);
         Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
+        Route::get('/my-appointments', [AppointmentController::class, 'getMyAppointments']);
 
         // Thêm các route mới cho cập nhật và hủy cuộc hẹn
         Route::put('/appointments/{appointment}/update', [AppointmentController::class, 'update']);

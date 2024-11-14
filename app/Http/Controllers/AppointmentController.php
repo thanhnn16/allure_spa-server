@@ -82,68 +82,83 @@ class AppointmentController extends BaseController
      */
     public function index(Request $request)
     {
-        $appointments = $this->appointmentService->getAppointments($request);
+        try {
+            // Check if user is admin
+            if (Auth::user()->role !== 'admin') {
+                return response()->json([
+                    'message' => 'Unauthorized access',
+                    'status' => 403
+                ], 403);
+            }
 
-        Log::info('Appointments:', $appointments->toArray());
+            $appointments = $this->appointmentService->getAppointments($request);
 
-        // Format appointments for calendar view
-        $formattedAppointments = $appointments->map(function ($appointment) {
-            $timeSlot = $appointment->timeSlot;
+            Log::info('Appointments:', $appointments->toArray());
 
-            // Combine appointment date with time slot times
-            $startDateTime = Carbon::parse($appointment->appointment_date)
-                ->setTimeFromTimeString($timeSlot->start_time)
-                ->setTimezone('Asia/Ho_Chi_Minh');
+            // Format appointments for calendar view
+            $formattedAppointments = $appointments->map(function ($appointment) {
+                $timeSlot = $appointment->timeSlot;
 
-            $endDateTime = Carbon::parse($appointment->appointment_date)
-                ->setTimeFromTimeString($timeSlot->end_time)
-                ->setTimezone('Asia/Ho_Chi_Minh');
+                // Combine appointment date with time slot times
+                $startDateTime = Carbon::parse($appointment->appointment_date)
+                    ->setTimeFromTimeString($timeSlot->start_time)
+                    ->setTimezone('Asia/Ho_Chi_Minh');
 
-            return [
-                'id' => $appointment->id,
-                'title' => $appointment->user->full_name ?? 'Unknown',
-                'start' => $startDateTime->format('Y-m-d H:i:s'),
-                'end' => $endDateTime->format('Y-m-d H:i:s'),
-                'user' => $appointment->user,
-                'service' => $appointment->service,
-                'staff' => $appointment->staff,
-                'status' => $appointment->status,
-                'appointment_type' => $appointment->appointment_type,
-                'note' => $appointment->note,
-                'time_slot' => $timeSlot,
-            ];
-        });
+                $endDateTime = Carbon::parse($appointment->appointment_date)
+                    ->setTimeFromTimeString($timeSlot->end_time)
+                    ->setTimezone('Asia/Ho_Chi_Minh');
 
-        if ($request->expectsJson()) {
-            return $this->respondWithJson($formattedAppointments, 'Lấy danh sách cuộc hẹn thành công');
-        }
-
-        // Get time slots for calendar
-        $timeSlots = TimeSlot::where('is_active', true)
-            ->orderBy('start_time')
-            ->get()
-            ->map(function ($slot) {
                 return [
-                    'id' => $slot->id,
-                    'start_time' => $slot->start_time,
-                    'end_time' => $slot->end_time,
-                    'max_bookings' => $slot->max_bookings
+                    'id' => $appointment->id,
+                    'title' => $appointment->user->full_name ?? 'Unknown',
+                    'start' => $startDateTime->format('Y-m-d H:i:s'),
+                    'end' => $endDateTime->format('Y-m-d H:i:s'),
+                    'user' => $appointment->user,
+                    'service' => $appointment->service,
+                    'staff' => $appointment->staff,
+                    'status' => $appointment->status,
+                    'appointment_type' => $appointment->appointment_type,
+                    'note' => $appointment->note,
+                    'time_slot' => $timeSlot,
                 ];
             });
 
-        return $this->respondWithInertia('Calendar/CalendarView', [
-            'appointments' => $formattedAppointments,
-            'timeSlots' => $timeSlots,
-            'businessHours' => [
-                'start' => '08:00',
-                'end' => '18:30',
-                'daysOfWeek' => [0, 1, 2, 3, 4, 5, 6]
-            ],
-            'slotDuration' => '01:00:00',
-            'initialView' => 'timeGridWeek',
-            'slotMinTime' => '08:00:00',
-            'slotMaxTime' => '18:30:00',
-        ]);
+            if ($request->expectsJson()) {
+                return $this->respondWithJson($formattedAppointments, 'Lấy danh sách cuộc hẹn thành công');
+            }
+
+            // Get time slots for calendar
+            $timeSlots = TimeSlot::where('is_active', true)
+                ->orderBy('start_time')
+                ->get()
+                ->map(function ($slot) {
+                    return [
+                        'id' => $slot->id,
+                        'start_time' => $slot->start_time,
+                        'end_time' => $slot->end_time,
+                        'max_bookings' => $slot->max_bookings
+                    ];
+                });
+
+            return $this->respondWithInertia('Calendar/CalendarView', [
+                'appointments' => $formattedAppointments,
+                'timeSlots' => $timeSlots,
+                'businessHours' => [
+                    'start' => '08:00',
+                    'end' => '18:30',
+                    'daysOfWeek' => [0, 1, 2, 3, 4, 5, 6]
+                ],
+                'slotDuration' => '01:00:00',
+                'initialView' => 'timeGridWeek',
+                'slotMinTime' => '08:00:00',
+                'slotMaxTime' => '18:30:00',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'status' => 500
+            ], 500);
+        }
     }
 
     /**
@@ -190,7 +205,7 @@ class AppointmentController extends BaseController
         try {
             $data = $request->validated();
             $result = $this->appointmentService->createAppointment($data);
-            
+
             if ($result['status'] === 422) {
                 return response()->json([
                     'message' => $result['message']
@@ -510,24 +525,29 @@ class AppointmentController extends BaseController
      */
     public function getMyAppointments(Request $request)
     {
-        $user = Auth::user();
-        if (!$user) {
-            return $this->respondWithError(AuthErrorCode::UNAUTHORIZED_ACCESS->value);
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json([
+                    'message' => 'Unauthorized',
+                    'status' => 401
+                ], 401);
+            }
+
+            $filters = [
+                'status' => $request->status,
+                'from_date' => $request->from_date,
+                'to_date' => $request->to_date
+            ];
+
+            $result = $this->appointmentService->getMyAppointments($user->id, $filters);
+
+            return $this->respondWithJson($result['data'], $result['message'], $result['status']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ',
+                'status' => 500
+            ], 500);
         }
-
-        $filters = [
-            'status' => $request->status,
-            'appointment_type' => $request->appointment_type,
-            'from_date' => $request->from_date,
-            'to_date' => $request->to_date
-        ];
-
-        $result = $this->appointmentService->getAppointmentsByUser($user->id, $filters);
-
-        if ($result['status'] !== 200) {
-            return $this->respondWithError(AuthErrorCode::SERVER_ERROR->value);
-        }
-
-        return $this->respondWithJson($result['data'], $result['message'], $result['status']);
     }
 }
