@@ -123,36 +123,25 @@ class AppointmentService
                 // Load relationships
                 $appointment->load(['user', 'service', 'timeSlot']);
 
-                // Gửi thông báo nếu có notification service
-                if (isset($this->notificationService)) {
-                    try {
-                        $this->notificationService->notifyAdmins(
-                            'Lịch hẹn mới',
-                            "Khách hàng {$appointment->user->full_name} đặt lịch {$appointment->service->name} vào ngày {$appointment->appointment_date}",
-                            'new_appointment',
-                            [
-                                'appointment_id' => $appointment->id,
-                                'user_id' => $appointment->user_id,
-                                'service_id' => $appointment->service_id,
-                                'appointment_date' => $appointment->appointment_date,
-                                'slots' => $appointment->slots,
-                                'time_slot' => [
-                                    'start' => $appointment->timeSlot->start_time,
-                                    'end' => $appointment->timeSlot->end_time
-                                ]
-                            ]
-                        );
-                    } catch (\Exception $e) {
-                        // Log notification error but don't fail the appointment creation
-                        Log::warning('Failed to send notification:', [
-                            'error' => $e->getMessage(),
-                            'appointment_id' => $appointment->id
-                        ]);
-                    }
-                }
+                // Gửi thông báo cho admin
+                $this->notificationService->notifyAdmins(
+                    'Lịch hẹn mới',
+                    "Khách hàng {$appointment->user->full_name} đặt lịch {$appointment->service->name}",
+                    'new_appointment',
+                    [
+                        'type' => 'appointment',
+                        'appointment_id' => $appointment->id,
+                        'action' => 'created'
+                    ]
+                );
 
-                // Trigger event
-                event(new AppointmentCreated($appointment));
+                // Gửi thông báo cho khách hàng
+                $this->notificationService->createNotification([
+                    'user_id' => $appointment->user_id,
+                    'title' => 'Đặt lịch thành công',
+                    'content' => "Bạn đã đặt lịch {$appointment->service->name} vào ngày {$appointment->appointment_date}",
+                    'type' => 'appointment_created'
+                ]);
 
                 return [
                     'status' => 200,
@@ -189,6 +178,7 @@ class AppointmentService
 
         try {
             $appointment = Appointment::findOrFail($id);
+            $oldStatus = $appointment->status;
 
             // If changing time slot, check availability
             if (isset($data['time_slot_id']) && isset($data['appointment_date'])) {
@@ -222,6 +212,33 @@ class AppointmentService
             // Load relationships cần thiết
             $appointment->load(['user', 'service', 'staff', 'timeSlot']);
 
+            // Gửi thông báo khi trạng thái thay đổi
+            if (isset($data['status']) && $data['status'] !== $oldStatus) {
+                $statusMessage = $this->getStatusMessage($data['status']);
+                
+                // Thông báo cho khách hàng
+                $this->notificationService->createNotification([
+                    'user_id' => $appointment->user_id,
+                    'title' => 'Cập nhật lịch hẹn',
+                    'content' => $statusMessage,
+                    'type' => 'appointment_status_changed'
+                ]);
+
+                // Thông báo cho admin nếu khách hàng hủy lịch
+                if ($data['status'] === 'cancelled') {
+                    $this->notificationService->notifyAdmins(
+                        'Lịch hẹn bị hủy',
+                        "Khách hàng {$appointment->user->full_name} đã hủy lịch hẹn {$appointment->service->name}",
+                        'appointment_cancelled',
+                        [
+                            'type' => 'appointment',
+                            'appointment_id' => $appointment->id,
+                            'action' => 'cancelled'
+                        ]
+                    );
+                }
+            }
+
             return [
                 'status' => 200,
                 'message' => 'Cập nhật lịch hẹn thành công',
@@ -234,6 +251,20 @@ class AppointmentService
                 'message' => 'Đã xảy ra lỗi khi cập nhật lịch hẹn',
                 'data' => null
             ];
+        }
+    }
+
+    private function getStatusMessage($status)
+    {
+        switch ($status) {
+            case 'confirmed':
+                return 'Lịch hẹn của bạn đã được xác nhận';
+            case 'cancelled':
+                return 'Lịch hẹn của bạn đã bị hủy';
+            case 'completed':
+                return 'Lịch hẹn của bạn đã hoàn thành';
+            default:
+                return 'Trạng thái lịch hẹn đã được cập nhật';
         }
     }
 
