@@ -9,6 +9,7 @@ use App\Models\PaymentMethod;
 use App\Models\Voucher;
 use App\Models\Product;
 use App\Services\ProductService;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -66,10 +67,14 @@ class OrderController extends BaseController
      */
 
 
+    protected $orderService;
     protected $productService;
 
-    public function __construct(ProductService $productService)
-    {
+    public function __construct(
+        OrderService $orderService,
+        ProductService $productService
+    ) {
+        $this->orderService = $orderService;
         $this->productService = $productService;
     }
 
@@ -236,22 +241,15 @@ class OrderController extends BaseController
                 'note' => 'nullable|string'
             ]);
 
-            $order->update([
-                'status' => $validated['status'],
-                'note' => $validated['note']
-            ]);
+            $updatedOrder = $this->orderService->updateOrderStatus(
+                $order,
+                $validated['status'],
+                $validated['note']
+            );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Cập nhật trạng thái đơn hàng thành công',
-                'data' => $order
-            ]);
+            return $this->respondWithJson($updatedOrder, 'Cập nhật trạng thái đơn hàng thành công');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Có lỗi xảy ra khi cập nhật trạng thái đơn hàng',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->respondWithError($e->getMessage());
         }
     }
 

@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
+    protected $firebaseService;
+    protected $notificationService;
+
+    public function __construct(
+        FirebaseService $firebaseService,
+        NotificationService $notificationService
+    ) {
+        $this->firebaseService = $firebaseService;
+        $this->notificationService = $notificationService;
+    }
+
     public function createOrder(array $data)
     {
         try {
@@ -49,11 +60,105 @@ class OrderService
                 ]);
             }
 
+            // Gửi thông báo cho admin
+            $this->notificationService->notifyAdmins(
+                'Đơn hàng mới',
+                "Có đơn hàng mới từ khách hàng {$order->user->full_name}",
+                'new_order',
+                [
+                    'type' => 'order',
+                    'order_id' => $order->id,
+                    'action' => 'created'
+                ]
+            );
+
+            // Gửi thông báo cho khách hàng
+            $this->notificationService->createNotification([
+                'user_id' => $order->user_id,
+                'title' => 'Đặt hàng thành công',
+                'content' => "Đơn hàng #{$order->id} đã được tạo thành công",
+                'type' => 'order_created'
+            ]);
+
             DB::commit();
             return $order->load('order_items');
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
+    }
+
+    public function updateOrderStatus($order, $status, $note = null)
+    {
+        try {
+            DB::beginTransaction();
+
+            $oldStatus = $order->status;
+            $order->update([
+                'status' => $status,
+                'note' => $note
+            ]);
+
+            // Chuẩn bị thông báo dựa trên trạng thái
+            $notificationData = $this->prepareStatusNotification($order, $status);
+
+            // Gửi thông báo cho khách hàng
+            if ($notificationData) {
+                $this->notificationService->createNotification([
+                    'user_id' => $order->user_id,
+                    'title' => $notificationData['title'],
+                    'content' => $notificationData['content'],
+                    'type' => 'order_status_changed'
+                ]);
+            }
+
+            // Gửi thông báo cho admin khi đơn hàng bị hủy
+            if ($status === 'cancelled') {
+                $this->notificationService->notifyAdmins(
+                    'Đơn hàng bị hủy',
+                    "Đơn hàng #{$order->id} đã bị hủy bởi khách hàng",
+                    'order_cancelled',
+                    [
+                        'type' => 'order',
+                        'order_id' => $order->id,
+                        'action' => 'cancelled'
+                    ]
+                );
+            }
+
+            DB::commit();
+            return $order;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    private function prepareStatusNotification($order, $status)
+    {
+        $notifications = [
+            'confirmed' => [
+                'title' => 'Đơn hàng đã được xác nhận',
+                'content' => "Đơn hàng #{$order->id} của bạn đã được xác nhận và đang được xử lý"
+            ],
+            'shipping' => [
+                'title' => 'Đơn hàng đang được giao',
+                'content' => "Đơn hàng #{$order->id} của bạn đang được giao đến bạn"
+            ],
+            'delivered' => [
+                'title' => 'Đơn hàng đã giao thành công',
+                'content' => "Đơn hàng #{$order->id} đã được giao thành công"
+            ],
+            'completed' => [
+                'title' => 'Đơn hàng hoàn thành',
+                'content' => "Đơn hàng #{$order->id} đã hoàn thành. Cảm ơn bạn đã mua hàng!"
+            ],
+            'cancelled' => [
+                'title' => 'Đơn hàng đã bị hủy',
+                'content' => "Đơn hàng #{$order->id} đã bị hủy"
+            ]
+        ];
+
+        return $notifications[$status] ?? null;
     }
 }
