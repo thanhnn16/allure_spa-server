@@ -57,10 +57,16 @@ class AppointmentService
     {
         return DB::transaction(function () use ($data) {
             try {
-                // Validate and convert types
+                // Validate and convert types for numeric fields
                 $data['service_id'] = (int) $data['service_id'];
                 $data['slots'] = (int) $data['slots'];
                 $data['time_slot_id'] = (int) $data['time_slot_id'];
+
+                // Xác định user_id (giữ nguyên dạng string nếu là UUID)
+                $userId = $data['user_id'] ?? Auth::id();
+                if (!$userId) {
+                    throw new \Exception('Không tìm thấy thông tin người dùng');
+                }
 
                 // Check if time slot is available
                 $timeSlot = TimeSlot::findOrFail($data['time_slot_id']);
@@ -82,12 +88,6 @@ class AppointmentService
                     ];
                 }
 
-                // Xác định user_id
-                $userId = $data['user_id'] ?? Auth::id();
-                if (!$userId) {
-                    throw new \Exception('Không tìm thấy thông tin người dùng');
-                }
-
                 // Find available staff
                 $availableStaff = User::where('role', 'staff')
                     ->whereNull('deleted_at')
@@ -101,8 +101,9 @@ class AppointmentService
                     ];
                 }
 
-                $appointment = Appointment::create([
-                    'user_id' => $userId,
+                // Create appointment with explicit data mapping
+                $appointmentData = [
+                    'user_id' => $userId, // Giữ nguyên dạng UUID
                     'service_id' => $data['service_id'],
                     'staff_user_id' => $availableStaff->id,
                     'appointment_date' => $data['appointment_date'],
@@ -111,29 +112,39 @@ class AppointmentService
                     'status' => $data['status'] ?? 'pending',
                     'note' => $data['note'] ?? null,
                     'slots' => $requestedSlots,
-                ]);
+                ];
+
+                $appointment = Appointment::create($appointmentData);
 
                 // Load relationships
                 $appointment->load(['user', 'service', 'timeSlot']);
 
                 // Gửi thông báo nếu có notification service
                 if (isset($this->notificationService)) {
-                    $this->notificationService->notifyAdmins(
-                        'Lịch hẹn mới',
-                        "Khách hàng {$appointment->user->full_name} đặt lịch {$appointment->service->name} vào ngày {$appointment->appointment_date}",
-                        'new_appointment',
-                        [
-                            'appointment_id' => $appointment->id,
-                            'user_id' => $appointment->user_id,
-                            'service_id' => $appointment->service_id,
-                            'appointment_date' => $appointment->appointment_date,
-                            'slots' => $appointment->slots,
-                            'time_slot' => [
-                                'start' => $appointment->timeSlot->start_time,
-                                'end' => $appointment->timeSlot->end_time
+                    try {
+                        $this->notificationService->notifyAdmins(
+                            'Lịch hẹn mới',
+                            "Khách hàng {$appointment->user->full_name} đặt lịch {$appointment->service->name} vào ngày {$appointment->appointment_date}",
+                            'new_appointment',
+                            [
+                                'appointment_id' => $appointment->id,
+                                'user_id' => $appointment->user_id,
+                                'service_id' => $appointment->service_id,
+                                'appointment_date' => $appointment->appointment_date,
+                                'slots' => $appointment->slots,
+                                'time_slot' => [
+                                    'start' => $appointment->timeSlot->start_time,
+                                    'end' => $appointment->timeSlot->end_time
+                                ]
                             ]
-                        ]
-                    );
+                        );
+                    } catch (\Exception $e) {
+                        // Log notification error but don't fail the appointment creation
+                        Log::warning('Failed to send notification:', [
+                            'error' => $e->getMessage(),
+                            'appointment_id' => $appointment->id
+                        ]);
+                    }
                 }
 
                 // Trigger event
@@ -149,9 +160,9 @@ class AppointmentService
                 Log::error('Error creating appointment:', [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
-                    'data' => $data
+                    'data' => json_encode($data) // Encode data to prevent array conversion issues
                 ]);
-                
+
                 throw new \Exception('Có lỗi xảy ra khi đặt lịch hẹn: ' . $e->getMessage());
             }
         });
