@@ -1,142 +1,174 @@
 <template>
     <div v-if="show"
-        class="fixed inset-0 bg-gray-600/50 dark:bg-gray-900/80 overflow-y-auto h-full w-full flex justify-center items-center z-50"
+        class="fixed inset-0 bg-gray-600/75 dark:bg-gray-900/90 overflow-y-auto h-full w-full flex justify-center items-center z-50 backdrop-blur-sm"
         @click.self="close" @keydown.esc="close" tabindex="0">
-        <div class="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full m-4">
-            <div class="p-6">
-                <h2 class="text-xl font-semibold mb-4 dark:text-white">{{ modalTitle }}</h2>
+        <div
+            class="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-4xl w-full m-4 transform transition-all">
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">{{ modalTitle }}</h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Điền thông tin để {{ modalTitle.toLowerCase() }}
+                </p>
+            </div>
 
-                <form @submit.prevent="validateAndSubmit">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="mb-4 relative">
-                            <label for="user" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Khách hàng</label>
+            <form @submit.prevent="validateAndSubmit" class="p-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <!-- User Search with improved UI -->
+                    <div class="relative">
+                        <label class="block text-sm font-medium mb-2 dark:text-gray-300">
+                            Khách hàng <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
                             <input type="text" v-model="userSearch" @input="searchUsers"
-                                placeholder="Tìm kiếm khách hàng"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                            <ul v-if="userResults.length > 0"
-                                class="absolute z-10 mt-1 w-full bg-white dark:bg-slate-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm max-h-40 overflow-y-auto">
-                                <li v-for="user in userResults" :key="user.id" @click="selectUser(user)"
-                                    class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-slate-600 cursor-pointer dark:text-gray-200">
-                                    {{ user.full_name }} ({{ user.phone_number }})
-                                </li>
-                            </ul>
+                                placeholder="Tìm theo tên hoặc số điện thoại"
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
+                            <div v-if="userResults.length > 0"
+                                class="absolute z-20 mt-1 w-full bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                <div v-for="user in userResults" :key="user.id" @click="selectUser(user)"
+                                    class="p-3 hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer border-b last:border-0 dark:border-gray-600">
+                                    <div class="font-medium dark:text-gray-200">{{ user.full_name }}</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ user.phone_number }}</div>
+                                </div>
+                            </div>
                         </div>
+                    </div>
 
-                        <div class="mb-4">
-                            <label for="staff" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nhân viên phụ trách</label>
-                            <select v-model="form.staff_id" id="staff"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <option v-for="staffMember in staffList" :key="staffMember.id" :value="staffMember.id">
-                                    {{ staffMember.full_name }}
-                                </option>
-                            </select>
-                        </div>
+                    <!-- Staff Selection with Avatar -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 dark:text-gray-300">
+                            Nhân viên phụ trách <span class="text-red-500">*</span>
+                        </label>
+                        <select v-model="form.staff_id"
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
+                            <option v-for="staff in staffList" :key="staff.id" :value="staff.id">
+                                {{ staff.full_name }}
+                            </option>
+                        </select>
+                    </div>
 
-                        <div class="mb-4">
-                            <label for="user_treatment_package" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gói điều trị</label>
-                            <select v-model="form.user_treatment_package_id" id="user_treatment_package"
-                                :disabled="isServiceSelected"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <!-- Service Selection with improved UI -->
+                    <div class="col-span-2 grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">
+                                Gói điều trị
+                                <span v-if="isServiceSelected" class="text-sm text-gray-500">(Đã chọn dịch vụ)</span>
+                            </label>
+                            <select v-model="form.user_treatment_package_id" :disabled="isServiceSelected"
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
                                 <option value="">Chọn gói điều trị</option>
-                                <option v-for="treatmentPackage in userTreatmentPackages" :key="treatmentPackage.id"
-                                    :value="treatmentPackage.id">
-                                    {{ treatmentPackage.treatment ? treatmentPackage.treatment.name : 'Unknown Treatment' }}
-                                    - Còn lại: {{ treatmentPackage.remaining_sessions }} buổi
+                                <option v-for="pkg in userTreatmentPackages" :key="pkg.id" :value="pkg.id">
+                                    {{ pkg.treatment?.name || 'Unknown' }} ({{ pkg.remaining_sessions }} buổi)
                                 </option>
                             </select>
                         </div>
 
-                        <div class="mb-4">
-                            <label for="service" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dịch vụ</label>
-                            <select v-model="form.service_id" id="service" :disabled="isUserTreatmentPackageSelected"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">
+                                Dịch vụ
+                                <span v-if="isUserTreatmentPackageSelected" class="text-sm text-gray-500">(Đã chọn
+                                    gói)</span>
+                            </label>
+                            <select v-model="form.service_id" :disabled="isUserTreatmentPackageSelected"
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
                                 <option value="">Chọn dịch vụ</option>
                                 <option v-for="service in services" :key="service.id" :value="service.id">
                                     {{ service.name || service.service_name }}
                                 </option>
                             </select>
                         </div>
+                    </div>
 
-                        <div class="mb-4">
-                            <label for="appointment_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Loại lịch hẹn
+                    <!-- Time Slot Selection with Visual Calendar -->
+                    <div class="col-span-2 grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">
+                                Ngày hẹn <span class="text-red-500">*</span>
                             </label>
-                            <select v-model="form.appointment_type" id="appointment_type"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <option v-for="(label, value) in appointmentTypes" 
-                                        :key="value" 
-                                        :value="value">
-                                    {{ label }}
+                            <input type="date" v-model="form.appointment_date"
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">
+                                Khung giờ <span class="text-red-500">*</span>
+                            </label>
+                            <select v-model="form.time_slot_id"
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
+                                <option value="">Chọn khung giờ</option>
+                                <option v-for="slot in timeSlots" :key="slot.id" :value="slot.id"
+                                    :disabled="!slot.available" :class="{ 'text-gray-400': !slot.available }">
+                                    {{ slot.displayText }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Additional Info -->
+                    <div class="col-span-2 grid grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">Loại lịch hẹn</label>
+                            <select v-model="form.appointment_type"
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
+                                <option v-for="type in appointmentTypes" 
+                                    :key="type.value" 
+                                    :value="type.value">
+                                    {{ type.label }}
                                 </option>
                             </select>
                         </div>
 
-                        <div class="mb-4">
-                            <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trạng thái</label>
-                            <select v-model="form.status" id="status"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <!-- Slots field -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">
+                                Số lượng slot <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" 
+                                v-model="form.slots"
+                                min="1"
+                                :max="maxAvailableSlots"
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
+                            <span v-if="maxAvailableSlots" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Còn trống: {{ maxAvailableSlots }} slot
+                            </span>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">Trạng thái</label>
+                            <select v-model="form.status"
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
                                 <option value="pending">Đang chờ</option>
                                 <option value="confirmed">Đã xác nhận</option>
                                 <option value="cancelled">Đã hủy</option>
                             </select>
                         </div>
-
-                        <div class="mb-4">
-                            <label for="slots" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Số lượng slot
-                                <span class="text-xs text-gray-500">(Tối đa 2 slot/khung giờ)</span>
-                            </label>
-                            <select v-model="form.slots" id="slots"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <option :value="1">1 slot</option>
-                                <option :value="2">2 slot</option>
-                            </select>
-                            <p v-if="selectedTimeSlot" class="mt-1 text-sm text-gray-500">
-                                Số slot còn trống: {{ getAvailableSlots }}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap items-center justify-between mb-4 space-y-4 md:space-y-0">
-                        <div class="w-full md:w-1/2 pr-2">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày hẹn</label>
-                            <input type="date" v-model="form.appointment_date"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <div class="w-full md:w-1/2 pl-2">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Khung giờ</label>
-                            <select v-model="form.time_slot_id"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="">Chọn khung giờ</option>
-                                <option v-for="slot in timeSlots" :key="slot.id" :value="slot.id"
-                                    :disabled="!slot.available">
-                                    {{ slot.displayText }}
-                                    {{ !slot.available ? '(Đã đầy)' : '' }}
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-4">
-                        <label for="note" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ghi chú</label>
-                        <textarea v-model="form.note" id="note" rows="3"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                     </div>
 
-                    <div class="mt-6 flex justify-end space-x-3">
-                        <button type="submit" :disabled="!isFormValid" :class="[
-                            'px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:ring-offset-slate-800',
-                            isFormValid
-                                ? 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500'
-                                : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                        ]">
-                            {{ isFormValid ? 'Lưu' : 'Vui lòng điền đầy đủ thông tin' }}
-                        </button>
-                        <button @click="close" type="button"
-                            class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:ring-offset-slate-800">
-                            Đóng
-                        </button>
+                    <!-- Notes -->
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium mb-2 dark:text-gray-300">Ghi chú</label>
+                        <textarea v-model="form.note" rows="3"
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200"
+                            placeholder="Thêm ghi chú cho lịch hẹn..."></textarea>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button @click="close" type="button"
+                        class="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                        Đóng
+                    </button>
+                    <button type="submit" :disabled="!isFormValid" :class="[
+                        'px-6 py-2.5 rounded-lg font-medium transition-all duration-200',
+                        isFormValid
+                            ? 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:ring-offset-slate-800'
+                            : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    ]">
+                        {{ isFormValid ? 'Lưu' : 'Vui lòng điền đầy đủ thông tin' }}
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </template>
@@ -165,21 +197,15 @@ const emit = defineEmits(['close', 'save', 'appointmentAdded'])
 
 // Định nghĩa constants
 const APPOINTMENT_TYPES = {
-    FACIAL: 'facial',
-    MASSAGE: 'massage',
-    WEIGHT_LOSS: 'weight_loss',
-    HAIR_REMOVAL: 'hair_removal',
-    CONSULTATION: 'consultation',
-    OTHERS: 'others'
+    FACIAL: { value: 'facial', label: 'Chăm sóc da mặt' },
+    MASSAGE: { value: 'massage', label: 'Massage' },
+    WEIGHT_LOSS: { value: 'weight_loss', label: 'Giảm béo' },
+    HAIR_REMOVAL: { value: 'hair_removal', label: 'Triệt lông' },
+    CONSULTATION: { value: 'consultation', label: 'Tư vấn' },
+    OTHERS: { value: 'others', label: 'Khác' }
 };
 
 // Định nghĩa mapping
-const CATEGORY_NAME_MAPPING = {
-    'Chăm sóc da mặt': { value: APPOINTMENT_TYPES.FACIAL, label: 'Chăm sóc da mặt' },
-    'Massage': { value: APPOINTMENT_TYPES.MASSAGE, label: 'Massage' },
-    'Giảm béo': { value: APPOINTMENT_TYPES.WEIGHT_LOSS, label: 'Giảm béo' },
-    'Triệt lông': { value: APPOINTMENT_TYPES.HAIR_REMOVAL, label: 'Triệt lông' }
-};
 
 // Khai báo các ref và state
 const userSearch = ref('')
@@ -188,11 +214,8 @@ const selectedUser = ref(null)
 const errors = ref({})
 const services = ref([])
 const timeSlots = ref([])
-const selectedService = ref(null)
 const userTreatmentPackages = ref([])
 const staffList = ref([])
-const errorMessage = ref('')
-const appointments = ref(props.appointments)
 
 // Định nghĩa hàm resetForm trước khi sử dụng trong watch
 const resetForm = () => {
@@ -232,62 +255,58 @@ const modalTitle = computed(() => {
 const isUserTreatmentPackageSelected = computed(() => !!form.value.user_treatment_package_id)
 const isServiceSelected = computed(() => !!form.value.service_id)
 
-// Computed property cho appointment types
+// Thay đổi computed property cho appointmentTypes
 const appointmentTypes = computed(() => {
+    let types = [
+        { value: 'consultation', label: 'Tư vấn' },
+        { value: 'others', label: 'Khác' }
+    ];
+
     if (form.value.service_id) {
-        // Tìm label tương ứng với appointment type hiện tại
-        const currentTypeLabel = Object.values(CATEGORY_NAME_MAPPING)
-            .find(mapping => mapping.value === form.value.appointment_type)?.label || 'Khác';
+        const service = services.value.find(s => s.id === form.value.service_id);
+        if (service?.category?.service_category_name) {
+            // Kiểm tra xem category đã tồn tại trong types chưa
+            const categoryExists = types.some(type =>
+                type.value === service.category.service_category_name
+                    .toLowerCase()
+                    .replace(/ /g, '_')
+            );
 
-        const baseTypes = [
-            {
-                value: form.value.appointment_type,
-                label: currentTypeLabel // Sử dụng label đã tìm được
-            },
-            { value: APPOINTMENT_TYPES.CONSULTATION, label: 'Tư vấn' },
-            { value: APPOINTMENT_TYPES.OTHERS, label: 'Khác' }
-        ];
-
-        // Remove duplicates based on value
-        return baseTypes.filter((type, index, self) =>
-            index === self.findIndex(t => t.value === type.value)
-        );
+            // Nếu chưa tồn tại thì thêm vào đầu mảng
+            if (!categoryExists) {
+                types.unshift({
+                    value: service.category.service_category_name
+                        .toLowerCase()
+                        .replace(/ /g, '_'),
+                    label: service.category.service_category_name
+                });
+            }
+        }
     }
 
-    return [
-        { value: APPOINTMENT_TYPES.CONSULTATION, label: 'Tư vấn' },
-        { value: APPOINTMENT_TYPES.OTHERS, label: 'Khác' }
-    ];
+    return types;
 });
 
-// Watch cho service_id
+// Cập nhật watch cho service_id
 watch(() => form.value.service_id, async (newServiceId) => {
     form.value.user_treatment_package_id = '';
 
     if (newServiceId) {
-        try {
-            // Fetch service details including category
-            const response = await axios.get(`/api/services/${newServiceId}`);
-            const service = response.data.data;
-
-            // Set appointment type based on service category
-            if (service.category?.service_category_name) {
-                const categoryName = service.category.service_category_name;
-                const appointmentType = CATEGORY_NAME_MAPPING[categoryName]?.value || APPOINTMENT_TYPES.OTHERS;
-                form.value.appointment_type = appointmentType;
-            } else {
-                form.value.appointment_type = APPOINTMENT_TYPES.OTHERS;
-            }
-        } catch (error) {
-            console.error('Error fetching service details:', error);
-            form.value.appointment_type = APPOINTMENT_TYPES.OTHERS;
+        const service = services.value.find(s => s.id === newServiceId);
+        if (service?.category?.service_category_name) {
+            // Tự động set appointment_type theo category của service
+            form.value.appointment_type = service.category.service_category_name
+                .toLowerCase()
+                .replace(/ /g, '_');
+        } else {
+            form.value.appointment_type = 'others';
         }
 
         if (form.value.appointment_date) {
             fetchTimeSlots();
         }
     } else {
-        form.value.appointment_type = APPOINTMENT_TYPES.CONSULTATION;
+        form.value.appointment_type = 'consultation';
     }
 }, { immediate: true });
 
@@ -331,7 +350,7 @@ watch(() => form.value.service_id, (newServiceId) => {
         }
     } else {
         // Reset về consultation khi không chọn service
-        form.value.appointment_type = APPOINTMENT_TYPES.CONSULTATION;
+        form.value.appointment_type = APPOINTMENT_TYPES.CONSULTATION.value;
     }
 });
 
@@ -364,9 +383,6 @@ watch(() => props.selectedTimeSlot, (newTimeSlot) => {
     }
 }, { immediate: true });
 
-function formatDate(date) {
-    return new Date(date).toISOString().split('T')[0];
-}
 
 function formatDateTimeForInput(dateTime) {
     if (!dateTime) return ''
@@ -380,11 +396,6 @@ function formatDateTimeForInput(dateTime) {
         ':' + pad(date.getMinutes())
 }
 
-function formatDateForAPI(dateTimeString) {
-    if (!dateTimeString) return ''
-    let date = new Date(dateTimeString)
-    return date.toISOString()
-}
 
 function pad(number) {
     return number < 10 ? '0' + number : number
@@ -434,9 +445,6 @@ function fetchUserTreatmentPackages(userId) {
         });
 }
 
-function formatPrice(price) {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
-}
 
 onMounted(() => {
     fetchServices()
@@ -539,7 +547,7 @@ function validateForm() {
         isValid = false;
     }
 
-    // Kiểm tra số slot có vượt quá slot trống không
+    // Kiểm tra s slot có vượt quá slot trống không
     if (form.value.time_slot_id) {
         const selectedSlot = timeSlots.value.find(slot => slot.id === form.value.time_slot_id);
         if (selectedSlot) {
@@ -585,7 +593,7 @@ function submitAppointment(formData) {
         note: formData.note,
         slots: formData.slots
     })
-        .then(response => {
+        .then(() => {
             // Emit cả save và appointmentAdded events
             emit('save', formData);
             emit('appointmentAdded');
@@ -602,7 +610,7 @@ function submitAppointment(formData) {
 }
 
 // Add this after other watch statements
-watch(() => services.value, (newServices) => {
+watch(() => services.value, () => {
 }, { deep: true });
 
 const isFormValid = computed(() => {
@@ -617,25 +625,30 @@ const isFormValid = computed(() => {
 });
 
 // Thêm watch cho các giá trị quan trọng
-watch(() => form.value, (newValue) => {
+watch(() => form.value, () => {
 }, { deep: true });
 
-const getAvailableSlots = computed(() => {
-    if (!form.value.time_slot_id || !timeSlots.value.length) return 0;
-    
+const maxAvailableSlots = computed(() => {
+    if (!form.value.time_slot_id) return 0;
     const selectedSlot = timeSlots.value.find(slot => slot.id === form.value.time_slot_id);
     if (!selectedSlot) return 0;
+    return selectedSlot.max_bookings - selectedSlot.current_bookings;
+});
 
-    // Kiểm tra nếu có available_slots trong dữ liệu
-    if ('available_slots' in selectedSlot) {
-        return selectedSlot.available_slots;
+// Thêm watch cho service_id
+watch(() => form.service_id, async (newServiceId) => {
+    if (newServiceId) {
+        try {
+            // Gọi API để lấy thông tin service
+            const response = await axios.get(`/api/services/${newServiceId}`);
+            if (response.data.data) {
+                // Cập nhật appointment_type dựa trên category của service
+                form.appointment_type = response.data.data.category?.toLowerCase() || 'others';
+            }
+        } catch (error) {
+            console.error('Error fetching service details:', error);
+        }
     }
-
-    // Tính toán slots còn trống từ max_bookings và booked_slots
-    const maxBookings = selectedSlot.max_bookings || 2; // Mặc định là 2 nếu không có
-    const bookedSlots = selectedSlot.booked_slots || 0;
-    
-    return Math.max(0, maxBookings - bookedSlots);
 });
 </script>
 
