@@ -33,28 +33,39 @@ class FirebaseService
                 throw new \Exception('Firebase messaging not initialized');
             }
 
-            // Thêm sound và badge cho iOS
+            // Notification payload
             $notification = [
                 'title' => $title,
                 'body' => $body,
-                'sound' => 'default',
-                'badge' => 1
             ];
 
-            // Thêm các tùy chọn cho Android
+            // Android config đúng cấu trúc
             $android = [
+                'priority' => 'high',
                 'notification' => [
                     'channel_id' => 'appointment_channel',
-                    'priority' => 'high',
-                    'default_sound' => true,
-                    'default_vibrate_timings' => true
+                    'sound' => 'default',
+                    'notification_priority' => 'PRIORITY_HIGH',
+                    'default_vibrate_timings' => true,
+                    'default_sound' => true
+                ]
+            ];
+
+            // APNS (iOS) config
+            $apns = [
+                'payload' => [
+                    'aps' => [
+                        'sound' => 'default',
+                        'badge' => 1,
+                    ]
                 ]
             ];
 
             $message = CloudMessage::withTarget('token', $token)
                 ->withNotification($notification)
                 ->withData($data)
-                ->withAndroidConfig($android);
+                ->withAndroidConfig($android)
+                ->withApnsConfig($apns);
 
             return $this->messaging->send($message);
         } catch (\Exception $e) {
