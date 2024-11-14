@@ -27,6 +27,16 @@ class Appointment extends Model
 {
     use HasFactory, SoftDeletes;
 
+    // Thêm constant cho appointment types
+    const APPOINTMENT_TYPES = [
+        'facial',
+        'massage', 
+        'weight_loss',
+        'hair_removal',
+        'consultation',
+        'others'
+    ];
+
     protected $fillable = [
         'user_id',
         'service_id',
@@ -71,12 +81,15 @@ class Appointment extends Model
 
     public function getAppointmentTypeAttribute($value)
     {
-        return ucfirst(str_replace('_', ' ', $value));
+        return $value ?? 'others';
     }
 
     public function setAppointmentTypeAttribute($value)
     {
-        $this->attributes['appointment_type'] = strtolower(str_replace(' ', '_', $value));
+        $value = strtolower(str_replace(' ', '_', $value));
+        $this->attributes['appointment_type'] = in_array($value, self::APPOINTMENT_TYPES) 
+            ? $value 
+            : 'others';
     }
 
     public function getStatusAttribute($value)

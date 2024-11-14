@@ -63,8 +63,16 @@ class AppointmentService
             try {
                 // Validate and convert types for numeric fields
                 $data['service_id'] = (int) $data['service_id'];
-                $data['slots'] = (int) $data['slots'];
+                $data['slots'] = (int) ($data['slots'] ?? 1);
                 $data['time_slot_id'] = (int) $data['time_slot_id'];
+
+                // Ensure appointment_type is valid
+                if (
+                    !isset($data['appointment_type']) ||
+                    !in_array($data['appointment_type'], Appointment::APPOINTMENT_TYPES)
+                ) {
+                    $data['appointment_type'] = 'others';
+                }
 
                 // Xác định user_id (giữ nguyên dạng string nếu là UUID)
                 $userId = $data['user_id'] ?? Auth::id();
@@ -149,14 +157,16 @@ class AppointmentService
                     'data' => $appointment
                 ];
             } catch (\Exception $e) {
-                // Ghi log chi tiết lỗi
-                Log::error('Error creating appointment:', [
+                Log::error('Error in createAppointment:', [
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                    'data' => json_encode($data) // Encode data to prevent array conversion issues
+                    'trace' => $e->getTraceAsString()
                 ]);
 
-                throw new \Exception('Có lỗi xảy ra khi đặt lịch hẹn: ' . $e->getMessage());
+                return [
+                    'status' => 500,
+                    'message' => 'Đã xảy ra lỗi khi tạo lịch hẹn',
+                    'data' => null
+                ];
             }
         });
     }

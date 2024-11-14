@@ -63,8 +63,10 @@
                             </label>
                             <select v-model="form.appointment_type" id="appointment_type"
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                <option v-for="type in appointmentTypes" :key="type.value" :value="type.value">
-                                    {{ type.label }}
+                                <option v-for="(label, value) in appointmentTypes" 
+                                        :key="value" 
+                                        :value="value">
+                                    {{ label }}
                                 </option>
                             </select>
                         </div>
