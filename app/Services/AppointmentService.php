@@ -57,6 +57,11 @@ class AppointmentService
     {
         return DB::transaction(function () use ($data) {
             try {
+                // Validate and convert types
+                $data['service_id'] = (int) $data['service_id'];
+                $data['slots'] = (int) $data['slots'];
+                $data['time_slot_id'] = (int) $data['time_slot_id'];
+
                 // Check if time slot is available
                 $timeSlot = TimeSlot::findOrFail($data['time_slot_id']);
                 $requestedSlots = $data['slots'] ?? 1;
@@ -141,7 +146,7 @@ class AppointmentService
                 ];
             } catch (\Exception $e) {
                 Log::error('Error creating appointment: ' . $e->getMessage());
-                throw $e;
+                throw new \Exception('Có lỗi xảy ra khi đặt lịch hẹn: ' . $e->getMessage());
             }
         });
     }
