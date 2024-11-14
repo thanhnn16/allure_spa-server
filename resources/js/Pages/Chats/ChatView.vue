@@ -173,12 +173,8 @@ onMounted(() => {
         subscribeToChat(selectedChat.value.id)
     }
 
-    // Lắng nghe sự kiện refresh tin nhắn
-    window.addEventListener('refresh-chat-messages', (event) => {
-        if (selectedChat.value?.id === event.detail.chatId) {
-            loadMessages(selectedChat.value.id, 1)
-        }
-    })
+    // Sử dụng handler function đã tách riêng
+    window.addEventListener('refresh-chat-messages', handleRefreshMessages)
 })
 
 // Cleanup event listener
@@ -188,15 +184,26 @@ onUnmounted(() => {
         Echo.leave(`chat.${selectedChat.value.id}`)
     }
 
-    // Reset các ref về giá trị mặc định
+    // Cleanup event listener với handler function cụ thể
+    window.removeEventListener('refresh-chat-messages', handleRefreshMessages)
+    
+    // Reset các ref về null hoặc giá trị mặc định
     selectedChat.value = null
     messages.value = []
     suggestedUsers.value = []
     searchQuery.value = ''
-
-    // Cleanup event listener
-    window.removeEventListener('refresh-chat-messages', null)
+    currentPage.value = 1
+    hasMoreMessages.value = false
+    isLoadingMore.value = false
+    isFirstLoad.value = true
 })
+
+// Tách handler function ra riêng
+const handleRefreshMessages = (event) => {
+    if (selectedChat.value?.id === event.detail.chatId) {
+        loadMessages(selectedChat.value.id, 1)
+    }
+}
 
 // Cập nhật hàm subscribeToChat
 const subscribeToChat = (chatId) => {
