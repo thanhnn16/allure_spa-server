@@ -3,8 +3,8 @@
 
     <Head :title="`Chi tiết đơn hàng #${order.id}`" />
     <SectionMain>
-      <div class="container mx-auto px-4 py-8 dark:bg-dark-bg">
-        <div class="flex justify-between items-center mb-6">
+      <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6 dark:bg-dark-surface/50 p-4 rounded-lg">
           <div class="flex items-center space-x-4">
             <h1 class="text-2xl font-semibold dark:text-dark-text">Chi tiết đơn hàng #{{ order.id }}</h1>
             <span :class="getStatusClass(order.status)">
@@ -27,7 +27,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Thông tin đơn hàng -->
           <div class="lg:col-span-2">
-            <div class="bg-white dark:bg-dark-surface shadow overflow-hidden sm:rounded-lg">
+            <div class="bg-white dark:bg-dark-surface shadow-md dark:shadow-gray-800/30 overflow-hidden sm:rounded-lg">
               <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-dark-border">
                 <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text">Thông tin đơn hàng </h3>
               </div>
@@ -69,7 +69,7 @@
                   </h3>
                 </div>
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
-                  <thead class="bg-gray-50 dark:bg-dark-surface">
+                  <thead class="bg-gray-50 dark:bg-dark-surface/80">
                     <tr>
                       <th scope="col"
                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -95,7 +95,7 @@
                   </thead>
                   <tbody class="bg-white dark:bg-dark-surface divide-y divide-gray-200 dark:divide-dark-border">
                     <tr v-for="item in order.order_items" :key="item.id"
-                      class="hover:bg-gray-50 dark:hover:bg-dark-bg/50">
+                      class="hover:bg-gray-50 dark:hover:bg-dark-bg/30 transition-colors duration-150">
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-dark-text">
                         <div class="flex flex-col">
                           <span class="font-medium">{{ item.item_name }}</span>
@@ -226,7 +226,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Trạng thái mới</label>
             <select v-model="newStatus"
-              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text">
+              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400">
               <option value="pending">Chờ xác nhận</option>
               <option value="confirmed">Đã xác nhận</option>
               <option value="shipping">Đang giao hàng</option>
@@ -238,15 +238,22 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ghi chú</label>
             <textarea v-model="statusNote" rows="3"
-              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text"></textarea>
+              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400"></textarea>
           </div>
         </div>
       </CardBoxModal>
 
       <!-- Modal xử lý thanh toán -->
       <CardBoxModal v-model="showPaymentModal" title="Xử lý thanh toán" button="success" button-label="Thanh toán"
-        has-cancel @confirm="processPayment">
+        has-cancel @confirm="processPayment" class="dark:bg-dark-surface"
+        :header-class="'dark:bg-dark-surface dark:text-dark-text border-b dark:border-dark-border'"
+        :actions-class="'dark:bg-dark-surface border-t dark:border-dark-border'"
+        :button-class="'dark:bg-green-600 dark:hover:bg-green-700 dark:text-white'"
+        :cancel-button-class="'dark:bg-gray-600 dark:hover:bg-gray-700 dark:text-white'">
         <!-- Nội dung modal thanh toán -->
+        <div class="dark:bg-dark-surface p-4 rounded-lg">
+          <!-- Thêm nội dung của modal thanh toán ở đây -->
+        </div>
       </CardBoxModal>
 
       <!-- Modal tạo hóa đơn -->
@@ -256,23 +263,23 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ghi chú</label>
             <textarea v-model="invoiceNote" rows="3"
-              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text"
-              placeholder="Nhập ghi chú cho hóa đơn (nếu có)">
-            </textarea>
+              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400"
+              placeholder="Nhập ghi chú cho hóa đơn (nếu có)"></textarea>
           </div>
-          <!-- Hiển thị tổng quan về hóa đơn sẽ tạo -->
+
+          <!-- Thông tin hóa đơn -->
           <div class="bg-gray-50 dark:bg-dark-bg/50 p-4 rounded-md">
-            <h4 class="font-medium mb-2">Thông tin hóa đơn</h4>
+            <h4 class="font-medium mb-2 dark:text-dark-text">Thông tin hóa đơn</h4>
             <div class="space-y-2">
-              <div class="flex justify-between">
+              <div class="flex justify-between dark:text-dark-text">
                 <span>Tổng tiền hàng:</span>
                 <span>{{ formatCurrency(order.total_amount) }}</span>
               </div>
-              <div v-if="order.discount_amount > 0" class="flex justify-between text-green-600">
+              <div v-if="order.discount_amount > 0" class="flex justify-between text-green-600 dark:text-green-400">
                 <span>Giảm giá:</span>
                 <span>-{{ formatCurrency(order.discount_amount) }}</span>
               </div>
-              <div class="flex justify-between font-bold pt-2 border-t dark:border-dark-border">
+              <div class="flex justify-between font-bold pt-2 border-t dark:border-dark-border dark:text-dark-text">
                 <span>Tổng thanh toán:</span>
                 <span>{{ formatCurrency(order.total_amount) }}</span>
               </div>
@@ -334,16 +341,16 @@ export default {
 
     // Các hàm xử lý trạng thái và style
     const getStatusClass = (status) => {
-      const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full items-center'
+      const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full items-center transition-colors duration-150'
       const statusClasses = {
-        'pending': `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-400`,
-        'confirmed': `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-400`,
-        'shipping': `${baseClasses} bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-400`,
-        'delivered': `${baseClasses} bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-400`,
-        'completed': `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400`,
-        'cancelled': `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400`
+        'pending': `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`,
+        'confirmed': `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`,
+        'shipping': `${baseClasses} bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300`,
+        'delivered': `${baseClasses} bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300`,
+        'completed': `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`,
+        'cancelled': `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`
       }
-      return statusClasses[status] || `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-400`
+      return statusClasses[status] || `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300`
     }
 
     const getStatusDotClass = (status) => {

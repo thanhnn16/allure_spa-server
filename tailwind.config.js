@@ -21,6 +21,12 @@ module.exports = {
                 'dark-border': '#404040',
                 'dark-text': '#e5e5e5',
                 'dark-muted': '#6b7280',
+                'dark-modal': '#374151',
+                'primary': {
+                    400: '#60a5fa',
+                    500: '#3b82f6',
+                    600: '#2563eb',
+                }
             },
             zIndex: {
                 "-1": "-1",

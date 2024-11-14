@@ -56,25 +56,27 @@ window.addEventListener('keydown', (e) => {
 <template>
   <OverlayLayer v-show="value" @overlay-click="cancel">
     <CardBox v-show="value" class="shadow-lg w-11/12 md:w-3/5 lg:w-2/5 xl:w-4/12 z-50" is-modal>
-      <!-- Header -->
-      <CardBoxComponentTitle :title="title" class="sticky top-0 z-10 bg-white border-b">
-        <BaseButton v-if="hasCancel" :icon="mdiClose" color="whiteDark" small rounded-full @click.prevent="cancel" />
-      </CardBoxComponentTitle>
+      <div class="flex flex-col h-full">
+        <!-- Header -->
+        <CardBoxComponentTitle :title="title" class="sticky top-0 z-10">
+          <BaseButton v-if="hasCancel" :icon="mdiClose" color="whiteDark" small rounded-full @click.prevent="cancel" />
+        </CardBoxComponentTitle>
 
-      <!-- Content -->
-      <div class="overflow-y-auto custom-scrollbar" style="max-height: calc(90vh - 120px);">
-        <div class="px-6 py-4">
-          <slot />
+        <!-- Content -->
+        <div class="flex-grow overflow-y-auto">
+          <div class="p-5">
+            <slot />
+          </div>
         </div>
-      </div>
 
-      <!-- Footer -->
-      <div class="sticky bottom-0 z-10 px-6 py-4">
-        <BaseButtons v-if="hasButton" class="flex justify-end gap-3">
-          <BaseButton v-if="hasCancel" label="Hủy" :color="button" outline @click="cancel" />
-          <BaseButton :label="buttonLabel" :color="button" @click="confirm" />
-        </BaseButtons>
-        <slot name="footer"></slot>
+        <!-- Footer -->
+        <footer class="p-5 border-t dark:border-dark-border">
+          <BaseButtons class="justify-end gap-3">
+            <BaseButton v-if="hasCancel" label="Hủy" :color="button" outline @click="cancel" />
+            <BaseButton :label="buttonLabel" :color="button" @click="confirm" />
+          </BaseButtons>
+          <slot name="footer" />
+        </footer>
       </div>
     </CardBox>
   </OverlayLayer>
@@ -82,18 +84,20 @@ window.addEventListener('keydown', (e) => {
 
 <style scoped>
 .custom-scrollbar {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 /* Sticky header and footer */
 .sticky {
   position: sticky;
-  background: white;
 }
 
 /* Card styling */

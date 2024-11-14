@@ -29,11 +29,12 @@ const componentClass = computed(() => {
   const base = [
     props.rounded,
     props.flex,
-    props.isModal ? 'dark:bg-slate-900' : 'dark:bg-slate-900/70'
+    props.isModal ? 'dark:bg-dark-modal' : 'dark:bg-dark-surface',
+    'bg-white dark:text-dark-text'
   ]
 
   if (props.isHoverable) {
-    base.push('hover:shadow-lg transition-shadow duration-500')
+    base.push('hover:shadow-lg transition-shadow duration-500 dark:hover:shadow-dark-surface/50')
   }
 
   return base

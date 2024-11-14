@@ -51,10 +51,10 @@ defineProps({
     </BaseLevel>
     <BaseLevel mobile>
       <div>
-        <h3 class="text-lg leading-tight text-gray-500 dark:text-slate-400">
+        <h3 class="text-lg leading-tight text-gray-500 dark:text-dark-muted">
           {{ label }}
         </h3>
-        <h1 class="text-3xl leading-tight font-semibold">
+        <h1 class="text-3xl leading-tight font-semibold dark:text-dark-text">
           <NumberDynamic :value="number" :prefix="prefix" :suffix="suffix" />
         </h1>
       </div>

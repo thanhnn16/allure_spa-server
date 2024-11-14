@@ -38,29 +38,29 @@
                     </select>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-300">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-dark-surface dark:text-gray-300">
+                    <table class="w-full text-sm text-gray-500 dark:text-gray-300">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-dark-surface/50 dark:text-gray-300">
                             <tr>
                                 <th scope="col" class="px-6 py-3 w-24">Ảnh</th>
                                 <th @click="sort('name')" scope="col" class="px-6 py-3 cursor-pointer">
                                     <div class="flex items-center justify-between h-full">
                                         <span class="mr-2">Tên sản phẩm</span>
                                         <BaseIcon :path="sortIcon('name')" size="18" class="flex-shrink-0"
-                                            :class="{ 'text-gray-900': form.sort === 'name', 'text-gray-400': form.sort !== 'name' }" />
+                                            :class="{ 'text-primary-600 dark:text-primary-400': form.sort === 'name', 'text-gray-400 dark:text-gray-600': form.sort !== 'name' }" />
                                     </div>
                                 </th>
                                 <th @click="sort('category_id')" scope="col" class="px-6 py-3 cursor-pointer">
                                     <div class="flex items-center justify-between h-full">
                                         <span class="mr-2">Danh mục</span>
                                         <BaseIcon :path="sortIcon('category_id')" size="18" class="flex-shrink-0"
-                                            :class="{ 'text-gray-900': form.sort === 'category_id', 'text-gray-400': form.sort !== 'category_id' }" />
+                                            :class="{ 'text-primary-600 dark:text-primary-400': form.sort === 'category_id', 'text-gray-400 dark:text-gray-600': form.sort !== 'category_id' }" />
                                     </div>
                                 </th>
                                 <th @click="sort('price')" scope="col" class="px-6 py-3 cursor-pointer">
                                     <div class="flex items-center justify-between h-full">
                                         <span class="mr-2">Giá</span>
                                         <BaseIcon :path="sortIcon('price')" size="18" class="flex-shrink-0"
-                                            :class="{ 'text-gray-900': form.sort === 'price', 'text-gray-400': form.sort !== 'price' }" />
+                                            :class="{ 'text-primary-600 dark:text-primary-400': form.sort === 'price', 'text-gray-400 dark:text-gray-600': form.sort !== 'price' }" />
                                     </div>
                                 </th>
                                 <th scope="col" class="px-6 py-3 w-32">Thao tác</th>
@@ -68,7 +68,7 @@
                         </thead>
                         <tbody>
                             <tr v-for="product in products.data" :key="product.id"
-                                class="bg-white border-b hover:bg-gray-50 dark:bg-dark-surface dark:border-dark-border dark:hover:bg-dark-bg">
+                                class="bg-white border-b hover:bg-gray-50 dark:bg-dark-surface dark:border-dark-border dark:hover:bg-dark-surface/70">
                                 <td class="px-6 py-4">
                                     <img :src="getProductImage(product)" :alt="product.name"
                                         class="w-16 h-16 object-cover rounded-md">
