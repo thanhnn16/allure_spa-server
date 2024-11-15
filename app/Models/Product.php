@@ -95,7 +95,8 @@ class Product extends Model
 
     public function favorites()
     {
-        return $this->hasMany(Favorite::class);
+        return $this->hasMany(Favorite::class, 'item_id')
+            ->where('favorite_type', 'product');
     }
 
     public function ratings()
