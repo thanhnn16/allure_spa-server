@@ -145,4 +145,36 @@ class AuthService
             throw new \Exception(AuthErrorCode::SERVER_ERROR->value);
         }
     }
+
+    public function changePassword(User $user, array $data)
+    {
+        $validator = Validator::make($data, [
+            'current_password' => 'required|string',
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+            if ($errors->has('current_password')) {
+                throw new \Exception(AuthErrorCode::INVALID_PASSWORD_FORMAT->value);
+            }
+            if ($errors->has('new_password')) {
+                throw new \Exception(AuthErrorCode::INVALID_PASSWORD_FORMAT->value);
+            }
+            throw new \Exception(AuthErrorCode::VALIDATION_ERROR->value);
+        }
+
+        // Verify current password
+        if (!Hash::check($data['current_password'], $user->password)) {
+            throw new \Exception(AuthErrorCode::WRONG_PASSWORD->value);
+        }
+
+        // Update password
+        $user->password = Hash::make($data['new_password']);
+        $user->save();
+
+        return [
+            'message' => 'Password changed successfully'
+        ];
+    }
 }

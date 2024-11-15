@@ -17,4 +17,6 @@ enum AuthErrorCode: string
     case INVALID_EMAIL_FORMAT = 'INVALID_EMAIL_FORMAT';
     case INVALID_NAME_FORMAT = 'INVALID_NAME_FORMAT';
     case PASSWORDS_NOT_MATCH = 'PASSWORDS_NOT_MATCH';
+    case WRONG_CURRENT_PASSWORD = 'Mật khẩu hiện tại không đúng';
+    case PASSWORD_CHANGE_FAILED = 'Không thể thay đổi mật khẩu';
 } 

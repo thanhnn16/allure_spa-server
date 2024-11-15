@@ -34,6 +34,7 @@ Route::middleware('throttle:api')->group(function () {
     // Auth routes
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
 
     // Search routes
     Route::get('/products/search', [ProductController::class, 'searchProducts']);

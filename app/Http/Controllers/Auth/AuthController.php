@@ -245,6 +245,48 @@ class AuthController extends BaseController
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/auth/change-password",
+     *     summary="Đổi mật khẩu người dùng",
+     *     tags={"Authentication"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"current_password", "new_password", "new_password_confirmation"},
+     *             @OA\Property(property="current_password", type="string"),
+     *             @OA\Property(property="new_password", type="string"),
+     *             @OA\Property(property="new_password_confirmation", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Đổi mật khẩu thành công"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Lỗi validation"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Chưa xác thực"
+     *     )
+     * )
+     */
+    public function changePassword(Request $request)
+    {
+        try {
+            $result = $this->authService->changePassword(
+                $request->user(),
+                $request->all()
+            );
+            return $this->respondWithJson($result, 'Đổi mật khẩu thành công');
+        } catch (\Exception $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+    }
+
+    /**
      * Get detailed error message from validation exception
      */
     private function getDetailedErrorMessage(ValidationException $e): string
