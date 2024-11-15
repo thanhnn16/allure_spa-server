@@ -24,7 +24,18 @@ class NotificationController extends BaseController
     {
         $notifications = Notification::where('user_id', Auth::user()->id)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'title' => $notification->title,
+                    'content' => $notification->content,
+                    'type' => $notification->type,
+                    'is_read' => (bool) $notification->is_read,
+                    'created_at' => $notification->created_at,
+                    'url' => $notification->url
+                ];
+            });
 
         if ($request->wantsJson()) {
             return $this->respondWithJson([

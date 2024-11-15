@@ -35,25 +35,16 @@ const fetchNotifications = async () => {
         loading.value = true
         const response = await axios.get('/api/notifications')
         
-        let notificationData = []
+        const notificationData = response.data?.data || response.data?.notifications || response.data || []
         
-        if (response.data) {
-            if (Array.isArray(response.data.data)) {
-                notificationData = response.data.data
-            } else if (Array.isArray(response.data)) {
-                notificationData = response.data
-            } else if (Array.isArray(response.data.notifications)) {
-                notificationData = response.data.notifications
-            }
-        }
-
         notifications.value = notificationData.map(notification => ({
             id: notification.id,
-            title: notification.title || '',
-            content: notification.content || '',
+            title: notification.title,
+            content: notification.content,
             type: notification.type || 'default',
-            is_read: !!notification.is_read,
-            created_at: notification.created_at || new Date().toISOString(),
+            is_read: Boolean(notification.is_read),
+            created_at: notification.created_at,
+            url: notification.url
         }))
 
     } catch (error) {
@@ -72,12 +63,21 @@ const handleNotificationClick = async (notification) => {
     try {
         await axios.post(`/notifications/${notification.id}/mark-as-read`)
         notification.is_read = true
-        if (notification.type === 'new_order') {
-            router.push(`/admin/orders`)
-        } else if (notification.type === 'new_appointment') {
-            router.push(`/admin/appointments`)
-        } else if (notification.type === 'new_review') {
-            router.push(`/admin/reviews`)
+        
+        if (notification.url) {
+            router.push(notification.url)
+        } else {
+            switch (notification.type) {
+                case 'new_order':
+                    router.push('/admin/orders')
+                    break
+                case 'new_appointment':
+                    router.push('/admin/appointments')
+                    break
+                case 'new_review':
+                    router.push('/admin/reviews')
+                    break
+            }
         }
     } catch (error) {
         console.error('Error marking notification as read:', error)
