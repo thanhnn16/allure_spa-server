@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Services\NotificationService;
 use App\Models\FcmToken;
+use App\Models\Order;
 use App\Services\FirebaseService;
 
 class PayOSController extends Controller
@@ -24,6 +25,19 @@ class PayOSController extends Controller
     public function createPaymentLink(array $paymentData)
     {
         try {
+            // Validate payment data
+            if (!is_array($paymentData)) {
+                throw new \Exception('Invalid payment data format');
+            }
+
+            // Ensure required fields exist
+            $requiredFields = ['orderCode', 'amount', 'description'];
+            foreach ($requiredFields as $field) {
+                if (!isset($paymentData[$field])) {
+                    throw new \Exception("Missing required field: {$field}");
+                }
+            }
+
             Log::info('PayOS Request:', $paymentData);
 
             $response = $this->payOS->createPaymentLink($paymentData);
@@ -46,12 +60,13 @@ class PayOSController extends Controller
         } catch (\Exception $e) {
             Log::error('PayOS Error:', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'paymentData' => $paymentData
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Lỗi x�� lý thanh toán: ' . $e->getMessage()
+                'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()
             ];
         }
     }
@@ -90,44 +105,50 @@ class PayOSController extends Controller
     public function processPayment(Request $request)
     {
         try {
-            $invoice = Invoice::find($request->invoice_id);
+            // Validate request
+            $request->validate([
+                'returnUrl' => 'required|string',
+                'cancelUrl' => 'required|string',
+                'order_id' => 'required|string'
+            ]);
 
-            if (!$invoice) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không tìm thấy hóa đơn'
-                ], 404);
-            }
+            $order = Order::findOrFail($request->order_id);
 
-            if (!$invoice->isPending() && !$invoice->isPartiallyPaid()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Hóa đơn không hợp lệ để thanh toán'
-                ], 400);
-            }
+            // Generate order code
+            $orderCode = intval(substr(time() . rand(10, 99), -8));
 
-            $orderCode = intval($invoice->id . time() . rand(100, 999));
-            $amount = intval($invoice->remaining_amount);
-
+            // Prepare payment data as array
             $paymentData = [
                 'orderCode' => $orderCode,
-                'amount' => $amount,
-                'description' => "Thanh toán hóa đơn #" . $invoice->id,
+                'amount' => (int)$order->total_amount,
+                'description' => "Thanh toán đơn hàng #{$order->id}",
                 'returnUrl' => $request->returnUrl,
                 'cancelUrl' => $request->cancelUrl,
-                'buyerName' => $invoice->user->full_name ?? null,
-                'buyerEmail' => $invoice->user->email ?? null,
-                'buyerPhone' => $invoice->user->phone ?? null,
-                'buyerAddress' => $invoice->user->address ?? null,
-                'items' => $this->formatOrderItems($invoice->order->items),
             ];
+
+            // Add buyer info if available
+            if ($order->user) {
+                if ($order->user->full_name) {
+                    $paymentData['buyerName'] = substr($order->user->full_name, 0, 255);
+                }
+                if ($order->user->email) {
+                    $paymentData['buyerEmail'] = substr($order->user->email, 0, 255);
+                }
+                if ($order->user->phone) {
+                    $paymentData['buyerPhone'] = substr($order->user->phone, 0, 20);
+                }
+                if ($order->user->address) {
+                    $paymentData['buyerAddress'] = substr($order->user->address, 0, 255);
+                }
+            }
 
             $result = $this->createPaymentLink($paymentData);
 
             if ($result['success']) {
+                // Create payment history
                 PaymentHistory::create([
-                    'invoice_id' => $invoice->id,
-                    'payment_amount' => $amount,
+                    'order_id' => $order->id,
+                    'payment_amount' => $order->total_amount,
                     'payment_method' => 'payos',
                     'old_payment_status' => 'pending',
                     'new_payment_status' => 'pending',
@@ -139,8 +160,7 @@ class PayOSController extends Controller
         } catch (\Exception $e) {
             Log::error('PayOS Process Payment Error:', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'invoice_id' => $request->invoice_id
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
