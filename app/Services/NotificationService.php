@@ -64,7 +64,7 @@ class NotificationService
             ->with('media')
             ->orderBy('created_at', 'desc');
 
-        $unreadCount = $query->where('is_read', false)->count();
+        $unreadCount = $query->clone()->where('is_read', false)->count();
         
         $skip = ($page - 1) * $perPage;
         $notifications = $query->skip($skip)
