@@ -8,6 +8,12 @@ use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
+/**
+ * @OA\Tag(
+ *     name="Notifications",
+ *     description="API Endpoints for managing notifications"
+ * )
+ */
 class NotificationController extends BaseController
 {
     protected $notificationService;
@@ -18,97 +24,108 @@ class NotificationController extends BaseController
     }
 
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *     path="/api/notifications",
+     *     summary="Get user notifications",
+     *     tags={"Notifications"},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Notification")),
+     *             @OA\Property(property="hasMore", type="boolean")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request)
     {
-        $notifications = Notification::where('user_id', Auth::user()->id)
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($notification) {
-                return [
-                    'id' => $notification->id,
-                    'title' => $notification->title,
-                    'content' => $notification->content,
-                    'type' => $notification->type,
-                    'is_read' => (bool) $notification->is_read,
-                    'created_at' => $notification->created_at,
-                    'url' => $notification->url
-                ];
-            });
+        $perPage = 10;
+        $notifications = $this->notificationService->getUserNotifications(
+            Auth::user()->id,
+            $perPage,
+            $request->input('page', 1)
+        );
 
         if ($request->wantsJson()) {
             return $this->respondWithJson([
-                'data' => $notifications
+                'data' => $notifications['items'],
+                'hasMore' => $notifications['hasMore']
             ]);
         }
 
         return $this->respondWithInertia('Notifications/Index', [
-            'data' => $notifications
+            'initialNotifications' => $notifications['items'],
+            'hasMore' => $notifications['hasMore'],
+            'unreadCount' => $notifications['unreadCount']
         ]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * @OA\Post(
+     *     path="/api/notifications/{id}/mark-as-read",
+     *     summary="Mark notification as read",
+     *     tags={"Notifications"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(ref="#/components/schemas/Notification")
+     *     )
+     * )
      */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
     public function markAsRead($id)
     {
-        $notification = Notification::findOrFail($id);
-        $notification->update(['is_read' => true]);
-
+        $notification = $this->notificationService->markAsRead($id);
         return $this->respondWithJson($notification);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/notifications/mark-all-as-read",
+     *     summary="Mark all notifications as read",
+     *     tags={"Notifications"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success"
+     *     )
+     * )
+     */
     public function markAllAsRead()
     {
-        Notification::where('user_id', Auth::user()->id)
-            ->update(['is_read' => true]);
-
+        $this->notificationService->markAllAsRead(Auth::user()->id);
         return $this->respondWithJson(null, 'All notifications marked as read');
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/notifications/unread-count",
+     *     summary="Get unread notifications count",
+     *     tags={"Notifications"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="count", type="integer")
+     *         )
+     *     )
+     * )
+     */
+    public function getUnreadCount()
+    {
+        $count = $this->notificationService->getUnreadCount(Auth::user()->id);
+        return $this->respondWithJson(['count' => $count]);
     }
 }

@@ -8,7 +8,8 @@ export const useNotificationStore = defineStore('notification', {
     state: () => ({
         notifications: [],
         unreadCount: 0,
-        fcmToken: null
+        fcmToken: null,
+        loading: false
     }),
     actions: {
         // Handle incoming FCM messages
@@ -83,6 +84,15 @@ export const useNotificationStore = defineStore('notification', {
                 }
             } catch (error) {
                 console.error('FCM initialization failed:', error)
+            }
+        },
+
+        async fetchUnreadCount() {
+            try {
+                const response = await axios.get('/api/notifications/unread-count')
+                this.unreadCount = response.data.data.count
+            } catch (error) {
+                console.error('Error fetching unread count:', error)
             }
         }
     }

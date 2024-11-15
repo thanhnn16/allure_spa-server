@@ -2226,6 +2226,120 @@
                 ]
             }
         },
+        "/api/notifications": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get user notifications",
+                "operationId": "911565ad9aff9ba7eded3f189509e578",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Notification"
+                                            }
+                                        },
+                                        "hasMore": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notifications/{id}/mark-as-read": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark notification as read",
+                "operationId": "0b62f07a2a10c04cb0510382a5523702",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Notification"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notifications/mark-all-as-read": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark all notifications as read",
+                "operationId": "a72c021ffd50de02c44c68c5dfc04925",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/api/notifications/unread-count": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get unread notifications count",
+                "operationId": "7caea6b85f9c3fe360aa3daa1f8daeb3",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "count": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/orders": {
             "get": {
                 "tags": [
@@ -6250,6 +6364,11 @@
                     },
                     "user_id": {
                         "description": "User ID",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "media_id": {
+                        "description": "Media ID",
                         "type": "integer",
                         "format": "int64"
                     },
@@ -6268,6 +6387,14 @@
                     "is_read": {
                         "description": "Whether the notification has been read",
                         "type": "boolean"
+                    },
+                    "url": {
+                        "description": "URL associated with notification",
+                        "type": "string"
+                    },
+                    "status": {
+                        "description": "Notification status",
+                        "type": "string"
                     },
                     "created_at": {
                         "description": "Creation timestamp",
@@ -7508,6 +7635,10 @@
         {
             "name": "Appointments",
             "description": "API Endpoints của Appointment"
+        },
+        {
+            "name": "Notifications",
+            "description": "API Endpoints for managing notifications"
         },
         {
             "name": "Orders",
