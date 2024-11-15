@@ -131,14 +131,22 @@ class Product extends Model
             return false;
         }
 
-        // If favorites was loaded through withCount
+        // Case 1: When loaded through favorites relationship (in FavoriteService)
+        if ($this->relationLoaded('favorites')) {
+            return $this->favorites->where('user_id', Auth::id())
+                ->where('favorite_type', 'product')
+                ->isNotEmpty();
+        }
+
+        // Case 2: When loaded with favorites count (in ProductService)
         if (isset($this->favorites_count)) {
             return $this->favorites_count > 0;
         }
 
-        // Otherwise check directly
+        // Case 3: Direct database check
         return $this->favorites()
             ->where('user_id', Auth::id())
+            ->where('favorite_type', 'product')
             ->exists();
     }
 
