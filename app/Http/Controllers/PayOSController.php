@@ -112,12 +112,13 @@ class PayOSController extends Controller
                 'order_id' => 'required|string'
             ]);
 
-            $order = Order::findOrFail($request->order_id);
+            $order = Order::with(['user', 'shippingAddress'])
+                ->findOrFail($request->order_id);
 
             // Generate order code
             $orderCode = intval(substr(time() . rand(10, 99), -8));
 
-            // Prepare payment data as array
+            // Prepare payment data
             $paymentData = [
                 'orderCode' => $orderCode,
                 'amount' => (int)$order->total_amount,
@@ -128,35 +129,41 @@ class PayOSController extends Controller
 
             // Add buyer info if available
             if ($order->user) {
-                if ($order->user->full_name) {
-                    $paymentData['buyerName'] = substr($order->user->full_name, 0, 255);
-                }
-                if ($order->user->email) {
-                    $paymentData['buyerEmail'] = substr($order->user->email, 0, 255);
-                }
-                if ($order->user->phone) {
-                    $paymentData['buyerPhone'] = substr($order->user->phone, 0, 20);
-                }
-                if ($order->user->address) {
-                    $paymentData['buyerAddress'] = substr($order->user->address, 0, 255);
+                $paymentData['buyerName'] = substr($order->user->full_name ?? '', 0, 255);
+                $paymentData['buyerEmail'] = substr($order->user->email ?? '', 0, 255);
+                $paymentData['buyerPhone'] = substr($order->user->phone ?? '', 0, 20);
+
+                if ($order->shippingAddress) {
+                    $paymentData['buyerAddress'] = substr($order->shippingAddress->full_address ?? '', 0, 255);
                 }
             }
 
-            $result = $this->createPaymentLink($paymentData);
+            $result = $this->payOS->createPaymentLink($paymentData);
 
-            if ($result['success']) {
-                // Create payment history
-                PaymentHistory::create([
-                    'order_id' => $order->id,
-                    'payment_amount' => $order->total_amount,
-                    'payment_method' => 'payos',
-                    'old_payment_status' => 'pending',
-                    'new_payment_status' => 'pending',
-                    'transaction_code' => $orderCode,
-                ]);
+            if (!isset($result['checkoutUrl'])) {
+                throw new \Exception($result['desc'] ?? 'Không thể tạo link thanh toán');
             }
 
-            return response()->json($result, $result['success'] ? 200 : 400);
+            // Create payment history
+            PaymentHistory::create([
+                'order_id' => $order->id,
+                'payment_amount' => $order->total_amount,
+                'payment_method' => 'payos',
+                'old_payment_status' => 'pending',
+                'new_payment_status' => 'pending',
+                'transaction_code' => $orderCode,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'checkoutUrl' => $result['checkoutUrl'],
+                    'qrCode' => $result['qrCode'] ?? null,
+                    'orderCode' => $orderCode,
+                    'amount' => $order->total_amount,
+                    'payment_method' => 'payos'
+                ]
+            ]);
         } catch (\Exception $e) {
             Log::error('PayOS Process Payment Error:', [
                 'message' => $e->getMessage(),
