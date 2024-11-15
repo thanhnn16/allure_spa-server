@@ -227,7 +227,7 @@ class PayOSController extends Controller
                 $paymentStatus = $response['status'];
                 $amount = isset($response['amount']) ? $response['amount'] : 0;
 
-                // Extract invoice ID from orderCode
+                // Extract invoice ID from orderCode (format: INV{id}_timestamp)
                 preg_match('/INV(\d+)_/', $orderCode, $matches);
                 $invoiceId = $matches[1] ?? null;
 
@@ -236,18 +236,20 @@ class PayOSController extends Controller
                     try {
                         // Find invoice and related payment history
                         $invoice = Invoice::with(['user', 'user.fcmTokens'])->findOrFail($invoiceId);
-
-                        // Update invoice status
+                        
+                        // Update invoice status and paid amount
                         $oldStatus = $invoice->status;
+                        $newPaidAmount = $invoice->paid_amount + $amount;
+                        
                         $invoice->update([
                             'status' => 'paid',
-                            'paid_amount' => $invoice->total_amount
+                            'paid_amount' => $newPaidAmount
                         ]);
 
-                        // Update order status to confirmed
+                        // Update order status if exists
                         if ($invoice->order) {
                             $invoice->order->update([
-                                'status' => 'confirmed'
+                                'status' => 'completed'
                             ]);
                         }
 
@@ -297,7 +299,6 @@ class PayOSController extends Controller
                                 'message' => $e->getMessage(),
                                 'trace' => $e->getTraceAsString()
                             ]);
-                            // Don't throw the exception - continue with the transaction
                         }
 
                         DB::commit();
