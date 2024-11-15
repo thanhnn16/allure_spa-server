@@ -8,6 +8,9 @@ use PayOS\PayOS;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
+use App\Models\FcmToken;
+use App\Services\FirebaseService;
 
 class PayOSController extends Controller
 {
@@ -48,7 +51,7 @@ class PayOSController extends Controller
 
             return [
                 'success' => false,
-                'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()
+                'message' => 'Lỗi x�� lý thanh toán: ' . $e->getMessage()
             ];
         }
     }
@@ -173,9 +176,8 @@ class PayOSController extends Controller
 
             if ($response && isset($response['status'])) {
                 $paymentStatus = $response['status'];
-                $amount = isset($response['amount']) ? $response['amount'] : 0; // Convert from smallest unit
+                $amount = isset($response['amount']) ? $response['amount'] : 0;
 
-                // Extract invoice ID from orderCode if it exists
                 preg_match('/^(\d+)/', $orderCode, $matches);
                 $invoiceId = $matches[1] ?? null;
 
@@ -187,13 +189,41 @@ class PayOSController extends Controller
                             'payment_details' => json_encode($response)
                         ]);
 
-                        $invoice = Invoice::find($invoiceId);
+                        $invoice = Invoice::with('user')->find($invoiceId);
                         if ($invoice) {
                             $invoice->paid_amount += $amount;
                             $invoice->remaining_amount = $invoice->calculateRemainingAmount();
                             $invoice->status = $invoice->remaining_amount > 0 ?
                                 'partially_paid' : 'paid';
                             $invoice->save();
+
+                            if ($invoice->user) {
+                                app(NotificationService::class)->createNotification([
+                                    'user_id' => $invoice->user->id,
+                                    'title' => 'Thanh toán thành công',
+                                    'content' => "Thanh toán hóa đơn #{$invoice->id} thành công với số tiền " . number_format($amount, 0, ',', '.') . 'đ',
+                                    'type' => 'payment_success',
+                                    'url' => "/invoices/{$invoice->id}"
+                                ]);
+
+                                $userFcmTokens = FcmToken::where('user_id', $invoice->user->id)
+                                    ->pluck('token')
+                                    ->toArray();
+
+                                if (!empty($userFcmTokens)) {
+                                    foreach ($userFcmTokens as $token) {
+                                        app(FirebaseService::class)->sendMessage(
+                                            $token,
+                                            'Thanh toán thành công',
+                                            "Thanh toán hóa đơn #{$invoice->id} thành công với số tiền " . number_format($amount, 0, ',', '.') . 'đ',
+                                            [
+                                                'type' => 'payment_success',
+                                                'invoice_id' => $invoice->id
+                                            ]
+                                        );
+                                    }
+                                }
+                            }
                         }
                     }
                 }
