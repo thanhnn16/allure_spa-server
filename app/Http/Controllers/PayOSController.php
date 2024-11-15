@@ -111,8 +111,23 @@ class PayOSController extends Controller
                 'cancelUrl' => 'required|string'
             ]);
 
-            $order = Order::with(['user', 'shippingAddress'])
+            $order = Order::with(['user', 'shippingAddress', 'invoice'])
                 ->findOrFail($orderId);
+
+            // Kiểm tra hoặc tạo invoice nếu chưa có
+            if (!$order->invoice) {
+                $invoice = new Invoice([
+                    'user_id' => $order->user_id,
+                    'order_id' => $order->id,
+                    'total_amount' => $order->total_amount,
+                    'remaining_amount' => $order->total_amount,
+                    'paid_amount' => 0,
+                    'status' => 'pending',
+                    'payment_method' => 'payos'
+                ]);
+                $order->invoice()->save($invoice);
+                $order->refresh();
+            }
 
             // Generate order code
             $orderCode = intval(substr(time() . rand(10, 99), -8));
@@ -150,9 +165,10 @@ class PayOSController extends Controller
                 throw new \Exception($result['desc'] ?? 'Không thể tạo link thanh toán');
             }
 
-            // Create payment history
+            // Create payment history với invoice_id
             PaymentHistory::create([
                 'order_id' => $order->id,
+                'invoice_id' => $order->invoice->id,
                 'payment_amount' => $order->total_amount,
                 'payment_method' => 'payos',
                 'old_payment_status' => 'pending',
@@ -170,6 +186,7 @@ class PayOSController extends Controller
                     'payment_method' => 'payos'
                 ]
             ]);
+
         } catch (\Exception $e) {
             Log::error('PayOS Process Payment Error:', [
                 'message' => $e->getMessage(),
