@@ -44,7 +44,7 @@ class Product extends Model
 
     protected $morphClass = 'product';
 
-    protected $appends = ['rating_summary'];
+    protected $appends = ['rating_summary', 'is_favorite'];
 
     public function category()
     {
@@ -110,6 +110,24 @@ class Product extends Model
                 1 => $approvedRatings->where('stars', 1)->count(),
             ]
         ];
+    }
+
+    public function getIsFavoriteAttribute()
+    {
+        // Return false for guest users
+        if (!auth()->check()) {
+            return false;
+        }
+        
+        // If favorites count was loaded through withCount
+        if (isset($this->is_favorite)) {
+            return $this->is_favorite > 0;
+        }
+
+        // Otherwise check directly
+        return $this->favorites()
+            ->where('user_id', auth()->id())
+            ->exists();
     }
 
     /**

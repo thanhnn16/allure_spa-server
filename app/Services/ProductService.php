@@ -8,6 +8,7 @@ use App\Models\ProductPriceHistory;
 use App\Models\StockMovement;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ProductService
@@ -70,37 +71,44 @@ class ProductService
 
     public function getProductById($id)
     {
-        return Product::with([
-            'category', 
+        $query = Product::with([
+            'category',
             'media',
-            'priceHistory' => function($query) {
+            'priceHistory' => function ($query) {
                 $query->orderBy('effective_from', 'desc');
             },
             'attributes',
-            'ratings' => function($query) {
+            'ratings' => function ($query) {
                 $query->where('status', 'approved')
-                      ->where('rating_type', 'product');
+                    ->where('rating_type', 'product');
             }
         ])
-        ->withCount(['ratings as total_ratings' => function($query) {
-            $query->where('status', 'approved')
-                  ->where('rating_type', 'product');
-        }])
-        ->withAvg(['ratings as average_rating' => function($query) {
-            $query->where('status', 'approved')
-                  ->where('rating_type', 'product');
-        }], 'stars')
-        ->findOrFail($id);
+            ->withCount(['ratings as total_ratings' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'product');
+            }])
+            ->withAvg(['ratings as average_rating' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'product');
+            }], 'stars');
+
+        if (Auth::check()) {
+            $query->withCount(['favorites as is_favorite' => function ($query) {
+                $query->where('user_id', Auth::user()->id);
+            }]);
+        }
+
+        return $query->findOrFail($id);
     }
 
     public function updateProduct($id, array $data)
     {
         try {
             DB::beginTransaction();
-            
+
             $product = Product::findOrFail($id);
             $oldPrice = $product->price;
-            
+
             // Update product
             $product->update($data);
 
