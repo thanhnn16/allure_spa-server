@@ -148,7 +148,10 @@ class AppointmentService
                     'user_id' => $appointment->user_id,
                     'title' => 'Đặt lịch thành công',
                     'content' => "Bạn đã đặt lịch {$appointment->service->name} vào ngày {$appointment->appointment_date}",
-                    'type' => 'appointment_created'
+                    'type' => 'appointment_created',
+                    'data' => [
+                        'appointment_id' => $appointment->id,
+                    ]
                 ]);
 
                 return [
@@ -202,7 +205,11 @@ class AppointmentService
                     'user_id' => $appointment->user_id,
                     'title' => 'Cập nhật lịch hẹn',
                     'content' => $statusMessage,
-                    'type' => 'appointment_status_changed'
+                    'type' => 'appointment_status_changed',
+                    'data' => [
+                        'appointment_id' => $appointment->id,
+                        'status' => $data['status'],
+                    ]
                 ]);
 
                 // Thông báo cho admin nếu khách hàng hủy lịch
