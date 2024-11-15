@@ -102,23 +102,22 @@ class PayOSController extends Controller
         return response()->json($result, $result['success'] ? 200 : 400);
     }
 
-    public function processPayment(Request $request)
+    public function processPayment(Request $request, $orderId)
     {
         try {
             // Validate request
             $request->validate([
                 'returnUrl' => 'required|string',
-                'cancelUrl' => 'required|string',
-                'order_id' => 'required|string'
+                'cancelUrl' => 'required|string'
             ]);
 
             $order = Order::with(['user', 'shippingAddress'])
-                ->findOrFail($request->order_id);
+                ->findOrFail($orderId);
 
             // Generate order code
             $orderCode = intval(substr(time() . rand(10, 99), -8));
 
-            // Prepare payment data
+            // Prepare payment data as array
             $paymentData = [
                 'orderCode' => $orderCode,
                 'amount' => (int)$order->total_amount,
@@ -129,15 +128,22 @@ class PayOSController extends Controller
 
             // Add buyer info if available
             if ($order->user) {
-                $paymentData['buyerName'] = substr($order->user->full_name ?? '', 0, 255);
-                $paymentData['buyerEmail'] = substr($order->user->email ?? '', 0, 255);
-                $paymentData['buyerPhone'] = substr($order->user->phone ?? '', 0, 20);
-
-                if ($order->shippingAddress) {
-                    $paymentData['buyerAddress'] = substr($order->shippingAddress->full_address ?? '', 0, 255);
+                if ($order->user->full_name) {
+                    $paymentData['buyerName'] = substr($order->user->full_name, 0, 255);
+                }
+                if ($order->user->email) {
+                    $paymentData['buyerEmail'] = substr($order->user->email, 0, 255);
+                }
+                if ($order->user->phone) {
+                    $paymentData['buyerPhone'] = substr($order->user->phone, 0, 20);
                 }
             }
 
+            if ($order->shippingAddress) {
+                $paymentData['buyerAddress'] = substr($order->shippingAddress->full_address ?? '', 0, 255);
+            }
+
+            // Gọi PayOS API để tạo payment link
             $result = $this->payOS->createPaymentLink($paymentData);
 
             if (!isset($result['checkoutUrl'])) {

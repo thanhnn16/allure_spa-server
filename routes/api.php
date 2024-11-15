@@ -198,6 +198,10 @@ Route::middleware('throttle:api')->group(function () {
 
             // Thêm route tạo hóa đơn từ đơn hàng
             Route::post('/{order}/create-invoice', [OrderController::class, 'createInvoice']);
+
+            // Thay vì gọi trực tiếp createPaymentLink
+            Route::post('/orders/{order}/payment-link', [PayOSController::class, 'processPayment'])
+                ->middleware('auth:sanctum');
         });
 
         // Notification routes
