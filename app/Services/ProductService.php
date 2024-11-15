@@ -93,10 +93,12 @@ class ProductService
             }], 'stars');
 
         if (Auth::check()) {
-            $query->withCount(['favorites as is_favorite' => function ($query) {
-                $query->where('favorite_type', 'product')
-                    ->where('user_id', Auth::user()->id);
-            }]);
+            $query->withCount([
+                'favorites as favorites_count' => function ($query) {
+                    $query->where('favorite_type', 'product')
+                        ->where('user_id', Auth::user()->id);
+                }
+            ]);
         }
 
         return $query->findOrFail($id);

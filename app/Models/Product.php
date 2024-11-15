@@ -132,8 +132,8 @@ class Product extends Model
         }
 
         // If favorites count was loaded through withCount
-        if (isset($this->is_favorite)) {
-            return $this->is_favorite > 0;
+        if ($this->relationLoaded('favorites_count')) {
+            return $this->favorites_count > 0;
         }
 
         // Otherwise check directly
