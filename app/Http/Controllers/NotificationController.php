@@ -56,11 +56,9 @@ class NotificationController extends BaseController
 
         if ($request->wantsJson()) {
             return $this->respondWithJson([
-                'data' => [
-                    'data' => $notifications['items'],
-                    'hasMore' => $notifications['hasMore'],
-                    'unreadCount' => $notifications['unreadCount']
-                ]
+                'data' => $notifications['items'],
+                'hasMore' => $notifications['hasMore'],
+                'unreadCount' => $notifications['unreadCount']
             ]);
         }
 
