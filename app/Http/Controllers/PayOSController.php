@@ -18,7 +18,7 @@ class PayOSController extends Controller
         $this->payOS = $payOS;
     }
 
-    protected function createPaymentLink(array $paymentData)
+    public function createPaymentLink(array $paymentData)
     {
         try {
             Log::info('PayOS Request:', $paymentData);
