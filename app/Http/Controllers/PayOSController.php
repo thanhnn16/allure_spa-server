@@ -120,7 +120,6 @@ class PayOSController extends Controller
                     'user_id' => $order->user_id,
                     'order_id' => $order->id,
                     'total_amount' => $order->total_amount,
-                    'remaining_amount' => $order->total_amount,
                     'paid_amount' => 0,
                     'status' => 'pending',
                     'payment_method' => 'payos'
@@ -186,7 +185,6 @@ class PayOSController extends Controller
                     'payment_method' => 'payos'
                 ]
             ]);
-
         } catch (\Exception $e) {
             Log::error('PayOS Process Payment Error:', [
                 'message' => $e->getMessage(),

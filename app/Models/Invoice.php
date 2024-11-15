@@ -48,7 +48,6 @@ class Invoice extends Model
         'staff_user_id',
         'total_amount',
         'paid_amount',
-        'remaining_amount',
         'status',
         'order_id',
         'note',
