@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @OA\Schema(
@@ -38,8 +39,18 @@ class Product extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'name', 'price', 'category_id', 'quantity', 'brand_description', 'usage', 'benefits',
-        'key_ingredients', 'ingredients', 'directions', 'storage_instructions', 'product_notes'
+        'name',
+        'price',
+        'category_id',
+        'quantity',
+        'brand_description',
+        'usage',
+        'benefits',
+        'key_ingredients',
+        'ingredients',
+        'directions',
+        'storage_instructions',
+        'product_notes'
     ];
 
     protected $morphClass = 'product';
@@ -98,7 +109,7 @@ class Product extends Model
         $approvedRatings = $this->ratings()
             ->where('status', 'approved')
             ->where('rating_type', 'product');
-        
+
         return [
             'average_rating' => round($this->average_rating, 1) ?? 0,
             'total_ratings' => $this->total_ratings ?? 0,
@@ -115,10 +126,10 @@ class Product extends Model
     public function getIsFavoriteAttribute()
     {
         // Return false for guest users
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return false;
         }
-        
+
         // If favorites count was loaded through withCount
         if (isset($this->is_favorite)) {
             return $this->is_favorite > 0;
@@ -126,7 +137,7 @@ class Product extends Model
 
         // Otherwise check directly
         return $this->favorites()
-            ->where('user_id', auth()->id())
+            ->where('user_id', Auth::user()->id)
             ->exists();
     }
 
@@ -156,7 +167,7 @@ class Product extends Model
             ->get();
     }
 
-    public function getCurrentStock(): int 
+    public function getCurrentStock(): int
     {
         return $this->quantity;
     }
@@ -185,15 +196,15 @@ class Product extends Model
                 'stock_after_movement',
                 'note'
             ]);
-        
+
         if ($startDate) {
             $query->where('created_at', '>=', $startDate);
         }
-        
+
         if ($endDate) {
             $query->where('created_at', '<=', $endDate);
         }
-        
+
         return $query->orderBy('created_at')->get();
     }
 
@@ -202,11 +213,11 @@ class Product extends Model
         $lastMovement = $this->stockMovements()
             ->latest()
             ->first();
-        
+
         if ($lastMovement) {
             return $this->quantity === $lastMovement->stock_after_movement;
         }
-        
+
         return $this->quantity === 0;
     }
 }
