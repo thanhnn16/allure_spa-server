@@ -131,14 +131,14 @@ class Product extends Model
             return false;
         }
 
-        // If favorites count was loaded through withCount
-        if ($this->relationLoaded('favorites_count')) {
+        // If favorites was loaded through withCount
+        if (isset($this->favorites_count)) {
             return $this->favorites_count > 0;
         }
 
         // Otherwise check directly
         return $this->favorites()
-            ->where('user_id', Auth::user()->id)
+            ->where('user_id', Auth::id())
             ->exists();
     }
 
