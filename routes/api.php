@@ -176,7 +176,7 @@ Route::middleware('throttle:api')->group(function () {
         });
 
         // Order routes
-        Route::prefix('orders')->group(function () {
+        Route::prefix('orders')->middleware('auth:sanctum')->group(function () {
             // Basic CRUD operations
             Route::get('/', [OrderController::class, 'index']);
             Route::post('/', [OrderController::class, 'store']);
@@ -190,7 +190,7 @@ Route::middleware('throttle:api')->group(function () {
             Route::delete('/{order}/cancel', [OrderController::class, 'cancelOrder']);
 
             // Payment related
-            Route::post('/{order}/payment', [PayOSController::class, 'createPaymentLink']);
+            Route::post('/{order}/payment-link', [PayOSController::class, 'processPayment']);
             Route::post('/{order}/verify-payment', [PayOSController::class, 'verifyPayment']);
 
             // User specific
@@ -198,10 +198,6 @@ Route::middleware('throttle:api')->group(function () {
 
             // Thêm route tạo hóa đơn từ đơn hàng
             Route::post('/{order}/create-invoice', [OrderController::class, 'createInvoice']);
-
-            // Thay vì gọi trực tiếp createPaymentLink
-            Route::post('/orders/{order}/payment-link', [PayOSController::class, 'processPayment'])
-                ->middleware('auth:sanctum');
         });
 
         // Notification routes
