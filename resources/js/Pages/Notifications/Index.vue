@@ -136,25 +136,22 @@ const formatNotificationDate = (dateString) => {
                             v-for="notification in notifications" 
                             :key="notification.id"
                             @click="handleNotificationClick(notification)"
-                            class="p-4 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer"
-                            :class="{
-                                'bg-blue-50 dark:bg-slate-700 border border-blue-200 dark:border-slate-600': !notification.is_read,
-                                'bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700': notification.is_read
-                            }"
+                            class="p-4 rounded-lg transition-all duration-200 hover:shadow-md cursor-pointer bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700"
                         >
                             <div class="flex items-start gap-4">
                                 <div class="flex-shrink-0">
-                                    <BaseIcon :path="getNotificationIcon(notification.type)" class="w-6 h-6" :class="{
-                                        'text-blue-500': !notification.is_read,
-                                        'text-gray-400 dark:text-gray-500': notification.is_read
-                                    }" />
+                                    <BaseIcon 
+                                        :path="getNotificationIcon(notification.type)" 
+                                        class="w-6 h-6 text-gray-400 dark:text-gray-500" 
+                                    />
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium mb-0.5" :class="{
-                                        'text-gray-900 dark:text-white': !notification.is_read,
-                                        'text-gray-600 dark:text-gray-300': notification.is_read
-                                    }">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
                                         {{ notification.title }}
+                                        <span 
+                                            v-if="!notification.is_read" 
+                                            class="inline-block ml-2 w-2 h-2 bg-blue-500 rounded-full"
+                                        ></span>
                                     </p>
                                     <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                                         {{ notification.content }}
