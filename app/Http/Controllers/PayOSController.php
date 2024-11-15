@@ -236,11 +236,11 @@ class PayOSController extends Controller
                     try {
                         // Find invoice and related payment history
                         $invoice = Invoice::with(['user', 'user.fcmTokens'])->findOrFail($invoiceId);
-                        
+
                         // Update invoice status and paid amount
                         $oldStatus = $invoice->status;
                         $newPaidAmount = $invoice->paid_amount + $amount;
-                        
+
                         $invoice->update([
                             'status' => 'paid',
                             'paid_amount' => $newPaidAmount
