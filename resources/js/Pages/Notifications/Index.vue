@@ -35,18 +35,8 @@ const fetchNotifications = async () => {
         loading.value = true
         const response = await axios.get('/api/notifications')
         
-        const notificationData = response.data?.data || response.data?.notifications || response.data || []
+        notifications.value = response.data.data || []
         
-        notifications.value = notificationData.map(notification => ({
-            id: notification.id,
-            title: notification.title,
-            content: notification.content,
-            type: notification.type || 'default',
-            is_read: Boolean(notification.is_read),
-            created_at: notification.created_at,
-            url: notification.url
-        }))
-
     } catch (error) {
         console.error('Error fetching notifications:', error)
         notifications.value = []
@@ -61,23 +51,11 @@ onMounted(() => {
 
 const handleNotificationClick = async (notification) => {
     try {
-        await axios.post(`/notifications/${notification.id}/mark-as-read`)
+        await axios.post(`/api/notifications/${notification.id}/mark-as-read`)
         notification.is_read = true
         
         if (notification.url) {
             router.push(notification.url)
-        } else {
-            switch (notification.type) {
-                case 'new_order':
-                    router.push('/admin/orders')
-                    break
-                case 'new_appointment':
-                    router.push('/admin/appointments')
-                    break
-                case 'new_review':
-                    router.push('/admin/reviews')
-                    break
-            }
         }
     } catch (error) {
         console.error('Error marking notification as read:', error)
@@ -86,7 +64,7 @@ const handleNotificationClick = async (notification) => {
 
 const markAllAsRead = async () => {
     try {
-        await axios.post('/notifications/mark-all-as-read')
+        await axios.post('/api/notifications/mark-all-as-read')
         notifications.value = notifications.value.map(notification => ({
             ...notification,
             is_read: true

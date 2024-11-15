@@ -44,7 +44,7 @@ class NotificationController extends BaseController
         }
 
         return $this->respondWithInertia('Notifications/Index', [
-            'notifications' => $notifications
+            'data' => $notifications
         ]);
     }
 

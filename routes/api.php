@@ -202,8 +202,8 @@ Route::middleware('throttle:api')->group(function () {
         // Notification routes
         Route::prefix('notifications')->group(function () {
             Route::get('/', [NotificationController::class, 'index']);
-            Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
-            Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
+            Route::post('/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
+            Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
         });
 
         // Add new route for stats
