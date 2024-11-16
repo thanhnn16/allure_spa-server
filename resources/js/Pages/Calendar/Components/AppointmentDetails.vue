@@ -95,14 +95,14 @@ const handleGoBack = () => {
 }
 
 const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return new Intl.DateTimeFormat('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
+    if (!dateString) return 'N/A'
+    return new Date(dateString).toLocaleString('vi-VN', {
         year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
         hour: '2-digit',
         minute: '2-digit'
-    }).format(date)
+    })
 }
 
 const isModalActive = ref(false)
@@ -199,16 +199,27 @@ const handleCancelAppointment = async () => {
                 {{ notification.message }}
             </NotificationBar>
 
+            <!-- Status Badge Section -->
+            <div class="mb-6">
+                <div class="flex items-center space-x-4">
+                    <div :class="`px-4 py-2 rounded-full text-sm font-semibold ${
+                        statusColors[appointment.status] === 'success' ? 'bg-green-100 text-green-800' :
+                        statusColors[appointment.status] === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                        statusColors[appointment.status] === 'danger' ? 'bg-red-100 text-red-800' :
+                        'bg-blue-100 text-blue-800'
+                    }`">
+                        {{ statusLabels[appointment.status] }}
+                    </div>
+                    <span class="text-gray-500">
+                        Cập nhật lần cuối: {{ formatDate(appointment.updated_at) }}
+                    </span>
+                </div>
+            </div>
+
             <!-- Main Content Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Appointment Status Card -->
+                <!-- Appointment Info Card -->
                 <CardBox class="relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-20 h-20">
-                        <div :class="`absolute transform rotate-45 bg-${statusColors[appointment.status]} text-white text-xs font-bold py-1 right-[-35px] top-[32px] w-[170px] text-center`">
-                            {{ statusLabels[appointment.status] }}
-                        </div>
-                    </div>
-                    
                     <div class="space-y-4">
                         <h2 class="text-xl font-semibold mb-4 flex items-center">
                             <span class="mr-2">Thông tin chung</span>
@@ -228,27 +239,47 @@ const handleCancelAppointment = async () => {
                             </div>
                         </div>
 
-                        <div v-if="appointment.status === 'cancelled'" class="mt-4 p-4 bg-red-50 rounded-lg border border-red-100">
-                            <h3 class="font-semibold text-red-700 mb-2">Thông tin hủy lịch</h3>
-                            <div class="space-y-2">
-                                <p class="text-sm">
-                                    <span class="text-gray-600">Người hủy:</span>
-                                    <span class="font-medium ml-2">{{ appointment.cancelled_by?.full_name || 'N/A' }}</span>
-                                </p>
-                                <p class="text-sm">
-                                    <span class="text-gray-600">Thời gian hủy:</span>
-                                    <span class="font-medium ml-2">{{ formatDate(appointment.cancelled_at) }}</span>
-                                </p>
-                                <p class="text-sm">
-                                    <span class="text-gray-600">Lý do hủy:</span>
-                                    <span class="font-medium ml-2">{{ appointment.cancellation_note || 'Không có' }}</span>
-                                </p>
+                        <!-- Thông tin trạng thái -->
+                        <div class="mt-4 p-4 rounded-lg" :class="{
+                            'bg-green-50 border border-green-100': appointment.status === 'confirmed',
+                            'bg-yellow-50 border border-yellow-100': appointment.status === 'pending',
+                            'bg-red-50 border border-red-100': appointment.status === 'cancelled',
+                            'bg-blue-50 border border-blue-100': appointment.status === 'completed'
+                        }">
+                            <h3 class="font-semibold mb-2" :class="{
+                                'text-green-700': appointment.status === 'confirmed',
+                                'text-yellow-700': appointment.status === 'pending',
+                                'text-red-700': appointment.status === 'cancelled',
+                                'text-blue-700': appointment.status === 'completed'
+                            }">
+                                Trạng thái: {{ statusLabels[appointment.status] }}
+                            </h3>
+
+                            <!-- Hiển thị thông tin hủy nếu lịch đã bị hủy -->
+                            <div v-if="appointment.status === 'cancelled'" class="space-y-2">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <span class="font-medium mr-2">Người hủy:</span>
+                                    <span>{{ appointment.cancelled_by?.full_name || 'N/A' }}</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <span class="font-medium mr-2">Thời gian hủy:</span>
+                                    <span>{{ formatDate(appointment.cancelled_at) }}</span>
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    <span class="font-medium">Lý do hủy:</span>
+                                    <p class="mt-1 p-2 bg-white/50 rounded">
+                                        {{ appointment.cancellation_note || 'Không có lý do' }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Ghi chú chung nếu có -->
                         <div v-if="appointment.note" class="mt-4">
-                            <span class="text-gray-500">Ghi chú</span>
-                            <p class="mt-1 text-gray-700 bg-gray-50 p-3 rounded-lg">{{ appointment.note }}</p>
+                            <span class="text-gray-500 font-medium">Ghi chú</span>
+                            <p class="mt-1 text-gray-700 bg-gray-50 p-3 rounded-lg">
+                                {{ appointment.note }}
+                            </p>
                         </div>
                     </div>
                 </CardBox>
@@ -327,6 +358,7 @@ const handleCancelAppointment = async () => {
                                 :label="label"
                                 :color="statusColors[status]"
                                 :disabled="appointment.status === status"
+                                :outline="appointment.status !== status"
                                 class="w-full justify-center"
                                 @click="status === 'cancelled' ? isModalActive = true : handleStatusChange(status)"
                             />
@@ -336,7 +368,7 @@ const handleCancelAppointment = async () => {
             </div>
         </SectionMain>
 
-        <!-- Thêm Modal Hủy Lịch -->
+        <!-- Cancel Modal -->
         <CardBoxModal
             v-model="isModalActive"
             title="Hủy lịch hẹn"
@@ -369,5 +401,26 @@ const handleCancelAppointment = async () => {
 .card-hover:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Thêm styles cho status badges */
+.status-badge {
+    @apply px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.status-badge-pending {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-badge-confirmed {
+    @apply bg-green-100 text-green-800;
+}
+
+.status-badge-cancelled {
+    @apply bg-red-100 text-red-800;
+}
+
+.status-badge-completed {
+    @apply bg-blue-100 text-blue-800;
 }
 </style>
