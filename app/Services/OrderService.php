@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\UserServicePackage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -205,5 +206,50 @@ class OrderService
         ];
 
         return in_array($newStatus, $allowedTransitions[$currentStatus] ?? []);
+    }
+
+    public function completeOrder(Order $order)
+    {
+        DB::transaction(function () use ($order) {
+            // Update order status
+            $order->status = Order::STATUS_COMPLETED;
+            $order->save();
+
+            // Process service packages for combo items
+            foreach ($order->order_items as $item) {
+                if ($item->item_type === 'service' && $item->service_type) {
+                    $totalSessions = $this->getSessionsFromServiceType($item->service_type);
+                    
+                    UserServicePackage::create([
+                        'user_id' => $order->user_id,
+                        'service_id' => $item->item_id,
+                        'total_sessions' => $totalSessions,
+                        'used_sessions' => 0,
+                        'expiry_date' => now()->addDays(365), // Set appropriate expiry
+                        'is_combo' => true,
+                        'combo_type' => $this->mapServiceTypeToComboType($item->service_type),
+                        'order_id' => $order->id
+                    ]);
+                }
+            }
+        });
+    }
+
+    private function getSessionsFromServiceType(string $serviceType): int 
+    {
+        return match($serviceType) {
+            'combo_5' => 5,
+            'combo_10' => 10,
+            default => 1
+        };
+    }
+
+    private function mapServiceTypeToComboType(string $serviceType): ?string 
+    {
+        return match($serviceType) {
+            'combo_5' => '5_times',
+            'combo_10' => '10_times',
+            default => null
+        };
     }
 }

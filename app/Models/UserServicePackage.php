@@ -2,37 +2,46 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * @OA\Schema(
- *     schema="UserServicePackage",
- *     title="User Service Package",
- *     description="Model representing a user's service package",
- *     @OA\Property(property="id", type="integer", description="The unique identifier of the package"),
- *     @OA\Property(property="user_id", type="integer", description="The ID of the user who owns this package"),
- *     @OA\Property(property="service_id", type="integer", description="The ID of the service associated with this package"),
- *     @OA\Property(property="total_sessions", type="integer", description="The total number of sessions in this package"),
- *     @OA\Property(property="remaining_sessions", type="integer", description="The number of remaining sessions in this package"),
- *     @OA\Property(property="expiry_date", type="string", format="date", description="The expiration date of the package"),
- *     @OA\Property(property="purchase_date", type="string", format="date", description="The date when the package was purchased"),
- *     @OA\Property(property="price", type="number", format="float", description="The price of the package")
- * )
- */
 class UserServicePackage extends Model
 {
-    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
-        'user_id', 'service_id', 'total_sessions', 'remaining_sessions',
-        'expiry_date', 'purchase_date', 'price'
+        'user_id',
+        'service_id',
+        'total_sessions',
+        'used_sessions',
+        'expiry_date',
+        'is_combo',
+        'combo_type',
+        'order_id'
     ];
 
     protected $casts = [
         'expiry_date' => 'date',
-        'purchase_date' => 'date',
+        'is_combo' => 'boolean'
     ];
+
+    protected $appends = ['remaining_sessions', 'status'];
+
+    public function getStatusAttribute(): string
+    {
+        if ($this->used_sessions >= $this->total_sessions) {
+            return 'completed';
+        }
+        if ($this->used_sessions === 0) {
+            return 'pending';
+        }
+        return 'active';
+    }
+
+    public function getRemainingSessionsAttribute(): int
+    {
+        return $this->total_sessions - $this->used_sessions;
+    }
 
     public function user()
     {
@@ -42,6 +51,11 @@ class UserServicePackage extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 
     public function usageHistories()

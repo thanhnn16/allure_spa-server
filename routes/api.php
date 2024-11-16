@@ -23,6 +23,7 @@ use App\Http\Controllers\AiFunctionController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\VoucherController;
+use App\Http\Controllers\ServiceUsageController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -221,6 +222,10 @@ Route::middleware('throttle:api')->group(function () {
 
         // Sửa lại route cập nhật user profile
         Route::put('/user/profile', [UserController::class, 'updateProfile']);
+
+        // Service Usage Routes
+        Route::post('service-packages/{package}/usage', [ServiceUsageController::class, 'recordUsage']);
+        Route::get('service-packages/{package}/history', [ServiceUsageController::class, 'getUsageHistory']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);
