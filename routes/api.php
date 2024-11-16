@@ -231,7 +231,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('service-packages/{package}/usage', [ServiceUsageController::class, 'recordUsage']);
         Route::get('service-packages/{package}/history', [ServiceUsageController::class, 'getUsageHistory']);
 
-        // Banner routes
+        // Banner API routes
         Route::apiResource('banners', BannerController::class);
     });
 
