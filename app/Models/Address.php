@@ -14,7 +14,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *     @OA\Property(property="id", type="integer", format="int64", description="Address ID"),
  *     @OA\Property(property="user_id", type="string", format="uuid", description="User ID"),
  *     @OA\Property(property="province", type="string", description="Province"),
- *     @OA\Property(property="district", type="string", description="District"), 
+ *     @OA\Property(property="district", type="string", description="District"),
+ *     @OA\Property(property="ward", type="string", description="Ward"),
  *     @OA\Property(property="address", type="string", description="Address"),
  *     @OA\Property(property="address_type", type="string", enum={"home","work","shipping","others"}, description="Address type"),
  *     @OA\Property(property="is_default", type="boolean", description="Is default address"),
@@ -31,7 +32,8 @@ class Address extends Model
     protected $fillable = [
         'user_id',
         'province',
-        'district', 
+        'district',
+        'ward',
         'address',
         'address_type',
         'is_default',
@@ -47,5 +49,10 @@ class Address extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 }

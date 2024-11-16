@@ -198,6 +198,7 @@ CREATE TABLE addresses (
     user_id CHAR(36) NULL,
     province VARCHAR(255) NOT NULL,
     district VARCHAR(255) NOT NULL,
+    ward VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
     address_type ENUM ('home', 'work', 'shipping', 'others') NOT NULL DEFAULT 'home',
     is_default BOOLEAN DEFAULT FALSE,
