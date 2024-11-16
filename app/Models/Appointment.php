@@ -30,7 +30,7 @@ class Appointment extends Model
     // Thêm constant cho appointment types
     const APPOINTMENT_TYPES = [
         'facial',
-        'massage', 
+        'massage',
         'weight_loss',
         'hair_removal',
         'consultation',
@@ -91,8 +91,8 @@ class Appointment extends Model
     public function setAppointmentTypeAttribute($value)
     {
         $value = strtolower(str_replace(' ', '_', $value));
-        $this->attributes['appointment_type'] = in_array($value, self::APPOINTMENT_TYPES) 
-            ? $value 
+        $this->attributes['appointment_type'] = in_array($value, self::APPOINTMENT_TYPES)
+            ? $value
             : 'others';
     }
 
@@ -136,19 +136,15 @@ class Appointment extends Model
 
         return [
             'id' => $this->id,
-            'appointment_date' => $this->appointment_date,
+            'title' => $this->service->service_name ?? 'Appointment',
+            'status' => $this->status,
+            'service' => $this->service,
             'start' => $startDateTime->format('Y-m-d H:i:s'),
             'end' => $endDateTime->format('Y-m-d H:i:s'),
-            'service' => [
-                'id' => $this->service?->id,
-                'name' => $this->service?->name,
-                'price' => $this->service?->price,
-                // Add other needed service fields
-            ],
+            'price' => $this->service?->price,
             'staff' => $this->staff ? [
                 'id' => $this->staff->id,
                 'full_name' => $this->staff->full_name,
-                // Add other needed staff fields
             ] : null,
             'time_slot' => $this->timeSlot ? [
                 'id' => $this->timeSlot->id,
@@ -156,11 +152,9 @@ class Appointment extends Model
                 'end_time' => $this->timeSlot->end_time,
                 'max_bookings' => $this->timeSlot->max_bookings,
             ] : null,
-            'status' => $this->status,
             'appointment_type' => $this->appointment_type,
             'note' => $this->note,
             'slots' => $this->slots,
-            // Add cancellation fields
             'cancelled_by' => $this->cancelled_by,
             'cancelled_at' => $this->cancelled_at ? $this->cancelled_at->format('Y-m-d H:i:s') : null,
             'cancellation_note' => $this->cancellation_note,
