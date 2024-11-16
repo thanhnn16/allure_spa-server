@@ -144,4 +144,9 @@ class Appointment extends Model
     {
         return $query->with(['user', 'service', 'staff', 'timeSlot']);
     }
+
+    public function cancelledBy()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
 }
