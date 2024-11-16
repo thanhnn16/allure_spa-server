@@ -479,8 +479,8 @@ class AppointmentService
             }
 
             // Add sorting
-            $query->orderBy('appointment_date', 'desc')
-                ->orderBy('created_at', 'desc');
+            $query->orderBy('appointment_date', 'asc')
+                ->orderBy('created_at', 'asc');
 
             $appointments = $query->get();
 
