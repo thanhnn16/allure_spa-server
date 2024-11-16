@@ -98,11 +98,22 @@ class OrderService
 
             DB::beginTransaction();
 
-            $oldStatus = $order->status;
-            $order->update([
+            $updateData = [
                 'status' => $status,
                 'note' => $note
-            ]);
+            ];
+
+            // Thêm thông tin hủy đơn nếu status là cancelled
+            if ($status === 'cancelled') {
+                $updateData = array_merge($updateData, [
+                    'cancelled_by_user_id' => Auth::id(),
+                    'cancelled_at' => now(),
+                    'cancel_reason' => $note
+                ]);
+            }
+
+            // Cập nhật đơn hàng
+            $order->update($updateData);
 
             // Chuẩn bị thông báo dựa trên trạng thái
             $notificationData = $this->prepareStatusNotification($order, $status);
@@ -121,7 +132,8 @@ class OrderService
             if ($status === 'cancelled') {
                 $this->notificationService->notifyAdmins(
                     'Đơn hàng bị hủy',
-                    "Đơn hàng #{$order->id} đã bị hủy bởi khách hàng",
+                    "Đơn hàng #{$order->id} đã bị hủy bởi " . 
+                    (Auth::user()->role === 'admin' ? 'Admin' : 'khách hàng'),
                     'order_cancelled',
                     [
                         'type' => 'order',

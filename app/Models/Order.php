@@ -19,6 +19,9 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="discount_amount", type="number", format="float", description="Discount amount"),
  *     @OA\Property(property="status", type="string", enum={"pending", "confirmed", "shipping", "completed", "cancelled"}, description="Order status"),
  *     @OA\Property(property="note", type="string", nullable=true, description="Order note"),
+ *     @OA\Property(property="cancelled_by_user_id", type="string", format="uuid", nullable=true, description="ID of user who cancelled the order"),
+ *     @OA\Property(property="cancelled_at", type="string", format="date-time", nullable=true, description="Cancellation timestamp"),
+ *     @OA\Property(property="cancel_reason", type="string", nullable=true, description="Reason for cancellation"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Created timestamp"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Last updated timestamp"),
  *     @OA\Property(
@@ -42,7 +45,16 @@ class Order extends Model
         'voucher_id',
         'discount_amount',
         'status',
-        'note'
+        'note',
+        'cancelled_by_user_id',
+        'cancelled_at',
+        'cancel_reason'
+    ];
+
+    protected $dates = [
+        'created_at',
+        'updated_at',
+        'cancelled_at'
     ];
 
     public function items()
@@ -78,5 +90,10 @@ class Order extends Model
     public function paymentMethod()
     {
         return $this->belongsTo(PaymentMethod::class);
+    }
+
+    public function cancelledBy()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by_user_id');
     }
 }

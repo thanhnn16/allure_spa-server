@@ -263,12 +263,16 @@ CREATE TABLE orders (
     note TEXT,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
+    cancelled_by_user_id CHAR(36) NULL,
+    cancelled_at TIMESTAMP NULL DEFAULT NULL,
+    cancel_reason TEXT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (shipping_address_id) REFERENCES addresses (id) ON DELETE CASCADE,
     FOREIGN KEY (payment_method_id) REFERENCES payment_methods (id) ON DELETE CASCADE,
     FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE
     SET
-        NULL
+        NULL,
+    FOREIGN KEY (cancelled_by_user_id) REFERENCES users (id) ON DELETE SET NULL
 );
 
 -- 31. Bảng order_items

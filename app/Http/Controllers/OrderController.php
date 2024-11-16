@@ -650,7 +650,7 @@ class OrderController extends BaseController
     {
         try {
             // Kiểm tra quyền
-            if ($order->user_id !== Auth::id()) {
+            if ($order->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
                 return $this->respondWithJson(null, 'Bạn không có quyền hủy đơn hàng này', 403);
             }
 
@@ -660,10 +660,10 @@ class OrderController extends BaseController
             ]);
 
             // Kiểm tra điều kiện hủy đơn
-            if ($order->status !== 'pending') {
+            if (!in_array($order->status, ['pending', 'confirmed'])) {
                 return $this->respondWithJson(
                     null,
-                    'Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý',
+                    'Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý hoặc đã xác nhận',
                     400
                 );
             }
@@ -671,10 +671,15 @@ class OrderController extends BaseController
             // Cập nhật trạng thái thành cancelled
             $order->update([
                 'status' => 'cancelled',
-                'note' => $validated['cancel_reason'] ?? null
+                'cancel_reason' => $validated['cancel_reason'] ?? null,
+                'cancelled_by_user_id' => Auth::id(),
+                'cancelled_at' => now()
             ]);
 
-            return $this->respondWithJson(null, 'Hủy đơn hàng thành công');
+            return $this->respondWithJson(
+                $order->load(['cancelledBy']), 
+                'Hủy đơn hàng thành công'
+            );
         } catch (\Exception $e) {
             return $this->respondWithJson(null, $e->getMessage(), 500);
         }
