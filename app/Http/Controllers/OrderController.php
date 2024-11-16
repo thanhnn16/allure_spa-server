@@ -684,4 +684,14 @@ class OrderController extends BaseController
             return $this->respondWithJson(null, $e->getMessage(), 500);
         }
     }
+
+    public function complete(Request $request, Order $order)
+    {
+        try {
+            $this->orderService->completeOrder($order);
+            return $this->respondWithJson($order->fresh(), 'Đơn hàng đã hoàn thành thành công');
+        } catch (\Exception $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+    }
 }

@@ -186,19 +186,22 @@ Route::middleware('throttle:api')->group(function () {
             Route::put('/{order}', [OrderController::class, 'update']);
             Route::delete('/{order}', [OrderController::class, 'destroy']);
 
-            // Order status management
-            Route::put('/{order}/update-status', [OrderController::class, 'updateOrderStatus']);
-            Route::delete('/{order}/cancel', [OrderController::class, 'cancelOrder']);
-
             // Payment related
             Route::post('/{order}/payment-link', [PayOSController::class, 'processPayment']);
             Route::post('/{order}/verify-payment', [PayOSController::class, 'verifyPayment']);
 
-            // User specific
-            Route::get('/my-orders', [OrderController::class, 'getMyOrders']);
-
             // Thêm route tạo hóa đơn từ đơn hàng
             Route::post('/{order}/create-invoice', [OrderController::class, 'createInvoice']);
+
+            Route::post('{order}/complete', [OrderController::class, 'complete'])
+                ->middleware('can:complete,order');
+
+            // Order status management
+            Route::put('/{order}/update-status', [OrderController::class, 'updateOrderStatus']);
+            Route::delete('/{order}/cancel', [OrderController::class, 'cancelOrder']);
+
+            // User specific
+            Route::get('/my-orders', [OrderController::class, 'getMyOrders']);
         });
 
         // Notification routes

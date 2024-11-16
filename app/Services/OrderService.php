@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
+use App\Models\Service;
 use App\Models\UserServicePackage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -103,7 +105,7 @@ class OrderService
                 if (!$order->invoice) {
                     throw new \Exception('Không thể hoàn thành đơn hàng chưa có hóa đơn');
                 }
-                
+
                 if ($order->invoice->status !== Invoice::STATUS_PAID) {
                     throw new \Exception('Không thể hoàn thành đơn hàng chưa thanh toán đủ');
                 }
@@ -150,8 +152,8 @@ class OrderService
             if ($status === 'cancelled') {
                 $this->notificationService->notifyAdmins(
                     'Đơn hàng bị hủy',
-                    "Đơn hàng #{$order->id} đã bị hủy bởi " . 
-                    (Auth::user()->role === 'admin' ? 'Admin' : 'khách hàng'),
+                    "Đơn hàng #{$order->id} đã bị hủy bởi " .
+                        (Auth::user()->role === 'admin' ? 'Admin' : 'khách hàng'),
                     'order_cancelled',
                     [
                         'type' => 'order',
@@ -211,42 +213,108 @@ class OrderService
     public function completeOrder(Order $order)
     {
         DB::transaction(function () use ($order) {
-            // Update order status
+            // Kiểm tra điều kiện để hoàn thành order
+            if (!$this->canComplete($order)) {
+                throw new \Exception('Không thể hoàn thành đơn hàng này');
+            }
+
+            // Cập nhật trạng thái order
             $order->status = Order::STATUS_COMPLETED;
             $order->save();
 
-            // Process service packages for combo items
+            // Xử lý các order items
             foreach ($order->order_items as $item) {
-                if ($item->item_type === 'service' && $item->service_type) {
-                    $totalSessions = $this->getSessionsFromServiceType($item->service_type);
-                    
-                    UserServicePackage::create([
-                        'user_id' => $order->user_id,
-                        'service_id' => $item->item_id,
-                        'total_sessions' => $totalSessions,
-                        'used_sessions' => 0,
-                        'expiry_date' => now()->addDays(365), // Set appropriate expiry
-                        'is_combo' => true,
-                        'combo_type' => $this->mapServiceTypeToComboType($item->service_type),
-                        'order_id' => $order->id
-                    ]);
+                if ($item->item_type === 'product') {
+                    // Cập nhật số lượng sản phẩm trong kho
+                    $this->updateProductInventory($item);
+                } elseif ($item->item_type === 'service' && $item->service_type) {
+                    // Tạo gói dịch vụ cho khách hàng
+                    $this->createServicePackage($order, $item);
                 }
             }
+
+            // Tạo hóa đơn
+            $this->createInvoice($order);
+
+            // Cập nhật điểm tích lũy cho khách hàng
+            $this->updateLoyaltyPoints($order);
         });
     }
 
-    private function getSessionsFromServiceType(string $serviceType): int 
+    private function canComplete(Order $order): bool
     {
-        return match($serviceType) {
+        // Kiểm tra các điều kiện để hoàn thành order
+        return $order->status === Order::STATUS_CONFIRMED
+            && $order->payment_status === 'paid'
+            && (!$this->hasPhysicalProducts($order) || $order->status === Order::STATUS_SHIPPING);
+    }
+
+    private function hasPhysicalProducts(Order $order): bool
+    {
+        return $order->order_items()
+            ->where('item_type', 'product')
+            ->whereHas('product', function ($query) {
+                $query->where('type', 'physical');
+            })
+            ->exists();
+    }
+
+    private function createServicePackage(Order $order, OrderItem $item)
+    {
+        $totalSessions = $this->getSessionsFromServiceType($item->service_type);
+        $service = Service::find($item->item_id);
+
+        UserServicePackage::create([
+            'user_id' => $order->user_id,
+            'service_id' => $item->item_id,
+            'total_sessions' => $totalSessions,
+            'used_sessions' => 0,
+            'expiry_date' => now()->addDays($service->validity_period ?? 365),
+            'is_combo' => true,
+            'combo_type' => $this->mapServiceTypeToComboType($item->service_type),
+            'order_id' => $order->id
+        ]);
+    }
+
+    private function updateProductInventory(OrderItem $item)
+    {
+        $product = Product::find($item->item_id);
+        if ($product) {
+            $product->decrement('stock_quantity', $item->quantity);
+        }
+    }
+
+    private function createInvoice(Order $order)
+    {
+        Invoice::create([
+            'order_id' => $order->id,
+            'user_id' => $order->user_id,
+            'total_amount' => $order->total_amount,
+            'discount_amount' => $order->discount_amount,
+            'final_amount' => $order->total_amount - $order->discount_amount,
+            'payment_method_id' => $order->payment_method_id,
+            'status' => 'completed'
+        ]);
+    }
+
+    private function updateLoyaltyPoints(Order $order)
+    {
+        $pointsEarned = floor(($order->total_amount - $order->discount_amount) / 1000); // 1 point per 1000
+        $order->user->increment('loyalty_points', $pointsEarned);
+    }
+
+    private function getSessionsFromServiceType(string $serviceType): int
+    {
+        return match ($serviceType) {
             'combo_5' => 5,
             'combo_10' => 10,
             default => 1
         };
     }
 
-    private function mapServiceTypeToComboType(string $serviceType): ?string 
+    private function mapServiceTypeToComboType(string $serviceType): ?string
     {
-        return match($serviceType) {
+        return match ($serviceType) {
             'combo_5' => '5_times',
             'combo_10' => '10_times',
             default => null

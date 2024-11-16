@@ -17,6 +17,11 @@
               class="bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">
               <i class="mdi mdi-pencil mr-2"></i>Cập nhật trạng thái
             </button>
+            <button v-if="canComplete" 
+              @click="openCompleteModal"
+              class="bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors">
+              <i class="mdi mdi-check-circle mr-2"></i>Hoàn thành đơn hàng
+            </button>
             <Link :href="route('orders.index')"
               class="bg-gray-500 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-colors">
             <i class="mdi mdi-arrow-left mr-2"></i>Quay lại
@@ -284,6 +289,42 @@
           </div>
         </div>
       </CardBoxModal>
+
+      <CardBoxModal 
+        v-model="showCompleteModal" 
+        title="Xác nhận hoàn thành đơn hàng" 
+        button="success" 
+        button-label="Hoàn thành"
+        has-cancel 
+        @confirm="completeOrder">
+        <div class="space-y-4">
+          <!-- Hiển thị cảnh báo nếu có service combo -->
+          <div v-if="hasServiceCombo" class="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-md">
+            <p class="text-yellow-800 dark:text-yellow-300">
+              <i class="mdi mdi-alert mr-2"></i>
+              Đơn hàng có gói dịch vụ combo. Khi hoàn thành, hệ thống sẽ tự động tạo gói liệu trình cho khách hàng.
+            </p>
+          </div>
+
+          <!-- Hiển thị thông tin thanh toán -->
+          <div v-if="!order.invoice?.paid_amount" class="bg-red-50 dark:bg-red-900/30 p-4 rounded-md">
+            <p class="text-red-800 dark:text-red-300">
+              <i class="mdi mdi-alert mr-2"></i>
+              Đơn hàng chưa được thanh toán đầy đủ. Vui lòng kiểm tra lại.
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ghi chú hoàn thành</label>
+            <textarea 
+              v-model="completeNote" 
+              rows="3"
+              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary-500 focus:ring-primary-500"
+              placeholder="Nhập ghi chú khi hoàn thành đơn hàng (nếu có)">
+            </textarea>
+          </div>
+        </div>
+      </CardBoxModal>
     </SectionMain>
   </LayoutAuthenticated>
 </template>
@@ -315,9 +356,11 @@ export default {
     const showStatusModal = ref(false)
     const showPaymentModal = ref(false)
     const showCreateInvoiceModal = ref(false)
+    const showCompleteModal = ref(false)
     const newStatus = ref(props.order.status)
     const statusNote = ref('')
     const invoiceNote = ref('')
+    const completeNote = ref('')
     const toast = useToast()
     const loading = ref(false)
 
@@ -402,6 +445,17 @@ export default {
       return !props.order.invoice &&
         props.order.status !== 'cancelled' &&
         props.order.status !== 'completed'
+    })
+
+    const canComplete = computed(() => {
+      return ['confirmed', 'shipping'].includes(props.order.status) && 
+             props.order.invoice?.status === 'paid'
+    })
+
+    const hasServiceCombo = computed(() => {
+      return props.order.order_items.some(item => 
+        item.item_type === 'service' && ['combo_5', 'combo_10'].includes(item.service_type)
+      )
     })
 
     const updateOrderStatus = async () => {
@@ -502,12 +556,40 @@ export default {
       showStatusModal.value = true;
     };
 
+    const openCompleteModal = () => {
+      showCompleteModal.value = true
+      completeNote.value = ''
+    }
+
+    const completeOrder = async () => {
+      loading.value = true
+      try {
+        const response = await axios.post(`/api/orders/${props.order.id}/complete`, {
+          note: completeNote.value
+        })
+
+        if (response.data.success) {
+          toast.success('Đơn hàng đã được hoàn thành thành công')
+          if (hasServiceCombo.value) {
+            toast.info('Các gói liệu trình đã được tạo cho khách hàng')
+          }
+          router.reload()
+        }
+      } catch (error) {
+        console.error('Error completing order:', error)
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hoàn thành đơn hàng')
+      } finally {
+        loading.value = false
+        showCompleteModal.value = false
+      }
+    }
+
     // Chỉ hiển thị các trạng thái có thể chuyển đổi
     const getAvailableStatuses = computed(() => {
       const transitions = {
         'pending': ['confirmed', 'cancelled'],
-        'confirmed': ['shipping', 'cancelled'],
-        'shipping': ['completed'],
+        'confirmed': ['shipping', 'completed', 'cancelled'],
+        'shipping': ['completed', 'cancelled'],
         'completed': [],
         'cancelled': []
       };
@@ -519,9 +601,11 @@ export default {
       showStatusModal,
       showPaymentModal,
       showCreateInvoiceModal,
+      showCompleteModal,
       newStatus,
       statusNote,
       invoiceNote,
+      completeNote,
       formatCurrency,
       formatDate,
       getStatusClass,
@@ -532,6 +616,8 @@ export default {
       canUpdateStatus,
       canProcessPayment,
       canCreateInvoice,
+      canComplete,
+      hasServiceCombo,
       updateOrderStatus,
       processPayment,
       createInvoice,
@@ -542,7 +628,9 @@ export default {
       getServiceTypeText,
       loading,
       openUpdateStatusModal,
-      getAvailableStatuses
+      getAvailableStatuses,
+      openCompleteModal,
+      completeOrder
     }
   }
 }
