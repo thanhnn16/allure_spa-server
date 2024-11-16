@@ -123,7 +123,7 @@ class Appointment extends Model
     public function getFormattedAppointmentAttribute(): array
     {
         // Ensure relationships are loaded
-        $this->loadMissing(['service', 'staff', 'timeSlot']);
+        $this->loadMissing(['service', 'staff', 'timeSlot', 'user', 'cancelledBy']);
 
         // Combine appointment date with time slot times
         $startDateTime = Carbon::parse($this->appointment_date)
@@ -141,10 +141,16 @@ class Appointment extends Model
             'service' => $this->service,
             'start' => $startDateTime->format('Y-m-d H:i:s'),
             'end' => $endDateTime->format('Y-m-d H:i:s'),
-            'price' => $this->service?->price,
+            'price' => $this->service?->single_price,
             'staff' => $this->staff ? [
                 'id' => $this->staff->id,
                 'full_name' => $this->staff->full_name,
+            ] : null,
+            'user' => $this->user ? [
+                'id' => $this->user->id,
+                'full_name' => $this->user->full_name,
+                'email' => $this->user->email,
+                'phone_number' => $this->user->phone_number,
             ] : null,
             'time_slot' => $this->timeSlot ? [
                 'id' => $this->timeSlot->id,
@@ -158,6 +164,12 @@ class Appointment extends Model
             'cancelled_by' => $this->cancelled_by,
             'cancelled_at' => $this->cancelled_at ? $this->cancelled_at->format('Y-m-d H:i:s') : null,
             'cancellation_note' => $this->cancellation_note,
+            'cancelled_by_user' => $this->cancelledBy ? [
+                'id' => $this->cancelledBy->id,
+                'full_name' => $this->cancelledBy->full_name,
+            ] : null,
+            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
         ];
     }
 

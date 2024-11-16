@@ -211,18 +211,43 @@ const cancelledByInfo = computed(() => {
 
             <!-- Status Badge Section -->
             <div class="mb-6">
-                <div class="flex items-center space-x-4">
-                    <div :class="`px-4 py-2 rounded-full text-sm font-semibold ${
-                        statusColors[appointment.status] === 'success' ? 'bg-green-100 text-green-800' :
-                        statusColors[appointment.status] === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                        statusColors[appointment.status] === 'danger' ? 'bg-red-100 text-red-800' :
-                        'bg-blue-100 text-blue-800'
-                    }`">
-                        {{ statusLabels[appointment.status] }}
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div :class="`px-4 py-2 rounded-full text-sm font-semibold ${
+                            statusColors[appointment.status] === 'success' ? 'bg-green-100 text-green-800' :
+                            statusColors[appointment.status] === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                            statusColors[appointment.status] === 'danger' ? 'bg-red-100 text-red-800' :
+                            'bg-blue-100 text-blue-800'
+                        }`">
+                            {{ statusLabels[appointment.status] }}
+                        </div>
+                        <span class="text-gray-500">
+                            Cập nhật lần cuối: {{ formatDate(appointment.updated_at) }}
+                        </span>
                     </div>
-                    <span class="text-gray-500">
-                        Cập nhật lần cuối: {{ formatDate(appointment.updated_at) }}
-                    </span>
+                </div>
+            </div>
+
+            <!-- Thêm phần hiển thị thông tin hủy lịch vào sau phần trạng thái -->
+            <div v-if="appointment.status === 'cancelled'" class="mb-6 p-4 bg-red-50 rounded-lg border border-red-100">
+                <h3 class="font-semibold text-red-700 mb-3">Thông tin hủy lịch</h3>
+                <div class="space-y-2">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <span class="text-gray-600 font-medium">Người hủy:</span>
+                            <p>{{ appointment.cancelled_by_user?.full_name || 'Không xác định' }}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">Thời gian hủy:</span>
+                            <p>{{ formatDate(appointment.cancelled_at) }}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-gray-600 font-medium">Lý do hủy:</span>
+                        <p class="mt-1 p-2 bg-white/50 rounded">
+                            {{ appointment.cancellation_note || 'Không có lý do' }}
+                        </p>
+                    </div>
                 </div>
             </div>
 
