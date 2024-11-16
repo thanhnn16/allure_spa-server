@@ -619,133 +619,19 @@ INSERT INTO
 VALUES
   (
     1,
-    'WELCOME10',
-    'Giảm 10% cho khách hàng mới',
+    'WELCOME90',
+    'Giảm 90% cho khách hàng mới',
     'percentage',
-    10,
+    90,
     '2023-01-01',
     '2023-12-31'
   ),
   (
     2,
-    'SUMMER50K',
-    'Giảm 50,000đ cho đơn hàng từ 500,000đ',
+    'SUMMER500K',
+    'Giảm 500,000đ cho đơn hàng từ 550,000đ',
     'fixed_amount',
-    50000,
+    500000,
     '2023-06-01',
     '2023-08-31'
   );
-
--- Chèn dữ liệu vào bảng user_vouchers
-INSERT INTO
-  user_vouchers (user_id, voucher_id, remaining_uses, total_uses)
-SELECT
-  u.id,
-  v.id,
-  5,
-  5
-FROM
-  users u,
-  vouchers v
-WHERE
-  u.email = 'user@example.com'
-  AND v.code = 'WELCOME10';
-
--- Chèn dữ liệu vào bảng orders
-INSERT INTO
-  orders (
-    id,
-    user_id,
-    payment_method_id,
-    total_amount,
-    status
-  )
-SELECT
-  1,
-  id,
-  1,
-  1500000,
-  'completed'
-FROM
-  users
-WHERE
-  email = 'user@example.com';
-
--- Chèn dữ liệu vào bảng order_items
-INSERT INTO
-  order_items (
-    id,
-    order_id,
-    item_type,
-    item_id,
-    quantity,
-    price
-  )
-SELECT
-  1,
-  o.id,
-  'product',
-  p.id,
-  1,
-  p.price
-FROM
-  orders o
-  JOIN users u ON o.user_id = u.id
-  JOIN products p ON p.name = 'FAITH Members Club Face Lamela Veil EX Cleansing'
-WHERE
-  u.email = 'user@example.com'
-UNION
-ALL
-SELECT
-  2,
-  o.id,
-  'service',
-  s.id,
-  1,
-  s.single_price
-FROM
-  orders o
-  JOIN users u ON o.user_id = u.id
-  JOIN services s ON s.service_name = 'Chăm da Amino - Phù hợp mọi loại da'
-WHERE
-  u.email = 'user@example.com';
-
--- Chèn dữ liệu vào bảng invoices
-INSERT INTO
-  invoices (
-    id,
-    user_id,
-    staff_user_id,
-    total_amount,
-    paid_amount,
-    status,
-    note,
-    created_by_user_id,
-    created_at
-  )
-SELECT
-  UUID(),
-  -- id
-  u.id,
-  -- user_id
-  s.id,
-  -- staff_user_id
-  1500000,
-  -- total_amount
-  1500000,
-  -- paid_amount (assuming fully paid)
-  'paid',
-  -- status
-  'Thanh toán đơn hàng',
-  -- note
-  s.id,
-  -- created_by_user_id
-  NOW() -- created_at
-FROM
-  users u
-  JOIN users s ON s.email = 'staff@example.com'
-  JOIN orders o ON o.user_id = u.id
-WHERE
-  u.email = 'user@example.com'
-LIMIT
-  1;

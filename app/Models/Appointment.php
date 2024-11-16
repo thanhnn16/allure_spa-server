@@ -116,24 +116,54 @@ class Appointment extends Model
     }
 
     /**
-     * Get formatted appointment data for UI
+     * Get formatted appointment attribute.
+     *
      * @return array
      */
-    public function getFormattedAppointmentAttribute()
+    public function getFormattedAppointmentAttribute(): array
     {
+        // Ensure relationships are loaded
+        $this->loadMissing(['service', 'staff', 'timeSlot']);
+
+        // Combine appointment date with time slot times
+        $startDateTime = Carbon::parse($this->appointment_date)
+            ->setTimeFromTimeString($this->timeSlot?->start_time ?? '00:00:00')
+            ->setTimezone('Asia/Ho_Chi_Minh');
+
+        $endDateTime = Carbon::parse($this->appointment_date)
+            ->setTimeFromTimeString($this->timeSlot?->end_time ?? '00:00:00')
+            ->setTimezone('Asia/Ho_Chi_Minh');
+
         return [
             'id' => $this->id,
-            'title' => $this->service->name ?? 'Appointment',
-            'start' => Carbon::parse($this->appointment_date)->format('Y-m-d') . ' ' . $this->timeSlot->start_time,
-            'end' => Carbon::parse($this->appointment_date)->format('Y-m-d') . ' ' . $this->timeSlot->end_time,
-            'resourceId' => $this->staff_user_id,
-            'extendedProps' => [
-                'status' => $this->status,
-                'appointment_type' => $this->appointment_type,
-                'user' => $this->user,
-                'service' => $this->service,
-                'timeSlot' => $this->timeSlot
-            ]
+            'appointment_date' => $this->appointment_date,
+            'start' => $startDateTime->format('Y-m-d H:i:s'),
+            'end' => $endDateTime->format('Y-m-d H:i:s'),
+            'service' => [
+                'id' => $this->service?->id,
+                'name' => $this->service?->name,
+                'price' => $this->service?->price,
+                // Add other needed service fields
+            ],
+            'staff' => $this->staff ? [
+                'id' => $this->staff->id,
+                'full_name' => $this->staff->full_name,
+                // Add other needed staff fields
+            ] : null,
+            'time_slot' => $this->timeSlot ? [
+                'id' => $this->timeSlot->id,
+                'start_time' => $this->timeSlot->start_time,
+                'end_time' => $this->timeSlot->end_time,
+                'max_bookings' => $this->timeSlot->max_bookings,
+            ] : null,
+            'status' => $this->status,
+            'appointment_type' => $this->appointment_type,
+            'note' => $this->note,
+            'slots' => $this->slots,
+            // Add cancellation fields
+            'cancelled_by' => $this->cancelled_by,
+            'cancelled_at' => $this->cancelled_at ? $this->cancelled_at->format('Y-m-d H:i:s') : null,
+            'cancellation_note' => $this->cancellation_note,
         ];
     }
 
@@ -142,7 +172,7 @@ class Appointment extends Model
      */
     public function scopeWithFullDetails($query)
     {
-        return $query->with(['user', 'service', 'staff', 'timeSlot']);
+        return $query->with(['user', 'service', 'staff', 'timeSlot', 'cancelledBy']);
     }
 
     public function cancelledBy()

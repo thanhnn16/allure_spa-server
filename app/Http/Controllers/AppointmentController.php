@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AuthErrorCode;
 use App\Services\AppointmentService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -11,7 +10,7 @@ use App\Http\Requests\AppointmentRequest;
 use OpenApi\Annotations as OA;
 use App\Models\TimeSlot;
 use Illuminate\Support\Facades\Auth;
-
+use Exception;
 /**
  * @OA\Tag(
  *     name="Appointments",
@@ -295,7 +294,25 @@ class AppointmentController extends BaseController
      *             @OA\Property(property="message", type="string"),
      *             @OA\Property(property="status_code", type="integer"),
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Appointment")
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 allOf={
+     *                     @OA\Schema(ref="#/components/schemas/Appointment"),
+     *                     @OA\Schema(
+     *                         @OA\Property(property="cancelled_by", type="string", nullable=true),
+     *                         @OA\Property(property="cancelled_at", type="string", format="date-time", nullable=true),
+     *                         @OA\Property(property="cancellation_note", type="string", nullable=true),
+     *                         @OA\Property(
+     *                             property="cancelled_by_user",
+     *                             type="object",
+     *                             nullable=true,
+     *                             @OA\Property(property="id", type="string"),
+     *                             @OA\Property(property="full_name", type="string")
+     *                         )
+     *                     )
+     *                 }
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -457,6 +474,16 @@ class AppointmentController extends BaseController
      *         required=false,
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *     @OA\Parameter(
+     *         name="appointment_type",
+     *         in="query",
+     *         description="Lọc theo loại lịch hẹn",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={"consultation", "treatment", "follow_up", "others"}
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Thành công",
@@ -468,12 +495,21 @@ class AppointmentController extends BaseController
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="title", type="string", example="Facial Treatment"),
-     *                     @OA\Property(property="start", type="string", format="date-time", example="2024-03-20 09:00:00"),
-     *                     @OA\Property(property="end", type="string", format="date-time", example="2024-03-20 10:00:00"),
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="title", type="string"),
+     *                     @OA\Property(property="start", type="string", format="date-time"),
+     *                     @OA\Property(property="end", type="string", format="date-time"),
+     *                     @OA\Property(property="service", ref="#/components/schemas/Service"),
+     *                     @OA\Property(property="staff", ref="#/components/schemas/User"),
+     *                     @OA\Property(property="status", type="string"),
+     *                     @OA\Property(property="appointment_type", type="string"),
+     *                     @OA\Property(property="note", type="string"),
+     *                     @OA\Property(property="time_slot", ref="#/components/schemas/TimeSlot"),
+     *                     @OA\Property(property="cancelled_by", type="string", nullable=true),
+     *                     @OA\Property(property="cancelled_at", type="string", format="date-time", nullable=true),
+     *                     @OA\Property(property="cancellation_note", type="string", nullable=true),
      *                     @OA\Property(
-     *                         property="service",
+     *                         property="cancelled_by_user",
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="name", type="string", example="Facial Treatment"),
@@ -527,19 +563,29 @@ class AppointmentController extends BaseController
                 ], 401);
             }
 
-            $filters = [
-                'status' => $request->status,
-                'from_date' => $request->from_date,
-                'to_date' => $request->to_date
-            ];
+            $filters = array_filter([
+                'status' => $request->input('status'),
+                'from_date' => $request->input('from_date'),
+                'to_date' => $request->input('to_date')
+            ]);
 
             $result = $this->appointmentService->getMyAppointments($user->id, $filters);
 
-            return $this->respondWithJson($result['data'], $result['message'], $result['status']);
-        } catch (\Exception $e) {
+            if (!is_array($result) || !isset($result['data'])) {
+                throw new Exception('Invalid response format from service');
+            }
+
             return response()->json([
-                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ',
-                'status' => 500
+                'success' => true,
+                'message' => $result['message'] ?? 'Lấy danh sách lịch hẹn thành công',
+                'data' => $result['data']
+            ], $result['status'] ?? 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage(),
+                'data' => []
             ], 500);
         }
     }

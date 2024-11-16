@@ -227,12 +227,9 @@
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Trạng thái mới</label>
             <select v-model="newStatus"
               class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400">
-              <option value="pending">Chờ xác nhận</option>
-              <option value="confirmed">Đã xác nhận</option>
-              <option value="shipping">Đang giao hàng</option>
-              <option value="delivered">Đã giao hàng</option>
-              <option value="completed">Hoàn thành</option>
-              <option value="cancelled">Đã hủy</option>
+              <option v-for="status in getAvailableStatuses" :key="status" :value="status">
+                {{ getStatusText(status) }}
+              </option>
             </select>
           </div>
           <div>
@@ -346,7 +343,6 @@ export default {
         'pending': `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`,
         'confirmed': `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`,
         'shipping': `${baseClasses} bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300`,
-        'delivered': `${baseClasses} bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300`,
         'completed': `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`,
         'cancelled': `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`
       }
@@ -358,7 +354,6 @@ export default {
         'pending': 'bg-yellow-400',
         'confirmed': 'bg-blue-400',
         'shipping': 'bg-purple-400',
-        'delivered': 'bg-indigo-400',
         'completed': 'bg-green-400',
         'cancelled': 'bg-red-400'
       }
@@ -470,7 +465,6 @@ export default {
         'pending': 'Chờ xác nhận',
         'confirmed': 'Đã xác nhận',
         'shipping': 'Đang giao hàng',
-        'delivered': 'Đã giao hàng',
         'completed': 'Hoàn thành',
         'cancelled': 'Đã hủy'
       }
@@ -508,6 +502,19 @@ export default {
       showStatusModal.value = true;
     };
 
+    // Chỉ hiển thị các trạng thái có thể chuyển đổi
+    const getAvailableStatuses = computed(() => {
+      const transitions = {
+        'pending': ['confirmed', 'cancelled'],
+        'confirmed': ['shipping', 'cancelled'],
+        'shipping': ['completed'],
+        'completed': [],
+        'cancelled': []
+      };
+      
+      return transitions[props.order.status] || [];
+    });
+
     return {
       showStatusModal,
       showPaymentModal,
@@ -534,7 +541,8 @@ export default {
       openCreateInvoiceModal,
       getServiceTypeText,
       loading,
-      openUpdateStatusModal
+      openUpdateStatusModal,
+      getAvailableStatuses
     }
   }
 }

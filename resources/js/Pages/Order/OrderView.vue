@@ -26,7 +26,6 @@
               <option value="pending">Chờ xác nhận</option>
               <option value="confirmed">Đã xác nhận</option>
               <option value="shipping">Đang giao hàng</option>
-              <option value="delivered">Đã giao hàng</option>
               <option value="completed">Hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
             </select>
@@ -87,14 +86,14 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span :class="[
-                    'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
+                    'px-2 inline-flex text-xs leading-5 font-semibold rounded-full items-center',
                     getStatusClass(order.status)
                   ]">
                     <span :class="[
                       'h-2 w-2 rounded-full mr-2 self-center',
                       getStatusDotClass(order.status)
                     ]"></span>
-                    {{ order.status }}
+                    {{ getStatusText(order.status) }}
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -121,11 +120,11 @@
                     </svg>
                     </Link>
 
-                    <!-- Nút Xóa -->
-                    <button @click="deleteOrder(order.id)"
+                    <!-- Nút Hủy -->
+                    <button @click="openCancelModal(order.id)"
                       class="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-200">
                       <svg class="w-5 h-5" viewBox="0 0 24 24">
-                        <path :d="mdiDelete" fill="currentColor" />
+                        <path :d="mdiClose" fill="currentColor" />
                       </svg>
                     </button>
                   </div>
@@ -151,7 +150,8 @@ import SectionMain from '@/Components/SectionMain.vue'
 import Pagination from '@/Components/Pagination.vue'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios';
-import { mdiEye, mdiPencil, mdiDelete } from '@mdi/js'
+import { mdiEye, mdiPencil, mdiClose } from '@mdi/js'
+import { useToast } from "vue-toastification"
 
 export default {
   components: {
@@ -182,6 +182,11 @@ export default {
     })
 
     const searchTimeout = ref(null)
+
+    const toast = useToast()
+    const showCancelModal = ref(false)
+    const cancelReason = ref('')
+    const selectedOrderId = ref(null)
 
     // Add debounce search function
     const debounceSearch = () => {
@@ -217,22 +222,14 @@ export default {
     });
 
     const getStatusText = (status) => {
-      switch (status) {
-        case 'pending':
-          return 'Chờ xác nhận';
-        case 'confirmed':
-          return 'Đã xác nhận';
-        case 'shipping':
-          return 'Đang giao hàng';
-        case 'delivered':
-          return 'Đã giao hàng';
-        case 'completed':
-          return 'Hoàn thành';
-        case 'cancelled':
-          return 'Đã hủy';
-        default:
-          return 'Không xác định';
-      }
+      const statusTexts = {
+        'pending': 'Chờ xác nhận',
+        'confirmed': 'Đã xác nhận',
+        'shipping': 'Đang giao hàng',
+        'completed': 'Hoàn thành',
+        'cancelled': 'Đã hủy'
+      };
+      return statusTexts[status.toLowerCase()] || 'Không xác định';
     }
 
     const getPaymentStatusText = (status) => {
@@ -258,15 +255,29 @@ export default {
       router.visit('/orders/create');
     }
 
-    const deleteOrder = async (orderId) => {
-      if (confirm('Bạn có chắc chắn muốn xóa đơn hàng này?')) {
-        try {
-          await axios.delete(`/api/orders/${orderId}`);
-          // Refresh lại trang sau khi xóa
-          router.reload();
-        } catch (error) {
-          console.error('Error deleting order:', error);
-        }
+    const openCancelModal = (orderId) => {
+      selectedOrderId.value = orderId
+      cancelReason.value = ''
+      showCancelModal.value = true
+    }
+
+    const cancelOrder = async () => {
+      if (!cancelReason.value.trim()) {
+        toast.error('Vui lòng nhập lý do hủy đơn hàng')
+        return
+      }
+
+      try {
+        await axios.put(`/api/orders/${selectedOrderId.value}/cancel`, {
+          reason: cancelReason.value
+        })
+        
+        toast.success('Đơn hàng đã được hủy thành công')
+        showCancelModal.value = false
+        router.reload()
+      } catch (error) {
+        console.error('Error cancelling order:', error)
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy đơn hàng')
       }
     }
 
@@ -282,16 +293,15 @@ export default {
     }
 
     const getStatusClass = (status) => {
-      const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
+      const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full items-center transition-colors duration-150';
       const statusClasses = {
-        'pending': `${baseClasses} dark:bg-yellow-900/50 dark:text-yellow-400 bg-yellow-100 text-yellow-800`,
-        'confirmed': `${baseClasses} dark:bg-blue-900/50 dark:text-blue-400 bg-blue-100 text-blue-800`,
-        'shipping': `${baseClasses} dark:bg-purple-900/50 dark:text-purple-400 bg-purple-100 text-purple-800`,
-        'delivered': `${baseClasses} dark:bg-indigo-900/50 dark:text-indigo-400 bg-indigo-100 text-indigo-800`,
-        'completed': `${baseClasses} dark:bg-green-900/50 dark:text-green-400 bg-green-100 text-green-800`,
-        'cancelled': `${baseClasses} dark:bg-red-900/50 dark:text-red-400 bg-red-100 text-red-800`
+        'pending': `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300`,
+        'confirmed': `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300`,
+        'shipping': `${baseClasses} bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300`,
+        'completed': `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`,
+        'cancelled': `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300`
       };
-      return statusClasses[status.toLowerCase()] || `${baseClasses} dark:bg-gray-900/50 dark:text-gray-400 bg-gray-100 text-gray-800`;
+      return statusClasses[status.toLowerCase()] || `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300`;
     }
 
     const getStatusDotClass = (status) => {
@@ -299,7 +309,6 @@ export default {
         'pending': 'bg-yellow-400',
         'confirmed': 'bg-blue-400',
         'shipping': 'bg-purple-400',
-        'delivered': 'bg-indigo-400',
         'completed': 'bg-green-400',
         'cancelled': 'bg-red-400'
       };
@@ -328,11 +337,14 @@ export default {
       createNewOrder,
       applyFilters,
       debounceSearch,
-      deleteOrder,
+      showCancelModal,
+      cancelReason,
+      openCancelModal,
+      cancelOrder,
       formatDate,
       mdiEye,
       mdiPencil,
-      mdiDelete
+      mdiClose
     }
   },
 }

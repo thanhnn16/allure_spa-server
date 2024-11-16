@@ -196,4 +196,9 @@ class User extends Authenticatable
     {
         return $this->role === 'user';
     }
+
+    public function cancelledAppointments()
+    {
+        return $this->hasMany(Appointment::class, 'cancelled_by');
+    }
 }

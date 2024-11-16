@@ -91,6 +91,11 @@ class OrderService
     public function updateOrderStatus($order, $status, $note = null)
     {
         try {
+            // Kiểm tra flow trạng thái hợp lệ
+            if (!$this->isValidStatusTransition($order->status, $status)) {
+                throw new \Exception('Không thể cập nhật sang trạng thái này');
+            }
+
             DB::beginTransaction();
 
             $oldStatus = $order->status;
@@ -156,5 +161,21 @@ class OrderService
         ];
 
         return $notifications[$status] ?? null;
+    }
+
+    // Thêm method mới để kiểm tra flow trạng thái
+    private function isValidStatusTransition($currentStatus, $newStatus)
+    {
+        // Định nghĩa flow cho phép
+        $allowedTransitions = [
+            'pending' => ['confirmed', 'cancelled'],
+            'confirmed' => ['shipping', 'cancelled'],
+            'shipping' => ['completed'],
+            'completed' => [], // Trạng thái cuối, không thể chuyển sang trạng thái khác
+            'cancelled' => [], // Trạng thái cuối, không thể chuyển sang trạng thái khác
+        ];
+
+        // Kiểm tra xem transition có được phép không
+        return in_array($newStatus, $allowedTransitions[$currentStatus] ?? []);
     }
 }

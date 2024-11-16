@@ -266,13 +266,25 @@ class AppointmentService
     public function getAppointmentDetails($id)
     {
         try {
-            $appointment = Appointment::with(['user', 'service', 'staff'])
-                ->findOrFail($id);
+            $appointment = Appointment::with([
+                'user', 
+                'service', 
+                'staff',
+                'cancelledBy'
+            ])->findOrFail($id);
+
+            // Format the response
+            $formattedAppointment = array_merge($appointment->toArray(), [
+                'cancelled_by_user' => $appointment->cancelled_by ? [
+                    'id' => $appointment->cancelledBy->id,
+                    'full_name' => $appointment->cancelledBy->full_name
+                ] : null
+            ]);
 
             return [
                 'status' => 200,
                 'message' => 'Lấy thông tin cuộc hẹn thành công',
-                'data' => $appointment
+                'data' => $formattedAppointment
             ];
         } catch (\Exception $e) {
             Log::error('Lỗi khi lấy thông tin cuộc hẹn: ' . $e->getMessage());
@@ -465,15 +477,17 @@ class AppointmentService
     public function getMyAppointments($userId, array $filters = [])
     {
         try {
-            $query = Appointment::with(['service', 'staff', 'timeSlot'])
-                ->where('user_id', $userId);
+            $query = Appointment::with([
+                'service', 
+                'staff', 
+                'timeSlot',
+                'cancelledBy'
+            ])->where('user_id', $userId);
 
-            // Filter by status
+            // Add filters
             if (!empty($filters['status'])) {
-                $query->where('status', strtolower($filters['status']));
+                $query->where('status', $filters['status']);
             }
-
-            // Filter by date range
             if (!empty($filters['from_date'])) {
                 $query->where('appointment_date', '>=', $filters['from_date']);
             }
@@ -481,16 +495,25 @@ class AppointmentService
                 $query->where('appointment_date', '<=', $filters['to_date']);
             }
 
-            // Add sorting
-            $query->orderBy('appointment_date', 'asc')
-                ->orderBy('created_at', 'asc');
-
             $appointments = $query->get();
+
+            // Format appointments with cancellation info
+            $formattedAppointments = $appointments->map(function ($appointment) {
+                $baseFormat = $appointment->getFormattedAppointmentAttribute();
+                
+                // Add cancelled_by_user information separately
+                return array_merge($baseFormat, [
+                    'cancelled_by_user' => $appointment->cancelledBy ? [
+                        'id' => $appointment->cancelledBy->id,
+                        'full_name' => $appointment->cancelledBy->full_name
+                    ] : null
+                ]);
+            })->toArray();
 
             return [
                 'status' => 200,
                 'message' => 'Lấy danh sách lịch hẹn thành công',
-                'data' => $appointments->map->getFormattedAppointmentAttribute()
+                'data' => $formattedAppointments
             ];
         } catch (\Exception $e) {
             Log::error('Error in getMyAppointments:', [
