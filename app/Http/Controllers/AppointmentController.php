@@ -307,7 +307,7 @@ class AppointmentController extends BaseController
     public function show(Request $request, $id)
     {
         $result = $this->appointmentService->getAppointmentDetails($id);
-
+        
         // Nếu là request API thì trả về JSON
         if ($request->expectsJson()) {
             return response()->json($result);
@@ -316,7 +316,7 @@ class AppointmentController extends BaseController
         // Nếu không phải API request thì render trang chi tiết bằng Inertia
         if ($result['status'] === 200) {
             return $this->respondWithInertia('Calendar/Components/AppointmentDetails', [
-                'appointment' => $result['data']->load(['user', 'service', 'staff', 'timeSlot'])
+                'appointment' => $result['data']->load(['user', 'service', 'staff', 'timeSlot', 'cancelledBy'])
             ]);
         }
 

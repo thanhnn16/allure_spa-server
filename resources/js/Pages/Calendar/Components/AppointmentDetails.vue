@@ -3,11 +3,14 @@ import { ref, computed, onMounted } from 'vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
 import CardBox from '@/Components/CardBox.vue'
+import CardBoxModal from '@/Components/CardBoxModal.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import NotificationBar from '@/Components/NotificationBar.vue'
 import { Head, router } from '@inertiajs/vue3'
 import { mdiCalendar, mdiAccount, mdiClockOutline, mdiNoteText, mdiAlert, mdiDelete, mdiPencil, mdiArrowLeft } from '@mdi/js'
 import axios from 'axios'
+import FormField from '@/Components/FormField.vue'
+import FormControl from '@/Components/FormControl.vue'
 
 const props = defineProps({
     appointment: {
@@ -101,6 +104,46 @@ const formatDate = (dateString) => {
         minute: '2-digit'
     }).format(date)
 }
+
+const isModalActive = ref(false)
+const cancellationNote = ref('')
+const isSubmitting = ref(false)
+
+const handleCancelAppointment = async () => {
+    if (!cancellationNote.value.trim()) {
+        notification.value = {
+            type: 'danger',
+            message: 'Vui lòng nhập lý do hủy lịch'
+        }
+        return
+    }
+
+    try {
+        isSubmitting.value = true
+        const response = await axios.put(`/api/appointments/${props.appointment.id}/cancel`, {
+            note: cancellationNote.value
+        })
+
+        if (response.data.success) {
+            notification.value = {
+                type: 'success',
+                message: 'Hủy lịch hẹn thành công'
+            }
+            isModalActive.value = false
+            // Reload sau 1 giây
+            setTimeout(() => {
+                router.reload()
+            }, 1000)
+        }
+    } catch (error) {
+        notification.value = {
+            type: 'danger',
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi hủy lịch hẹn'
+        }
+    } finally {
+        isSubmitting.value = false
+    }
+}
 </script>
 
 <template>
@@ -181,6 +224,24 @@ const formatDate = (dateString) => {
                                 <span class="text-gray-500">Thời gian</span>
                                 <p class="font-medium">
                                     {{ formatDateTime(appointment.appointment_date, appointment.time_slot.start_time) }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div v-if="appointment.status === 'cancelled'" class="mt-4 p-4 bg-red-50 rounded-lg border border-red-100">
+                            <h3 class="font-semibold text-red-700 mb-2">Thông tin hủy lịch</h3>
+                            <div class="space-y-2">
+                                <p class="text-sm">
+                                    <span class="text-gray-600">Người hủy:</span>
+                                    <span class="font-medium ml-2">{{ appointment.cancelled_by?.full_name || 'N/A' }}</span>
+                                </p>
+                                <p class="text-sm">
+                                    <span class="text-gray-600">Thời gian hủy:</span>
+                                    <span class="font-medium ml-2">{{ formatDate(appointment.cancelled_at) }}</span>
+                                </p>
+                                <p class="text-sm">
+                                    <span class="text-gray-600">Lý do hủy:</span>
+                                    <span class="font-medium ml-2">{{ appointment.cancellation_note || 'Không có' }}</span>
                                 </p>
                             </div>
                         </div>
@@ -267,13 +328,32 @@ const formatDate = (dateString) => {
                                 :color="statusColors[status]"
                                 :disabled="appointment.status === status"
                                 class="w-full justify-center"
-                                @click="handleStatusChange(status)"
+                                @click="status === 'cancelled' ? isModalActive = true : handleStatusChange(status)"
                             />
                         </div>
                     </div>
                 </CardBox>
             </div>
         </SectionMain>
+
+        <!-- Thêm Modal Hủy Lịch -->
+        <CardBoxModal
+            v-model="isModalActive"
+            title="Hủy lịch hẹn"
+            button="danger"
+            buttonLabel="Xác nhận hủy"
+            :hasCancel="true"
+            @confirm="handleCancelAppointment"
+        >
+            <FormField label="Lý do hủy" help="Vui lòng nhập lý do hủy lịch">
+                <FormControl
+                    v-model="cancellationNote"
+                    type="textarea"
+                    placeholder="Nhập lý do hủy lịch..."
+                    :rows="4"
+                />
+            </FormField>
+        </CardBoxModal>
     </LayoutAuthenticated>
 </template>
 
