@@ -57,6 +57,12 @@ class Order extends Model
         'cancelled_at'
     ];
 
+    const STATUS_PENDING = 'pending';     // Chờ xử lý
+    const STATUS_CONFIRMED = 'confirmed'; // Đã xác nhận
+    const STATUS_SHIPPING = 'shipping';   // Đang giao hàng
+    const STATUS_COMPLETED = 'completed'; // Hoàn thành
+    const STATUS_CANCELLED = 'cancelled'; // Đã hủy
+
     public function items()
     {
         return $this->hasMany(OrderItem::class);
@@ -95,5 +101,31 @@ class Order extends Model
     public function cancelledBy()
     {
         return $this->belongsTo(User::class, 'cancelled_by_user_id');
+    }
+
+    // Thêm helper methods để kiểm tra trạng thái
+    public function isPending()
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isConfirmed()
+    {
+        return $this->status === self::STATUS_CONFIRMED;
+    }
+
+    public function isShipping()
+    {
+        return $this->status === self::STATUS_SHIPPING;
+    }
+
+    public function isCompleted()
+    {
+        return $this->status === self::STATUS_COMPLETED;
+    }
+
+    public function isCancelled()
+    {
+        return $this->status === self::STATUS_CANCELLED;
     }
 }

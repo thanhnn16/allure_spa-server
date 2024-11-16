@@ -104,18 +104,21 @@ class InvoiceService
             $oldStatus = $invoice->status;
             $newPaidAmount = $invoice->paid_amount + $data['payment_amount'];
 
-            $newStatus = 'pending';
+            $newStatus = Invoice::STATUS_PENDING;
             if ($newPaidAmount >= $invoice->total_amount) {
-                $newStatus = 'paid';
+                $newStatus = Invoice::STATUS_PAID;
 
-                // Update order status to completed when invoice is fully paid
+                // Kiểm tra và cập nhật trạng thái đơn hàng
                 if ($invoice->order) {
-                    $invoice->order->update([
-                        'status' => 'completed'
-                    ]);
+                    // Nếu đơn hàng đang giao -> có thể chuyển sang hoàn thành
+                    if ($invoice->order->status === Order::STATUS_SHIPPING) {
+                        $invoice->order->update([
+                            'status' => Order::STATUS_COMPLETED
+                        ]);
+                    }
                 }
             } elseif ($newPaidAmount > 0) {
-                $newStatus = 'partial';
+                $newStatus = Invoice::STATUS_PARTIALLY_PAID;
             }
 
             // Update invoice

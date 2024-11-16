@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\Auth;
@@ -96,6 +97,17 @@ class OrderService
                 throw new \Exception('Không thể cập nhật sang trạng thái này');
             }
 
+            // Kiểm tra ràng buộc với invoice
+            if ($status === Order::STATUS_COMPLETED) {
+                if (!$order->invoice) {
+                    throw new \Exception('Không thể hoàn thành đơn hàng chưa có hóa đơn');
+                }
+                
+                if ($order->invoice->status !== Invoice::STATUS_PAID) {
+                    throw new \Exception('Không thể hoàn thành đơn hàng chưa thanh toán đủ');
+                }
+            }
+
             DB::beginTransaction();
 
             $updateData = [
@@ -104,7 +116,12 @@ class OrderService
             ];
 
             // Thêm thông tin hủy đơn nếu status là cancelled
-            if ($status === 'cancelled') {
+            if ($status === Order::STATUS_CANCELLED) {
+                // Kiểm tra nếu đã thanh toán thì không được hủy
+                if ($order->invoice && $order->invoice->status === Invoice::STATUS_PAID) {
+                    throw new \Exception('Không thể hủy đơn hàng đã thanh toán');
+                }
+
                 $updateData = array_merge($updateData, [
                     'cancelled_by_user_id' => Auth::id(),
                     'cancelled_at' => now(),
@@ -180,14 +197,13 @@ class OrderService
     {
         // Định nghĩa flow cho phép
         $allowedTransitions = [
-            'pending' => ['confirmed', 'cancelled'],
-            'confirmed' => ['shipping', 'cancelled'],
-            'shipping' => ['completed'],
-            'completed' => [], // Trạng thái cuối, không thể chuyển sang trạng thái khác
-            'cancelled' => [], // Trạng thái cuối, không thể chuyển sang trạng thái khác
+            Order::STATUS_PENDING => [Order::STATUS_CONFIRMED, Order::STATUS_CANCELLED],
+            Order::STATUS_CONFIRMED => [Order::STATUS_SHIPPING, Order::STATUS_CANCELLED],
+            Order::STATUS_SHIPPING => [Order::STATUS_COMPLETED],
+            Order::STATUS_COMPLETED => [], // Trạng thái cuối
+            Order::STATUS_CANCELLED => [], // Trạng thái cuối
         ];
 
-        // Kiểm tra xem transition có được phép không
         return in_array($newStatus, $allowedTransitions[$currentStatus] ?? []);
     }
 }
