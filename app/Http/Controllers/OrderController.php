@@ -92,7 +92,7 @@ class OrderController extends BaseController
      *         required=false,
      *         @OA\Schema(
      *             type="string",
-     *             enum={"pending", "confirmed", "shipping", "delivered", "completed", "cancelled"}
+     *             enum={"pending", "confirmed", "shipping", "completed", "cancelled"}
      *         )
      *     ),
      *     @OA\Parameter(
@@ -237,7 +237,7 @@ class OrderController extends BaseController
     {
         try {
             $validated = $request->validate([
-                'status' => 'required|in:pending,confirmed,shipping,delivered,completed,cancelled',
+                'status' => 'required|in:pending,confirmed,shipping,completed,cancelled',
                 'note' => 'nullable|string'
             ]);
 
@@ -497,7 +497,7 @@ class OrderController extends BaseController
      *         in="query",
      *         description="Filter by order status",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"pending", "confirmed", "shipping", "delivered", "completed", "cancelled"})
+     *         @OA\Schema(type="string", enum={"pending", "confirmed", "shipping", "completed", "cancelled"})
      *     ),
      *     @OA\Response(
      *         response=200,

@@ -145,13 +145,9 @@ class OrderService
                 'title' => 'Đơn hàng đang được giao',
                 'content' => "Đơn hàng #{$order->id} của bạn đang được giao đến bạn"
             ],
-            'delivered' => [
-                'title' => 'Đơn hàng đã giao thành công',
-                'content' => "Đơn hàng #{$order->id} đã được giao thành công"
-            ],
             'completed' => [
                 'title' => 'Đơn hàng hoàn thành',
-                'content' => "Đơn hàng #{$order->id} đã hoàn thành. Cảm ơn bạn đã mua hàng!"
+                'content' => "Đơn hàng #{$order->id} đã được giao thành công và hoàn thành. Cảm ơn bạn đã mua hàng!"
             ],
             'cancelled' => [
                 'title' => 'Đơn hàng đã bị hủy',

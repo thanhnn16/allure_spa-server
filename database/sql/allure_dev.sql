@@ -258,8 +258,7 @@ CREATE TABLE orders (
         'confirmed',
         'cancelled',
         'completed',
-        'shipping',
-        'delivered'
+        'shipping'
     ) NOT NULL DEFAULT 'pending',
     note TEXT,
     created_at TIMESTAMP NULL DEFAULT NULL,

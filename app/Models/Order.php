@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="payment_method_id", type="integer", description="Payment method ID"),
  *     @OA\Property(property="voucher_id", type="integer", nullable=true, description="Voucher ID"),
  *     @OA\Property(property="discount_amount", type="number", format="float", description="Discount amount"),
- *     @OA\Property(property="status", type="string", enum={"pending", "confirmed", "shipping", "delivered", "completed", "cancelled"}, description="Order status"),
+ *     @OA\Property(property="status", type="string", enum={"pending", "confirmed", "shipping", "completed", "cancelled"}, description="Order status"),
  *     @OA\Property(property="note", type="string", nullable=true, description="Order note"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Created timestamp"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Last updated timestamp"),
