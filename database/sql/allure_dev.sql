@@ -638,13 +638,16 @@ CREATE INDEX idx_translations_translatable ON translations (
 -- 53. Bảng banners
 CREATE TABLE banners (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    media_id INT UNSIGNED NOT NULL,
-    link VARCHAR(255),
+    title VARCHAR(255),
+    description TEXT,
+    image_url VARCHAR(255),
+    link_url VARCHAR(255),
+    start_date DATE,
+    end_date DATE,
     is_active BOOLEAN DEFAULT TRUE,
     `order` INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (media_id) REFERENCES media (id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- 54. Bảng ai_chat_configs

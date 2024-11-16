@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="start_date", type="string", format="date", description="Start date of the banner"),
  *     @OA\Property(property="end_date", type="string", format="date", description="End date of the banner"),
  *     @OA\Property(property="is_active", type="boolean", description="Whether the banner is active or not"),
+ *     @OA\Property(property="order", type="integer", description="Display order of the banner"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Timestamp of creation"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Timestamp of last update")
  * )
@@ -27,12 +28,20 @@ class Banner extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'description', 'image_url', 'link_url', 'start_date', 'end_date', 'is_active'
+        'title',
+        'description', 
+        'image_url',
+        'link_url',
+        'start_date',
+        'end_date',
+        'is_active',
+        'order'
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
         'is_active' => 'boolean',
+        'order' => 'integer',
+        'start_date' => 'date',
+        'end_date' => 'date'
     ];
 }
