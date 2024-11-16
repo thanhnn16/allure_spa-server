@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Http\Requests\AppointmentRequest;
+use App\Models\Appointment;
 use OpenApi\Annotations as OA;
 use App\Models\TimeSlot;
 use Illuminate\Support\Facades\Auth;
@@ -331,14 +332,24 @@ class AppointmentController extends BaseController
         }
 
         // Nếu không phải API request thì render trang chi tiết bằng Inertia
-        if ($result['status'] === 200) {
+        if ($result['status'] === 200 && isset($result['data'])) {
+            // Lấy appointment từ database một lần nữa để có thể sử dụng relationship loading
+            $appointment = Appointment::with(['user', 'service', 'staff', 'timeSlot', 'cancelledBy'])
+                ->find($result['data']['id']);
+            
+            if (!$appointment) {
+                return redirect()->route('appointments.index')
+                    ->with('error', 'Không tìm thấy lịch hẹn');
+            }
+
             return $this->respondWithInertia('Calendar/Components/AppointmentDetails', [
-                'appointment' => $result['data']->load(['user', 'service', 'staff', 'timeSlot', 'cancelledBy'])
+                'appointment' => $appointment
             ]);
         }
 
         // Nếu có lỗi thì redirect về trang danh sách với thông báo
-        return redirect()->route('appointments.index')->with('error', $result['message']);
+        return redirect()->route('appointments.index')
+            ->with('error', $result['message'] ?? 'Đã xảy ra lỗi');
     }
 
     /**

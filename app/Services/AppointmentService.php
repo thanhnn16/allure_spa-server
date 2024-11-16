@@ -270,11 +270,19 @@ class AppointmentService
                 'user', 
                 'service', 
                 'staff',
+                'timeSlot',
                 'cancelledBy'
             ])->findOrFail($id);
 
-            // Format the response
-            $formattedAppointment = array_merge($appointment->toArray(), [
+            // Format the response using the accessor
+            $formattedAppointment = $appointment->getFormattedAppointmentAttribute();
+            
+            // Add additional data specific to appointment details
+            $formattedAppointment = array_merge($formattedAppointment, [
+                'user' => [
+                    'id' => $appointment->user->id,
+                    'full_name' => $appointment->user->full_name,
+                ],
                 'cancelled_by_user' => $appointment->cancelled_by ? [
                     'id' => $appointment->cancelledBy->id,
                     'full_name' => $appointment->cancelledBy->full_name

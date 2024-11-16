@@ -144,6 +144,16 @@ const handleCancelAppointment = async () => {
         isSubmitting.value = false
     }
 }
+
+// Cập nhật computed property để xử lý thông tin người hủy
+const cancelledByInfo = computed(() => {
+    if (!props.appointment.cancelled_by_user) return null;
+    return {
+        name: props.appointment.cancelled_by_user.full_name,
+        time: formatDate(props.appointment.cancelled_at),
+        note: props.appointment.cancellation_note
+    }
+})
 </script>
 
 <template>
@@ -237,6 +247,11 @@ const handleCancelAppointment = async () => {
                                     {{ formatDateTime(appointment.appointment_date, appointment.time_slot.start_time) }}
                                 </p>
                             </div>
+
+                            <div>
+                                <span class="text-gray-500">Số lượng slot</span>
+                                <p class="font-medium">{{ appointment.slots }}</p>
+                            </div>
                         </div>
 
                         <!-- Thông tin trạng thái -->
@@ -256,25 +271,25 @@ const handleCancelAppointment = async () => {
                             </h3>
 
                             <!-- Hiển thị thông tin hủy nếu lịch đã bị hủy -->
-                            <div v-if="appointment.status === 'cancelled'" class="space-y-2">
+                            <div v-if="appointment.status === 'cancelled' && cancelledByInfo" class="space-y-2">
                                 <div class="flex items-center text-sm text-gray-600">
                                     <span class="font-medium mr-2">Người hủy:</span>
-                                    <span>{{ appointment.cancelled_by?.full_name || 'N/A' }}</span>
+                                    <span>{{ cancelledByInfo.name }}</span>
                                 </div>
                                 <div class="flex items-center text-sm text-gray-600">
                                     <span class="font-medium mr-2">Thời gian hủy:</span>
-                                    <span>{{ formatDate(appointment.cancelled_at) }}</span>
+                                    <span>{{ cancelledByInfo.time }}</span>
                                 </div>
                                 <div class="text-sm text-gray-600">
                                     <span class="font-medium">Lý do hủy:</span>
                                     <p class="mt-1 p-2 bg-white/50 rounded">
-                                        {{ appointment.cancellation_note || 'Không có lý do' }}
+                                        {{ cancelledByInfo.note || 'Không có lý do' }}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Ghi chú chung nếu có -->
+                        <!-- Ghi chú chung -->
                         <div v-if="appointment.note" class="mt-4">
                             <span class="text-gray-500 font-medium">Ghi chú</span>
                             <p class="mt-1 text-gray-700 bg-gray-50 p-3 rounded-lg">
@@ -330,7 +345,7 @@ const handleCancelAppointment = async () => {
                         <div class="grid grid-cols-2 gap-4">
                             <div class="col-span-2">
                                 <span class="text-gray-500">Dịch vụ</span>
-                                <p class="font-medium">{{ appointment.service.service_name }}</p>
+                                <p class="font-medium">{{ appointment.service.name }}</p>
                             </div>
                             
                             <div>
@@ -339,8 +354,13 @@ const handleCancelAppointment = async () => {
                             </div>
                             
                             <div>
+                                <span class="text-gray-500">Giá dịch vụ</span>
+                                <p class="font-medium">{{ new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appointment.service.price) }}</p>
+                            </div>
+
+                            <div class="col-span-2">
                                 <span class="text-gray-500">Nhân viên phụ trách</span>
-                                <p class="font-medium">{{ appointment.staff.full_name }}</p>
+                                <p class="font-medium">{{ appointment.staff?.full_name || 'Chưa phân công' }}</p>
                             </div>
                         </div>
                     </div>
@@ -357,7 +377,9 @@ const handleCancelAppointment = async () => {
                                 :key="status"
                                 :label="label"
                                 :color="statusColors[status]"
-                                :disabled="appointment.status === status"
+                                :disabled="appointment.status === status || 
+                                         (appointment.status === 'cancelled' && status !== 'cancelled') ||
+                                         (appointment.status === 'completed' && status !== 'completed')"
                                 :outline="appointment.status !== status"
                                 class="w-full justify-center"
                                 @click="status === 'cancelled' ? isModalActive = true : handleStatusChange(status)"

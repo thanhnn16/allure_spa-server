@@ -57,9 +57,9 @@ watch(() => props.appointments, (newAppointments) => {
 const events = computed(() => {
     return appointments.value.map(appointment => ({
         id: appointment.id,
-        title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.service?.service_name || 'Không xác định'}`,
-        start: `${appointment.start}`,
-        end: `${appointment.end}`,
+        title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.service?.name || 'Không xác định'}`,
+        start: appointment.start,
+        end: appointment.end,
         className: `status-${appointment.status.toLowerCase()}`,
         extendedProps: {
             userId: appointment.user_id,
@@ -69,8 +69,12 @@ const events = computed(() => {
             status: appointment.status,
             timeSlotId: appointment.time_slot_id,
             userName: appointment.user?.full_name,
-            serviceName: appointment.service?.service_name,
-            staffName: appointment.staff?.full_name
+            serviceName: appointment.service?.name,
+            staffName: appointment.staff?.full_name,
+            cancelledBy: appointment.cancelled_by,
+            cancelledAt: appointment.cancelled_at,
+            cancellationNote: appointment.cancellation_note,
+            cancelledByUser: appointment.cancelled_by_user,
         }
     }))
 })
@@ -116,21 +120,37 @@ const calendarOptions = computed(() => ({
     noEventsText: 'Không có lịch hẹn nào',
     select: handleDateSelect,
     eventDidMount: (info) => {
-        tippy(info.el, {
-            content: `
-                <div class="p-2">
-                    <div class="font-bold">${info.event.extendedProps.userName || 'Không xác định'}</div>
-                    <div>Dịch vụ: ${info.event.extendedProps.serviceName || 'Không xác định'}</div>
-                    <div>Nhân viên: ${info.event.extendedProps.staffName || 'Không xác định'}</div>
-                    <div>Trạng thái: ${info.event.extendedProps.status}</div>
+        const event = info.event;
+        const props = event.extendedProps;
+        
+        let tooltipContent = `
+            <div class="p-2">
+                <div class="font-bold">${props.userName || 'Không xác định'}</div>
+                <div>Dịch vụ: ${props.serviceName || 'Không xác định'}</div>
+                <div>Nhân viên: ${props.staffName || 'Không xác định'}</div>
+                <div>Trạng thái: ${props.status}</div>
+        `;
+
+        if (props.status === 'cancelled') {
+            tooltipContent += `
+                <div class="mt-2 pt-2 border-t">
+                    <div>Hủy bởi: ${props.cancelledByUser?.full_name || 'Không xác định'}</div>
+                    <div>Thời gian hủy: ${formatDateTime(props.cancelledAt)}</div>
+                    ${props.cancellationNote ? `<div>Lý do: ${props.cancellationNote}</div>` : ''}
                 </div>
-            `,
+            `;
+        }
+
+        tooltipContent += '</div>';
+
+        tippy(info.el, {
+            content: tooltipContent,
             allowHTML: true,
             placement: 'top',
             theme: 'light-border',
-            delay: [200, 0], // Delay before showing tooltip
+            delay: [200, 0],
             interactive: true
-        })
+        });
     },
     eventClick: (info) => {
         info.jsEvent.preventDefault()
@@ -309,6 +329,19 @@ const statusColors = [
 
 // Thêm prop isAsideLgActive
 const isAsideLgActive = ref(true)
+
+// Thêm hàm format datetime
+function formatDateTime(dateTimeStr) {
+    if (!dateTimeStr) return 'N/A';
+    const date = new Date(dateTimeStr);
+    return new Intl.DateTimeFormat('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(date);
+}
 </script>
 
 <template>
@@ -399,6 +432,12 @@ const isAsideLgActive = ref(true)
     background-color: #ef4444 !important;
     border-color: #dc2626 !important;
     color: #fff !important;
+    text-decoration: line-through;
+    opacity: 0.8;
+}
+
+.dark .status-cancelled {
+    opacity: 0.7;
 }
 
 .status-completed {
@@ -418,12 +457,17 @@ const isAsideLgActive = ref(true)
     border: 1px solid #e2e8f0;
     border-radius: 0.5rem;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    max-width: 300px !important;
 }
 
 .dark .tippy-box[data-theme~='light-border'] {
     background-color: rgb(30, 41, 59);
     border-color: rgb(51, 65, 85);
     color: rgb(203, 213, 225);
+}
+
+.dark .tippy-box[data-theme~='light-border'] .border-t {
+    border-color: rgb(71, 85, 105);
 }
 
 /* Calendar header and controls */
@@ -473,5 +517,20 @@ const isAsideLgActive = ref(true)
 
 .dark .fc-timegrid-now-indicator-arrow {
     border-color: #ef4444;
+}
+
+/* Thêm style cho cancelled event tooltip */
+.tippy-box[data-theme~='light-border'] .mt-2 {
+    margin-top: 0.5rem;
+}
+
+.tippy-box[data-theme~='light-border'] .pt-2 {
+    padding-top: 0.5rem;
+}
+
+.tippy-box[data-theme~='light-border'] .border-t {
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: #e2e8f0;
 }
 </style>
