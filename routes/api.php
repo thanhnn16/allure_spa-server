@@ -24,6 +24,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\ServiceUsageController;
+use App\Http\Controllers\BannerController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -229,6 +230,9 @@ Route::middleware('throttle:api')->group(function () {
         // Service Usage Routes
         Route::post('service-packages/{package}/usage', [ServiceUsageController::class, 'recordUsage']);
         Route::get('service-packages/{package}/history', [ServiceUsageController::class, 'getUsageHistory']);
+
+        // Banner routes
+        Route::apiResource('banners', BannerController::class);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

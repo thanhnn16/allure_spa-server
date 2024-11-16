@@ -111,7 +111,7 @@ export default [
             },
             {
                 label: 'Banner App',
-                route: 'mobileapp.banners',
+                route: 'banners.index',
                 icon: mdiViewCarousel
             },
             {

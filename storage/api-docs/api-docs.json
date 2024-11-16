@@ -1289,7 +1289,42 @@
                                             "type": "boolean"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/Appointment"
+                                            "type": "object",
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Appointment"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "cancelled_by": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "cancelled_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        },
+                                                        "cancellation_note": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "cancelled_by_user": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string"
+                                                                },
+                                                                "full_name": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
                                         }
                                     },
                                     "type": "object"
@@ -1606,6 +1641,21 @@
                             "type": "string",
                             "format": "date"
                         }
+                    },
+                    {
+                        "name": "appointment_type",
+                        "in": "query",
+                        "description": "Lọc theo loại lịch hẹn",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "consultation",
+                                "treatment",
+                                "follow_up",
+                                "others"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
@@ -1628,52 +1678,24 @@
                                             "items": {
                                                 "properties": {
                                                     "id": {
-                                                        "type": "integer",
-                                                        "example": 1
+                                                        "type": "integer"
                                                     },
                                                     "title": {
-                                                        "type": "string",
-                                                        "example": "Facial Treatment"
+                                                        "type": "string"
                                                     },
                                                     "start": {
                                                         "type": "string",
-                                                        "format": "date-time",
-                                                        "example": "2024-03-20 09:00:00"
+                                                        "format": "date-time"
                                                     },
                                                     "end": {
                                                         "type": "string",
-                                                        "format": "date-time",
-                                                        "example": "2024-03-20 10:00:00"
+                                                        "format": "date-time"
                                                     },
                                                     "service": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "Facial Treatment"
-                                                            },
-                                                            "price": {
-                                                                "type": "number",
-                                                                "example": 500000
-                                                            }
-                                                        },
-                                                        "type": "object"
+                                                        "$ref": "#/components/schemas/Service"
                                                     },
                                                     "staff": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "full_name": {
-                                                                "type": "string",
-                                                                "example": "Staff Name"
-                                                            }
-                                                        },
-                                                        "type": "object"
+                                                        "$ref": "#/components/schemas/User"
                                                     },
                                                     "status": {
                                                         "type": "string",
@@ -1688,17 +1710,34 @@
                                                         "example": "Customer note"
                                                     },
                                                     "time_slot": {
+                                                        "$ref": "#/components/schemas/TimeSlot"
+                                                    },
+                                                    "cancelled_by": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "cancelled_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "nullable": true
+                                                    },
+                                                    "cancellation_note": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "cancelled_by_user": {
                                                         "properties": {
-                                                            "start_time": {
-                                                                "type": "string",
-                                                                "example": "09:00:00"
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
                                                             },
-                                                            "end_time": {
+                                                            "full_name": {
                                                                 "type": "string",
-                                                                "example": "10:00:00"
+                                                                "example": "User Name"
                                                             }
                                                         },
-                                                        "type": "object"
+                                                        "type": "object",
+                                                        "nullable": true
                                                     }
                                                 },
                                                 "type": "object"
@@ -1978,6 +2017,122 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/banners": {
+            "get": {
+                "tags": [
+                    "Banners"
+                ],
+                "summary": "Get all active banners",
+                "operationId": "ef6e2a0694446d424bc4d5fa2458f5b1",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Banner"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Banners"
+                ],
+                "summary": "Create a new banner",
+                "operationId": "25593be4d8cb447471ad011740d24c3f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Banner"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Banner created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Banner"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/banners/{id}": {
+            "put": {
+                "tags": [
+                    "Banners"
+                ],
+                "summary": "Update a banner",
+                "operationId": "527b43650ac24e20b1063464e3d0f11a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Banner"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Banner updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Banner"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Banners"
+                ],
+                "summary": "Delete a banner",
+                "operationId": "2cbc019e9409a6b75b5f441bbae16d8d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Banner deleted successfully"
+                    }
+                }
             }
         },
         "/api/favorites/toggle": {
@@ -2410,7 +2565,6 @@
                                 "pending",
                                 "confirmed",
                                 "shipping",
-                                "delivered",
                                 "completed",
                                 "cancelled"
                             ]
@@ -2853,7 +3007,6 @@
                                 "pending",
                                 "confirmed",
                                 "shipping",
-                                "delivered",
                                 "completed",
                                 "cancelled"
                             ]
@@ -5679,6 +5832,10 @@
                         "description": "District",
                         "type": "string"
                     },
+                    "ward": {
+                        "description": "Ward",
+                        "type": "string"
+                    },
                     "address": {
                         "description": "Address",
                         "type": "string"
@@ -6504,13 +6661,29 @@
                             "pending",
                             "confirmed",
                             "shipping",
-                            "delivered",
                             "completed",
                             "cancelled"
                         ]
                     },
                     "note": {
                         "description": "Order note",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cancelled_by_user_id": {
+                        "description": "ID of user who cancelled the order",
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                    },
+                    "cancelled_at": {
+                        "description": "Cancellation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "cancel_reason": {
+                        "description": "Reason for cancellation",
                         "type": "string",
                         "nullable": true
                     },
@@ -6666,13 +6839,9 @@
                         "type": "integer",
                         "format": "int64"
                     },
-                    "name": {
+                    "method_name": {
                         "description": "Name of the payment method",
                         "type": "string"
-                    },
-                    "is_active": {
-                        "description": "Whether the payment method is active",
-                        "type": "boolean"
                     },
                     "created_at": {
                         "description": "Creation timestamp",
@@ -6681,6 +6850,11 @@
                     },
                     "updated_at": {
                         "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "description": "Deletion timestamp",
                         "type": "string",
                         "format": "date-time"
                     }
@@ -7462,48 +7636,6 @@
                 },
                 "type": "object"
             },
-            "UserServicePackage": {
-                "title": "User Service Package",
-                "description": "Model representing a user's service package",
-                "properties": {
-                    "id": {
-                        "description": "The unique identifier of the package",
-                        "type": "integer"
-                    },
-                    "user_id": {
-                        "description": "The ID of the user who owns this package",
-                        "type": "integer"
-                    },
-                    "service_id": {
-                        "description": "The ID of the service associated with this package",
-                        "type": "integer"
-                    },
-                    "total_sessions": {
-                        "description": "The total number of sessions in this package",
-                        "type": "integer"
-                    },
-                    "remaining_sessions": {
-                        "description": "The number of remaining sessions in this package",
-                        "type": "integer"
-                    },
-                    "expiry_date": {
-                        "description": "The expiration date of the package",
-                        "type": "string",
-                        "format": "date"
-                    },
-                    "purchase_date": {
-                        "description": "The date when the package was purchased",
-                        "type": "string",
-                        "format": "date"
-                    },
-                    "price": {
-                        "description": "The price of the package",
-                        "type": "number",
-                        "format": "float"
-                    }
-                },
-                "type": "object"
-            },
             "UserVoucher": {
                 "title": "User Voucher",
                 "description": "User Voucher model",
@@ -7722,6 +7854,10 @@
         {
             "name": "Authentication",
             "description": "Authentication"
+        },
+        {
+            "name": "Banners",
+            "description": "Banners"
         },
         {
             "name": "Favorites",

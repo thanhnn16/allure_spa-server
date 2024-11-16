@@ -512,9 +512,9 @@ class AppointmentController extends BaseController
      *                     @OA\Property(property="end", type="string", format="date-time"),
      *                     @OA\Property(property="service", ref="#/components/schemas/Service"),
      *                     @OA\Property(property="staff", ref="#/components/schemas/User"),
-     *                     @OA\Property(property="status", type="string"),
-     *                     @OA\Property(property="appointment_type", type="string"),
-     *                     @OA\Property(property="note", type="string"),
+     *                     @OA\Property(property="status", type="string", example="confirmed"),
+     *                     @OA\Property(property="appointment_type", type="string", example="facial"),
+     *                     @OA\Property(property="note", type="string", example="Customer note"),
      *                     @OA\Property(property="time_slot", ref="#/components/schemas/TimeSlot"),
      *                     @OA\Property(property="cancelled_by", type="string", nullable=true),
      *                     @OA\Property(property="cancelled_at", type="string", format="date-time", nullable=true),
@@ -522,24 +522,9 @@ class AppointmentController extends BaseController
      *                     @OA\Property(
      *                         property="cancelled_by_user",
      *                         type="object",
+     *                         nullable=true,
      *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="name", type="string", example="Facial Treatment"),
-     *                         @OA\Property(property="price", type="number", example=500000)
-     *                     ),
-     *                     @OA\Property(
-     *                         property="staff",
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="full_name", type="string", example="Staff Name")
-     *                     ),
-     *                     @OA\Property(property="status", type="string", example="confirmed"),
-     *                     @OA\Property(property="appointment_type", type="string", example="facial"),
-     *                     @OA\Property(property="note", type="string", example="Customer note"),
-     *                     @OA\Property(
-     *                         property="time_slot",
-     *                         type="object",
-     *                         @OA\Property(property="start_time", type="string", example="09:00:00"),
-     *                         @OA\Property(property="end_time", type="string", example="10:00:00")
+     *                         @OA\Property(property="full_name", type="string", example="User Name")
      *                     )
      *                 )
      *             )

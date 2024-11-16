@@ -103,7 +103,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
 
     // Mobile App routes
-    Route::get('mobileapp/banners', [BannerController::class, 'banners'])->name('mobileapp.banners');
+    Route::resource('banners', BannerController::class);
 
     // Report routes
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
