@@ -103,7 +103,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
 
     // Mobile App routes - Web Interface
-    Route::get('banners', [BannerController::class, 'banners'])->name('banners.web');
+    Route::get('banners', [BannerController::class, 'index'])->name('banners.web');
     // Không cần các route khác vì sẽ xử lý qua API
 
     // Report routes
