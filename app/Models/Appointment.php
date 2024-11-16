@@ -47,10 +47,14 @@ class Appointment extends Model
         'status',
         'note',
         'slots',
+        'cancelled_by',
+        'cancelled_at',
+        'cancellation_note'
     ];
 
     protected $casts = [
         'appointment_date' => 'date',
+        'cancelled_at' => 'datetime',
     ];
 
     protected $attributes = [

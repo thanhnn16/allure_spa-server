@@ -309,9 +309,10 @@ class AppointmentService
     {
         try {
             $appointment = Appointment::with('timeSlot')->findOrFail($id);
+            $currentUser = Auth::user();
 
-            // Kiểm tra xem người dùng có quyền hủy cuộc hẹn không
-            if ($appointment->user_id !== Auth::id()) {
+            // Kiểm tra quyền hủy cuộc hẹn (admin có thể hủy mọi cuộc hẹn)
+            if ($appointment->user_id !== $currentUser->id && $currentUser->role !== 'admin') {
                 return [
                     'status' => 403,
                     'message' => 'Bạn không có quyền hủy cuộc hẹn này',
@@ -335,7 +336,9 @@ class AppointmentService
 
             $appointment->update([
                 'status' => 'cancelled',
-                'note' => $note,
+                'cancelled_by' => $currentUser->id,
+                'cancelled_at' => now(),
+                'cancellation_note' => $note,
             ]);
 
             return [
