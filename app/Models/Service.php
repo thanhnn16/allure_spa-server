@@ -152,7 +152,7 @@ class Service extends Model
         }
 
         return $this->favorites()
-            ->where('user_id', Auth::user()->id)
+            ->where('user_id', Auth::id())
             ->where('favorite_type', 'service')
             ->exists();
     }
