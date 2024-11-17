@@ -129,7 +129,11 @@ class OrderController extends BaseController
             return $this->respondWithError('Bạn không có quyền truy cập', 403);
         }
 
-        $orders = Order::with(['user', 'invoice'])
+        $orders = Order::with([
+            'user',
+            'invoice',
+            'shippingAddress'
+        ])
             ->when(request('status'), function ($query, $status) {
                 return $query->where('status', $status);
             })
@@ -365,7 +369,7 @@ class OrderController extends BaseController
             ]);
 
             $order = $this->orderService->createOrder($validatedData);
-            
+
             return $this->respondWithJson($order->load('orderItems'), 'Đơn hàng đã được tạo thành công');
         } catch (\Exception $e) {
             return $this->respondWithError($e->getMessage());
@@ -415,12 +419,12 @@ class OrderController extends BaseController
             }
 
             $invoice = $this->orderService->createInvoice($order);
-            
+
             // Cập nhật điểm thưởng cho khách hàng
             $this->orderService->updateLoyaltyPoints($order);
 
             return $this->respondWithJson(
-                $invoice->load(['user', 'staff', 'order']), 
+                $invoice->load(['user', 'staff', 'order']),
                 'Hóa đơn đã được tạo thành công'
             );
         } catch (\Exception $e) {
@@ -471,7 +475,11 @@ class OrderController extends BaseController
     public function getMyOrders(Request $request)
     {
         try {
-            $orders = Order::with(['orderItems', 'invoice'])
+            $orders = Order::with([
+                'orderItems',
+                'invoice',
+                'shippingAddress' // Thêm relationship này
+            ])
                 ->where('user_id', Auth::id())
                 ->when($request->status, function ($query, $status) {
                     return $query->where('status', $status);
@@ -671,7 +679,7 @@ class OrderController extends BaseController
             }
 
             return $this->respondWithJson(
-                $completedOrder->fresh(), 
+                $completedOrder->fresh(),
                 'Đơn hàng đã hoàn thành thành công'
             );
         } catch (\Exception $e) {
