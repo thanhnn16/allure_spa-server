@@ -156,4 +156,27 @@ class Service extends Model
             ->where('favorite_type', 'service')
             ->exists();
     }
+
+    public function translations()
+    {
+        return $this->morphMany(Translation::class, 'translatable');
+    }
+
+    public function getTranslationsArrayAttribute()
+    {
+        $translations = [];
+
+        // Lấy tất cả bản dịch của service
+        $allTranslations = $this->translations;
+
+        // Nhóm các bản dịch theo ngôn ngữ
+        foreach ($allTranslations as $translation) {
+            if (!isset($translations[$translation->language])) {
+                $translations[$translation->language] = [];
+            }
+            $translations[$translation->language][$translation->field] = $translation->value;
+        }
+
+        return $translations;
+    }
 }
