@@ -107,28 +107,18 @@ class InvoiceController extends BaseController
     {
         $invoice = Invoice::with([
             'user',
-            'order.orderItems.item',
-            'order' => function ($query) {
-                $query->with([
-                    'orderItems' => function ($query) {
-                        $query->with([
-                            'service' => function ($query) {
-                                $query->withTrashed();
-                            },
-                            'product' => function ($query) {
-                                $query->withTrashed();
-                            }
-                        ]);
-                    },
-                    'voucher'
-                ]);
-            },
-            'paymentHistories'
+            'order.orderItems.product',
+            'order.orderItems.service',
+            'order.voucher',
+            'paymentHistories.createdBy',
+            'createdBy'
         ])->findOrFail($id);
 
         if ($request->expectsJson()) {
             return $this->respondWithJson($invoice, 'Invoice retrieved successfully');
         }
+
+        Log::info('Invoice Data:', ['invoice' => $invoice->toArray()]);
 
         return $this->respondWithInertia('Invoice/InvoiceShow', [
             'invoice' => $invoice

@@ -19,14 +19,6 @@ const canGoBack = computed(() => {
 const handleGoBack = () => {
   window.history.back()
 }
-
-onMounted(() => {
-  console.log('SectionMain mounted', {
-    url: router.page.url,
-    props: props,
-    parent: getCurrentInstance()?.parent?.type?.name
-  })
-})
 </script>
 
 <template>

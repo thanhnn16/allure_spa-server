@@ -159,13 +159,16 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="(item, index) in invoice.order?.orderItems" :key="item.id">
+                                    <tr v-for="(item, index) in invoice.order?.order_items" :key="item.id">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ index + 1 }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">
-                                                {{ getItemName(item) }}
+                                                {{ item.item_name }}
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                Mã: {{ item.service?.code || item.product?.code || '-' }}
                                             </div>
                                             <div v-if="item.description" class="text-sm text-gray-500">
                                                 {{ item.description }}
@@ -260,7 +263,7 @@
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     required />
                                 <p class="mt-1 text-sm text-gray-500">
-                                    Số tiền còn lại cần thanh toán: {{ formatCurrency(invoice.remaining_amount) }}
+                                    Số tiền cn lại cần thanh toán: {{ formatCurrency(invoice.remaining_amount) }}
                                 </p>
                             </div>
                             <div>
@@ -406,13 +409,10 @@
             </SectionMain>
         </LayoutAuthenticated>
 
-        <!-- Print Template -->
-        <div class="print-only" ref="printSection">
-            <PrintInvoiceTemplate :invoice="invoice" />
+        <!-- Thêm PrintInvoiceTemplate ở đây, ngoài LayoutAuthenticated -->
+        <div class="print-container" style="display: none;">
+            <PrintInvoiceTemplate ref="printTemplateRef" :invoice="invoice" style="visibility: visible !important;" />
         </div>
-
-        <!-- Thêm Toast component -->
-        <Toast ref="toast" />
 
         <!-- Thêm modal xác nhận hủy hóa đơn -->
         <div v-if="showCancelModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -437,9 +437,10 @@ import { Head, Link, router } from '@inertiajs/vue3'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
 import PrintInvoiceTemplate from '@/Components/PrintInvoiceTemplate.vue'
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import axios from 'axios'
 import { useToast } from "vue-toastification"
+import html2pdf from 'html2pdf.js'
 
 export default {
     components: {
@@ -499,12 +500,81 @@ export default {
             return methods[method] || method
         }
 
-        const printInvoice = () => {
-            // Thêm một chút delay để đảm bảo template được render
-            setTimeout(() => {
-                window.print()
-            }, 100)
-        }
+        const printTemplateRef = ref(null)
+
+        const printInvoice = async () => {
+            try {
+                await nextTick();
+
+                if (!printTemplateRef.value) {
+                    toast.error('Không tìm thấy template hóa đơn!');
+                    return;
+                }
+
+                const printTemplate = printTemplateRef.value.$el;
+
+                // Tạo container tạm thời
+                const tempContainer = document.createElement('div');
+                tempContainer.appendChild(printTemplate.cloneNode(true));
+                document.body.appendChild(tempContainer);
+
+                // Cấu hình PDF
+                const opt = {
+                    margin: 5,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        letterRendering: true,
+                        width: 302, // 80mm in pixels
+                    },
+                    jsPDF: {
+                        unit: 'mm',
+                        format: [80, 297],
+                        orientation: 'portrait'
+                    }
+                };
+
+                // Tạo PDF và mở trong cửa sổ mới
+                html2pdf().set(opt)
+                    .from(tempContainer.firstChild)
+                    .outputPdf('blob')
+                    .then((pdfBlob) => {
+                        // Tạo URL từ blob
+                        const blobUrl = URL.createObjectURL(pdfBlob);
+
+                        // Mở cửa sổ mới với kích thước phù hợp
+                        const printWindow = window.open(blobUrl, '_blank', 'width=800,height=600');
+
+                        if (printWindow) {
+                            // Tự động mở hộp thoại in sau khi PDF đã load
+                            printWindow.onload = () => {
+                                printWindow.print();
+                            };
+
+                            // Cleanup khi cửa sổ đóng
+                            printWindow.onbeforeunload = () => {
+                                URL.revokeObjectURL(blobUrl);
+                                document.body.removeChild(tempContainer);
+                            };
+                        } else {
+                            // Nếu popup bị chặn
+                            toast.error('Vui lòng cho phép popup để in hóa đơn!');
+                            URL.revokeObjectURL(blobUrl);
+                            document.body.removeChild(tempContainer);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('PDF generation error:', error);
+                        toast.error('Có lỗi khi tạo PDF. Vui lòng thử lại!');
+                        document.body.removeChild(tempContainer);
+                    });
+
+            } catch (error) {
+                console.error('Print process error:', error);
+                toast.error('Có lỗi xảy ra. Vui lòng thử lại!');
+            }
+        };
 
         const processPayment = async () => {
             processing.value = true
@@ -663,7 +733,6 @@ export default {
 
             let description = '';
 
-
             if (voucher.discount_type === 'percentage') {
                 description = `Giảm ${voucher.discount_value}% `;
             } else if (voucher.discount_type === 'fixed') {
@@ -741,12 +810,21 @@ export default {
 
         const getOrderStatusText = (status) => {
             const statusTexts = {
-                'pending': 'Chờ xử lý',
+                'pending': 'Chờ xử l',
                 'processing': 'Đang xử lý',
                 'completed': 'Hoàn thành',
                 'cancelled': 'Đã hủy'
             };
             return statusTexts[status] || 'Không xác định';
+        };
+
+        const getItemCode = (item) => {
+            if (item.item_type === 'service') {
+                return item.service?.code || '-';
+            } else if (item.item_type === 'product') {
+                return item.product?.code || '-';
+            }
+            return '-';
         };
 
         return {
@@ -778,11 +856,12 @@ export default {
             cancelInvoice,
             getOrderStatusClass,
             getOrderStatusText,
+            getItemCode,
+            printTemplateRef,
         }
     }
 }
 </script>
-
 <style>
 /* Screen styles */
 @media screen {
@@ -799,23 +878,33 @@ export default {
         visibility: hidden;
     }
 
-    .print-only,
-    .print-only * {
+    #print-invoice-template,
+    #print-invoice-template * {
         visibility: visible !important;
         display: block !important;
     }
 
-    .print-only {
+    #print-invoice-template {
         position: absolute;
         left: 0;
         top: 0;
-        width: 100%;
+        width: 80mm;
+        padding: 0;
+        margin: 0;
     }
 
     /* Reset page margins */
     @page {
         margin: 0;
-        size: A4;
+        size: 80mm auto;
+    }
+
+    /* Ẩn các phần tử không cần thiết khi in */
+    header,
+    footer,
+    nav,
+    .no-print {
+        display: none !important;
     }
 }
 </style>
