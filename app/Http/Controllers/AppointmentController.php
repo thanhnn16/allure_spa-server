@@ -207,14 +207,11 @@ class AppointmentController extends BaseController
         try {
             // Validate input
             $validated = $request->validate([
-                'user_id' => 'required|exists:users,id',
-                'staff_id' => 'required|exists:users,id',
                 'appointment_date' => 'required|date',
                 'time_slot_id' => 'required|exists:time_slots,id',
                 'appointment_type' => 'required|string',
                 'slots' => 'required|integer|min:1|max:2',
                 'note' => 'nullable|string',
-                // Thêm validation cho service_id và user_service_package_id
                 'service_id' => 'required_without:user_service_package_id|exists:services,id|nullable',
                 'user_service_package_id' => 'required_without:service_id|exists:user_service_packages,id|nullable',
             ]);
