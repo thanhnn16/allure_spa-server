@@ -101,6 +101,12 @@ class ProductService
                     ->where('rating_type', 'product');
             }], 'stars');
 
+        $query->addSelect(['products.*'])
+            ->leftJoin('translations', function ($join) {
+                $join->on('products.id', '=', 'translations.translatable_id')
+                    ->where('translations.translatable_type', '=', Product::class);
+            });
+
         if (Auth::check()) {
             $query->with(['favorites' => function ($query) {
                 $query->where('user_id', Auth::id())
@@ -114,7 +120,14 @@ class ProductService
                 ]);
         }
 
-        return $query->findOrFail($id);
+        $product = $query->findOrFail($id);
+
+        $translatableFields = $product->getTranslatableAttributes();
+        foreach ($translatableFields as $field) {
+            $product->setTranslations($field, $product->getTranslations($field));
+        }
+
+        return $product;
     }
 
     public function updateProduct($id, array $data)
