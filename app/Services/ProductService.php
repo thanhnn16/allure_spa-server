@@ -99,27 +99,16 @@ class ProductService
                 ->where('rating_type', 'product');
         }], 'stars');
 
-        // Chỉ load favorites nếu user đã đăng nhập
         if (Auth::check()) {
-            $query->with(['favorites' => function ($query) {
-                $query->where('user_id', Auth::id())
-                    ->where('favorite_type', 'product');
-            }])
-            ->withCount([
-                'favorites as favorites_count' => function ($query) {
-                    $query->where('user_id', Auth::id())
-                        ->where('favorite_type', 'product');
-                }
-            ]);
+            $userId = Auth::id();
+            $query->with(['favorites' => function ($query) use ($userId) {
+                $query->where('user_id', $userId)
+                      ->where('favorite_type', 'product');
+            }]);
         }
 
         $product = $query->findOrFail($id);
         
-        // Set is_favorite = false cho guest users
-        if (!Auth::check()) {
-            $product->is_favorite = false;
-        }
-
         return $product;
     }
 
