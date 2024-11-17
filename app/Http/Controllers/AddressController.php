@@ -52,6 +52,7 @@ class AddressController extends BaseController
         $validated = $request->validate([
             'province' => 'required|string|max:255',
             'district' => 'required|string|max:255',
+            'ward' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'address_type' => 'required|in:home,work,shipping,others',
             'is_default' => 'boolean',
@@ -112,6 +113,7 @@ class AddressController extends BaseController
         $validated = $request->validate([
             'province' => 'required|string|max:255',
             'district' => 'required|string|max:255',
+            'ward' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'address_type' => 'required|in:home,work,shipping,others',
             'is_default' => 'boolean',
