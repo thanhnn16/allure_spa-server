@@ -34,7 +34,7 @@ class ProductService
         if (Auth::check()) {
             $query->withCount([
                 'favorites as favorites_count' => function ($query) {
-                    $query->where('user_id', Auth::user()->id)
+                    $query->where('user_id', Auth::id())
                         ->where('favorite_type', 'product');
                 }
             ]);
@@ -108,12 +108,12 @@ class ProductService
 
         if (Auth::check()) {
             $query->with(['favorites' => function ($query) {
-                $query->where('user_id', Auth::user()->id)
+                $query->where('user_id', Auth::id())
                     ->where('favorite_type', 'product');
             }])
                 ->withCount([
                     'favorites as favorites_count' => function ($query) {
-                        $query->where('user_id', Auth::user()->id)
+                        $query->where('user_id', Auth::id())
                             ->where('favorite_type', 'product');
                     }
                 ]);
