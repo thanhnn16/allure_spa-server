@@ -22,13 +22,6 @@ defineProps({
 
 const emit = defineEmits(['menu-click'])
 
-const logoutItem = computed(() => ({
-  label: 'Logout',
-  icon: mdiLogout,
-  color: 'info',
-  isLogout: true
-}))
-
 const form = useForm({})
 
 const handleLogout = () => {
@@ -62,12 +55,17 @@ const menuClick = (event, item) => {
       </div>
 
       <!-- Menu -->
-      <div class="flex-1 overflow-y-auto no-scrollbar">
-        <div class="py-4">
+      <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col">
+        <div class="flex-1 py-4">
           <AsideMenuList :menu="menu" @menu-click="menuClick" />
         </div>
-        <div class="px-4 py-2">
-          <AsideMenuItem :item="logoutItem" @menu-click="menuClick" />
+        <div class="border-t border-gray-100 dark:border-dark-border">
+          <button @click="handleLogout" 
+            class="w-full flex items-center py-3 px-6 text-gray-600 dark:text-slate-300 
+                   hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200">
+            <BaseIcon :path="mdiLogout" class="w-5 h-5" />
+            <span class="ml-3">Đăng xuất</span>
+          </button>
         </div>
       </div>
     </div>
