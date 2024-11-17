@@ -71,7 +71,7 @@ window.addEventListener('keydown', (e) => {
 
         <!-- Footer -->
         <footer class="p-5 border-t dark:border-dark-border">
-          <BaseButtons class="justify-end gap-3">
+          <BaseButtons v-if="hasButton" class="justify-end gap-3">
             <BaseButton v-if="hasCancel" label="Hủy" :color="button" outline @click="cancel" />
             <BaseButton :label="buttonLabel" :color="button" @click="confirm" />
           </BaseButtons>

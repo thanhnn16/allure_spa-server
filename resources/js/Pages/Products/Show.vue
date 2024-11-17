@@ -5,71 +5,59 @@
         <SectionMain>
             <div class="flex justify-between items-center mb-6">
                 <SectionTitleLineWithButton :icon="mdiPackageVariantClosed" :title="'Chi tiết sản phẩm'" main />
-                <BaseButton :icon="mdiArrowLeft" label="Quay lại" color="info" small
-                    @click="router.visit(route('products.index'))" />
             </div>
 
             <CardBox class="mb-6 dark:bg-dark-surface">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-4">
-                        <Carousel v-if="product.media && product.media.length > 0" :items="processedMedia"
-                            :settings="carouselSettings">
-                        </Carousel>
-                        <img v-else src="/images/placeholder-product.jpg" :alt="product.name"
-                            class="w-full h-auto rounded-lg shadow-lg">
-                        <div class="flex justify-between">
-                            <div class="space-x-2">
-                                <BaseButton :icon="mdiImage" label="Quản lý ảnh" color="success"
-                                    @click="showManageImagesModal = true" />
-                                <BaseButton :icon="mdiPencil" label="Chỉnh sửa" color="info"
-                                    @click="showEditModal = true" />
-                            </div>
-                            <BaseButton :icon="mdiDelete" label="Xóa" color="danger" @click="showDeleteModal = true" />
+                        <div class="bg-white dark:bg-dark-surface rounded-xl shadow-lg p-4">
+                            <Carousel v-if="product.media && product.media.length > 0" :items="processedMedia"
+                                :settings="carouselSettings" class="rounded-lg overflow-hidden">
+                            </Carousel>
+                            <img v-else src="/images/placeholder-product.jpg" :alt="product.name"
+                                class="w-full h-auto rounded-lg shadow">
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <BaseButton :icon="mdiImage" label="Quản lý ảnh" color="success"
+                                class="flex-grow md:flex-grow-0" @click="showManageImagesModal = true" />
+                            <BaseButton :icon="mdiPencil" label="Chỉnh sửa" color="info"
+                                class="flex-grow md:flex-grow-0" @click="showEditModal = true" />
+                            <BaseButton :icon="mdiTranslate" label="Quản lý bản dịch" color="warning"
+                                class="flex-grow md:flex-grow-0" @click="showTranslationsModal = true" />
+                            <BaseButton :icon="mdiDelete" label="Xóa" color="danger" class="flex-grow md:flex-grow-0"
+                                @click="showDeleteModal = true" />
                         </div>
                     </div>
-                    <div class="space-y-4">
-                        <h3 class="text-2xl font-semibold dark:text-gray-100">{{ product.name }}</h3>
-                        <p class="text-gray-600 dark:text-gray-400">{{ product.category ? product.category.category_name
-                            : 'Không có danh mục' }}</p>
-                        <div>
-                            <h4 class="font-medium dark:text-gray-300">Giá hiện tại:</h4>
-                            <p class="text-2xl font-bold text-green-600 dark:text-green-500">{{ formatPrice(product.price) }}</p>
+                    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-lg p-6 space-y-6">
+                        <div class="border-b dark:border-dark-border pb-4">
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ product.name }}</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mt-2">
+                                {{ product.category ? product.category.category_name : 'Không có danh mục' }}
+                            </p>
                         </div>
-                        <div>
-                            <h4 class="font-medium dark:text-gray-300">Số lượng:</h4>
-                            <p class="dark:text-gray-400">{{ product.quantity }}</p>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 dark:bg-dark-bg rounded-lg p-4">
+                                <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400">Giá hiện tại</h4>
+                                <p class="text-2xl font-bold text-green-600 dark:text-green-500">
+                                    {{ formatPrice(product.price) }}
+                                </p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-dark-bg rounded-lg p-4">
+                                <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400">Số lượng</h4>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ product.quantity }}
+                                </p>
+                            </div>
                         </div>
-                        <div v-if="product.brand_description">
-                            <h4 class="font-medium dark:text-gray-300">Mô tả thương hiệu:</h4>
-                            <p class="dark:text-gray-400">{{ product.brand_description }}</p>
-                        </div>
-                        <div v-if="product.usage">
-                            <h4 class="font-medium">Cách sử dụng:</h4>
-                            <p>{{ product.usage }}</p>
-                        </div>
-                        <div v-if="product.benefits">
-                            <h4 class="font-medium">Lợi ích:</h4>
-                            <p>{{ product.benefits }}</p>
-                        </div>
-                        <div v-if="product.key_ingredients">
-                            <h4 class="font-medium">Thành phần chính:</h4>
-                            <p>{{ product.key_ingredients }}</p>
-                        </div>
-                        <div v-if="product.ingredients">
-                            <h4 class="font-medium">Thành phần đầy đủ:</h4>
-                            <p>{{ product.ingredients }}</p>
-                        </div>
-                        <div v-if="product.directions">
-                            <h4 class="font-medium">Hướng dẫn sử dụng:</h4>
-                            <p>{{ product.directions }}</p>
-                        </div>
-                        <div v-if="product.storage_instructions">
-                            <h4 class="font-medium">Hướng dẫn bảo quản:</h4>
-                            <p>{{ product.storage_instructions }}</p>
-                        </div>
-                        <div v-if="product.product_notes">
-                            <h4 class="font-medium">Ghi chú sản phẩm:</h4>
-                            <p>{{ product.product_notes }}</p>
+
+                        <div class="space-y-4">
+                            <template v-for="(value, key) in productDetails" :key="key">
+                                <div v-if="product[key]" class="border-b dark:border-dark-border pb-4">
+                                    <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-2">{{ value }}</h4>
+                                    <p class="text-gray-600 dark:text-gray-400 whitespace-pre-line">{{ product[key] }}
+                                    </p>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -97,7 +85,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(history, index) in sortedPriceHistory" :key="history.id"
+                                <tr v-for="(history) in sortedPriceHistory" :key="history.id"
                                     class="border-b border-gray-100 hover:bg-gray-50 transition-colors dark:border-dark-border dark:hover:bg-dark-bg"
                                     :class="{ 'bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30': !history.effective_to }">
                                     <td class="px-6 py-4">
@@ -162,6 +150,9 @@
             @product-deleted="handleProductDeleted" />
 
         <ManageImagesModal v-model="showManageImagesModal" :product="product" @updated="handleImagesUpdated" />
+
+        <TranslationsModal v-model="showTranslationsModal" :product="product"
+            @translations-updated="handleTranslationsUpdated" />
     </LayoutAuthenticated>
 </template>
 
@@ -177,7 +168,8 @@ import EditProductModal from './Components/EditProductModal.vue'
 import DeleteConfirmModal from './Components/DeleteConfirmModal.vue'
 import Carousel from '@/Components/Carousel.vue'
 import ManageImagesModal from './Components/ManageImagesModal.vue'
-import { mdiPackageVariantClosed, mdiArrowLeft, mdiPencil, mdiDelete, mdiImage } from '@mdi/js'
+import TranslationsModal from './Components/TranslationsModal.vue'
+import { mdiPackageVariantClosed, mdiArrowLeft, mdiPencil, mdiDelete, mdiImage, mdiTranslate } from '@mdi/js'
 
 const props = defineProps({
     product: Object,
@@ -187,6 +179,7 @@ const props = defineProps({
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const showManageImagesModal = ref(false)
+const showTranslationsModal = ref(false)
 
 const carouselSettings = {
     itemsToShow: 1,
@@ -197,9 +190,6 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
 }
 
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('vi-VN')
-}
 
 const closeEditModal = () => {
     showEditModal.value = false
@@ -213,15 +203,6 @@ const handleProductUpdated = () => {
 const handleProductDeleted = () => {
     showDeleteModal.value = false
     router.visit(route('products.index'))
-}
-
-const logImageLoaded = (url) => {
-    console.log(`Image loaded successfully: ${url}`)
-}
-
-const handleImageError = (event, url) => {
-    console.error(`Failed to load image: ${url}`)
-    event.target.src = '/images/placeholder-product.jpg'
 }
 
 const processedMedia = computed(() => {
@@ -251,6 +232,21 @@ const sortedPriceHistory = computed(() => {
         return new Date(b.effective_from) - new Date(a.effective_from)
     })
 })
+
+const handleTranslationsUpdated = () => {
+    router.reload({ only: ['product'] })
+}
+
+const productDetails = {
+    brand_description: 'Mô tả thương hiệu',
+    usage: 'Cách sử dụng',
+    benefits: 'Lợi ích',
+    key_ingredients: 'Thành phần chính',
+    ingredients: 'Thành phần đầy đủ',
+    directions: 'Hướng dẫn sử dụng',
+    storage_instructions: 'Hướng dẫn bảo quản',
+    product_notes: 'Ghi chú sản phẩm'
+}
 
 onMounted(() => {
     console.log('Chi tiết sản phẩm:', props.product)

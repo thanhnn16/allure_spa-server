@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\HasTranslations;
 
 /**
  * @OA\Schema(
@@ -36,7 +37,7 @@ use Illuminate\Support\Facades\Auth;
  */
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasTranslations;
 
     protected $fillable = [
         'name',
@@ -55,7 +56,19 @@ class Product extends Model
 
     protected $morphClass = 'product';
 
-    protected $appends = ['rating_summary', 'is_favorite'];
+    protected $appends = ['media', 'rating_summary', 'is_favorite'];
+
+    protected $translatable = [
+        'name',
+        'brand_description',
+        'usage',
+        'benefits',
+        'key_ingredients',
+        'ingredients',
+        'directions',
+        'storage_instructions',
+        'product_notes'
+    ];
 
     public function category()
     {
@@ -228,5 +241,15 @@ class Product extends Model
         }
 
         return $this->quantity === 0;
+    }
+
+    /**
+     * Get the attributes that can be translated.
+     *
+     * @return array
+     */
+    public function getTranslatableAttributes(): array
+    {
+        return $this->translatable ?? [];
     }
 }

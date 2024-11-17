@@ -56,6 +56,9 @@ Route::middleware('throttle:api')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{product}', [ProductController::class, 'show']);
     Route::get('/product-categories', [ProductController::class, 'categories']);
+    Route::get('/products/{product}/translations', [ProductController::class, 'getTranslations']);
+    Route::post('/products/{product}/translations', [ProductController::class, 'saveTranslations']);
+
 
     Route::post('/payos/test', [PayOSController::class, 'testPayment']);
     Route::post('/payos/verify', [PayOSController::class, 'verifyPayment']);

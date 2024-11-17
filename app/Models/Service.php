@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\HasTranslations;
 
 /**
  * @OA\Schema(
@@ -50,7 +51,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Service extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasTranslations;
 
     protected $fillable = [
         'service_name',
@@ -70,6 +71,12 @@ class Service extends Model
         'combo_10_price' => 'float',
         'duration' => 'integer',
         'validity_period' => 'integer',
+    ];
+
+    // Định nghĩa các trường có thể dịch
+    protected $translatable = [
+        'service_name',
+        'description'
     ];
 
     public function media()

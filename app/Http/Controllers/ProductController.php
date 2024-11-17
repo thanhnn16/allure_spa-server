@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use App\Models\Product;
 use App\Services\MediaService;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends BaseController
 {
@@ -431,6 +432,82 @@ class ProductController extends BaseController
             ]);
 
             return $this->respondWithError('Failed to upload images: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get translations for a product
+     */
+    public function getTranslations(Product $product)
+    {
+        try {
+            $translations = [];
+
+            // Lấy tất cả các trường có thể dịch
+            $translatableFields = $product->getTranslatableAttributes();
+
+            // Lấy tất cả bản dịch cho từng trường
+            foreach ($translatableFields as $field) {
+                $fieldTranslations = $product->getTranslations($field);
+
+                // Tổ chức lại dữ liệu theo ngôn ngữ
+                foreach ($fieldTranslations as $language => $value) {
+                    if (!isset($translations[$language])) {
+                        $translations[$language] = [];
+                    }
+                    $translations[$language][$field] = $value;
+                }
+            }
+
+            // Log để debug
+            Log::info('Product translations:', [
+                'product_id' => $product->id,
+                'translations' => $translations
+            ]);
+
+            return $this->respondWithJson($translations, 'Translations retrieved successfully');
+        } catch (\Exception $e) {
+            Log::error('Error getting translations:', [
+                'product_id' => $product->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this->respondWithError('Failed to get translations: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Save translations for a product
+     */
+    public function saveTranslations(Request $request, Product $product)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Kiểm tra và lấy danh sách các trường có thể dịch từ model
+            $translatableFields = $product->getTranslatableAttributes();
+
+            foreach ($request->translations as $language => $fields) {
+                foreach ($fields as $field => $value) {
+                    // Kiểm tra field có trong danh sách translatable không
+                    if (in_array($field, $translatableFields)) {
+                        $product->setTranslation($field, $language, $value);
+                    }
+                }
+            }
+
+            $product->save();
+            DB::commit();
+
+            return $this->respondWithJson(null, 'Translations saved successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Translation save error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return $this->respondWithError('Failed to save translations: ' . $e->getMessage(), 500);
         }
     }
 }
