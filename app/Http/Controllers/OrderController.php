@@ -177,8 +177,13 @@ class OrderController extends BaseController
     {
         $order->load([
             'user',
-            'orderItems',
-            'invoice'
+            'orderItems.product',
+            'orderItems.service',
+            'invoice',
+            'shippingAddress',
+            'paymentMethod',
+            'voucher',
+            'cancelledBy'
         ]);
 
         if ($request->expectsJson()) {

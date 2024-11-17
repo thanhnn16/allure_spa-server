@@ -3,338 +3,289 @@
 
     <Head :title="`Chi tiết đơn hàng #${order.id}`" />
     <SectionMain>
-      <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-6 dark:bg-dark-surface/50 p-4 rounded-lg">
-          <div class="flex items-center space-x-4">
-            <h1 class="text-2xl font-semibold dark:text-dark-text">Chi tiết đơn hàng #{{ order.id }}</h1>
-            <span :class="getStatusClass(order.status)">
-              <span :class="['h-2 w-2 rounded-full mr-2 self-center', getStatusDotClass(order.status)]"></span>
-              {{ getStatusText(order.status) }}
-            </span>
-          </div>
-          <div class="flex space-x-3">
-            <button v-if="canUpdateStatus" @click="openUpdateStatusModal"
-              class="bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">
-              <i class="mdi mdi-pencil mr-2"></i>Cập nhật trạng thái
-            </button>
-            <button v-if="canComplete" 
-              @click="openCompleteModal"
-              class="bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors">
-              <i class="mdi mdi-check-circle mr-2"></i>Hoàn thành đơn hàng
-            </button>
-            <Link :href="route('orders.index')"
-              class="bg-gray-500 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-colors">
-            <i class="mdi mdi-arrow-left mr-2"></i>Quay lại
-            </Link>
-          </div>
-        </div>
+      <!-- Header với breadcrumb -->
+      <div class="mb-6">
+        <nav class="text-gray-500 dark:text-gray-400">
+          <ol class="list-none p-0 inline-flex">
+            <li class="flex items-center">
+              <Link :href="route('orders.index')" class="hover:text-primary-500">Đơn hàng</Link>
+              <svg class="h-5 w-5 mx-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                  clip-rule="evenodd" />
+              </svg>
+            </li>
+            <li>Đơn hàng #{{ order.id }}</li>
+          </ol>
+        </nav>
+      </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Thông tin đơn hàng -->
-          <div class="lg:col-span-2">
-            <div class="bg-white dark:bg-dark-surface shadow-md dark:shadow-gray-800/30 overflow-hidden sm:rounded-lg">
-              <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-dark-border">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text">Thông tin đơn hàng </h3>
+      <!-- Grid layout cho thông tin đơn hàng -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Cột trái: Thông tin chính và sản phẩm -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Card thông tin cơ bản -->
+          <CardBox>
+            <template #header>
+              <div class="flex justify-between items-center">
+                <h3 class="text-lg font-medium">Thông tin đơn hàng #{{ order.id }}</h3>
+                <StatusBadge :status="order.status" />
               </div>
-              <div class="px-4 py-5 sm:p-0">
-                <dl class="sm:divide-y sm:divide-gray-200 dark:divide-dark-border">
-                  <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Khách hàng</dt>
-                    <dd class="mt-1 text-sm text-gray-900 dark:text-dark-text sm:mt-0 sm:col-span-2">
-                      {{ order.user.full_name }}
-                    </dd>
-                  </div>
-                  <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Tổng tiền</dt>
-                    <dd class="mt-1 text-sm text-gray-900 dark:text-dark-text sm:mt-0 sm:col-span-2">
-                      {{ formatCurrency(order.total_amount) }}
-                    </dd>
-                  </div>
-                  <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Giảm giá</dt>
-                    <dd class="mt-1 text-sm text-gray-900 dark:text-dark-text sm:mt-0 sm:col-span-2">
-                      {{ formatCurrency(order.discount_amount) }}
-                    </dd>
-                  </div>
-                  <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Ngày tạo</dt>
-                    <dd class="mt-1 text-sm text-gray-900 dark:text-dark-text sm:mt-0 sm:col-span-2">
-                      {{ formatDate(order.created_at) }}
-                    </dd>
-                  </div>
-                </dl>
+            </template>
+
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Thông tin khách hàng -->
+              <div>
+                <h4 class="font-medium mb-2">Thông tin khách hàng</h4>
+                <div class="space-y-2">
+                  <p><span class="text-gray-500">Họ tên:</span> {{ order.user.full_name }}</p>
+                  <p><span class="text-gray-500">Email:</span> {{ order.user.email }}</p>
+                  <p><span class="text-gray-500">Điện thoại:</span> {{ order.user.phone }}</p>
+                </div>
+              </div>
+
+              <!-- Thông tin đơn hàng -->
+              <div>
+                <h4 class="font-medium mb-2">Thông tin đặt hàng</h4>
+                <div class="space-y-2">
+                  <p><span class="text-gray-500">Ngày đặt:</span> {{ formatDateTime(order.created_at) }}</p>
+                  <p><span class="text-gray-500">Phương thức:</span> {{ order.payment_method?.name }}</p>
+                  <p v-if="order.voucher"><span class="text-gray-500">Mã giảm giá:</span> {{ order.voucher.code }}</p>
+                </div>
               </div>
             </div>
 
-            <!-- Danh sách sản phẩm/dịch vụ -->
-            <div class="mt-6">
-              <div class="bg-white dark:bg-dark-surface shadow overflow-hidden sm:rounded-lg">
-                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-dark-border">
-                  <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text">Các mục trong đơn hàng
-                  </h3>
-                </div>
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
-                  <thead class="bg-gray-50 dark:bg-dark-surface/80">
-                    <tr>
-                      <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Sản phẩm/Dịch vụ
-                      </th>
-                      <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Loại
-                      </th>
-                      <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Số lượng
-                      </th>
-                      <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Đơn giá
-                      </th>
-                      <th scope="col"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Thành tiền
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white dark:bg-dark-surface divide-y divide-gray-200 dark:divide-dark-border">
-                    <tr v-for="item in order.order_items" :key="item.id"
-                      class="hover:bg-gray-50 dark:hover:bg-dark-bg/30 transition-colors duration-150">
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-dark-text">
-                        <div class="flex flex-col">
-                          <span class="font-medium">{{ item.item_name }}</span>
-                          <span v-if="item.item_type === 'service' && item.service_type"
-                            class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ getServiceTypeText(item.service_type) }}
-                          </span>
+            <!-- Địa chỉ giao hàng -->
+            <div class="mt-4 pt-4 border-t dark:border-dark-border">
+              <h4 class="font-medium mb-2">Địa chỉ giao hàng</h4>
+              <div v-if="order.shipping_address" class="bg-gray-50 dark:bg-dark-bg/50 p-3 rounded-lg">
+                <p class="font-medium">{{ order.shipping_address.address }}</p>
+                <p class="text-gray-600 dark:text-gray-400">
+                  {{ formatAddress(order.shipping_address) }}
+                </p>
+              </div>
+            </div>
+          </CardBox>
+
+          <!-- Card danh sách sản phẩm -->
+          <CardBox>
+            <template #header>
+              <h3 class="text-lg font-medium">Danh sách sản phẩm/dịch vụ</h3>
+            </template>
+
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y dark:divide-dark-border">
+                <thead>
+                  <tr class="bg-gray-50 dark:bg-dark-bg/50">
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sản phẩm/Dịch vụ
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Đơn giá
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Số lượng
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Thành tiền
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y dark:divide-dark-border">
+                  <tr v-for="item in order.order_items" :key="item.id"
+                    class="hover:bg-gray-50 dark:hover:bg-dark-bg/30">
+                    <td class="px-4 py-4">
+                      <div class="flex items-center">
+                        <img v-if="getItemImage(item)" :src="getItemImage(item)"
+                          class="h-10 w-10 rounded-lg object-cover mr-3">
+                        <div>
+                          <div class="font-medium">{{ getItemName(item) }}</div>
+                          <div class="text-sm text-gray-500">
+                            <ItemTypeBadge :type="item.item_type" />
+                            <span v-if="item.service_type" class="ml-2">
+                              {{ getServiceTypeText(item.service_type) }}
+                            </span>
+                          </div>
                         </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        <span :class="getItemTypeClass(item.item_type)">
-                          {{ item.item_type === 'product' ? 'Sản phẩm' : 'Dịch vụ' }}
+                      </div>
+                    </td>
+                    <td class="px-4 py-4">{{ formatCurrency(item.price) }}</td>
+                    <td class="px-4 py-4">{{ item.quantity }}</td>
+                    <td class="px-4 py-4 font-medium">
+                      {{ formatCurrency(item.price * item.quantity) }}
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot class="bg-gray-50 dark:bg-dark-bg/50">
+                  <tr>
+                    <td colspan="3" class="px-4 py-3 text-right font-medium">Tổng tiền:</td>
+                    <td class="px-4 py-3 font-medium">{{ formatCurrency(order.total_amount) }}</td>
+                  </tr>
+                  <tr v-if="order.discount_amount">
+                    <td colspan="3" class="px-4 py-3 text-right font-medium">Giảm giá:</td>
+                    <td class="px-4 py-3 font-medium text-green-600">
+                      -{{ formatCurrency(order.discount_amount) }}
+                    </td>
+                  </tr>
+                  <tr class="border-t dark:border-dark-border">
+                    <td colspan="3" class="px-4 py-3 text-right font-medium">Thành tiền:</td>
+                    <td class="px-4 py-3 font-medium text-lg">
+                      {{ formatCurrency(order.total_amount - order.discount_amount) }}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </CardBox>
+
+          <!-- Timeline đơn hàng -->
+          <CardBox v-if="orderTimeline.length">
+            <template #header>
+              <h3 class="text-lg font-medium">Lịch sử đơn hàng</h3>
+            </template>
+
+            <div class="flow-root">
+              <ul role="list" class="-mb-8">
+                <li v-for="(event, eventIdx) in orderTimeline" :key="event.id">
+                  <div class="relative pb-8">
+                    <span v-if="eventIdx !== orderTimeline.length - 1"
+                      class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-dark-border"
+                      aria-hidden="true" />
+                    <div class="relative flex space-x-3">
+                      <div>
+                        <span :class="[
+                          'h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white dark:ring-dark-surface',
+                          event.iconBackground
+                        ]">
+                          <i :class="[event.iconClass, 'text-white']" aria-hidden="true"></i>
                         </span>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {{ item.quantity }}
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {{ formatCurrency(item.price) }}
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {{ formatCurrency(item.quantity * item.price) }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- Thông tin thanh toán -->
-          <div class="lg:col-span-1">
-            <div class="bg-white dark:bg-dark-surface shadow overflow-hidden sm:rounded-lg">
-              <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-dark-border">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-dark-text">Thông tin thanh toán</h3>
-              </div>
-              <div class="px-4 py-5">
-                <!-- Khi đã có hóa đơn -->
-                <div v-if="order.invoice" class="space-y-4">
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Trạng thái</span>
-                    <span :class="getPaymentStatusClass(order.invoice.status)">
-                      {{ getPaymentStatusText(order.invoice.status) }}
-                    </span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Tổng tiền</span>
-                    <span class="text-sm font-medium text-gray-900 dark:text-dark-text">
-                      {{ formatCurrency(order.invoice.total_amount) }}
-                    </span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Đã thanh toán</span>
-                    <span class="text-sm font-medium text-green-600 dark:text-green-400">
-                      {{ formatCurrency(order.invoice.paid_amount) }}
-                    </span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Còn lại</span>
-                    <span class="text-sm font-medium text-red-600 dark:text-red-400">
-                      {{ formatCurrency(order.invoice.remaining_amount) }}
-                    </span>
-                  </div>
-
-                  <!-- Nút xem chi tiết hóa đơn -->
-                  <div class="pt-4 border-t border-gray-200 dark:border-dark-border">
-                    <Link :href="route('invoices.show', order.invoice.id)"
-                      class="w-full bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition-colors flex items-center justify-center">
-                    <i class="mdi mdi-file-document-outline mr-2"></i>
-                    Xem chi tiết hóa đơn #{{ order.invoice.id }}
-                    </Link>
-                  </div>
-                </div>
-
-                <!-- Khi chưa có hóa đơn -->
-                <div v-else class="space-y-4">
-                  <div class="text-center py-6">
-                    <div class="mb-4">
-                      <i class="mdi mdi-file-document-outline text-5xl text-gray-400 dark:text-gray-500"></i>
-                    </div>
-                    <span class="text-gray-500 dark:text-gray-400 block mb-6 text-lg">
-                      Chưa có hóa đơn cho đơn hàng này
-                    </span>
-
-                    <!-- Hiển thị tổng quan về đơn hàng -->
-                    <div
-                      class="bg-gray-50 dark:bg-dark-bg/50 p-6 rounded-lg mb-6 border border-gray-200 dark:border-dark-border">
-                      <div class="space-y-3">
-                        <div class="flex justify-between text-lg">
-                          <span class="text-gray-600 dark:text-gray-400">Tổng tiền hàng:</span>
-                          <span class="font-medium text-gray-900 dark:text-dark-text">
-                            {{ formatCurrency(order.total_amount) }}
-                          </span>
+                      </div>
+                      <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                        <div>
+                          <p class="text-sm text-gray-500">
+                            {{ event.content }}
+                          </p>
                         </div>
-                        <div v-if="order.discount_amount > 0" class="flex justify-between text-lg">
-                          <span class="text-gray-600 dark:text-gray-400">Giảm giá:</span>
-                          <span class="text-green-600 dark:text-green-400 font-medium">
-                            -{{ formatCurrency(order.discount_amount) }}
-                          </span>
-                        </div>
-                        <div class="flex justify-between pt-3 border-t dark:border-dark-border text-lg">
-                          <span class="font-semibold text-gray-900 dark:text-dark-text">Tổng thanh toán:</span>
-                          <span class="font-semibold text-gray-900 dark:text-dark-text">
-                            {{ formatCurrency(order.total_amount - order.discount_amount) }}
-                          </span>
+                        <div class="whitespace-nowrap text-right text-sm text-gray-500">
+                          <time :datetime="event.datetime">{{ formatDateTime(event.datetime) }}</time>
                         </div>
                       </div>
                     </div>
-
-                    <!-- Nút tạo hóa đơn -->
-                    <button v-if="canCreateInvoice" @click="openCreateInvoiceModal"
-                      class="w-full bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center text-lg">
-                      <i class="mdi mdi-file-plus-outline mr-2 text-xl"></i>
-                      Tạo hóa đơn mới
-                    </button>
                   </div>
-                </div>
+                </li>
+              </ul>
+            </div>
+          </CardBox>
+        </div>
+
+        <!-- Cột phải: Thông tin thanh toán và actions -->
+        <div class="lg:col-span-1 space-y-6">
+          <!-- Card trạng thái và actions -->
+          <CardBox>
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-500">Trạng thái</span>
+                <StatusBadge :status="order.status" size="lg" />
+              </div>
+
+              <div class="space-y-3">
+                <button v-if="canUpdateStatus" @click="openUpdateStatusModal" class="w-full btn-primary">
+                  <i class="mdi mdi-pencil mr-2"></i>
+                  Cập nhật trạng thái
+                </button>
+
+                <button v-if="canComplete" @click="openCompleteModal" class="w-full btn-success">
+                  <i class="mdi mdi-check-circle mr-2"></i>
+                  Hoàn thành đơn hàng
+                </button>
+
+                <button v-if="canCancel" @click="openCancelModal" class="w-full btn-danger">
+                  <i class="mdi mdi-close-circle mr-2"></i>
+                  Hủy đơn hàng
+                </button>
               </div>
             </div>
-          </div>
+          </CardBox>
+
+          <!-- Card thông tin thanh toán -->
+          <CardBox>
+            <template #header>
+              <h3 class="text-lg font-medium">Thông tin thanh toán</h3>
+            </template>
+
+            <!-- Khi đã có hóa đơn -->
+            <div v-if="order.invoice" class="space-y-4">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-500">Trạng thái</span>
+                <PaymentStatusBadge :status="order.invoice.status" />
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Tổng tiền</span>
+                  <span class="font-medium">{{ formatCurrency(order.invoice.total_amount) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Đã thanh toán</span>
+                  <span class="text-green-600 font-medium">
+                    {{ formatCurrency(order.invoice.paid_amount) }}
+                  </span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Còn lại</span>
+                  <span class="text-red-600 font-medium">
+                    {{ formatCurrency(order.invoice.remaining_amount) }}
+                  </span>
+                </div>
+              </div>
+
+              <Link :href="route('invoices.show', order.invoice.id)" class="btn-primary w-full text-center">
+              <i class="mdi mdi-file-document-outline mr-2"></i>
+              Xem chi tiết hóa đơn
+              </Link>
+            </div>
+
+            <!-- Khi chưa có hóa đơn -->
+            <div v-else class="text-center py-6">
+              <div class="mb-4">
+                <i class="mdi mdi-file-document-outline text-5xl text-gray-400"></i>
+              </div>
+              <p class="text-gray-500 mb-4">Chưa có hóa đơn cho đơn hàng này</p>
+              <button v-if="canCreateInvoice" @click="openCreateInvoiceModal" class="btn-success w-full">
+                <i class="mdi mdi-plus mr-2"></i>
+                Tạo hóa đơn
+              </button>
+            </div>
+          </CardBox>
         </div>
       </div>
 
-      <!-- Modal cập nhật trạng thái -->
-      <CardBoxModal v-model="showStatusModal" title="Cập nhật trạng thái đơn hàng" button="info" button-label="Cập nhật"
-        has-cancel @confirm="updateOrderStatus">
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Trạng thái mới</label>
-            <select v-model="newStatus"
-              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400">
-              <option v-for="status in getAvailableStatuses" :key="status" :value="status">
-                {{ getStatusText(status) }}
-              </option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ghi chú</label>
-            <textarea v-model="statusNote" rows="3"
-              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400"></textarea>
-          </div>
-        </div>
-      </CardBoxModal>
+      <!-- Các modal -->
+      <UpdateStatusModal v-model="showStatusModal" :order="order" :available-statuses="getAvailableStatuses"
+        @updated="handleStatusUpdated" />
 
-      <!-- Modal xử lý thanh toán -->
-      <CardBoxModal v-model="showPaymentModal" title="Xử lý thanh toán" button="success" button-label="Thanh toán"
-        has-cancel @confirm="processPayment" class="dark:bg-dark-surface"
-        :header-class="'dark:bg-dark-surface dark:text-dark-text border-b dark:border-dark-border'"
-        :actions-class="'dark:bg-dark-surface border-t dark:border-dark-border'"
-        :button-class="'dark:bg-green-600 dark:hover:bg-green-700 dark:text-white'"
-        :cancel-button-class="'dark:bg-gray-600 dark:hover:bg-gray-700 dark:text-white'">
-        <!-- Nội dung modal thanh toán -->
-        <div class="dark:bg-dark-surface p-4 rounded-lg">
-          <!-- Thêm nội dung của modal thanh toán ở đây -->
-        </div>
-      </CardBoxModal>
+      <CreateInvoiceModal v-model="showCreateInvoiceModal" :order="order" @created="handleInvoiceCreated" />
 
-      <!-- Modal tạo hóa đơn -->
-      <CardBoxModal v-model="showCreateInvoiceModal" title="Tạo hóa đơn" button="success" button-label="Tạo hóa đơn"
-        has-cancel @confirm="createInvoice">
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ghi chú</label>
-            <textarea v-model="invoiceNote" rows="3"
-              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400"
-              placeholder="Nhập ghi chú cho hóa đơn (nếu có)"></textarea>
-          </div>
+      <CompleteOrderModal v-model="showCompleteModal" :order="order" @completed="handleOrderCompleted" />
 
-          <!-- Thông tin hóa đơn -->
-          <div class="bg-gray-50 dark:bg-dark-bg/50 p-4 rounded-md">
-            <h4 class="font-medium mb-2 dark:text-dark-text">Thông tin hóa đơn</h4>
-            <div class="space-y-2">
-              <div class="flex justify-between dark:text-dark-text">
-                <span>Tổng tiền hàng:</span>
-                <span>{{ formatCurrency(order.total_amount) }}</span>
-              </div>
-              <div v-if="order.discount_amount > 0" class="flex justify-between text-green-600 dark:text-green-400">
-                <span>Giảm giá:</span>
-                <span>-{{ formatCurrency(order.discount_amount) }}</span>
-              </div>
-              <div class="flex justify-between font-bold pt-2 border-t dark:border-dark-border dark:text-dark-text">
-                <span>Tổng thanh toán:</span>
-                <span>{{ formatCurrency(order.total_amount) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardBoxModal>
-
-      <CardBoxModal 
-        v-model="showCompleteModal" 
-        title="Xác nhận hoàn thành đơn hàng" 
-        button="success" 
-        button-label="Hoàn thành"
-        has-cancel 
-        @confirm="completeOrder">
-        <div class="space-y-4">
-          <!-- Hiển thị cảnh báo nếu có service combo -->
-          <div v-if="hasServiceCombo" class="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-md">
-            <p class="text-yellow-800 dark:text-yellow-300">
-              <i class="mdi mdi-alert mr-2"></i>
-              Đơn hàng có gói dịch vụ combo. Khi hoàn thành, hệ thống sẽ tự động tạo gói liệu trình cho khách hàng.
-            </p>
-          </div>
-
-          <!-- Hiển thị thông tin thanh toán -->
-          <div v-if="!order.invoice?.paid_amount" class="bg-red-50 dark:bg-red-900/30 p-4 rounded-md">
-            <p class="text-red-800 dark:text-red-300">
-              <i class="mdi mdi-alert mr-2"></i>
-              Đơn hàng chưa được thanh toán đầy đủ. Vui lòng kiểm tra lại.
-            </p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ghi chú hoàn thành</label>
-            <textarea 
-              v-model="completeNote" 
-              rows="3"
-              class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary-500 focus:ring-primary-500"
-              placeholder="Nhập ghi chú khi hoàn thành đơn hàng (nếu có)">
-            </textarea>
-          </div>
-        </div>
-      </CardBoxModal>
+      <CancelOrderModal v-model="showCancelModal" :order="order" @cancelled="handleOrderCancelled" />
     </SectionMain>
   </LayoutAuthenticated>
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Head, Link, router } from "@inertiajs/vue3"
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
-import CardBoxModal from '@/Components/CardBoxModal.vue'
+import CardBox from '@/Components/CardBox.vue'
+import StatusBadge from '@/Components/StatusBadge.vue'
+import PaymentStatusBadge from '@/Components/PaymentStatusBadge.vue'
+import ItemTypeBadge from '@/Components/ItemTypeBadge.vue'
+import UpdateStatusModal from '@/Components/UpdateStatusModal.vue'
+import CreateInvoiceModal from '@/Components/CreateInvoiceModal.vue'
+import CompleteOrderModal from '@/Components/CompleteOrderModal.vue'
+import CancelOrderModal from '@/Components/CancelOrderModal.vue'
 import axios from 'axios'
 import { useToast } from "vue-toastification"
 
@@ -344,7 +295,14 @@ export default {
     Link,
     LayoutAuthenticated,
     SectionMain,
-    CardBoxModal
+    CardBox,
+    StatusBadge,
+    PaymentStatusBadge,
+    ItemTypeBadge,
+    UpdateStatusModal,
+    CreateInvoiceModal,
+    CompleteOrderModal,
+    CancelOrderModal
   },
   props: {
     order: Object,
@@ -357,10 +315,12 @@ export default {
     const showPaymentModal = ref(false)
     const showCreateInvoiceModal = ref(false)
     const showCompleteModal = ref(false)
+    const showCancelModal = ref(false)
     const newStatus = ref(props.order.status)
     const statusNote = ref('')
     const invoiceNote = ref('')
     const completeNote = ref('')
+    const cancelNote = ref('')
     const toast = useToast()
     const loading = ref(false)
 
@@ -448,12 +408,12 @@ export default {
     })
 
     const canComplete = computed(() => {
-      return ['confirmed', 'shipping'].includes(props.order.status) && 
-             props.order.invoice?.status === 'paid'
+      return ['confirmed', 'shipping'].includes(props.order.status) &&
+        props.order.invoice?.status === 'paid'
     })
 
     const hasServiceCombo = computed(() => {
-      return props.order.order_items.some(item => 
+      return props.order.order_items.some(item =>
         item.item_type === 'service' && ['combo_5', 'combo_10'].includes(item.service_type)
       )
     })
@@ -561,6 +521,11 @@ export default {
       completeNote.value = ''
     }
 
+    const openCancelModal = () => {
+      showCancelModal.value = true
+      cancelNote.value = ''
+    }
+
     const completeOrder = async () => {
       loading.value = true
       try {
@@ -584,6 +549,26 @@ export default {
       }
     }
 
+    const cancelOrder = async () => {
+      loading.value = true
+      try {
+        const response = await axios.post(`/api/orders/${props.order.id}/cancel`, {
+          note: cancelNote.value
+        })
+
+        if (response.data.success) {
+          toast.success('Đơn hàng đã được hủy thành công')
+          router.reload()
+        }
+      } catch (error) {
+        console.error('Error canceling order:', error)
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy đơn hàng')
+      } finally {
+        loading.value = false
+        showCancelModal.value = false
+      }
+    }
+
     // Chỉ hiển thị các trạng thái có thể chuyển đổi
     const getAvailableStatuses = computed(() => {
       const transitions = {
@@ -593,19 +578,127 @@ export default {
         'completed': [],
         'cancelled': []
       };
-      
+
       return transitions[props.order.status] || [];
     });
+
+    // Add orderTimeline computed property
+    const orderTimeline = computed(() => {
+      const timeline = [];
+
+      // Add order creation event
+      timeline.push({
+        id: 'created',
+        content: 'Đơn hàng được tạo',
+        datetime: props.order.created_at,
+        iconClass: 'mdi mdi-plus-circle',
+        iconBackground: 'bg-blue-500'
+      });
+
+      // Add status changes if any
+      if (props.order.status_histories?.length) {
+        props.order.status_histories.forEach(history => {
+          timeline.push({
+            id: history.id,
+            content: `Trạng thái đơn hàng thay đổi thành "${getStatusText(history.status)}"${history.note ? ` - ${history.note}` : ''}`,
+            datetime: history.created_at,
+            iconClass: 'mdi mdi-clipboard-check',
+            iconBackground: 'bg-green-500'
+          });
+        });
+      }
+
+      // Add completion/cancellation event if applicable
+      if (props.order.status === 'completed') {
+        timeline.push({
+          id: 'completed',
+          content: 'Đơn hàng hoàn thành',
+          datetime: props.order.completed_at || props.order.updated_at,
+          iconClass: 'mdi mdi-check-circle',
+          iconBackground: 'bg-green-600'
+        });
+      } else if (props.order.status === 'cancelled') {
+        timeline.push({
+          id: 'cancelled',
+          content: 'Đơn hàng đã hủy',
+          datetime: props.order.cancelled_at || props.order.updated_at,
+          iconClass: 'mdi mdi-close-circle',
+          iconBackground: 'bg-red-600'
+        });
+      }
+
+      // Sort timeline by datetime
+      return timeline.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+    });
+
+    // Thêm hàm formatDateTime
+    const formatDateTime = (datetime) => {
+      return new Date(datetime).toLocaleString('vi-VN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Thêm các hàm xử lý sự kiện
+    const handleStatusUpdated = () => {
+      router.reload();
+    }
+
+    const handleInvoiceCreated = () => {
+      router.reload();
+    }
+
+    const handleOrderCompleted = () => {
+      router.reload();
+    }
+
+    const handleOrderCancelled = () => {
+      router.reload();
+    }
+
+    // Thêm các hàm helper cho item
+    const getItemName = (item) => {
+      return item.product?.name || item.service?.name || 'N/A';
+    }
+
+    const getItemImage = (item) => {
+      return item.product?.image || item.service?.image || null;
+    }
+
+    // Thêm computed property canCancel
+    const canCancel = computed(() => {
+      return ['pending', 'confirmed'].includes(props.order.status) &&
+        (!props.order.invoice || props.order.invoice.status === 'pending')
+    })
+
+    // Watch cho modal states nếu cần
+    watch(() => showStatusModal.value, (newVal) => {
+      if (!newVal) {
+        statusNote.value = ''
+        newStatus.value = props.order.status
+      }
+    })
+
+    watch(() => showCancelModal.value, (newVal) => {
+      if (!newVal) {
+        cancelNote.value = ''
+      }
+    })
 
     return {
       showStatusModal,
       showPaymentModal,
       showCreateInvoiceModal,
       showCompleteModal,
+      showCancelModal,
       newStatus,
       statusNote,
       invoiceNote,
       completeNote,
+      cancelNote,
       formatCurrency,
       formatDate,
       getStatusClass,
@@ -630,7 +723,18 @@ export default {
       openUpdateStatusModal,
       getAvailableStatuses,
       openCompleteModal,
-      completeOrder
+      openCancelModal,
+      completeOrder,
+      cancelOrder,
+      orderTimeline,
+      formatDateTime,
+      handleStatusUpdated,
+      handleInvoiceCreated,
+      handleOrderCompleted,
+      handleOrderCancelled,
+      getItemName,
+      getItemImage,
+      canCancel,
     }
   }
 }
