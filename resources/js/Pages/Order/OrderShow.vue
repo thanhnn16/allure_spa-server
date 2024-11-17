@@ -2,24 +2,10 @@
   <LayoutAuthenticated>
 
     <Head :title="`Chi tiết đơn hàng #${order.id}`" />
-    <SectionMain>
-      <!-- Header với breadcrumb -->
-      <div class="mb-6">
-        <nav class="text-gray-500 dark:text-gray-400">
-          <ol class="list-none p-0 inline-flex">
-            <li class="flex items-center">
-              <Link :href="route('orders.index')" class="hover:text-primary-500">Đơn hàng</Link>
-              <svg class="h-5 w-5 mx-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                  clip-rule="evenodd" />
-              </svg>
-            </li>
-            <li>Đơn hàng #{{ order.id }}</li>
-          </ol>
-        </nav>
-      </div>
-
+    <SectionMain :breadcrumbs="[
+      { label: 'Quản lý đơn hàng', href: route('orders.index') },
+      { label: `Đơn hàng #${order.id}` }
+    ]">
       <!-- Grid layout cho thông tin đơn hàng -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Cột trái: Thông tin chính và sản phẩm -->

@@ -1,47 +1,24 @@
 <script setup>
 import { containerMaxW } from '@/config.js'
-import { computed, onMounted } from 'vue'
-import BaseIcon from '@/Components/BaseIcon.vue'
-import { mdiArrowLeft } from '@mdi/js'
+import { computed } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { useHistoryStore } from '@/Stores/history'
-
-const historyStore = useHistoryStore()
+import Breadcrumb from '@/Components/Breadcrumb.vue'
 
 const props = defineProps({
-  showBackButton: {
-    type: Boolean,
-    default: true
+  breadcrumbs: {
+    type: Array,
+    default: () => []
   }
 })
 
-const canGoBack = computed(() => {
-  return props.showBackButton && historyStore.canGoBack(router.page.url)
-})
-
-// Listen to route changes
-router.on('finish', () => {
-  historyStore.addToHistory(router.page.url)
-})
-
-// Initialize history
-onMounted(() => {
-  historyStore.initHistory()
+const showBreadcrumbs = computed(() => {
+  return props.breadcrumbs.length > 0
 })
 </script>
 
 <template>
   <section class="p-6" :class="[containerMaxW]">
-    <div v-if="canGoBack" class="mb-6">
-      <button @click="historyStore.goBack" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium
-               text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-800
-               border border-gray-200 dark:border-slate-700 rounded-lg
-               hover:bg-gray-50 dark:hover:bg-slate-700 
-               transition-colors duration-200">
-        <BaseIcon :path="mdiArrowLeft" class="w-5 h-5" />
-        <span>Quay lại</span>
-      </button>
-    </div>
+    <Breadcrumb v-if="showBreadcrumbs" :items="breadcrumbs" />
     <slot />
   </section>
 </template>

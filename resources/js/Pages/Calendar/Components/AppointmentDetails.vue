@@ -192,7 +192,10 @@ const appointmentDateTime = computed(() => {
 
         <Head title="Chi tiết lịch hẹn" />
 
-        <SectionMain>
+        <SectionMain :breadcrumbs="[
+            { label: 'Lịch hẹn', href: route('appointments.index') },
+            { label: 'Chi tiết lịch hẹn' }
+        ]">
             <!-- Header Section -->
             <div class="mb-6 bg-white rounded-lg shadow-sm p-4">
                 <div class="flex justify-between items-center">
