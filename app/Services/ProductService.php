@@ -83,55 +83,42 @@ class ProductService
         $query = Product::with([
             'category',
             'media',
-            'priceHistory' => function ($query) {
-                $query->orderBy('effective_from', 'desc');
-            },
+            'priceHistory',
             'attributes',
-            'favorites',
             'ratings' => function ($query) {
                 $query->where('status', 'approved')
                     ->where('rating_type', 'product');
             }
         ])
-            ->withCount(['ratings as total_ratings' => function ($query) {
-                $query->where('status', 'approved')
-                    ->where('rating_type', 'product');
-            }])
-            ->withAvg(['ratings as average_rating' => function ($query) {
-                $query->where('status', 'approved')
-                    ->where('rating_type', 'product');
-            }], 'stars');
+        ->withCount(['ratings as total_ratings' => function ($query) {
+            $query->where('status', 'approved')
+                ->where('rating_type', 'product');
+        }])
+        ->withAvg(['ratings as average_rating' => function ($query) {
+            $query->where('status', 'approved')
+                ->where('rating_type', 'product');
+        }], 'stars');
 
-        // Sửa lại phần load translations
-        $query->with(['translations' => function ($query) {
-            $query->select('translatable_id', 'language', 'field', 'value');
-        }]);
-
+        // Chỉ load favorites nếu user đã đăng nhập
         if (Auth::check()) {
             $query->with(['favorites' => function ($query) {
                 $query->where('user_id', Auth::id())
                     ->where('favorite_type', 'product');
             }])
-                ->withCount([
-                    'favorites as favorites_count' => function ($query) {
-                        $query->where('user_id', Auth::id())
-                            ->where('favorite_type', 'product');
-                    }
-                ]);
+            ->withCount([
+                'favorites as favorites_count' => function ($query) {
+                    $query->where('user_id', Auth::id())
+                        ->where('favorite_type', 'product');
+                }
+            ]);
         }
 
         $product = $query->findOrFail($id);
-
-        // Sửa lại phần xử lý translations
-        $translations = [];
-        foreach ($product->translations as $translation) {
-            if (!isset($translations[$translation->language])) {
-                $translations[$translation->language] = [];
-            }
-            $translations[$translation->language][$translation->field] = $translation->value;
+        
+        // Set is_favorite = false cho guest users
+        if (!Auth::check()) {
+            $product->is_favorite = false;
         }
-
-        $product->translations_array = $translations;
 
         return $product;
     }
