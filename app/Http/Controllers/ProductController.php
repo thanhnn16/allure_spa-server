@@ -443,22 +443,23 @@ class ProductController extends BaseController
         try {
             $translations = [];
             
-            // Load translations từ database
+            // Sửa lại tên cột trong truy vấn
             $translationsFromDb = DB::table('translations')
                 ->where('translatable_id', $product->id)
                 ->where('translatable_type', Product::class)
+                ->select('language', 'field', 'value')
                 ->get();
 
-            // Tổ chức lại dữ liệu theo ngôn ngữ và trường
+            // Sửa lại tên biến để phù hợp với cấu trúc bảng
             foreach ($translationsFromDb as $translation) {
-                $locale = $translation->locale;
-                $field = $translation->key;
+                $language = $translation->language;
+                $field = $translation->field;
                 
-                if (!isset($translations[$locale])) {
-                    $translations[$locale] = [];
+                if (!isset($translations[$language])) {
+                    $translations[$language] = [];
                 }
                 
-                $translations[$locale][$field] = $translation->value;
+                $translations[$language][$field] = $translation->value;
             }
 
             // Log để debug

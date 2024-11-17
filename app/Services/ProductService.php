@@ -101,9 +101,9 @@ class ProductService
                     ->where('rating_type', 'product');
             }], 'stars');
 
-        // Load translations
+        // Sửa lại phần load translations
         $query->with(['translations' => function($query) {
-            $query->select('translatable_id', 'locale', 'key', 'value');
+            $query->select('translatable_id', 'language', 'field', 'value');
         }]);
 
         if (Auth::check()) {
@@ -121,13 +121,13 @@ class ProductService
 
         $product = $query->findOrFail($id);
 
-        // Gán translations vào các trường tương ứng
+        // Sửa lại phần xử lý translations
         $translations = [];
         foreach ($product->translations as $translation) {
-            if (!isset($translations[$translation->locale])) {
-                $translations[$translation->locale] = [];
+            if (!isset($translations[$translation->language])) {
+                $translations[$translation->language] = [];
             }
-            $translations[$translation->locale][$translation->key] = $translation->value;
+            $translations[$translation->language][$translation->field] = $translation->value;
         }
         
         $product->translations_array = $translations;
