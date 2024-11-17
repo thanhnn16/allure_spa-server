@@ -87,6 +87,7 @@ class ProductService
                 $query->orderBy('effective_from', 'desc');
             },
             'attributes',
+            'favorites',
             'ratings' => function ($query) {
                 $query->where('status', 'approved')
                     ->where('rating_type', 'product');
