@@ -456,7 +456,7 @@ CREATE INDEX idx_favorites_item_type_id ON favorites (favorite_type, item_id);
 
 -- 36. Bảng notifications
 CREATE TABLE notifications (
-    id INT UNSIGNED PRI MARY KEY AUTO_INCREMENT,
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
     media_id INT UNSIGNED,
     title VARCHAR(255) NOT NULL,
