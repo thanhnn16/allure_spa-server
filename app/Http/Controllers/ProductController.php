@@ -265,7 +265,7 @@ class ProductController extends BaseController
         $product = $this->productService->getProductById($product->id);
         $categories = $this->productService->getAllCategories();
 
-        $product->load(['category', 'media', 'priceHistory', 'attributes']);
+        $product->load(['category', 'media', 'priceHistory', 'attributes', 'favorites']);
 
         if (request()->expectsJson()) {
             return $this->respondWithJson($product, 'Product retrieved successfully');
