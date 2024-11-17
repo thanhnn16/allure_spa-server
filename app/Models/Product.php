@@ -140,27 +140,33 @@ class Product extends Model
 
     public function getIsFavoriteAttribute()
     {
-        // Return false for guest users
         if (!Auth::check()) {
             return false;
         }
 
-        // Case 1: When loaded through favorites relationship
+        $userId = Auth::id();
+        
+        // Add logging
+        Log::info('Checking is_favorite:', [
+            'user_id' => $userId,
+            'favorites_loaded' => $this->relationLoaded('favorites'),
+            'favorites_count_exists' => isset($this->favorites_count),
+            'favorites' => $this->relationLoaded('favorites') ? $this->favorites->toArray() : null
+        ]);
+
         if ($this->relationLoaded('favorites')) {
             return $this->favorites
-                ->where('user_id', Auth::id())
+                ->where('user_id', $userId)
                 ->where('favorite_type', 'product')
                 ->isNotEmpty();
         }
 
-        // Case 2: When loaded with favorites count
         if (isset($this->favorites_count)) {
             return $this->favorites_count > 0;
         }
 
-        // Case 3: Direct database check
         return $this->favorites()
-            ->where('user_id', Auth::id())
+            ->where('user_id', $userId)
             ->where('favorite_type', 'product')
             ->exists();
     }

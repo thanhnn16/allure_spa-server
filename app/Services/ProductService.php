@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProductService
 {
@@ -80,6 +81,11 @@ class ProductService
 
     public function getProductById($id)
     {
+        Log::info('Current user:', [
+            'auth_id' => Auth::id(),
+            'is_authenticated' => Auth::check()
+        ]);
+
         $query = Product::with([
             'category',
             'media',
@@ -101,7 +107,9 @@ class ProductService
 
         if (Auth::check()) {
             $userId = Auth::id();
-            $query->with(['favorites' => function ($query) use ($userId) {
+            Log::info('Loading favorites for user:', ['user_id' => $userId]);
+            
+            $query->withCount(['favorites as favorites_count' => function ($query) use ($userId) {
                 $query->where('user_id', $userId)
                       ->where('favorite_type', 'product');
             }]);
@@ -109,6 +117,13 @@ class ProductService
 
         $product = $query->findOrFail($id);
         
+        Log::info('Product favorites data:', [
+            'product_id' => $product->id,
+            'favorites' => $product->favorites->toArray(),
+            'favorites_count' => $product->favorites_count ?? 0,
+            'is_favorite' => $product->is_favorite
+        ]);
+
         return $product;
     }
 
