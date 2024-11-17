@@ -16,6 +16,7 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use App\Services\FcmTokenService;
 use App\Services\MediaService;
+use App\Models\UserServicePackage;
 
 class UserController extends BaseController
 {
@@ -256,8 +257,23 @@ class UserController extends BaseController
 
     public function getUserServicePackages($userId)
     {
-        $userServicePackages = $this->userService->getUserServicePackages($userId);
-        return $this->respondWithJson($userServicePackages, 'User service packages retrieved successfully');
+        try {
+            $packages = UserServicePackage::where('user_id', $userId)
+                ->with([
+                    'service',
+                    'nextAppointment',
+                    'nextAppointment.timeSlot',
+                    'nextAppointment.staff',
+                    'treatmentSessions',
+                    'order'
+                ])
+                ->get();
+
+            return $this->respondWithJson($packages, 'User treatment packages retrieved successfully');
+        } catch (\Exception $e) {
+            Log::error('Error fetching user treatment packages: ' . $e->getMessage());
+            return $this->respondWithError('Error fetching user treatment packages', 500);
+        }
     }
 
     public function debugAuth(Request $request)
@@ -349,7 +365,7 @@ class UserController extends BaseController
      * @OA\Get(
      *     path="/api/user/info",
      *     summary="Lấy thông tin người dùng",
-     *     description="Truy xuất thông tin chi ti��t của người dùng đã xác thực",
+     *     description="Truy xuất thông tin chi tiết của người dùng đã xác thực",
      *     operationId="getUserInfo",
      *     tags={"User"},
      *     security={{ "bearerAuth": {} }},

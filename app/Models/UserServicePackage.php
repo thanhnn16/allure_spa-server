@@ -25,7 +25,14 @@ class UserServicePackage extends Model
         'is_combo' => 'boolean'
     ];
 
-    protected $with = ['service'];
+    protected $with = [
+        'service',
+        'nextAppointment',
+        'nextAppointment.timeSlot',
+        'nextAppointment.staff',
+        'order',
+        'treatmentSessions'
+    ];
 
     protected $appends = [
         'remaining_sessions',
@@ -34,7 +41,8 @@ class UserServicePackage extends Model
         'service_name',
         'progress_percentage',
         'formatted_expiry_date',
-        'next_session_date'
+        'next_session_date',
+        'next_appointment_details'
     ];
 
     public function getStatusAttribute(): string
@@ -107,25 +115,34 @@ class UserServicePackage extends Model
     public function treatmentSessions()
     {
         return $this->hasMany(ServiceUsageHistory::class)
-            ->orderBy('start_time', 'desc')
-            ->with('staff');
+            ->with('staff')
+            ->orderBy('start_time', 'desc');
     }
 
     public function nextAppointment()
     {
-        return $this->hasOne(Appointment::class, 'service_id', 'service_id')
+        return $this->belongsTo(Appointment::class, 'service_id', 'service_id')
             ->where('user_id', $this->user_id)
-            ->where('appointment_date', '>=', now())
             ->where('status', '!=', 'cancelled')
+            ->where(function ($query) {
+                $query->where('appointment_date', '>', now())
+                    ->orWhere(function ($q) {
+                        $q->where('appointment_date', '=', now()->format('Y-m-d'))
+                            ->whereHas('timeSlot', function ($q) {
+                                $q->where('start_time', '>', now()->format('H:i:s'));
+                            });
+                    });
+            })
             ->orderBy('appointment_date', 'asc')
             ->orderBy('time_slot_id', 'asc');
     }
 
     public function getProgressPercentageAttribute(): int
     {
-        return $this->total_sessions > 0
-            ? round(($this->used_sessions / $this->total_sessions) * 100)
-            : 0;
+        if (!$this->total_sessions) {
+            return 0;
+        }
+        return round(($this->used_sessions / $this->total_sessions) * 100);
     }
 
     public function getFormattedExpiryDateAttribute(): ?string
@@ -136,6 +153,29 @@ class UserServicePackage extends Model
     public function getNextSessionDateAttribute(): ?string
     {
         $nextAppointment = $this->nextAppointment;
-        return $nextAppointment ? $nextAppointment->appointment_date->format('d/m/Y') : null;
+        if (!$nextAppointment) {
+            return null;
+        }
+
+        return $nextAppointment->appointment_date->format('d/m/Y');
+    }
+
+    public function getNextAppointmentDetailsAttribute()
+    {
+        if (!$this->nextAppointment) {
+            return null;
+        }
+
+        return [
+            'date' => $this->nextAppointment->appointment_date->format('d/m/Y'),
+            'time' => [
+                'start' => $this->nextAppointment->timeSlot->start_time,
+                'end' => $this->nextAppointment->timeSlot->end_time
+            ],
+            'staff' => $this->nextAppointment->staff ? [
+                'id' => $this->nextAppointment->staff->id,
+                'full_name' => $this->nextAppointment->staff->full_name
+            ] : null
+        ];
     }
 }

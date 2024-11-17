@@ -8,6 +8,8 @@ import {
     mdiProgressClock,
     mdiCalendarClock,
     mdiClockOutline,
+    mdiCalendar,
+    mdiPlus,
 } from '@mdi/js'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
@@ -411,11 +413,29 @@ const getUserVouchers = async () => {
     }
 };
 
-// Call getUserVouchers when component mounts
+const getUserServicePackages = async () => {
+    try {
+        const response = await axios.get(`/api/users/${props.user.id}/service-packages`);
+        if (response.data.data) {
+            props.user.userServicePackages = response.data.data;
+        }
+    } catch (error) {
+        console.error('Error fetching service packages:', error);
+        notification.value = {
+            type: 'danger',
+            message: error.response?.data?.message || 'Không thể tải danh sách liệu trình'
+        };
+    }
+};
+
+// Update onMounted to fetch both vouchers and service packages
 onMounted(() => {
     if (props.user?.id) {
         getUserVouchers();
+        getUserServicePackages();
     }
+    console.log('user', props.user);
+    console.log('userServicePackages', props.user.userServicePackages);
 });
 
 // Add isAsideLgActive ref
@@ -485,19 +505,21 @@ const cancelOrder = async (orderId) => {
 };
 
 const userServicePackages = computed(() => {
-    return safeUser.value.user_service_packages?.filter(p =>
-        p.status === 'active' || p.status === 'pending'
-    ).sort((a, b) => {
-        // Sort by status (pending first, then active)
-        if (a.status === 'pending' && b.status !== 'pending') return -1
-        if (a.status !== 'pending' && b.status === 'pending') return 1
-        // Then sort by expiry date
-        return new Date(a.expiry_date) - new Date(b.expiry_date)
-    }) || []
-})
+    if (!safeUser.value?.userServicePackages) {
+        return [];
+    }
+
+    return safeUser.value.userServicePackages
+        .filter(p => p && (p.status === 'active' || p.status === 'pending'))
+        .sort((a, b) => {
+            if (a.status === 'pending' && b.status !== 'pending') return -1;
+            if (a.status !== 'pending' && b.status === 'pending') return 1;
+            return new Date(a.expiry_date) - new Date(b.expiry_date);
+        });
+});
 
 const completedPackages = computed(() => {
-    return safeUser.value.user_service_packages?.filter(p => p.status === 'completed') || [];
+    return safeUser.value.userServicePackages?.filter(p => p.status === 'completed') || [];
 });
 
 const completedTreatments = computed(() => {
@@ -579,6 +601,81 @@ const showTreatmentHistory = (servicePackage) => {
 
 const formatTime = (datetime) => {
     if (!datetime) return
+}
+
+// Add datetime formatter
+const formatDateTime = (datetime) => {
+    if (!datetime) return '';
+    const date = new Date(datetime);
+    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+}
+
+const showAddTreatmentModal = ref(false)
+const treatmentForm = reactive({
+    staff_user_id: '',
+    start_time: '',
+    end_time: '',
+    result: '',
+    notes: ''
+})
+
+const openAddTreatmentModal = async (servicePackage) => {
+    selectedPackage.value = servicePackage
+    showAddTreatmentModal.value = true
+    await loadStaffList()
+
+    // Reset form
+    Object.assign(treatmentForm, {
+        staff_user_id: '',
+        start_time: '',
+        end_time: '',
+        result: '',
+        notes: ''
+    })
+}
+
+const closeAddTreatmentModal = () => {
+    showAddTreatmentModal.value = false
+}
+
+const submitTreatmentSession = async () => {
+    try {
+        const response = await axios.post('/api/treatment-sessions', {
+            ...treatmentForm,
+            user_service_package_id: selectedPackage.value.id
+        })
+
+        // Refresh user data to get updated service packages
+        const userResponse = await axios.get(`/users/${props.user.id}`)
+        Object.assign(props.user, userResponse.data.data)
+
+        closeAddTreatmentModal()
+        notification.value = {
+            type: 'success',
+            message: 'Đã thêm buổi điều trị thành công'
+        }
+    } catch (error) {
+        notification.value = {
+            type: 'danger',
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm buổi điều trị'
+        }
+    }
+}
+
+const staffList = ref([])
+
+// Add this method to load staff list when opening modal
+const loadStaffList = async () => {
+    try {
+        const response = await axios.get('/api/users/get-staff-list')
+        staffList.value = response.data.data
+    } catch (error) {
+        console.error('Error loading staff:', error)
+        notification.value = {
+            type: 'danger',
+            message: 'Không thể tải danh sách nhân viên'
+        }
+    }
 }
 </script>
 <template>
@@ -1043,7 +1140,7 @@ const formatTime = (datetime) => {
 
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Địa chỉ chi tiết *
+                                                Đa chỉ chi tiết *
                                             </label>
                                             <input v-model="addressForm.address" type="text" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                                     dark:bg-slate-800 dark:text-white focus:border-blue-500 
@@ -1285,12 +1382,10 @@ const formatTime = (datetime) => {
                         <h3 class="text-lg font-medium dark:text-white">Liệu trình đang thực hiện</h3>
                     </div>
 
-                    <div v-if="userServicePackages?.length" class="divide-y dark:divide-slate-700">
-                        <div v-for="servicePackage in userServicePackages" :key="servicePackage.id"
-                            class="p-4 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                            <!-- Package Header -->
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="flex-1">
+                    <div v-if="userServicePackages?.length" class="divide-y dark:divide-slate-700 p-4 ">
+                        <div v-for="servicePackage in userServicePackages" :key="servicePackage.id">
+                            <div class="flex justify-between items-start mb-4 ">
+                                <div>
                                     <div class="flex items-center space-x-2">
                                         <h4 class="font-medium dark:text-white">{{ servicePackage.service_name }}</h4>
                                         <span :class="{
@@ -1305,17 +1400,12 @@ const formatTime = (datetime) => {
                                         Hết hạn: {{ servicePackage.formatted_expiry_date || 'Không giới hạn' }}
                                     </p>
                                 </div>
-                                <div :class="{
-                                    'px-3 py-1 text-xs font-medium rounded-full': true,
-                                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': servicePackage.status === 'active',
-                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': servicePackage.status === 'pending',
-                                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': servicePackage.status === 'expired'
-                                }">
-                                    {{ formatPackageStatus(servicePackage.status) }}
-                                </div>
+                                <BaseButton v-if="servicePackage.remaining_sessions > 0" color="info"
+                                    label="Thêm buổi điều trị" :icon="mdiPlus"
+                                    @click="openAddTreatmentModal(servicePackage)" />
                             </div>
 
-                            <!-- Progress Bar -->
+                            <!-- Progress Bar - Di chuyển vào trong vòng lặp -->
                             <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mb-4">
                                 <div class="bg-blue-600 h-2.5 rounded-full"
                                     :style="{ width: `${servicePackage.progress_percentage}%` }"
@@ -1363,7 +1453,7 @@ const formatTime = (datetime) => {
                             </button>
 
                             <!-- Next Appointment -->
-                            <div v-if="servicePackage.next_appointment"
+                            <div v-if="servicePackage.next_appointment_details"
                                 class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-100 dark:border-blue-800">
                                 <div class="flex items-start space-x-3">
                                     <BaseIcon :path="mdiCalendarClock"
@@ -1374,17 +1464,59 @@ const formatTime = (datetime) => {
                                         </p>
                                         <div class="mt-1 space-y-1">
                                             <p class="text-sm text-blue-800 dark:text-blue-300">
-                                                {{ formattedDate(servicePackage.next_appointment.appointment_date) }}
+                                                {{ servicePackage.next_appointment_details.date }}
                                             </p>
                                             <div class="flex items-center text-sm text-blue-700 dark:text-blue-400">
                                                 <BaseIcon :path="mdiClockOutline" class="w-4 h-4 mr-1" />
-                                                {{ servicePackage.next_appointment.time_slot.start_time }} -
-                                                {{ servicePackage.next_appointment.time_slot.end_time }}
+                                                {{ servicePackage.next_appointment_details.time.start }} -
+                                                {{ servicePackage.next_appointment_details.time.end }}
                                             </div>
-                                            <div v-if="servicePackage.next_appointment.staff"
+                                            <div v-if="servicePackage.next_appointment_details.staff"
                                                 class="flex items-center text-sm text-blue-700 dark:text-blue-400">
                                                 <BaseIcon :path="mdiAccount" class="w-4 h-4 mr-1" />
-                                                Thực hiện bởi: {{ servicePackage.next_appointment.staff.full_name }}
+                                                Thực hiện bởi: {{
+                                                    servicePackage.next_appointment_details.staff.full_name }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Treatment History Section -->
+                            <div v-if="servicePackage.treatmentSessions?.length" class="mt-4">
+                                <div class="border-t dark:border-slate-700 pt-4">
+                                    <h5 class="font-medium text-gray-900 dark:text-white mb-3">
+                                        Lịch sử điều trị
+                                    </h5>
+                                    <div class="space-y-3">
+                                        <div v-for="session in servicePackage.treatmentSessions" :key="session.id"
+                                            class="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <div class="text-sm text-gray-900 dark:text-white">
+                                                        Buổi #{{ servicePackage.total_sessions -
+                                                            servicePackage.treatmentSessions.indexOf(session) }}
+                                                    </div>
+                                                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                        <div class="flex items-center space-x-2">
+                                                            <BaseIcon :path="mdiCalendar" class="w-4 h-4" />
+                                                            <span>{{ formatDateTime(session.start_time) }}</span>
+                                                        </div>
+                                                        <div class="flex items-center space-x-2 mt-1">
+                                                            <BaseIcon :path="mdiAccount" class="w-4 h-4" />
+                                                            <span>Thực hiện: {{ session.staff?.full_name || 'N/A'
+                                                                }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div v-if="session.result"
+                                                    class="text-sm text-gray-600 dark:text-gray-400 text-right">
+                                                    <span class="font-medium">Kết quả:</span> {{ session.result }}
+                                                </div>
+                                            </div>
+                                            <div v-if="session.notes"
+                                                class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                                <span class="font-medium">Ghi chú:</span> {{ session.notes }}
                                             </div>
                                         </div>
                                     </div>
@@ -1403,6 +1535,8 @@ const formatTime = (datetime) => {
             <!-- Treatment History Modal -->
             <TransitionRoot appear :show="showTreatmentHistoryModal" as="template">
                 <Dialog as="div" @close="showTreatmentHistoryModal = false" class="relative z-50">
+                    <div class="fixed inset-0 bg-black/30" />
+
                     <div class="fixed inset-0 overflow-y-auto">
                         <div class="flex min-h-full items-center justify-center p-4">
                             <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-2xl 
@@ -1441,6 +1575,88 @@ const formatTime = (datetime) => {
                                 <div class="mt-6 flex justify-end">
                                     <BaseButton label="Đóng" @click="showTreatmentHistoryModal = false" />
                                 </div>
+                            </DialogPanel>
+                        </div>
+                    </div>
+                </Dialog>
+            </TransitionRoot>
+
+            <!-- Add Treatment Modal -->
+            <TransitionRoot appear :show="showAddTreatmentModal" as="template">
+                <Dialog as="div" @close="closeAddTreatmentModal" class="relative z-50">
+                    <div class="fixed inset-0 bg-black/30" />
+
+                    <div class="fixed inset-0 overflow-y-auto">
+                        <div class="flex min-h-full items-center justify-center p-4">
+                            <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl 
+                                bg-white dark:bg-slate-900 p-6 shadow-xl transition-all">
+                                <DialogTitle as="h3" class="text-lg font-medium leading-6 
+                                    text-gray-900 dark:text-white mb-4">
+                                    Thêm buổi điều trị mới
+                                </DialogTitle>
+
+                                <form @submit.prevent="submitTreatmentSession" class="space-y-4">
+                                    <!-- Staff selection -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Nhân viên thực hiện *
+                                        </label>
+                                        <select v-model="treatmentForm.staff_user_id" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                            dark:bg-slate-800 dark:text-white focus:border-blue-500 
+                                            focus:ring-blue-500">
+                                            <option value="">-- Chọn nhân viên --</option>
+                                            <option v-for="staff in staffList" :key="staff.id" :value="staff.id">
+                                                {{ staff.full_name }}
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Start time -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Thời gian bắt đầu *
+                                        </label>
+                                        <input v-model="treatmentForm.start_time" type="datetime-local" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                            dark:bg-slate-800 dark:text-white focus:border-blue-500 
+                                            focus:ring-blue-500">
+                                    </div>
+
+                                    <!-- End time -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Thời gian kết thúc *
+                                        </label>
+                                        <input v-model="treatmentForm.end_time" type="datetime-local" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                            dark:bg-slate-800 dark:text-white focus:border-blue-500 
+                                            focus:ring-blue-500">
+                                    </div>
+
+                                    <!-- Result -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Kết quả
+                                        </label>
+                                        <textarea v-model="treatmentForm.result" rows="2" class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                            dark:bg-slate-800 dark:text-white focus:border-blue-500 
+                                            focus:ring-blue-500"></textarea>
+                                    </div>
+
+                                    <!-- Notes -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Ghi chú
+                                        </label>
+                                        <textarea v-model="treatmentForm.notes" rows="3" class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                            dark:bg-slate-800 dark:text-white focus:border-blue-500 
+                                            focus:ring-blue-500"></textarea>
+                                    </div>
+
+                                    <div class="flex justify-end space-x-3 pt-4">
+                                        <BaseButton type="button" label="Hủy" color="white"
+                                            @click="closeAddTreatmentModal" />
+                                        <BaseButton type="submit" label="Thêm" color="info" />
+                                    </div>
+                                </form>
                             </DialogPanel>
                         </div>
                     </div>

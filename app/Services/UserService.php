@@ -60,21 +60,22 @@ class UserService
     {
         return User::with([
             'addresses',
+            'orders.orderItems.service',
+            'orders.orderItems.product',
+            'invoices',
+            'vouchers',
+            'media',
             'userServicePackages' => function ($query) {
                 $query->with([
                     'service',
-                    'treatmentSessions.staff',
-                    'nextAppointment',
+                    'treatmentSessions' => function ($q) {
+                        $q->with('staff')
+                            ->orderBy('start_time', 'desc');
+                    },
+                    'nextAppointment' => function ($q) {
+                        $q->with(['timeSlot', 'staff']);
+                    },
                     'order.orderItems'
-                ]);
-            },
-            'invoices',
-            'vouchers',
-            'orders' => function ($query) {
-                $query->with([
-                    'orderItems' => function ($query) {
-                        $query->with(['product', 'service']);
-                    }
                 ]);
             }
         ])->findOrFail($id);
