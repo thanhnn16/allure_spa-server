@@ -1,6 +1,6 @@
 <script setup>
 import { containerMaxW } from '@/config.js'
-import { computed, onMounted, getCurrentInstance } from 'vue'
+import { computed, onMounted } from 'vue'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import { mdiArrowLeft } from '@mdi/js'
 import { router } from '@inertiajs/vue3'
@@ -12,13 +12,54 @@ const props = defineProps({
   }
 })
 
+// Get route history from localStorage or initialize empty array
+const getRouteHistory = () => {
+  const history = localStorage.getItem('routeHistory')
+  return history ? JSON.parse(history) : []
+}
+
+// Save route history to localStorage
+const saveRouteHistory = (history) => {
+  localStorage.setItem('routeHistory', JSON.stringify(history))
+}
+
 const canGoBack = computed(() => {
-  return props.showBackButton && !router.page.url.endsWith('/dashboard')
+  const history = getRouteHistory()
+  return props.showBackButton && router.page.url !== '/dashboard' && history.length > 1
 })
 
 const handleGoBack = () => {
-  window.history.back()
+  const history = getRouteHistory()
+  if (history.length > 1) {
+    // Remove current route
+    history.pop()
+    // Save updated history
+    saveRouteHistory(history)
+    // Get previous route
+    const previousRoute = history[history.length - 1]
+    router.visit(previousRoute)
+  }
 }
+
+// Listen to route changes
+router.on('finish', (event) => {
+  const history = getRouteHistory()
+  const currentUrl = router.page.url
+  // Only add to history if it's a different route
+  if (!history.length || history[history.length - 1] !== currentUrl) {
+    history.push(currentUrl)
+    saveRouteHistory(history)
+  }
+})
+
+// Initialize with current route
+onMounted(() => {
+  const history = getRouteHistory()
+  if (!history.length) {
+    history.push(router.page.url)
+    saveRouteHistory(history)
+  }
+})
 </script>
 
 <template>
