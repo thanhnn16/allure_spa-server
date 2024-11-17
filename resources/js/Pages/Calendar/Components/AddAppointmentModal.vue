@@ -58,9 +58,13 @@
                                 class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
                                 <option value="">Chọn gói điều trị</option>
                                 <option v-for="pkg in userTreatmentPackages" :key="pkg.id" :value="pkg.id">
-                                    {{ pkg.treatment?.name || 'Unknown' }} ({{ pkg.remaining_sessions }} buổi)
+                                    {{ pkg.service?.service_name || pkg.service_name }} ({{ pkg.remaining_sessions }}
+                                    buổi)
                                 </option>
                             </select>
+                            <div v-if="errors.user_service_package_id" class="mt-1 text-sm text-red-600">
+                                {{ errors.user_service_package_id[0] }}
+                            </div>
                         </div>
 
                         <div>
@@ -76,6 +80,9 @@
                                     {{ service.name || service.service_name }}
                                 </option>
                             </select>
+                            <div v-if="errors.service_id" class="mt-1 text-sm text-red-600">
+                                {{ errors.service_id[0] }}
+                            </div>
                         </div>
                     </div>
 
@@ -105,15 +112,11 @@
                     </div>
 
                     <!-- Additional Info -->
-                    <div class="col-span-2 grid grid-cols-3 gap-6">
+                    <div class="col-span-2 grid grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium mb-2 dark:text-gray-300">Loại lịch hẹn</label>
-                            <select v-model="form.appointment_type"
-                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
-                                <option v-for="type in appointmentTypes" :key="type.value" :value="type.value">
-                                    {{ type.label }}
-                                </option>
-                            </select>
+                            <input type="text" :value="appointmentTypeDisplay" disabled
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white bg-gray-100">
                         </div>
 
                         <!-- Slots field -->
@@ -123,19 +126,12 @@
                             </label>
                             <input type="number" v-model="form.slots" min="1" :max="maxAvailableSlots"
                                 class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
+                            <div v-if="errors.slots" class="mt-1 text-sm text-red-600">
+                                {{ errors.slots[0] }}
+                            </div>
                             <span v-if="maxAvailableSlots" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 Còn trống: {{ maxAvailableSlots }} slot
                             </span>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium mb-2 dark:text-gray-300">Trạng thái</label>
-                            <select v-model="form.status"
-                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
-                                <option value="pending">Đang chờ</option>
-                                <option value="confirmed">Đã xác nhận</option>
-                                <option value="cancelled">Đã hủy</option>
-                            </select>
                         </div>
                     </div>
 
@@ -154,13 +150,15 @@
                         class="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
                         Đóng
                     </button>
-                    <button type="submit" :disabled="!isFormValid" :class="[
-                        'px-6 py-2.5 rounded-lg font-medium transition-all duration-200',
-                        isFormValid
-                            ? 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:ring-offset-slate-800'
-                            : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                    ]">
-                        {{ isFormValid ? 'Lưu' : 'Vui lòng điền đầy đủ thông tin' }}
+                    <button 
+                        type="submit"
+                        class="px-6 py-2.5 rounded-lg font-medium transition-all duration-200"
+                        :class="{
+                            'bg-indigo-600 text-white hover:bg-indigo-700': isFormValid,
+                            'bg-gray-300 text-gray-500 cursor-not-allowed': !isFormValid
+                        }"
+                    >
+                        {{ isFormValid ? 'Lưu' : getValidationMessage() }}
                     </button>
                 </div>
             </form>
@@ -232,14 +230,15 @@ const resetForm = () => {
 // Khởi tạo form
 const form = ref({
     user_id: '',
-    service_id: '',
     staff_id: '',
     appointment_date: props.selectedTimeSlot?.date || '',
-    time_slot_id: props.selectedTimeSlot?.timeSlotId || '',
-    appointment_type: 'consultation',
-    status: 'pending',
+    time_slot_id: props.selectedTimeSlot?.id || '',
+    appointment_type: 'service',
+    status: 'confirmed',
     note: '',
-    slots: 1
+    slots: 1,
+    service_id: null,
+    user_service_package_id: null
 });
 
 // Computed properties
@@ -261,19 +260,15 @@ const appointmentTypes = computed(() => [
 // Sửa lại watch cho service_id và user_service_package_id
 watch(() => form.value.service_id, (newServiceId) => {
     if (newServiceId) {
-        form.value.appointment_type = 'service';
         form.value.user_service_package_id = null; // Reset package selection
-    } else if (!form.value.user_service_package_id) {
-        form.value.appointment_type = 'consultation';
+        form.value.appointment_type = 'service';
     }
 });
 
 watch(() => form.value.user_service_package_id, (newPackageId) => {
     if (newPackageId) {
-        form.value.appointment_type = 'service_package';
         form.value.service_id = null; // Reset service selection
-    } else if (!form.value.service_id) {
-        form.value.appointment_type = 'consultation';
+        form.value.appointment_type = 'service_package';
     }
 });
 
@@ -469,110 +464,100 @@ onUnmounted(() => {
 })
 
 function validateForm() {
-    errors.value = {};
     let isValid = true;
+    errors.value = {};
 
-    // Kiểm tra user_id
+    // Validate required fields
     if (!form.value.user_id) {
         errors.value.user_id = ['Vui lòng chọn khách hàng'];
         isValid = false;
     }
 
-    // Kiểm tra staff_id
     if (!form.value.staff_id) {
-        errors.value.staff_id = ['Vui lòng chọn nhân viên phụ trách'];
+        errors.value.staff_id = ['Vui lòng chọn nhân viên'];
         isValid = false;
     }
 
-    // Kiểm tra service_id hoặc user_service_package_id
-    if (!form.value.service_id && !form.value.user_service_package_id) {
-        errors.value.service = ['Vui lòng chọn dịch vụ hoặc gói điều trị'];
+    if (!form.value.appointment_date) {
+        errors.value.appointment_date = ['Vui lòng chọn ngày hẹn'];
         isValid = false;
     }
 
-    // Kiểm tra time_slot_id
     if (!form.value.time_slot_id) {
         errors.value.time_slot_id = ['Vui lòng chọn khung giờ'];
         isValid = false;
     }
 
-    // Kiểm tra tính khả dụng của time slot
-    if (form.value.time_slot_id) {
-        const selectedSlot = timeSlots.value.find(slot =>
-            slot.id === form.value.time_slot_id
-        );
-
-        if (selectedSlot && !selectedSlot.available) {
-            errors.value.time_slot_id = ['Khung giờ này đã đầy'];
-            isValid = false;
-        }
-    }
-
-    // Kiểm tra slots
-    if (!form.value.slots || form.value.slots < 1 || form.value.slots > 2) {
-        errors.value.slots = ['Số lượng slot phải từ 1-2'];
+    // Validate service or package selection
+    if (!form.value.service_id && !form.value.user_service_package_id) {
+        errors.value.service_selection = ['Vui lòng chọn dịch vụ hoặc gói điều trị'];
         isValid = false;
     }
 
-    // Kiểm tra s slot có vượt quá slot trống không
-    if (form.value.time_slot_id) {
-        const selectedSlot = timeSlots.value.find(slot => slot.id === form.value.time_slot_id);
-        if (selectedSlot) {
-            const availableSlots = selectedSlot.max_bookings - selectedSlot.booked_slots;
-            if (form.value.slots > availableSlots) {
-                errors.value.slots = [`Chỉ còn ${availableSlots} slot trống`];
-                isValid = false;
-            }
-        }
+    // Validate slots
+    const slots = parseInt(form.value.slots);
+    if (!slots || slots < 1 || slots > 2) {
+        errors.value.slots = ['Số lượng slot phải từ 1-2'];
+        isValid = false;
     }
 
     return isValid;
 }
 
 function validateAndSubmit() {
-    if (validateForm()) {
-        const formData = {
-            user_id: form.value.user_id,
-            staff_id: form.value.staff_id,
-            service_id: form.value.service_id || null,
-            user_service_package_id: form.value.user_service_package_id || null,
-            appointment_date: form.value.appointment_date,
-            time_slot_id: form.value.time_slot_id,
-            appointment_type: form.value.appointment_type,
-            status: form.value.status,
-            note: form.value.note || '',
-            slots: form.value.slots
-        };
-
-        submitAppointment(formData);
+    console.log('validateAndSubmit called');
+    console.log('isFormValid:', isFormValid.value);
+    
+    if (!isFormValid.value) {
+        console.log('Form is not valid');
+        return;
     }
+
+    // Tạo formData object
+    const formData = {
+        user_id: form.value.user_id,
+        staff_id: form.value.staff_id,
+        appointment_date: form.value.appointment_date,
+        time_slot_id: form.value.time_slot_id,
+        appointment_type: form.value.appointment_type,
+        status: 'pending',
+        note: form.value.note || '',
+        slots: parseInt(form.value.slots) || 1,
+        service_id: form.value.service_id || null,
+        user_service_package_id: form.value.user_service_package_id || null
+    };
+
+    console.log('Submitting form data:', formData);
+    submitAppointment(formData);
 }
 
 function submitAppointment(formData) {
-    axios.post(route('appointments.store'), {
-        user_id: formData.user_id,
-        staff_id: formData.staff_id,
-        service_id: formData.service_id,
-        appointment_date: formData.appointment_date,
-        time_slot_id: formData.time_slot_id,
-        appointment_type: formData.appointment_type,
-        status: formData.status,
-        note: formData.note,
-        slots: formData.slots
-    })
-        .then(() => {
-            // Emit cả save và appointmentAdded events
-            emit('save', formData);
-            emit('appointmentAdded');
-            props.closeModal();
+    console.log('submitAppointment called with:', formData);
+    
+    axios.post(route('appointments.store'), formData)
+        .then(response => {
+            console.log('Submit response:', response);
+            if (response.data.success) {
+                // Emit event với data từ response
+                emit('appointmentAdded', response.data.appointment);
+                // Đóng modal
+                props.closeModal();
+                // Toast thông báo thành công
+                toast.success("Thêm lịch hẹn thành công!");
+            } else {
+                errors.value = response.data.errors || {};
+            }
         })
         .catch(error => {
-            console.error('Error creating appointment:', error.response ? error.response.data : error);
+            console.error('Submit error:', error);
             if (error.response?.data?.errors) {
                 errors.value = error.response.data.errors;
+            } else {
+                errors.value = {
+                    general: ['Đã có lỗi xảy ra khi tạo lịch hẹn']
+                };
             }
-            // Thêm emit error event nếu cần
-            // emit('error', error.response?.data?.errors || 'Có lỗi xảy ra khi tạo lịch hẹn');
+            toast.error("Có lỗi xảy ra khi tạo lịch hẹn!");
         });
 }
 
@@ -583,16 +568,21 @@ watch(() => services.value, () => {
 const isFormValid = computed(() => {
     return Boolean(
         form.value.user_id &&
-        (form.value.service_id || form.value.user_service_package_id) &&
+        form.value.staff_id &&
         form.value.appointment_date &&
         form.value.time_slot_id &&
         form.value.slots >= 1 &&
-        form.value.slots <= 2
+        form.value.slots <= maxAvailableSlots.value &&
+        (
+            (form.value.service_id && !form.value.user_service_package_id) ||
+            (!form.value.service_id && form.value.user_service_package_id)
+        )
     );
 });
 
 // Thêm watch cho các giá trị quan trọng
 watch(() => form.value, () => {
+    errors.value = {};
 }, { deep: true });
 
 const maxAvailableSlots = computed(() => {
@@ -625,6 +615,61 @@ watch(() => form.value.user_service_package_id, (newPackageId) => {
     } else if (!form.value.service_id) {
         form.value.appointment_type = 'consultation';
     }
+});
+
+// Thêm computed property để hiển thị tên loại lịch hẹn
+const appointmentTypeDisplay = computed(() => {
+    switch (form.value.appointment_type) {
+        case 'service':
+            return 'Dịch vụ đơn lẻ';
+        case 'service_package':
+            return 'Gói điều trị';
+        case 'consultation':
+            return 'Tư vấn';
+        default:
+            return 'Khác';
+    }
+});
+
+// Thêm watch để tự động set appointment_type
+watch([() => form.value.service_id, () => form.value.user_service_package_id],
+    ([newServiceId, newPackageId]) => {
+        if (newPackageId) {
+            form.value.appointment_type = 'service_package';
+        } else if (newServiceId) {
+            form.value.appointment_type = 'service';
+        } else {
+            form.value.appointment_type = 'consultation';
+        }
+    }
+);
+
+function getValidationMessage() {
+    if (!form.value.user_id) return 'Vui lòng chọn khách hàng';
+    if (!form.value.staff_id) return 'Vui lòng chọn nhân viên';
+    if (!form.value.appointment_date) return 'Vui lòng chọn ngày hẹn';
+    if (!form.value.time_slot_id) return 'Vui lòng chọn khung giờ';
+    if (!form.value.slots || form.value.slots < 1 || form.value.slots > 2)
+        return 'Số lượng slot không hợp lệ';
+    if (!form.value.service_id && !form.value.user_service_package_id)
+        return 'Vui lòng chọn dịch vụ hoặc gói điều trị';
+    if (form.value.service_id && form.value.user_service_package_id)
+        return 'Vui lòng chỉ chọn một trong hai: dịch vụ hoặc gói điều trị';
+    return 'Vui lòng điền đầy đủ thông tin';
+}
+
+// Thêm watch để debug
+watch(() => isFormValid.value, (newValue) => {
+    console.log('Form valid status:', newValue);
+    console.log('Form values:', {
+        user_id: form.value.user_id,
+        staff_id: form.value.staff_id,
+        appointment_date: form.value.appointment_date,
+        time_slot_id: form.value.time_slot_id,
+        slots: form.value.slots,
+        service_id: form.value.service_id,
+        user_service_package_id: form.value.user_service_package_id
+    });
 });
 </script>
 

@@ -267,43 +267,25 @@ function closeModal() {
 const toast = useToast()
 
 function saveAppointment(appointmentData) {
-    const form = useForm({
-        user_id: appointmentData.user_id,
-        service_id: appointmentData.service_id,
-        staff_id: appointmentData.staff_id,
-        // Đảm bảo ngày được format đúng
-        appointment_date: formatDate(appointmentData.appointment_date),
-        time_slot_id: appointmentData.time_slot_id,
-        appointment_type: appointmentData.appointment_type,
-        status: appointmentData.status || 'pending',
-        note: appointmentData.note,
-    })
+    // Không cần xử lý gì ở đây nữa vì AddAppointmentModal sẽ tự xử lý
+    // và emit event appointmentAdded khi thành công
+}
 
-    form.post(route('appointments.store'), {
-        preserveState: true,
-        preserveScroll: true,
-        onSuccess: (response) => {
-            closeModal()
-            // Cập nhật danh sách appointments local với dữ liệu đã được format
-            if (response?.props?.appointment) {
-                const formattedAppointment = {
-                    ...response.props.appointment,
-                    start: `${response.props.appointment.appointment_date} ${response.props.appointment.timeSlot.start_time}`,
-                    end: `${response.props.appointment.appointment_date} ${response.props.appointment.timeSlot.end_time}`
-                }
-                appointments.value = [...appointments.value, formattedAppointment]
-            }
-            // Refresh calendar events
-            if (calendarRef.value) {
-                calendarRef.value.getApi().refetchEvents()
-            }
-            toast.success("Thêm lịch hẹn thành công!")
-        },
-        onError: (errors) => {
-            const errorMessage = Object.values(errors).flat().join('\n')
-            toast.error(`Có lỗi xảy ra khi thêm lịch hẹn! ${errorMessage}`)
-        }
-    })
+function handleAppointmentAdded(newAppointment) {
+    // Format appointment data để phù hợp với calendar
+    const formattedAppointment = {
+        ...newAppointment,
+        start: `${newAppointment.appointment_date} ${newAppointment.timeSlot.start_time}`,
+        end: `${newAppointment.appointment_date} ${newAppointment.timeSlot.end_time}`
+    };
+
+    // Thêm appointment mới vào danh sách
+    appointments.value = [...appointments.value, formattedAppointment];
+
+    // Refresh calendar
+    if (calendarRef.value) {
+        calendarRef.value.getApi().refetchEvents();
+    }
 }
 
 // Thêm hàm format date
@@ -311,12 +293,6 @@ function formatDate(date) {
     if (!date) return ''
     const d = new Date(date)
     return d.toISOString().split('T')[0]
-}
-
-function handleAppointmentAdded() {
-    if (calendarRef.value) {
-        calendarRef.value.getApi().refetchEvents()
-    }
 }
 
 // Add status legend component
@@ -367,8 +343,7 @@ function formatDateTime(dateTimeStr) {
         </SectionMain>
 
         <AddAppointmentModal :show="showModal" :appointments="appointments" :selectedTimeSlot="selectedTimeSlot"
-            @close="closeModal" @save="saveAppointment" @appointmentAdded="handleAppointmentAdded"
-            :closeModal="closeModal" />
+            @close="closeModal" @appointmentAdded="handleAppointmentAdded" :closeModal="closeModal" />
     </LayoutAuthenticated>
 </template>
 
