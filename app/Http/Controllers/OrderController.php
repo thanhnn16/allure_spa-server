@@ -519,7 +519,7 @@ class OrderController extends BaseController
     public function getMyOrders(Request $request)
     {
         try {
-            $orders = Order::with(['order_items', 'invoice'])
+            $orders = Order::with(['orderItems', 'invoice'])
                 ->where('user_id', Auth::id())
                 ->when($request->status, function ($query, $status) {
                     return $query->where('status', $status);
