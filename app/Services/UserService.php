@@ -62,6 +62,7 @@ class UserService
             'addresses',
             'orders.orderItems.service',
             'orders.orderItems.product',
+            'userServicePackages.treatmentSessions.staff',
             'invoices',
             'vouchers',
             'media',

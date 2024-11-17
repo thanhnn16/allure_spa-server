@@ -595,6 +595,8 @@ const showTreatmentHistoryModal = ref(false)
 const selectedPackage = ref(null)
 
 const showTreatmentHistory = (servicePackage) => {
+    console.log('Selected package:', servicePackage);
+    console.log('Treatment sessions:', servicePackage.treatmentSessions);
     selectedPackage.value = servicePackage
     showTreatmentHistoryModal.value = true
 }
@@ -1552,20 +1554,28 @@ const loadStaffList = async () => {
                                         <div class="flex justify-between items-start">
                                             <div>
                                                 <p class="font-medium dark:text-white">
-                                                    {{ formattedDate(session.start_time) }}
+                                                    Buổi #{{ selectedPackage.total_sessions -
+                                                    selectedPackage.treatmentSessions.indexOf(session) }}
                                                 </p>
                                                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                    {{ session.notes || 'Không có ghi chú' }}
+                                                    {{ formattedDate(session.start_time) }}
+                                                </p>
+                                                <p v-if="session.staff"
+                                                    class="text-sm text-gray-600 dark:text-gray-400">
+                                                    Thực hiện bởi: {{ session.staff.full_name }}
                                                 </p>
                                             </div>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                Thực hiện bởi: {{ session.staff?.full_name || 'N/A' }}
-                                            </p>
+                                            <div>
+                                                <p v-if="session.result"
+                                                    class="text-sm text-gray-600 dark:text-gray-400">
+                                                    <span class="font-medium">Kết quả:</span> {{ session.result }}
+                                                </p>
+                                                <p v-if="session.notes"
+                                                    class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                    <span class="font-medium">Ghi chú:</span> {{ session.notes }}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <p v-if="session.end_time" class="text-sm text-gray-500 mt-2">
-                                            Thời gian: {{ formatTime(session.start_time) }} - {{
-                                                formatTime(session.end_time) }}
-                                        </p>
                                     </div>
                                 </div>
                                 <div v-else class="text-center py-4 text-gray-500">

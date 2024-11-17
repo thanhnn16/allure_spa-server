@@ -31,7 +31,8 @@ class UserServicePackage extends Model
         'nextAppointment.timeSlot',
         'nextAppointment.staff',
         'order',
-        'treatmentSessions'
+        'treatmentSessions',
+        'treatmentSessions.staff'
     ];
 
     protected $appends = [

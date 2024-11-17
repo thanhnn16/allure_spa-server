@@ -39,6 +39,8 @@ class ServiceUsageHistory extends Model
         'end_time' => 'datetime',
     ];
 
+    protected $with = ['staff'];
+
     public function userServicePackage()
     {
         return $this->belongsTo(UserServicePackage::class);
@@ -46,6 +48,7 @@ class ServiceUsageHistory extends Model
 
     public function staff()
     {
-        return $this->belongsTo(User::class, 'staff_user_id');
+        return $this->belongsTo(User::class, 'staff_user_id')
+            ->select(['id', 'full_name', 'phone_number', 'email']);
     }
 }
