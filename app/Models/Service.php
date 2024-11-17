@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\HasTranslations;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @OA\Schema(
@@ -146,12 +147,12 @@ class Service extends Model
 
     public function getIsFavoriteAttribute()
     {
-        if (!auth()->check()) {
+        if (Auth::check()) {
             return false;
         }
 
         return $this->favorites()
-            ->where('user_id', auth()->id())
+            ->where('user_id', Auth::id())
             ->where('favorite_type', 'service')
             ->exists();
     }
