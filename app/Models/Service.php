@@ -79,6 +79,8 @@ class Service extends Model
         'description'
     ];
 
+    protected $appends = ['rating_summary', 'is_favorite', 'translations_array'];
+
     public function media()
     {
         return $this->morphMany(Media::class, 'mediable');
@@ -117,5 +119,25 @@ class Service extends Model
     public function orderItems()
     {
         return $this->morphMany(OrderItem::class, 'item');
+    }
+
+    public function getRatingSummaryAttribute()
+    {
+        // Get approved ratings only
+        $approvedRatings = $this->ratings()
+            ->where('status', 'approved')
+            ->where('rating_type', 'service');
+
+        return [
+            'average_rating' => round($this->average_rating, 1) ?? 0,
+            'total_ratings' => $this->total_ratings ?? 0,
+            'rating_distribution' => [
+                5 => $approvedRatings->where('stars', 5)->count(),
+                4 => $approvedRatings->where('stars', 4)->count(),
+                3 => $approvedRatings->where('stars', 3)->count(),
+                2 => $approvedRatings->where('stars', 2)->count(),
+                1 => $approvedRatings->where('stars', 1)->count(),
+            ]
+        ];
     }
 }

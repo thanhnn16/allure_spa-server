@@ -7,6 +7,7 @@ use App\Models\ServiceCategory;
 use App\Models\ServiceCombo;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 
 class ServiceService
 {
@@ -38,15 +39,60 @@ class ServiceService
         return $query->paginate($perPage);
     }
 
-    public function getServiceById(int $id): ?Service
+    public function getServiceById($id)
     {
-        return Service::with([
+        $query = Service::with([
             'category',
-            'media', // Media model đã có $appends = ['full_url'] nên sẽ tự động thêm full_url
+            'media',
             'priceHistory' => function ($query) {
                 $query->orderBy('effective_from', 'desc');
+            },
+            'ratings' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'service');
             }
-        ])->find($id);
+        ])
+            ->withCount(['ratings as total_ratings' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'service');
+            }])
+            ->withAvg(['ratings as average_rating' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'service');
+            }], 'stars');
+
+        // Load translations
+        $query->with(['translations' => function ($query) {
+            $query->select('translatable_id', 'language', 'field', 'value');
+        }]);
+
+        if (Auth::check()) {
+            $query->with(['favorites' => function ($query) {
+                $query->where('user_id', Auth::id())
+                    ->where('favorite_type', 'service');
+            }])
+                ->withCount([
+                    'favorites as favorites_count' => function ($query) {
+                        $query->where('user_id', Auth::id())
+                            ->where('favorite_type', 'service');
+                    }
+                ]);
+        }
+
+        $service = $query->findOrFail($id);
+
+        // Process translations
+        $translations = [];
+        foreach ($service->translations as $translation) {
+            if (!isset($translations[$translation->language])) {
+                $translations[$translation->language] = [];
+            }
+            $translations[$translation->language][$translation->field] = $translation->value;
+        }
+
+        $service->translations_array = $translations;
+
+        return $service;
     }
 
     public function updateService(int $id, array $data): ?Service
