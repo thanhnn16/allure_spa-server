@@ -137,14 +137,21 @@ class Appointment extends Model
         return [
             'id' => $this->id,
             'title' => $this->service->service_name ?? 'Appointment',
-            'status' => $this->status,
-            'service' => $this->service,
+            'status' => strtolower($this->status),
+            'service' => [
+                'id' => $this->service->id,
+                'service_name' => $this->service->service_name,
+                'duration' => $this->service->duration,
+                'single_price' => $this->service->single_price,
+                'description' => $this->service->description
+            ],
             'start' => $startDateTime->format('Y-m-d H:i:s'),
             'end' => $endDateTime->format('Y-m-d H:i:s'),
             'price' => $this->service?->single_price,
             'staff' => $this->staff ? [
                 'id' => $this->staff->id,
                 'full_name' => $this->staff->full_name,
+                'email' => $this->staff->email
             ] : null,
             'user' => $this->user ? [
                 'id' => $this->user->id,

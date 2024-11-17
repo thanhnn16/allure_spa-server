@@ -7,7 +7,7 @@ import CardBoxModal from '@/Components/CardBoxModal.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import NotificationBar from '@/Components/NotificationBar.vue'
 import { Head, router } from '@inertiajs/vue3'
-import { mdiCalendar, mdiAccount, mdiClockOutline, mdiNoteText, mdiAlert, mdiDelete, mdiPencil, mdiArrowLeft } from '@mdi/js'
+import { mdiAlert, mdiDelete, mdiPencil } from '@mdi/js'
 import axios from 'axios'
 import FormField from '@/Components/FormField.vue'
 import FormControl from '@/Components/FormControl.vue'
@@ -36,43 +36,12 @@ const statusLabels = {
 }
 
 const appointmentTypeLabels = {
+    'service': 'Thực hiện dịch vụ',
+    'service_package': 'Thực hiện combo',
     'consultation': 'Tư vấn',
-    'treatment': 'Điều trị',
-    'follow_up': 'Tái khám',
     'others': 'Khác'
 }
 
-const formatDateTime = (date, time) => {
-    const dateObj = new Date(date)
-    const day = dateObj.getDate().toString().padStart(2, '0')
-    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0')
-    const year = dateObj.getFullYear()
-    return `${day}/${month}/${year} ${time}`
-}
-
-const handleStatusChange = async (newStatus) => {
-    try {
-        const response = await axios.put(`/api/appointments/${props.appointment.id}`, {
-            status: newStatus
-        })
-        
-        if (response.data.success) {
-            notification.value = {
-                type: 'success',
-                message: 'Cập nhật trạng thái thành công'
-            }
-            // Reload the page after a short delay
-            setTimeout(() => {
-                router.reload()
-            }, 1000)
-        }
-    } catch (error) {
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái'
-        }
-    }
-}
 
 const handleDelete = async () => {
     if (!confirm('Bạn có chắc chắn muốn xóa lịch hẹn này?')) return
@@ -90,18 +59,14 @@ const handleDelete = async () => {
     }
 }
 
-const handleGoBack = () => {
-    router.visit('/appointments')
-}
 
 const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleString('vi-VN', {
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+        weekday: 'long',
         year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
+        month: 'long',
+        day: 'numeric'
     })
 }
 
@@ -146,20 +111,87 @@ const handleCancelAppointment = async () => {
 }
 
 // Cập nhật computed property để xử lý thông tin người hủy
-const cancelledByInfo = computed(() => {
-    if (!props.appointment.cancelled_by_user) return null;
+
+// Thêm các helpers mới
+
+const formatPrice = (price) => {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+    }).format(price || 0);
+}
+
+const getInitials = (name) => {
+    if (!name) return '';
+    return name.split(' ')
+        .map(word => word[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+}
+
+// Cập nhật computed properties
+
+const getStatusIcon = (status) => {
+    const icons = {
+        pending: 'mdiClockOutline',
+        confirmed: 'mdiCheckCircleOutline',
+        cancelled: 'mdiCloseCircleOutline',
+        completed: 'mdiCheckCircleOutline'
+    }
+    return icons[status] || 'mdiInformationOutline'
+}
+
+// Thêm transition cho status updates
+const isStatusUpdating = ref(false)
+const handleStatusChange = async (newStatus) => {
+    isStatusUpdating.value = true
+    try {
+        const response = await axios.put(`/api/appointments/${props.appointment.id}`, {
+            status: newStatus
+        })
+
+        if (response.data.success) {
+            notification.value = {
+                type: 'success',
+                message: 'Cập nhật trạng thái thành công'
+            }
+            setTimeout(() => {
+                router.reload()
+            }, 1000)
+        }
+    } catch (error) {
+        notification.value = {
+            type: 'danger',
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái'
+        }
+    } finally {
+        isStatusUpdating.value = false
+    }
+}
+
+
+onMounted(() => {
+    console.log('Appointment Data:', props.appointment);
+});
+
+// Thêm computed property để format thời gian
+const appointmentDateTime = computed(() => {
+    const start = new Date(props.appointment.start)
+    const end = new Date(props.appointment.end)
     return {
-        name: props.appointment.cancelled_by_user.full_name,
-        time: formatDate(props.appointment.cancelled_at),
-        note: props.appointment.cancellation_note
+        date: formatDate(start),
+        time: `${start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - 
+               ${end.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
     }
 })
 </script>
 
 <template>
     <LayoutAuthenticated>
+
         <Head title="Chi tiết lịch hẹn" />
-        
+
         <SectionMain>
             <!-- Header Section -->
             <div class="mb-6 bg-white rounded-lg shadow-sm p-4">
@@ -167,7 +199,8 @@ const cancelledByInfo = computed(() => {
                     <div class="flex items-center space-x-4">
                         <div class="p-2 bg-blue-100 rounded-full">
                             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
                         <div>
@@ -176,36 +209,15 @@ const cancelledByInfo = computed(() => {
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <BaseButton
-                            :icon="mdiArrowLeft"
-                            label="Quay lại"
-                            color="white"
-                            class="border border-gray-300 hover:bg-gray-50"
-                            @click="handleGoBack"
-                        />
-                        <BaseButton
-                            :icon="mdiPencil"
-                            label="Chỉnh sửa"
-                            color="info"
-                            @click="router.visit(`/appointments/${appointment.id}/edit`)"
-                        />
-                        <BaseButton
-                            :icon="mdiDelete"
-                            label="Xóa"
-                            color="danger"
-                            @click="handleDelete"
-                        />
+                        <BaseButton :icon="mdiPencil" label="Chỉnh sửa" color="info"
+                            @click="router.visit(`/appointments/${appointment.id}/edit`)" />
+                        <BaseButton :icon="mdiDelete" label="Xóa" color="danger" @click="handleDelete" />
                     </div>
                 </div>
             </div>
 
             <!-- Notification Bar -->
-            <NotificationBar
-                v-if="notification"
-                :color="notification.type"
-                :icon="mdiAlert"
-                class="mb-6"
-            >
+            <NotificationBar v-if="notification" :color="notification.type" :icon="mdiAlert" class="mb-6">
                 {{ notification.message }}
             </NotificationBar>
 
@@ -213,13 +225,12 @@ const cancelledByInfo = computed(() => {
             <div class="mb-6">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
-                        <div :class="`px-4 py-2 rounded-full text-sm font-semibold ${
-                            statusColors[appointment.status] === 'success' ? 'bg-green-100 text-green-800' :
-                            statusColors[appointment.status] === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                            statusColors[appointment.status] === 'danger' ? 'bg-red-100 text-red-800' :
-                            'bg-blue-100 text-blue-800'
-                        }`">
-                            {{ statusLabels[appointment.status] }}
+                        <div :class="`px-4 py-2 rounded-full text-sm font-semibold ${statusColors[appointment.status.toLowerCase()] === 'success' ? 'bg-green-100 text-green-800' :
+                            statusColors[appointment.status.toLowerCase()] === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                                statusColors[appointment.status.toLowerCase()] === 'danger' ? 'bg-red-100 text-red-800' :
+                                    'bg-blue-100 text-blue-800'
+                            }`">
+                            {{ statusLabels[appointment.status.toLowerCase()] || 'Không xác định' }}
                         </div>
                         <span class="text-gray-500">
                             Cập nhật lần cuối: {{ formatDate(appointment.updated_at) }}
@@ -229,13 +240,14 @@ const cancelledByInfo = computed(() => {
             </div>
 
             <!-- Thêm phần hiển thị thông tin hủy lịch vào sau phần trạng thái -->
-            <div v-if="appointment.status === 'cancelled'" class="mb-6 p-4 bg-red-50 rounded-lg border border-red-100">
+            <div v-if="appointment.status.toLowerCase() === 'cancelled'"
+                class="mb-6 p-4 bg-red-50 rounded-lg border border-red-100">
                 <h3 class="font-semibold text-red-700 mb-3">Thông tin hủy lịch</h3>
                 <div class="space-y-2">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <span class="text-gray-600 font-medium">Người hủy:</span>
-                            <p>{{ appointment.cancelled_by_user?.full_name || 'Không xác định' }}</p>
+                            <p>{{ appointment.cancelled_by?.full_name || 'Không xác định' }}</p>
                         </div>
                         <div>
                             <span class="text-gray-600 font-medium">Thời gian hủy:</span>
@@ -259,98 +271,65 @@ const cancelledByInfo = computed(() => {
                         <h2 class="text-xl font-semibold mb-4 flex items-center">
                             <span class="mr-2">Thông tin chung</span>
                         </h2>
-                        
+
                         <div class="grid grid-cols-2 gap-4">
+                            <!-- Loại lịch hẹn -->
                             <div>
                                 <span class="text-gray-500">Loại lịch hẹn</span>
-                                <p class="font-medium">{{ appointmentTypeLabels[appointment.appointment_type] }}</p>
-                            </div>
-                            
-                            <div>
-                                <span class="text-gray-500">Thời gian</span>
                                 <p class="font-medium">
-                                    {{ formatDateTime(appointment.appointment_date, appointment.time_slot.start_time) }}
+                                    {{ appointmentTypeLabels[appointment.appointment_type] || 'Không xác định' }}
                                 </p>
                             </div>
 
+                            <!-- Trạng thái -->
+                            <div>
+                                <span class="text-gray-500">Trạng thái</span>
+                                <div class="mt-1">
+                                    <span :class="`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium
+                                        ${statusColors[appointment.status.toLowerCase()] === 'success' ? 'bg-green-100 text-green-800' :
+                                            statusColors[appointment.status.toLowerCase()] === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                                                statusColors[appointment.status.toLowerCase()] === 'danger' ? 'bg-red-100 text-red-800' :
+                                                    'bg-blue-100 text-blue-800'}`">
+                                        {{ statusLabels[appointment.status.toLowerCase()] || 'Không xác định' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Thời gian lịch hẹn -->
+                            <div class="col-span-2">
+                                <span class="text-gray-500">Thời gian lịch hẹn</span>
+                                <div class="mt-1 space-y-1">
+                                    <p class="font-medium">
+                                        Ngày: {{ formatDate(appointment.appointment_date) }}
+                                    </p>
+                                    <p class="font-medium">
+                                        Giờ: {{ appointment.time_slot?.start_time }} - {{
+                                            appointment.time_slot?.end_time }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Số lượng slot -->
                             <div>
                                 <span class="text-gray-500">Số lượng slot</span>
                                 <p class="font-medium">{{ appointment.slots }}</p>
                             </div>
-                        </div>
 
-                        <!-- Thông tin trạng thái -->
-                        <div class="mt-4 p-4 rounded-lg" :class="{
-                            'bg-green-50 border border-green-100': appointment.status === 'confirmed',
-                            'bg-yellow-50 border border-yellow-100': appointment.status === 'pending',
-                            'bg-red-50 border border-red-100': appointment.status === 'cancelled',
-                            'bg-blue-50 border border-blue-100': appointment.status === 'completed'
-                        }">
-                            <h3 class="font-semibold mb-2" :class="{
-                                'text-green-700': appointment.status === 'confirmed',
-                                'text-yellow-700': appointment.status === 'pending',
-                                'text-red-700': appointment.status === 'cancelled',
-                                'text-blue-700': appointment.status === 'completed'
-                            }">
-                                Trạng thái: {{ statusLabels[appointment.status] }}
-                            </h3>
-
-                            <!-- Hiển thị thông tin hủy nếu lịch đã bị hủy -->
-                            <div v-if="appointment.status === 'cancelled' && cancelledByInfo" class="space-y-2">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <span class="font-medium mr-2">Người hủy:</span>
-                                    <span>{{ cancelledByInfo.name }}</span>
-                                </div>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <span class="font-medium mr-2">Thời gian hủy:</span>
-                                    <span>{{ cancelledByInfo.time }}</span>
-                                </div>
-                                <div class="text-sm text-gray-600">
-                                    <span class="font-medium">Lý do hủy:</span>
-                                    <p class="mt-1 p-2 bg-white/50 rounded">
-                                        {{ cancelledByInfo.note || 'Không có lý do' }}
-                                    </p>
-                                </div>
+                            <!-- Khung giờ -->
+                            <div>
+                                <span class="text-gray-500">Số lượng tối đa</span>
+                                <p class="font-medium">
+                                    {{ appointment.time_slot?.max_bookings || 0 }} lượt/khung giờ
+                                </p>
                             </div>
                         </div>
 
-                        <!-- Ghi chú chung -->
+                        <!-- Ghi chú -->
                         <div v-if="appointment.note" class="mt-4">
-                            <span class="text-gray-500 font-medium">Ghi chú</span>
-                            <p class="mt-1 text-gray-700 bg-gray-50 p-3 rounded-lg">
+                            <span class="text-gray-500">Ghi chú</span>
+                            <p class="mt-1 p-3 bg-gray-50 rounded-lg text-gray-700">
                                 {{ appointment.note }}
                             </p>
-                        </div>
-                    </div>
-                </CardBox>
-
-                <!-- Customer Info Card -->
-                <CardBox>
-                    <div class="space-y-4">
-                        <h2 class="text-xl font-semibold mb-4 flex items-center">
-                            <span class="mr-2">Thông tin khách hàng</span>
-                            <span class="p-1 bg-blue-100 rounded-full">
-                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                            </span>
-                        </h2>
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <span class="text-gray-500">Họ tên</span>
-                                <p class="font-medium">{{ appointment.user.full_name }}</p>
-                            </div>
-                            
-                            <div>
-                                <span class="text-gray-500">Số điện thoại</span>
-                                <p class="font-medium">{{ appointment.user.phone_number }}</p>
-                            </div>
-                            
-                            <div class="col-span-2">
-                                <span class="text-gray-500">Email</span>
-                                <p class="font-medium">{{ appointment.user.email }}</p>
-                            </div>
                         </div>
                     </div>
                 </CardBox>
@@ -361,31 +340,53 @@ const cancelledByInfo = computed(() => {
                         <h2 class="text-xl font-semibold mb-4 flex items-center">
                             <span class="mr-2">Thông tin dịch vụ</span>
                             <span class="p-1 bg-purple-100 rounded-full">
-                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                             </span>
                         </h2>
-                        
+
                         <div class="grid grid-cols-2 gap-4">
+                            <!-- Tên dịch vụ -->
                             <div class="col-span-2">
                                 <span class="text-gray-500">Dịch vụ</span>
-                                <p class="font-medium">{{ appointment.service.name }}</p>
-                            </div>
-                            
-                            <div>
-                                <span class="text-gray-500">Thời gian thực hiện</span>
-                                <p class="font-medium">{{ appointment.service.duration }} phút</p>
-                            </div>
-                            
-                            <div>
-                                <span class="text-gray-500">Giá dịch vụ</span>
-                                <p class="font-medium">{{ new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(appointment.service.price) }}</p>
+                                <p class="font-medium">{{ appointment.service?.service_name }}</p>
                             </div>
 
+                            <!-- Thời gian thực hiện -->
+                            <div>
+                                <span class="text-gray-500">Thời gian thực hiện</span>
+                                <p class="font-medium">{{ appointment.service?.duration || 0 }} phút</p>
+                            </div>
+
+                            <!-- Giá dịch vụ -->
+                            <div>
+                                <span class="text-gray-500">Giá dịch vụ</span>
+                                <p class="font-medium">{{ formatPrice(appointment.service?.single_price) }}</p>
+                            </div>
+
+                            <!-- Nhân viên phụ trách -->
                             <div class="col-span-2">
                                 <span class="text-gray-500">Nhân viên phụ trách</span>
-                                <p class="font-medium">{{ appointment.staff?.full_name || 'Chưa phân công' }}</p>
+                                <div class="flex items-center mt-1">
+                                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                                        <span class="text-sm font-medium">
+                                            {{ getInitials(appointment.staff?.full_name) }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">{{ appointment.staff?.full_name }}</p>
+                                        <p class="text-sm text-gray-500">{{ appointment.staff?.email }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mô tả dịch vụ nếu có -->
+                            <div v-if="appointment.service?.description" class="col-span-2">
+                                <span class="text-gray-500">Mô tả dịch vụ</span>
+                                <p class="mt-1 text-gray-700">{{ appointment.service.description }}</p>
                             </div>
                         </div>
                     </div>
@@ -395,20 +396,14 @@ const cancelledByInfo = computed(() => {
                 <CardBox>
                     <div class="space-y-4">
                         <h2 class="text-xl font-semibold mb-4">Cập nhật trạng thái</h2>
-                        
+
                         <div class="grid grid-cols-2 gap-3">
-                            <BaseButton
-                                v-for="(label, status) in statusLabels"
-                                :key="status"
-                                :label="label"
-                                :color="statusColors[status]"
-                                :disabled="appointment.status === status || 
-                                         (appointment.status === 'cancelled' && status !== 'cancelled') ||
-                                         (appointment.status === 'completed' && status !== 'completed')"
-                                :outline="appointment.status !== status"
-                                class="w-full justify-center"
-                                @click="status === 'cancelled' ? isModalActive = true : handleStatusChange(status)"
-                            />
+                            <BaseButton v-for="(label, status) in statusLabels" :key="status" :label="label"
+                                :color="statusColors[status]" :disabled="appointment.status === status ||
+                                    (appointment.status === 'cancelled' && status !== 'cancelled') ||
+                                    (appointment.status === 'completed' && status !== 'completed')"
+                                :outline="appointment.status !== status" class="w-full justify-center"
+                                @click="status === 'cancelled' ? isModalActive = true : handleStatusChange(status)" />
                         </div>
                     </div>
                 </CardBox>
@@ -416,21 +411,11 @@ const cancelledByInfo = computed(() => {
         </SectionMain>
 
         <!-- Cancel Modal -->
-        <CardBoxModal
-            v-model="isModalActive"
-            title="Hủy lịch hẹn"
-            button="danger"
-            buttonLabel="Xác nhận hủy"
-            :hasCancel="true"
-            @confirm="handleCancelAppointment"
-        >
+        <CardBoxModal v-model="isModalActive" title="Hủy lịch hẹn" button="danger" buttonLabel="Xác nhận hủy"
+            :hasCancel="true" @confirm="handleCancelAppointment">
             <FormField label="Lý do hủy" help="Vui lòng nhập lý do hủy lịch">
-                <FormControl
-                    v-model="cancellationNote"
-                    type="textarea"
-                    placeholder="Nhập lý do hủy lịch..."
-                    :rows="4"
-                />
+                <FormControl v-model="cancellationNote" type="textarea" placeholder="Nhập lý do hủy lịch..."
+                    :rows="4" />
             </FormField>
         </CardBoxModal>
     </LayoutAuthenticated>
@@ -469,5 +454,66 @@ const cancelledByInfo = computed(() => {
 
 .status-badge-completed {
     @apply bg-blue-100 text-blue-800;
+}
+
+/* Thêm styles mới */
+.status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium transition-colors duration-200;
+}
+
+.status-badge-icon {
+    @apply w-4 h-4 mr-1;
+}
+
+.appointment-card {
+    @apply bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+.info-label {
+    @apply text-gray-500 text-sm mb-1;
+}
+
+.info-value {
+    @apply font-medium text-gray-900;
+}
+
+.grid-section {
+    @apply bg-white rounded-lg p-6 shadow-sm;
+}
+
+/* Animation cho status update */
+.status-updating {
+    @apply opacity-50 pointer-events-none;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* Thêm styles mới cho badges */
+.status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium transition-colors duration-200;
+}
+
+.appointment-info {
+    @apply space-y-4 p-4 rounded-lg border border-gray-100;
+}
+
+.info-grid {
+    @apply grid grid-cols-2 gap-4;
+}
+
+.info-label {
+    @apply text-gray-500 text-sm;
+}
+
+.info-value {
+    @apply font-medium text-gray-900 mt-1;
 }
 </style>

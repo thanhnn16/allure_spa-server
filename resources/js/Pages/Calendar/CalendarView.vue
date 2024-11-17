@@ -266,11 +266,6 @@ function closeModal() {
 
 const toast = useToast()
 
-function saveAppointment(appointmentData) {
-    // Không cần xử lý gì ở đây nữa vì AddAppointmentModal sẽ tự xử lý
-    // và emit event appointmentAdded khi thành công
-}
-
 function handleAppointmentAdded(newAppointment) {
     // Kiểm tra và format dữ liệu appointment
     if (!newAppointment || !newAppointment.time_slot) {
