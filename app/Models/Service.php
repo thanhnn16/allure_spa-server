@@ -108,7 +108,8 @@ class Service extends Model
 
     public function favorites()
     {
-        return $this->hasMany(Favorite::class);
+        return $this->hasMany(Favorite::class, 'item_id')
+            ->where('favorite_type', 'service');
     }
 
     public function userServicePackages()
@@ -141,5 +142,17 @@ class Service extends Model
             'total_ratings' => $this->total_ratings ?? 0,
             'rating_distribution' => $distribution
         ];
+    }
+
+    public function getIsFavoriteAttribute()
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        return $this->favorites()
+            ->where('user_id', auth()->id())
+            ->where('favorite_type', 'service')
+            ->exists();
     }
 }
