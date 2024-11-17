@@ -150,14 +150,10 @@
                         class="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
                         Đóng
                     </button>
-                    <button 
-                        type="submit"
-                        class="px-6 py-2.5 rounded-lg font-medium transition-all duration-200"
-                        :class="{
-                            'bg-indigo-600 text-white hover:bg-indigo-700': isFormValid,
-                            'bg-gray-300 text-gray-500 cursor-not-allowed': !isFormValid
-                        }"
-                    >
+                    <button type="submit" class="px-6 py-2.5 rounded-lg font-medium transition-all duration-200" :class="{
+                        'bg-indigo-600 text-white hover:bg-indigo-700': isFormValid,
+                        'bg-gray-300 text-gray-500 cursor-not-allowed': !isFormValid
+                    }">
                         {{ isFormValid ? 'Lưu' : getValidationMessage() }}
                     </button>
                 </div>
@@ -168,7 +164,9 @@
 
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { useToast } from 'vue-toastification';
 
+const toast = useToast();
 // Khai báo props và emit
 const props = defineProps({
     show: Boolean,
@@ -187,16 +185,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'save', 'appointmentAdded'])
-
-// Định nghĩa constants
-const APPOINTMENT_TYPES = {
-    FACIAL: { value: 'facial', label: 'Chăm sóc da mặt' },
-    MASSAGE: { value: 'massage', label: 'Massage' },
-    WEIGHT_LOSS: { value: 'weight_loss', label: 'Giảm béo' },
-    HAIR_REMOVAL: { value: 'hair_removal', label: 'Triệt lông' },
-    CONSULTATION: { value: 'consultation', label: 'Tư vấn' },
-    OTHERS: { value: 'others', label: 'Khác' }
-};
 
 // Định nghĩa mapping
 
@@ -307,12 +295,8 @@ watch(() => form.value.service_id, (newServiceId) => {
     if (newServiceId) {
         const service = services.value.find(s => s.id === newServiceId);
         if (service) {
-            // Tự động set appointment_type theo service_type của service
             form.value.appointment_type = service.service_type;
         }
-    } else {
-        // Reset về consultation khi không chọn service
-        form.value.appointment_type = APPOINTMENT_TYPES.CONSULTATION.value;
     }
 });
 
@@ -507,7 +491,7 @@ function validateForm() {
 function validateAndSubmit() {
     console.log('validateAndSubmit called');
     console.log('isFormValid:', isFormValid.value);
-    
+
     if (!isFormValid.value) {
         console.log('Form is not valid');
         return;
@@ -533,19 +517,19 @@ function validateAndSubmit() {
 
 function submitAppointment(formData) {
     console.log('submitAppointment called with:', formData);
-    
+
     axios.post(route('appointments.store'), formData)
         .then(response => {
             console.log('Submit response:', response);
             if (response.data.success) {
-                // Emit event với data từ response
-                emit('appointmentAdded', response.data.appointment);
-                // Đóng modal
+                emit('appointmentAdded', response.data.data);
                 props.closeModal();
-                // Toast thông báo thành công
-                toast.success("Thêm lịch hẹn thành công!");
+                toast.success(response.data.message || 'Đặt lịch hẹn thành công');
             } else {
-                errors.value = response.data.errors || {};
+                if (response.data.errors) {
+                    errors.value = response.data.errors;
+                }
+                toast.error(response.data.message || 'Có lỗi xảy ra khi tạo lịch hẹn');
             }
         })
         .catch(error => {
@@ -557,7 +541,7 @@ function submitAppointment(formData) {
                     general: ['Đã có lỗi xảy ra khi tạo lịch hẹn']
                 };
             }
-            toast.error("Có lỗi xảy ra khi tạo lịch hẹn!");
+            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo lịch hẹn');
         });
 }
 

@@ -7,6 +7,7 @@ import {
     mdiCheckCircle,
     mdiProgressClock,
     mdiCalendarClock,
+    mdiClockOutline,
 } from '@mdi/js'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
@@ -1360,6 +1361,35 @@ const formatTime = (datetime) => {
                                 class="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline">
                                 Xem lịch sử điều trị
                             </button>
+
+                            <!-- Next Appointment -->
+                            <div v-if="servicePackage.next_appointment"
+                                class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-100 dark:border-blue-800">
+                                <div class="flex items-start space-x-3">
+                                    <BaseIcon :path="mdiCalendarClock"
+                                        class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-blue-900 dark:text-blue-200">
+                                            Lịch hẹn sắp tới
+                                        </p>
+                                        <div class="mt-1 space-y-1">
+                                            <p class="text-sm text-blue-800 dark:text-blue-300">
+                                                {{ formattedDate(servicePackage.next_appointment.appointment_date) }}
+                                            </p>
+                                            <div class="flex items-center text-sm text-blue-700 dark:text-blue-400">
+                                                <BaseIcon :path="mdiClockOutline" class="w-4 h-4 mr-1" />
+                                                {{ servicePackage.next_appointment.time_slot.start_time }} -
+                                                {{ servicePackage.next_appointment.time_slot.end_time }}
+                                            </div>
+                                            <div v-if="servicePackage.next_appointment.staff"
+                                                class="flex items-center text-sm text-blue-700 dark:text-blue-400">
+                                                <BaseIcon :path="mdiAccount" class="w-4 h-4 mr-1" />
+                                                Thực hiện bởi: {{ servicePackage.next_appointment.staff.full_name }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

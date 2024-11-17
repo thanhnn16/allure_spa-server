@@ -12,6 +12,8 @@ use OpenApi\Annotations as OA;
 use App\Models\TimeSlot;
 use Illuminate\Support\Facades\Auth;
 use Exception;
+use App\Models\UserServicePackage;
+
 /**
  * @OA\Tag(
  *     name="Appointments",
@@ -200,27 +202,58 @@ class AppointmentController extends BaseController
      *     )
      * )
      */
-    public function store(AppointmentRequest $request)
+    public function store(Request $request)
     {
         try {
-            $data = $request->validated();
-            $result = $this->appointmentService->createAppointment($data);
+            // Validate input
+            $validated = $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'staff_id' => 'required|exists:users,id',
+                'appointment_date' => 'required|date',
+                'time_slot_id' => 'required|exists:time_slots,id',
+                'appointment_type' => 'required|string',
+                'slots' => 'required|integer|min:1|max:2',
+                'note' => 'nullable|string',
+                // Thêm validation cho service_id và user_service_package_id
+                'service_id' => 'required_without:user_service_package_id|exists:services,id|nullable',
+                'user_service_package_id' => 'required_without:service_id|exists:user_service_packages,id|nullable',
+            ]);
 
-            if ($result['status'] === 422) {
-                return response()->json([
-                    'message' => $result['message']
-                ], 422);
+            // Tạo appointment data
+            $appointmentData = [
+                'user_id' => $validated['user_id'],
+                'staff_user_id' => $validated['staff_id'],
+                'appointment_date' => $validated['appointment_date'],
+                'time_slot_id' => $validated['time_slot_id'],
+                'appointment_type' => $validated['appointment_type'],
+                'status' => 'pending',
+                'slots' => $validated['slots'],
+                'note' => $validated['note'] ?? null,
+            ];
+
+            // Thêm service_id hoặc user_service_package_id tùy theo loại appointment
+            if (isset($validated['service_id'])) {
+                $appointmentData['service_id'] = $validated['service_id'];
+            } elseif (isset($validated['user_service_package_id'])) {
+                $userServicePackage = UserServicePackage::findOrFail($validated['user_service_package_id']);
+                $appointmentData['service_id'] = $userServicePackage->service_id;
+                $appointmentData['user_service_package_id'] = $validated['user_service_package_id'];
             }
 
-            return response()->json([
-                'message' => 'Đặt lịch hẹn thành công',
-                'data' => $result['data']
-            ], 201);
+            $result = $this->appointmentService->createAppointment($appointmentData);
+
+            return $this->respondWithJson(
+                $result['data'] ?? null,
+                $result['message'] ?? 'Đặt lịch hẹn thành công',
+                $result['status'] ?? 200
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Có lỗi xảy ra khi đặt lịch hẹn',
-                'error' => $e->getMessage()
-            ], 500);
+            Log::error('Error creating appointment: ' . $e->getMessage());
+            return $this->respondWithJson(
+                null,
+                'Có lỗi xảy ra khi đặt lịch hẹn: ' . $e->getMessage(),
+                500
+            );
         }
     }
 
@@ -269,12 +302,29 @@ class AppointmentController extends BaseController
      */
     public function update(Request $request, $id)
     {
-        $result = $this->appointmentService->updateAppointment($id, $request->all());
+        try {
+            $result = $this->appointmentService->updateAppointment($id, $request->all());
 
-        // Log để debug
-        Log::info('Update appointment response:', $result);
+            if (!$result['success']) {
+                return $this->respondWithJson(
+                    null,
+                    $result['message'] ?? 'Có lỗi xảy ra khi cập nhật lịch hẹn',
+                    422
+                );
+            }
 
-        return $this->respondWithJson($result['data'], $result['message'], $result['status']);
+            return $this->respondWithJson(
+                $result['data'],
+                'Cập nhật lịch hẹn thành công'
+            );
+        } catch (\Exception $e) {
+            \Log::error('Error updating appointment: ' . $e->getMessage());
+            return $this->respondWithJson(
+                null,
+                'Có lỗi xảy ra khi cập nhật lịch hẹn: ' . $e->getMessage(),
+                500
+            );
+        }
     }
 
     /**
@@ -325,7 +375,7 @@ class AppointmentController extends BaseController
     public function show(Request $request, $id)
     {
         $result = $this->appointmentService->getAppointmentDetails($id);
-        
+
         // Nếu là request API thì trả về JSON
         if ($request->expectsJson()) {
             return response()->json($result);
@@ -336,7 +386,7 @@ class AppointmentController extends BaseController
             // Lấy appointment từ database một lần nữa để có thể sử dụng relationship loading
             $appointment = Appointment::with(['user', 'service', 'staff', 'timeSlot', 'cancelledBy'])
                 ->find($result['data']['id']);
-            
+
             if (!$appointment) {
                 return redirect()->route('appointments.index')
                     ->with('error', 'Không tìm thấy lịch hẹn');
@@ -451,8 +501,22 @@ class AppointmentController extends BaseController
      */
     public function cancel(Request $request, $id)
     {
-        $result = $this->appointmentService->cancelAppointment($id, $request->input('note'));
-        return $this->respondWithJson($result['data'], $result['message'], $result['status']);
+        try {
+            $result = $this->appointmentService->cancelAppointment($id, $request->input('note'));
+
+            return $this->respondWithJson(
+                $result['data'],
+                $result['message'] ?? 'Hủy lịch hẹn thành công',
+                $result['status'] ?? 200
+            );
+        } catch (\Exception $e) {
+            \Log::error('Error cancelling appointment: ' . $e->getMessage());
+            return $this->respondWithJson(
+                null,
+                'Có lỗi xảy ra khi hủy lịch hẹn: ' . $e->getMessage(),
+                500
+            );
+        }
     }
 
     /**
@@ -553,10 +617,7 @@ class AppointmentController extends BaseController
         try {
             $user = Auth::user();
             if (!$user) {
-                return response()->json([
-                    'message' => 'Unauthorized',
-                    'status' => 401
-                ], 401);
+                return $this->respondWithJson(null, 'Unauthorized', 401);
             }
 
             $filters = array_filter([
@@ -567,22 +628,18 @@ class AppointmentController extends BaseController
 
             $result = $this->appointmentService->getMyAppointments($user->id, $filters);
 
-            if (!is_array($result) || !isset($result['data'])) {
-                throw new Exception('Invalid response format from service');
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => $result['message'] ?? 'Lấy danh sách lịch hẹn thành công',
-                'data' => $result['data']
-            ], $result['status'] ?? 200);
-
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage(),
-                'data' => []
-            ], 500);
+            return $this->respondWithJson(
+                $result['data'],
+                $result['message'] ?? 'Lấy danh sách lịch hẹn thành công',
+                $result['status'] ?? 200
+            );
+        } catch (\Exception $e) {
+            \Log::error('Error getting appointments: ' . $e->getMessage());
+            return $this->respondWithJson(
+                null,
+                'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage(),
+                500
+            );
         }
     }
 }

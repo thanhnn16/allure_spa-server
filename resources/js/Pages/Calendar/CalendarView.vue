@@ -272,11 +272,30 @@ function saveAppointment(appointmentData) {
 }
 
 function handleAppointmentAdded(newAppointment) {
+    // Kiểm tra và format dữ liệu appointment
+    if (!newAppointment || !newAppointment.time_slot) {
+        console.error('Invalid appointment data:', newAppointment);
+        return;
+    }
+
     // Format appointment data để phù hợp với calendar
     const formattedAppointment = {
         ...newAppointment,
-        start: `${newAppointment.appointment_date} ${newAppointment.timeSlot.start_time}`,
-        end: `${newAppointment.appointment_date} ${newAppointment.timeSlot.end_time}`
+        id: newAppointment.id,
+        title: `${newAppointment.user?.full_name || 'N/A'} - ${newAppointment.service?.name || 'N/A'}`,
+        start: `${newAppointment.appointment_date} ${newAppointment.time_slot.start_time}`,
+        end: `${newAppointment.appointment_date} ${newAppointment.time_slot.end_time}`,
+        extendedProps: {
+            userId: newAppointment.user_id,
+            serviceId: newAppointment.service_id,
+            staffId: newAppointment.staff_id,
+            appointmentType: newAppointment.appointment_type,
+            status: newAppointment.status,
+            timeSlotId: newAppointment.time_slot_id,
+            userName: newAppointment.user?.full_name,
+            serviceName: newAppointment.service?.name,
+            staffName: newAppointment.staff?.full_name
+        }
     };
 
     // Thêm appointment mới vào danh sách
