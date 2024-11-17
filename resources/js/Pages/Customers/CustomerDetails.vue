@@ -652,12 +652,12 @@ const submitTreatmentSession = async () => {
         closeAddTreatmentModal()
         notification.value = {
             type: 'success',
-            message: 'Đã thêm buổi điều trị thành công'
+            message: 'Thêm lịch sử dịch vụ thành công'
         }
     } catch (error) {
         notification.value = {
             type: 'danger',
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm buổi điều trị'
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm lịch sử dịch vụ'
         }
     }
 }
@@ -1401,7 +1401,7 @@ const loadStaffList = async () => {
                                     </p>
                                 </div>
                                 <BaseButton v-if="servicePackage.remaining_sessions > 0" color="info"
-                                    label="Thêm buổi điều trị" :icon="mdiPlus"
+                                    label="Thêm buổi dịch vụ" :icon="mdiPlus"
                                     @click="openAddTreatmentModal(servicePackage)" />
                             </div>
 
@@ -1437,7 +1437,7 @@ const loadStaffList = async () => {
                                         class="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                     <div>
                                         <p class="text-sm font-medium text-blue-900 dark:text-blue-200">
-                                            Buổi điều trị tiếp theo
+                                            Buổi dịch vụ tiếp theo
                                         </p>
                                         <p class="text-sm text-blue-800 dark:text-blue-300">
                                             {{ servicePackage.next_session_date }}
@@ -1449,7 +1449,7 @@ const loadStaffList = async () => {
                             <!-- Treatment History Button -->
                             <button @click="showTreatmentHistory(servicePackage)"
                                 class="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                                Xem lịch sử điều trị
+                                Xem lịch sử dịch vụ
                             </button>
 
                             <!-- Next Appointment -->
@@ -1486,7 +1486,7 @@ const loadStaffList = async () => {
                             <div v-if="servicePackage.treatmentSessions?.length" class="mt-4">
                                 <div class="border-t dark:border-slate-700 pt-4">
                                     <h5 class="font-medium text-gray-900 dark:text-white mb-3">
-                                        Lịch sử điều trị
+                                        Lịch sử dịch vụ
                                     </h5>
                                     <div class="space-y-3">
                                         <div v-for="session in servicePackage.treatmentSessions" :key="session.id"
@@ -1543,7 +1543,7 @@ const loadStaffList = async () => {
                                 bg-white dark:bg-slate-900 p-6 shadow-xl transition-all">
                                 <DialogTitle as="h3" class="text-lg font-medium leading-6 
                                     text-gray-900 dark:text-white mb-4">
-                                    Lịch sử điều trị
+                                    Lịch sử dịch vụ
                                 </DialogTitle>
 
                                 <div v-if="selectedPackage?.treatmentSessions?.length" class="space-y-4">
@@ -1569,7 +1569,7 @@ const loadStaffList = async () => {
                                     </div>
                                 </div>
                                 <div v-else class="text-center py-4 text-gray-500">
-                                    Chưa có buổi điều trị nào được ghi nhận
+                                    Chưa có buổi dịch vụ nào được ghi nhận
                                 </div>
 
                                 <div class="mt-6 flex justify-end">
@@ -1592,7 +1592,7 @@ const loadStaffList = async () => {
                                 bg-white dark:bg-slate-900 p-6 shadow-xl transition-all">
                                 <DialogTitle as="h3" class="text-lg font-medium leading-6 
                                     text-gray-900 dark:text-white mb-4">
-                                    Thêm buổi điều trị mới
+                                    Thêm buổi dịch vụ mới
                                 </DialogTitle>
 
                                 <form @submit.prevent="submitTreatmentSession" class="space-y-4">
