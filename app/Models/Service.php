@@ -128,16 +128,18 @@ class Service extends Model
             ->where('status', 'approved')
             ->where('rating_type', 'service');
 
+        $distribution = [
+            5 => $approvedRatings->clone()->where('stars', 5)->count(),
+            4 => $approvedRatings->clone()->where('stars', 4)->count(),
+            3 => $approvedRatings->clone()->where('stars', 3)->count(),
+            2 => $approvedRatings->clone()->where('stars', 2)->count(),
+            1 => $approvedRatings->clone()->where('stars', 1)->count(),
+        ];
+
         return [
-            'average_rating' => round($this->average_rating, 1) ?? 0,
+            'average_rating' => round($this->average_rating ?? 0, 1),
             'total_ratings' => $this->total_ratings ?? 0,
-            'rating_distribution' => [
-                5 => $approvedRatings->where('stars', 5)->count(),
-                4 => $approvedRatings->where('stars', 4)->count(),
-                3 => $approvedRatings->where('stars', 3)->count(),
-                2 => $approvedRatings->where('stars', 2)->count(),
-                1 => $approvedRatings->where('stars', 1)->count(),
-            ]
+            'rating_distribution' => $distribution
         ];
     }
 }
