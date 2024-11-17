@@ -230,6 +230,11 @@ class Product extends Model
         return $query->orderBy('created_at')->get();
     }
 
+    public function getMediaAttribute()
+    {
+        return $this->media()->get();
+    }
+
     public function validateStockConsistency()
     {
         $lastMovement = $this->stockMovements()
