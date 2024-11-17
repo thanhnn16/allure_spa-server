@@ -53,7 +53,7 @@ class OrderService
             $order = Order::create($orderData);
 
             // Create order items
-            foreach ($data['order_items'] as $item) {
+            foreach ($data['orderItems'] as $item) {
                 OrderItem::create([
                     'order_id' => $order->id,
                     'item_type' => $item['item_type'],
