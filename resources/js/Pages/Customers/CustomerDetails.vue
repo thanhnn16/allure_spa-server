@@ -21,6 +21,9 @@ import NotificationBar from '@/Components/NotificationBar.vue'
 import axios from 'axios'
 import UserAvatar from '@/Components/UserAvatar.vue'
 
+import { format, parseISO } from 'date-fns'
+import { vi } from 'date-fns/locale'
+
 const props = defineProps({
     user: Object,
     upcomingBirthdays: Number
@@ -138,12 +141,6 @@ const safeUser = computed(() => props.user || {});
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
-
-
-
-
-
-
 
 
 const basicInfo = computed(() => [
@@ -591,27 +588,6 @@ const toggleVoucherStatus = async (voucherId) => {
     }
 }
 
-const showTreatmentHistoryModal = ref(false)
-const selectedPackage = ref(null)
-
-const showTreatmentHistory = (servicePackage) => {
-    console.log('Selected package:', servicePackage);
-    console.log('Treatment sessions:', servicePackage.treatmentSessions);
-    selectedPackage.value = servicePackage
-    showTreatmentHistoryModal.value = true
-}
-
-const formatTime = (datetime) => {
-    if (!datetime) return
-}
-
-// Add datetime formatter
-const formatDateTime = (datetime) => {
-    if (!datetime) return '';
-    const date = new Date(datetime);
-    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-}
-
 const showAddTreatmentModal = ref(false)
 const treatmentForm = reactive({
     staff_user_id: '',
@@ -679,6 +655,31 @@ const loadStaffList = async () => {
         }
     }
 }
+
+// Add these formatting functions
+const formatDateTime = (datetime) => {
+    if (!datetime) return ''
+    return format(parseISO(datetime), 'HH:mm - dd/MM/yyyy', { locale: vi })
+}
+
+const formatDate = (date) => {
+    if (!date) return ''
+    return format(parseISO(date), 'dd/MM/yyyy', { locale: vi })
+}
+
+const formatTime = (time) => {
+    if (!time) return ''
+    // Handle time string in HH:mm:ss format
+    const [hours, minutes] = time.split(':')
+    return `${hours}:${minutes}`
+}
+
+// Expose these functions to template
+defineExpose({
+    formatDateTime,
+    formatDate,
+    formatTime
+})
 </script>
 <template>
     <LayoutAuthenticated>
@@ -855,7 +856,7 @@ const loadStaffList = async () => {
                     <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
                         <div>
                             <p class="text-gray-600 dark:text-gray-400">
-                                Đơn tối thiểu:
+                                Đơn ti thiểu:
                                 <span class="font-medium">{{ voucher.min_order_value_formatted }}</span>
                             </p>
                             <p class="text-gray-600 dark:text-gray-400">
@@ -1343,16 +1344,6 @@ const loadStaffList = async () => {
                                             </div>
                                         </div>
 
-                                        <div v-if="!newVoucherForm.is_unlimited">
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Số lần sử dụng tối đa *
-                                            </label>
-                                            <input v-model.number="newVoucherForm.usage_limit" type="number" required
-                                                min="1" class="w-full rounded-md border-gray-300 dark:border-gray-600 
-                                                dark:bg-slate-800 dark:text-white focus:border-blue-500 
-                                                focus:ring-blue-500">
-                                        </div>
-
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                 Số lần sử dụng cho mỗi người dùng *
@@ -1485,19 +1476,19 @@ const loadStaffList = async () => {
                             </div>
 
                             <!-- Treatment History Section -->
-                            <div v-if="servicePackage.treatmentSessions?.length" class="mt-4">
+                            <div v-if="servicePackage.treatment_sessions?.length" class="mt-4">
                                 <div class="border-t dark:border-slate-700 pt-4">
                                     <h5 class="font-medium text-gray-900 dark:text-white mb-3">
                                         Lịch sử dịch vụ
                                     </h5>
                                     <div class="space-y-3">
-                                        <div v-for="session in servicePackage.treatmentSessions" :key="session.id"
+                                        <div v-for="session in servicePackage.treatment_sessions" :key="session.id"
                                             class="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
                                             <div class="flex justify-between items-start">
                                                 <div>
                                                     <div class="text-sm text-gray-900 dark:text-white">
                                                         Buổi #{{ servicePackage.total_sessions -
-                                                            servicePackage.treatmentSessions.indexOf(session) }}
+                                                            servicePackage.treatment_sessions.indexOf(session) }}
                                                     </div>
                                                     <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                                         <div class="flex items-center space-x-2">
@@ -1533,63 +1524,6 @@ const loadStaffList = async () => {
                     </div>
                 </div>
             </div>
-
-            <!-- Treatment History Modal -->
-            <TransitionRoot appear :show="showTreatmentHistoryModal" as="template">
-                <Dialog as="div" @close="showTreatmentHistoryModal = false" class="relative z-50">
-                    <div class="fixed inset-0 bg-black/30" />
-
-                    <div class="fixed inset-0 overflow-y-auto">
-                        <div class="flex min-h-full items-center justify-center p-4">
-                            <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-2xl 
-                                bg-white dark:bg-slate-900 p-6 shadow-xl transition-all">
-                                <DialogTitle as="h3" class="text-lg font-medium leading-6 
-                                    text-gray-900 dark:text-white mb-4">
-                                    Lịch sử dịch vụ
-                                </DialogTitle>
-
-                                <div v-if="selectedPackage?.treatmentSessions?.length" class="space-y-4">
-                                    <div v-for="session in selectedPackage.treatmentSessions" :key="session.id"
-                                        class="p-4 border rounded-lg dark:border-gray-700">
-                                        <div class="flex justify-between items-start">
-                                            <div>
-                                                <p class="font-medium dark:text-white">
-                                                    Buổi #{{ selectedPackage.total_sessions -
-                                                    selectedPackage.treatmentSessions.indexOf(session) }}
-                                                </p>
-                                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                    {{ formattedDate(session.start_time) }}
-                                                </p>
-                                                <p v-if="session.staff"
-                                                    class="text-sm text-gray-600 dark:text-gray-400">
-                                                    Thực hiện bởi: {{ session.staff.full_name }}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p v-if="session.result"
-                                                    class="text-sm text-gray-600 dark:text-gray-400">
-                                                    <span class="font-medium">Kết quả:</span> {{ session.result }}
-                                                </p>
-                                                <p v-if="session.notes"
-                                                    class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                                    <span class="font-medium">Ghi chú:</span> {{ session.notes }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-else class="text-center py-4 text-gray-500">
-                                    Chưa có buổi dịch vụ nào được ghi nhận
-                                </div>
-
-                                <div class="mt-6 flex justify-end">
-                                    <BaseButton label="Đóng" @click="showTreatmentHistoryModal = false" />
-                                </div>
-                            </DialogPanel>
-                        </div>
-                    </div>
-                </Dialog>
-            </TransitionRoot>
 
             <!-- Add Treatment Modal -->
             <TransitionRoot appear :show="showAddTreatmentModal" as="template">
