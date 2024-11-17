@@ -56,7 +56,7 @@ class Product extends Model
 
     protected $morphClass = 'product';
 
-    protected $appends = ['media', 'rating_summary', 'is_favorite'];
+    protected $appends = ['media', 'rating_summary', 'is_favorite', 'translations_array'];
 
     protected $translatable = [
         'name',
@@ -256,5 +256,15 @@ class Product extends Model
     public function getTranslatableAttributes(): array
     {
         return $this->translatable ?? [];
+    }
+
+    public function translations()
+    {
+        return $this->morphMany(\App\Models\Translation::class, 'translatable');
+    }
+
+    public function getTranslationsArrayAttribute()
+    {
+        return $this->attributes['translations_array'] ?? [];
     }
 }
