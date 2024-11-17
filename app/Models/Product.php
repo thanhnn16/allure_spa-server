@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\HasTranslations;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Schema(
@@ -151,16 +152,22 @@ class Product extends Model
                 ->isNotEmpty();
         }
 
+        Log::info('favorites', $this->favorites);
+
         // Case 2: When loaded with favorites count (in ProductService)
         if (isset($this->favorites_count)) {
             return $this->favorites_count > 0;
         }
+
+        Log::info('favorites_count', $this->favorites_count);
 
         // Case 3: Direct database check
         return $this->favorites()
             ->where('user_id', Auth::id())
             ->where('favorite_type', 'product')
             ->exists();
+
+        Log::info('is_favorite', $this->is_favorite);
     }
 
     /**
