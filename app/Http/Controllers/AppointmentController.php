@@ -205,30 +205,21 @@ class AppointmentController extends BaseController
     public function store(Request $request)
     {
         try {
-            // Validate input
-            $validated = $request->validate([
-                'appointment_date' => 'required|date',
-                'time_slot_id' => 'required|exists:time_slots,id',
-                'appointment_type' => 'required|string',
-                'slots' => 'required|integer|min:1|max:2',
-                'note' => 'nullable|string',
-                'service_id' => 'required_without:user_service_package_id|exists:services,id|nullable',
-                'user_service_package_id' => 'required_without:service_id|exists:user_service_packages,id|nullable',
-            ]);
+            // Validate request using AppointmentRequest
+            $validator = new AppointmentRequest();
+            $validated = validator($request->all(), $validator->rules(), $validator->messages())->validate();
 
-            // Tạo appointment data
+            // Prepare appointment data from validated input
             $appointmentData = [
-                'user_id' => $validated['user_id'],
-                'staff_user_id' => $validated['staff_id'],
                 'appointment_date' => $validated['appointment_date'],
                 'time_slot_id' => $validated['time_slot_id'],
                 'appointment_type' => $validated['appointment_type'],
-                'status' => 'pending',
+                'status' => $validated['status'],
                 'slots' => $validated['slots'],
                 'note' => $validated['note'] ?? null,
             ];
 
-            // Thêm service_id hoặc user_service_package_id tùy theo loại appointment
+            // Add service_id or user_service_package_id based on appointment type
             if (isset($validated['service_id'])) {
                 $appointmentData['service_id'] = $validated['service_id'];
             } elseif (isset($validated['user_service_package_id'])) {
@@ -243,6 +234,12 @@ class AppointmentController extends BaseController
                 $result['data'] ?? null,
                 $result['message'] ?? 'Đặt lịch hẹn thành công',
                 $result['status'] ?? 200
+            );
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->respondWithJson(
+                null,
+                'Dữ liệu không hợp lệ: ' . implode(', ', $e->errors()),
+                422
             );
         } catch (\Exception $e) {
             Log::error('Error creating appointment: ' . $e->getMessage());
@@ -315,7 +312,7 @@ class AppointmentController extends BaseController
                 'Cập nhật lịch hẹn thành công'
             );
         } catch (\Exception $e) {
-            \Log::error('Error updating appointment: ' . $e->getMessage());
+            Log::error('Error updating appointment: ' . $e->getMessage());
             return $this->respondWithJson(
                 null,
                 'Có lỗi xảy ra khi cập nhật lịch hẹn: ' . $e->getMessage(),
@@ -507,7 +504,7 @@ class AppointmentController extends BaseController
                 $result['status'] ?? 200
             );
         } catch (\Exception $e) {
-            \Log::error('Error cancelling appointment: ' . $e->getMessage());
+            Log::error('Error cancelling appointment: ' . $e->getMessage());
             return $this->respondWithJson(
                 null,
                 'Có lỗi xảy ra khi hủy lịch hẹn: ' . $e->getMessage(),
@@ -631,7 +628,7 @@ class AppointmentController extends BaseController
                 $result['status'] ?? 200
             );
         } catch (\Exception $e) {
-            \Log::error('Error getting appointments: ' . $e->getMessage());
+            Log::error('Error getting appointments: ' . $e->getMessage());
             return $this->respondWithJson(
                 null,
                 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage(),

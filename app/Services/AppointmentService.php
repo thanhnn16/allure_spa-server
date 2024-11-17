@@ -72,8 +72,10 @@ class AppointmentService
         return DB::transaction(function () use ($data) {
             try {
                 // Validate appointment type
-                if (!isset($data['appointment_type']) || 
-                    !array_key_exists($data['appointment_type'], self::APPOINTMENT_TYPES)) {
+                if (
+                    !isset($data['appointment_type']) ||
+                    !array_key_exists($data['appointment_type'], self::APPOINTMENT_TYPES)
+                ) {
                     throw new \Exception('Loại lịch hẹn không hợp lệ');
                 }
 
@@ -82,16 +84,6 @@ class AppointmentService
                     throw new \Exception('Vui lòng chọn dịch vụ');
                 }
 
-                if ($data['appointment_type'] === 'service_package' && empty($data['user_service_package_id'])) {
-                    throw new \Exception('Vui lòng chọn gói combo');
-                }
-
-                // Validate and convert types for numeric fields
-                $data['service_id'] = (int) $data['service_id'];
-                $data['slots'] = (int) ($data['slots'] ?? 1);
-                $data['time_slot_id'] = (int) $data['time_slot_id'];
-
-                // Xác định user_id (giữ nguyên dạng string nếu là UUID)
                 $userId = $data['user_id'] ?? Auth::id();
                 if (!$userId) {
                     throw new \Exception('Không tìm thấy thông tin người dùng');
@@ -132,7 +124,7 @@ class AppointmentService
 
                 // Create appointment with explicit data mapping
                 $appointmentData = [
-                    'user_id' => $userId, // Giữ nguyên dạng UUID
+                    'user_id' => $userId,
                     'service_id' => $data['service_id'],
                     'staff_user_id' => $availableStaff->id,
                     'appointment_date' => $data['appointment_date'],
@@ -146,19 +138,21 @@ class AppointmentService
                 $appointment = Appointment::create($appointmentData);
 
                 // Nếu là appointment type service_package và có user_service_package_id
-                if ($appointment->appointment_type === 'service_package' && 
-                    isset($data['user_service_package_id'])) {
-                    
+                if (
+                    $appointment->appointment_type === 'service_package' &&
+                    isset($data['user_service_package_id'])
+                ) {
+
                     $package = UserServicePackage::findOrFail($data['user_service_package_id']);
-                    
+
                     // Tính số lần cần trừ dựa vào số slots
                     $sessionsToDeduct = $appointmentData['slots'];
-                    
+
                     // Kiểm tra xem còn đủ số lần không
                     if ($package->remaining_sessions < $sessionsToDeduct) {
                         throw new \Exception('Không đủ số lần trong gói combo');
                     }
-                    
+
                     // Cập nhật số lần sử dụng
                     $package->used_sessions += $sessionsToDeduct;
                     $package->save();
@@ -217,14 +211,16 @@ class AppointmentService
             $oldStatus = $appointment->status;
 
             // Nếu đang cập nhật status thành completed và là service_package
-            if (isset($data['status']) && 
-                $data['status'] === 'completed' && 
-                $appointment->appointment_type === 'service_package') {
-                
+            if (
+                isset($data['status']) &&
+                $data['status'] === 'completed' &&
+                $appointment->appointment_type === 'service_package'
+            ) {
+
                 // Tìm và cập nhật user_service_package
                 if ($appointment->user_service_package_id) {
                     $package = UserServicePackage::findOrFail($appointment->user_service_package_id);
-                    
+
                     // Tạo service usage history
                     ServiceUsageHistory::create([
                         'user_service_package_id' => $package->id,
@@ -322,8 +318,8 @@ class AppointmentService
     {
         try {
             $appointment = Appointment::with([
-                'user', 
-                'service', 
+                'user',
+                'service',
                 'staff',
                 'timeSlot',
                 'cancelledBy'
@@ -331,7 +327,7 @@ class AppointmentService
 
             // Format the response using the accessor
             $formattedAppointment = $appointment->getFormattedAppointmentAttribute();
-            
+
             // Add additional data specific to appointment details
             $formattedAppointment = array_merge($formattedAppointment, [
                 'user' => [
@@ -541,8 +537,8 @@ class AppointmentService
     {
         try {
             $query = Appointment::with([
-                'service', 
-                'staff', 
+                'service',
+                'staff',
                 'timeSlot',
                 'cancelledBy'
             ])->where('user_id', $userId);
@@ -563,7 +559,7 @@ class AppointmentService
             // Format appointments with cancellation info
             $formattedAppointments = $appointments->map(function ($appointment) {
                 $baseFormat = $appointment->getFormattedAppointmentAttribute();
-                
+
                 // Add cancelled_by_user information separately
                 return array_merge($baseFormat, [
                     'cancelled_by_user' => $appointment->cancelledBy ? [
