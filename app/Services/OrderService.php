@@ -10,6 +10,7 @@ use App\Models\Service;
 use App\Models\UserServicePackage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderService
 {
@@ -263,31 +264,45 @@ class OrderService
         ]);
     }
 
-    private function updateProductInventory(OrderItem $item)
+    public function createInvoice(Order $order)
     {
-        $product = Product::find($item->item_id);
-        if ($product) {
-            $product->decrement('stock_quantity', $item->quantity);
-        }
-    }
-
-    private function createInvoice(Order $order)
-    {
-        Invoice::create([
+        return Invoice::create([
             'order_id' => $order->id,
             'user_id' => $order->user_id,
             'total_amount' => $order->total_amount,
             'discount_amount' => $order->discount_amount,
-            'final_amount' => $order->total_amount - $order->discount_amount,
+            'final_amount' => $order->final_total,
             'payment_method_id' => $order->payment_method_id,
-            'status' => 'completed'
+            'status' => Invoice::STATUS_PENDING,
+            'created_by_user_id' => Auth::id()
         ]);
     }
 
-    private function updateLoyaltyPoints(Order $order)
+    public function updateProductInventory(OrderItem $item)
     {
-        $pointsEarned = floor(($order->total_amount - $order->discount_amount) / 1000); // 1 point per 1000
+        $product = Product::find($item->item_id);
+        if ($product) {
+            if ($product->stock_quantity < $item->quantity) {
+                throw new \Exception("Sản phẩm {$product->name} không đủ số lượng trong kho");
+            }
+            $product->decrement('stock_quantity', $item->quantity);
+        }
+    }
+
+    public function updateLoyaltyPoints(Order $order)
+    {
+        $pointsEarned = floor($order->final_total / 1000); // 1 point per 1000
         $order->user->increment('loyalty_points', $pointsEarned);
+
+        Log::on($order->user)
+            ->by($order)
+            ->withProperties([
+                'points_earned' => $pointsEarned,
+                'order_id' => $order->id
+            ])
+            ->log('earned_loyalty_points');
+
+        return $pointsEarned;
     }
 
     private function getSessionsFromServiceType(string $serviceType): int

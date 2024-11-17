@@ -350,9 +350,7 @@ class OrderController extends BaseController
     public function store(Request $request)
     {
         try {
-            // Validate request
             $validatedData = $request->validate([
-                'user_id' => 'nullable|exists:users,id',
                 'payment_method_id' => 'required|exists:payment_methods,id',
                 'voucher_id' => 'nullable|exists:vouchers,id',
                 'order_items' => 'required|array|min:1',
@@ -366,48 +364,10 @@ class OrderController extends BaseController
                 'note' => 'nullable|string'
             ]);
 
-            DB::beginTransaction();
-
-            // Determine initial status based on request type
-            $initialStatus = $request->expectsJson() ? 'pending' : 'confirmed';
-
-            // Create order with default values for optional fields
-            $order = Order::create([
-                'user_id' => $validatedData['user_id'] ?? Auth::user()->id,
-                'total_amount' => $validatedData['total_amount'],
-                'payment_method_id' => $validatedData['payment_method_id'],
-                'voucher_id' => $validatedData['voucher_id'] ?? null,
-                'discount_amount' => $validatedData['discount_amount'] ?? 0,
-                'note' => $validatedData['note'] ?? null,
-                'status' => $initialStatus
-            ]);
-
-            // Create order items
-            foreach ($validatedData['order_items'] as $item) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'item_type' => $item['item_type'],
-                    'item_id' => $item['item_id'],
-                    'service_type' => $item['service_type'] ?? null,
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                ]);
-
-                // Reduce stock only for products
-                if ($item['item_type'] === 'product') {
-                    $product = Product::findOrFail($item['item_id']);
-                    $this->productService->reduceStock(
-                        $product,
-                        $item['quantity'],
-                        "Order #{$order->id}"
-                    );
-                }
-            }
-
-            DB::commit();
-            return $this->respondWithJson($order->load('orderItems'), 'Order created successfully');
+            $order = $this->orderService->createOrder($validatedData);
+            
+            return $this->respondWithJson($order->load('orderItems'), 'Đơn hàng đã được tạo thành công');
         } catch (\Exception $e) {
-            DB::rollBack();
             return $this->respondWithError($e->getMessage());
         }
     }
@@ -450,34 +410,21 @@ class OrderController extends BaseController
     public function createInvoice(Order $order)
     {
         try {
-            // Kiểm tra xem đơn hàng đã có hóa đơn chưa
             if ($order->invoice) {
                 throw new \Exception('Đơn hàng này đã có hóa đơn');
             }
 
-            // Tạo hóa đơn mới
-            $invoice = Invoice::create([
-                'user_id' => $order->user_id,
-                'staff_user_id' => Auth::user()->id,
-                'total_amount' => $order->total_amount - $order->discount_amount,
-                'paid_amount' => 0, // remaining_amount sẽ tự động được tính
-                'status' => Invoice::STATUS_PENDING,
-                'order_id' => $order->id,
-                'note' => request('note'),
-                'created_by_user_id' => Auth::user()->id
-            ]);
+            $invoice = $this->orderService->createInvoice($order);
+            
+            // Cập nhật điểm thưởng cho khách hàng
+            $this->orderService->updateLoyaltyPoints($order);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Hóa đơn đã được tạo thành công',
-                'data' => $invoice->load(['user', 'staff', 'order'])
-            ]);
+            return $this->respondWithJson(
+                $invoice->load(['user', 'staff', 'order']), 
+                'Hóa đơn đã được tạo thành công'
+            );
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
+            return $this->respondWithError($e->getMessage());
         }
     }
 
@@ -710,13 +657,23 @@ class OrderController extends BaseController
     public function complete(Request $request, Order $order)
     {
         try {
-            // Kiểm tra quyền admin
             if (Auth::user()->role !== 'admin') {
                 return $this->respondWithError('Bạn không có quyền thực hiện hành động này', 403);
             }
 
-            $this->orderService->completeOrder($order);
-            return $this->respondWithJson($order->fresh(), 'Đơn hàng đã hoàn thành thành công');
+            $completedOrder = $this->orderService->completeOrder($order);
+
+            // Cập nhật tồn kho cho các sản phẩm
+            foreach ($order->orderItems as $item) {
+                if ($item->item_type === 'product') {
+                    $this->orderService->updateProductInventory($item);
+                }
+            }
+
+            return $this->respondWithJson(
+                $completedOrder->fresh(), 
+                'Đơn hàng đã hoàn thành thành công'
+            );
         } catch (\Exception $e) {
             return $this->respondWithError($e->getMessage());
         }
