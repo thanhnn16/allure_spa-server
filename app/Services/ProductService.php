@@ -34,7 +34,7 @@ class ProductService
         if (Auth::check()) {
             $query->withCount([
                 'favorites as favorites_count' => function ($query) {
-                    $query->where('user_id', Auth::id())
+                    $query->where('user_id', Auth::user()->id)
                         ->where('favorite_type', 'product');
                 }
             ]);
@@ -102,18 +102,18 @@ class ProductService
             }], 'stars');
 
         // Sửa lại phần load translations
-        $query->with(['translations' => function($query) {
+        $query->with(['translations' => function ($query) {
             $query->select('translatable_id', 'language', 'field', 'value');
         }]);
 
         if (Auth::check()) {
             $query->with(['favorites' => function ($query) {
-                $query->where('user_id', Auth::id())
+                $query->where('user_id', Auth::user()->id)
                     ->where('favorite_type', 'product');
             }])
                 ->withCount([
                     'favorites as favorites_count' => function ($query) {
-                        $query->where('user_id', Auth::id())
+                        $query->where('user_id', Auth::user()->id)
                             ->where('favorite_type', 'product');
                     }
                 ]);
@@ -129,7 +129,7 @@ class ProductService
             }
             $translations[$translation->language][$translation->field] = $translation->value;
         }
-        
+
         $product->translations_array = $translations;
 
         return $product;
