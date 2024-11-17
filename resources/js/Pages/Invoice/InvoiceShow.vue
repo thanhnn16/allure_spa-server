@@ -2,6 +2,7 @@
     <div>
         <!-- Main content with layout -->
         <LayoutAuthenticated>
+
             <Head title="Chi tiết hóa đơn" />
             <SectionMain>
                 <div class="container mx-auto px-4 py-8">
@@ -9,19 +10,18 @@
                     <div class="flex justify-between items-center mb-6">
                         <h1 class="text-2xl font-semibold">Chi tiết hóa đơn #{{ invoice.id }}</h1>
                         <div class="flex space-x-4">
-                            <button @click="printInvoice" 
+                            <button @click="printInvoice"
                                 class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center">
                                 <i class="fas fa-print mr-2"></i> In hóa đơn
                             </button>
                             <!-- Thêm nút hủy hóa đơn -->
-                            <button v-if="canCancel"
-                                @click="confirmCancelInvoice"
+                            <button v-if="canCancel" @click="confirmCancelInvoice"
                                 class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded flex items-center">
                                 <i class="fas fa-times mr-2"></i> Hủy hóa đơn
                             </button>
-                            <Link :href="route('invoices.index')" 
+                            <Link :href="route('invoices.index')"
                                 class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
-                                Quay lại
+                            Quay lại
                             </Link>
                         </div>
                     </div>
@@ -57,7 +57,8 @@
                                     </div>
                                     <div class="flex justify-between text-green-600">
                                         <span>Giảm giá:</span>
-                                        <span class="font-medium">-{{ formatCurrency(invoice.order.discount_amount) }}</span>
+                                        <span class="font-medium">-{{ formatCurrency(invoice.order.discount_amount)
+                                            }}</span>
                                     </div>
                                 </div>
                                 <div class="flex justify-between font-bold border-t border-gray-200 pt-2">
@@ -66,11 +67,13 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <span>Đã thanh toán:</span>
-                                    <span class="text-green-600 font-medium">{{ formatCurrency(invoice.paid_amount) }}</span>
+                                    <span class="text-green-600 font-medium">{{ formatCurrency(invoice.paid_amount)
+                                        }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span>Còn lại:</span>
-                                    <span class="text-red-600 font-medium">{{ formatCurrency(invoice.remaining_amount) }}</span>
+                                    <span class="text-red-600 font-medium">{{ formatCurrency(invoice.remaining_amount)
+                                        }}</span>
                                 </div>
                             </div>
                         </div>
@@ -129,28 +132,34 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead>
                                     <tr>
-                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             STT
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Sản phẩm/Dịch vụ
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Đơn giá
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Số lượng
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Thành tiền
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Ghi chú
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="(item, index) in invoice.order?.items" :key="item.id">
+                                    <tr v-for="(item, index) in invoice.order?.orderItems" :key="item.id">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ index + 1 }}
                                         </td>
@@ -168,17 +177,19 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
                                             {{ Number(item.quantity) || 0 }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                                            {{ formatCurrency((Number(item.price) || 0) * (Number(item.quantity) || 0)) }}
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                                            {{ formatCurrency((Number(item.price) || 0) * (Number(item.quantity) || 0))
+                                            }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <span v-if="item.service_type" 
-                                                  :class="getServiceTypeClass(item.service_type)">
+                                            <span v-if="item.service_type"
+                                                :class="getServiceTypeClass(item.service_type)">
                                                 {{ formatServiceType(item.service_type) }}
                                             </span>
                                         </td>
                                     </tr>
-                                    
+
                                     <!-- Thêm dòng tổng cộng -->
                                     <tr class="bg-gray-50">
                                         <td colspan="4" class="px-6 py-4 text-right font-medium">
@@ -222,28 +233,20 @@
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Hình thức thanh toán</label>
                                 <div class="flex space-x-4">
-                                    <button 
-                                        type="button"
-                                        @click="selectPaymentType('full')"
-                                        :class="[
-                                            'px-4 py-2 rounded-md',
-                                            paymentType === 'full' 
-                                                ? 'bg-blue-500 text-white' 
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        ]"
-                                    >
+                                    <button type="button" @click="selectPaymentType('full')" :class="[
+                                        'px-4 py-2 rounded-md',
+                                        paymentType === 'full'
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ]">
                                         Thanh toán tất cả ({{ formatCurrency(invoice.remaining_amount) }})
                                     </button>
-                                    <button 
-                                        type="button"
-                                        @click="selectPaymentType('partial')"
-                                        :class="[
-                                            'px-4 py-2 rounded-md',
-                                            paymentType === 'partial' 
-                                                ? 'bg-blue-500 text-white' 
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        ]"
-                                    >
+                                    <button type="button" @click="selectPaymentType('partial')" :class="[
+                                        'px-4 py-2 rounded-md',
+                                        paymentType === 'partial'
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ]">
                                         Thanh toán một phần
                                     </button>
                                 </div>
@@ -252,25 +255,19 @@
                             <!-- Amount Input -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Số tiền thanh toán</label>
-                                <input 
-                                    type="number" 
-                                    v-model="paymentAmount"
-                                    :max="invoice.remaining_amount"
+                                <input type="number" v-model="paymentAmount" :max="invoice.remaining_amount"
                                     :readonly="paymentType === 'full'"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    required
-                                />
+                                    required />
                                 <p class="mt-1 text-sm text-gray-500">
                                     Số tiền còn lại cần thanh toán: {{ formatCurrency(invoice.remaining_amount) }}
                                 </p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Phương thức thanh toán</label>
-                                <select 
-                                    v-model="paymentMethod"
+                                <select v-model="paymentMethod"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    required
-                                >
+                                    required>
                                     <option value="cash">Tiền mặt</option>
                                     <option value="bank_transfer">Chuyển khoản</option>
                                     <option value="card">Thẻ</option>
@@ -278,17 +275,13 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Ghi chú</label>
-                                <textarea 
-                                    v-model="paymentNote"
+                                <textarea v-model="paymentNote"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    rows="2"
-                                ></textarea>
+                                    rows="2"></textarea>
                             </div>
-                            <button 
-                                type="submit"
+                            <button type="submit"
                                 class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-                                :disabled="processing"
-                            >
+                                :disabled="processing">
                                 {{ processing ? 'Đang xử lý...' : 'Xác nhận thanh toán' }}
                             </button>
                         </form>
@@ -301,25 +294,32 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead>
                                     <tr>
-                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Thời gian
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Số tiền
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Phương thức
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Trạng thái cũ
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Trạng thái mới
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Người thực hiện
                                         </th>
-                                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th
+                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Ghi chú
                                         </th>
                                     </tr>
@@ -362,14 +362,13 @@
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-lg font-semibold">Thông tin đơn hàng</h2>
                             <!-- Thêm nút liên kết đến đơn hàng -->
-                            <Link v-if="invoice.order" 
-                                :href="route('orders.show', invoice.order.id)"
+                            <Link v-if="invoice.order" :href="route('orders.show', invoice.order.id)"
                                 class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-lg flex items-center transition-colors">
-                                <i class="mdi mdi-shopping-outline mr-2"></i>
-                                Xem đơn hàng #{{ invoice.order.id }}
+                            <i class="mdi mdi-shopping-outline mr-2"></i>
+                            Xem đơn hàng #{{ invoice.order.id }}
                             </Link>
                         </div>
-                        
+
                         <!-- Thêm thông tin tổng quan về đơn hàng -->
                         <div v-if="invoice.order" class="grid grid-cols-2 gap-6">
                             <div class="space-y-3">
@@ -389,13 +388,15 @@
                                     <span class="text-gray-600">Tổng tiền hàng:</span>
                                     <span class="font-medium">{{ formatCurrency(invoice.order.total_amount) }}</span>
                                 </div>
-                                <div v-if="invoice.order.discount_amount > 0" class="flex justify-between text-green-600">
+                                <div v-if="invoice.order.discount_amount > 0"
+                                    class="flex justify-between text-green-600">
                                     <span>Giảm giá:</span>
-                                    <span class="font-medium">-{{ formatCurrency(invoice.order.discount_amount) }}</span>
+                                    <span class="font-medium">-{{ formatCurrency(invoice.order.discount_amount)
+                                        }}</span>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Hiển thị thông báo nếu không có đơn hàng liên kết -->
                         <div v-else class="text-center py-4 text-gray-500">
                             Hóa đơn này không liên kết với đơn hàng nào
@@ -407,9 +408,7 @@
 
         <!-- Print Template -->
         <div class="print-only" ref="printSection">
-            <PrintInvoiceTemplate 
-                :invoice="invoice"
-            />
+            <PrintInvoiceTemplate :invoice="invoice" />
         </div>
 
         <!-- Thêm Toast component -->
@@ -421,12 +420,10 @@
                 <h3 class="text-lg font-semibold mb-4">Xác nhận hủy hóa đơn</h3>
                 <p class="mb-4">Bạn có chắc chắn muốn hủy hóa đơn này? Hành động này không thể hoàn tác.</p>
                 <div class="flex justify-end space-x-4">
-                    <button @click="showCancelModal = false" 
-                        class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">
+                    <button @click="showCancelModal = false" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">
                         Đóng
                     </button>
-                    <button @click="cancelInvoice" 
-                        class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded">
+                    <button @click="cancelInvoice" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded">
                         Xác nhận hủy
                     </button>
                 </div>
@@ -452,7 +449,7 @@ export default {
         SectionMain,
         PrintInvoiceTemplate,
     },
-    
+
     props: {
         invoice: {
             type: Object,
@@ -518,7 +515,7 @@ export default {
                     note: paymentNote.value,
                     payment_proof: null
                 })
-                
+
                 // Hiển thị toast thành công
                 toast.success("Đã cập nhật thanh toán cho hóa đơn")
 
@@ -533,7 +530,7 @@ export default {
                 // Reset form
                 paymentAmount.value = 0
                 paymentNote.value = ''
-                
+
             } catch (error) {
                 console.error('Payment processing error:', error)
                 toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xử lý thanh toán')
@@ -543,9 +540,9 @@ export default {
         }
 
         const calculateSubtotal = () => {
-            if (!props.invoice?.order?.items?.length) return 0;
-            
-            return props.invoice.order.items.reduce((sum, item) => {
+            if (!props.invoice?.order?.orderItems?.length) return 0;
+
+            return props.invoice.order.orderItems.reduce((sum, item) => {
                 const price = Number(item.price) || 0;
                 const quantity = Number(item.quantity) || 0;
                 return sum + (price * quantity);
@@ -557,7 +554,7 @@ export default {
             if (props.invoice?.order?.total_amount && props.invoice?.order?.discount_amount) {
                 return Number(props.invoice.order.total_amount) + Number(props.invoice.order.discount_amount);
             }
-            
+
             // Nếu không có thông tin giảm giá, tính từ items
             return calculateSubtotal();
         });
@@ -566,10 +563,10 @@ export default {
             // Đảm bảo amount là số
             const numAmount = Number(amount);
             if (isNaN(numAmount)) return '0 ₫';
-            
-            return new Intl.NumberFormat('vi-VN', { 
-                style: 'currency', 
-                currency: 'VND' 
+
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
             }).format(numAmount);
         }
 
@@ -649,13 +646,13 @@ export default {
 
         const getVoucherDescription = (voucher) => {
             if (!voucher) return '';
-            
+
             if (voucher.discount_type === 'percentage') {
                 return `Giảm ${voucher.discount_value}%`;
             } else if (voucher.discount_type === 'fixed') {
                 return `Giảm ${formatCurrency(voucher.discount_value)}`;
             }
-            
+
             return voucher.description || '';
         }
 
@@ -663,24 +660,24 @@ export default {
             if (!voucher) {
                 return '';
             }
-            
+
             let description = '';
-            
-            
+
+
             if (voucher.discount_type === 'percentage') {
                 description = `Giảm ${voucher.discount_value}% `;
             } else if (voucher.discount_type === 'fixed') {
                 description = `Giảm ${formatCurrency(voucher.discount_value)} `;
             }
-            
+
             if (voucher.min_order_amount) {
                 description += `cho đơn hàng từ ${formatCurrency(voucher.min_order_amount)}`;
             }
-            
+
             if (voucher.start_date && voucher.end_date) {
                 description += ` (Có hiệu lực: ${formatDateTime(voucher.start_date)} - ${formatDateTime(voucher.end_date)})`;
             }
-            
+
             return description || voucher.description || '';
         }
 
@@ -691,12 +688,12 @@ export default {
 
             const discountAmount = Number(order.discount_amount);
             const totalAmount = Number(subtotalAmount.value);
-            
+
             if (discountAmount && totalAmount) {
                 const percentage = ((discountAmount / totalAmount) * 100).toFixed(1);
                 return `Giảm ${percentage}% (${formatCurrency(discountAmount)})`;
             }
-            
+
             return `Giảm ${formatCurrency(order.discount_amount)}`;
         });
 
@@ -716,13 +713,13 @@ export default {
         const cancelInvoice = async () => {
             try {
                 const response = await axios.post(`/invoices/${props.invoice.id}/cancel`)
-                
+
                 // Hiển thị thông báo thành công
                 toast.success("Hóa đơn đã được hủy thành công")
-                
+
                 // Reload trang để cập nhật dữ liệu
                 router.reload({ only: ['invoice'] })
-                
+
                 // Đóng modal
                 showCancelModal.value = false
             } catch (error) {
@@ -796,11 +793,12 @@ export default {
 
 /* Print styles */
 @media print {
+
     /* Hide everything except print template */
     body * {
         visibility: hidden;
     }
-    
+
     .print-only,
     .print-only * {
         visibility: visible !important;
@@ -821,4 +819,3 @@ export default {
     }
 }
 </style>
-

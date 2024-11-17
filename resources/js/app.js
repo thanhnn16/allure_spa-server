@@ -76,10 +76,19 @@ const registerServiceWorker = async () => {
             });
 
             if (token) {
-                await axios.post('/api/fcm/token', {
-                    token,
-                    device_type: 'web'
-                });
+                try {
+                    await axios.post('/api/fcm/token', {
+                        token,
+                        device_type: 'web'
+                    });
+                } catch (error) {
+                    if (error.response && error.response.status === 401) {
+                        console.warn('Unauthorized. Please log in again.');
+                        // Xử lý đăng nhập lại hoặc hiển thị thông báo lỗi
+                    } else {
+                        throw error;
+                    }
+                }
             }
         }
     } catch (error) {

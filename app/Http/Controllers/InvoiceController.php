@@ -107,10 +107,10 @@ class InvoiceController extends BaseController
     {
         $invoice = Invoice::with([
             'user',
-            'order.items.item',
+            'order.orderItems.item',
             'order' => function ($query) {
                 $query->with([
-                    'items' => function ($query) {
+                    'orderItems' => function ($query) {
                         $query->with([
                             'service' => function ($query) {
                                 $query->withTrashed();

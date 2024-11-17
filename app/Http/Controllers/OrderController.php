@@ -177,8 +177,7 @@ class OrderController extends BaseController
     {
         $order->load([
             'user',
-            'order_items.product',
-            'order_items.service',
+            'orderItems',
             'invoice'
         ]);
 
@@ -196,7 +195,7 @@ class OrderController extends BaseController
 
     public function edit(Order $order)
     {
-        $order->load(['user', 'order_items']);
+        $order->load(['user', 'orderItems']);
         return Inertia::render('Order/OrderEdit', [
             'order' => $order
         ]);
@@ -401,7 +400,7 @@ class OrderController extends BaseController
             }
 
             DB::commit();
-            return $this->respondWithJson($order->load('order_items'), 'Order created successfully');
+            return $this->respondWithJson($order->load('orderItems'), 'Order created successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->respondWithError($e->getMessage());
@@ -602,7 +601,7 @@ class OrderController extends BaseController
             ]);
 
             return $this->respondWithJson(
-                $order->load(['order_items', 'invoice']),
+                $order->load(['orderItems', 'invoice']),
                 'Cập nhật trạng thái đơn hàng thành công'
             );
         } catch (\Exception $e) {
@@ -677,7 +676,7 @@ class OrderController extends BaseController
             ]);
 
             return $this->respondWithJson(
-                $order->load(['cancelledBy']), 
+                $order->load(['cancelledBy']),
                 'Hủy đơn hàng thành công'
             );
         } catch (\Exception $e) {
@@ -685,9 +684,32 @@ class OrderController extends BaseController
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/orders/{order}/complete",
+     *     summary="Complete an order (Admin only)",
+     *     tags={"Orders"},
+     *     security={{ "sanctum": {} }},
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Order completed successfully"
+     *     )
+     * )
+     */
     public function complete(Request $request, Order $order)
     {
         try {
+            // Kiểm tra quyền admin
+            if (Auth::user()->role !== 'admin') {
+                return $this->respondWithError('Bạn không có quyền thực hiện hành động này', 403);
+            }
+
             $this->orderService->completeOrder($order);
             return $this->respondWithJson($order->fresh(), 'Đơn hàng đã hoàn thành thành công');
         } catch (\Exception $e) {

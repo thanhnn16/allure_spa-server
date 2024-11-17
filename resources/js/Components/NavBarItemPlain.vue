@@ -9,10 +9,11 @@ defineProps({
 </script>
 
 <template>
-  <div
-    :class="[display, useMargin ? 'my-2 mx-3' : 'py-2 px-3']"
-    class="navbar-item-label items-center cursor-pointer dark:text-white dark:hover:text-slate-400"
-  >
+  <div :class="[
+    display,
+    useMargin ? 'mx-3' : 'px-3 py-2',
+    'items-center cursor-pointer rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors'
+  ]" class="navbar-item-label">
     <slot />
   </div>
 </template>

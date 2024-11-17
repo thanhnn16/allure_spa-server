@@ -46,40 +46,33 @@ const menuClick = (event) => {
         isDropdownActive.value = !isDropdownActive.value
     }
 }
+
+const isActive = computed(() => 
+    props.item.route && route().current(props.item.route)
+)
+
 </script>
 
 <template>
     <li>
-        <component :is="item.route ? Link : 'a'" 
-            :href="itemHref" 
-            :target="item.target ?? null"
-            class="flex items-center cursor-pointer" 
-            :class="componentClass" 
-            @click="menuClick">
-            <BaseIcon 
-                v-if="item.icon" 
-                :path="item.icon" 
-                class="flex-none" 
-                :class="activeInactiveStyle" 
-                w="w-6" 
-                :size="18" />
-            <span class="grow text-ellipsis line-clamp-1 ml-3" 
-                :class="[{ 'pr-12': !hasDropdown }]">
+        <component :is="item.route ? Link : 'a'" :href="itemHref" :target="item.target ?? null"
+            class="flex items-center cursor-pointer rounded-lg mx-3 transition-all duration-200" :class="[
+                componentClass,
+                'hover:translate-x-1',
+                isDropdownList ? 'py-2 px-4 text-sm' : 'py-2.5 px-4'
+            ]" @click="menuClick">
+            <BaseIcon v-if="item.icon" :path="item.icon" class="flex-none transition-colors"
+                :class="[activeInactiveStyle, isActive ? 'text-primary-500' : '']" w="w-5" :size="16" />
+            <span class="grow text-ellipsis line-clamp-1 ml-3" :class="[{ 'pr-12': !hasDropdown }]">
                 {{ item.label }}
             </span>
-            <BaseIcon 
-                v-if="hasDropdown" 
-                :path="isDropdownActive ? mdiMinus : mdiPlus" 
-                class="flex-none" 
-                w="w-6" />
+            <BaseIcon v-if="hasDropdown" :path="isDropdownActive ? mdiMinus : mdiPlus"
+                class="flex-none w-4 transition-transform" :class="{ 'rotate-180': isDropdownActive }" />
         </component>
-        <AsideMenuList 
-            v-if="hasDropdown" 
-            :menu="item.menu"
-            :class="[
-                'aside-menu-dropdown',
-                isDropdownActive ? 'block bg-gray-50 dark:bg-slate-800/50' : 'hidden'
-            ]"
-            is-dropdown-list />
+        <div v-if="hasDropdown" class="overflow-hidden transition-all duration-300"
+            :class="[isDropdownActive ? 'max-h-screen' : 'max-h-0']">
+            <AsideMenuList :menu="item.menu" class="pl-4 mt-2 border-l-2 border-gray-100 dark:border-dark-border"
+                is-dropdown-list />
+        </div>
     </li>
 </template>

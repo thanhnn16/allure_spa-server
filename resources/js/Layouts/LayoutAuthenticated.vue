@@ -31,11 +31,7 @@ const isAsideLgActive = computed(() => layoutStore.isAsideLgActive)
 
 // Thêm method để toggle menu
 const toggleMenu = () => {
-    if (window.innerWidth >= 1024) {
-        layoutStore.toggleAside()
-    } else {
-        isAsideMobileExpanded.value = !isAsideMobileExpanded.value
-    }
+    layoutStore.toggleAside()
 }
 
 // Reset menu state khi navigate
@@ -73,51 +69,35 @@ const markAllAsRead = async () => {
 </script>
 
 <template>
-    <div :class="{ 'overflow-hidden lg:overflow-visible': isAsideMobileExpanded }">
-        <div :class="[
-            'pt-14 min-h-screen w-screen transition-position lg:w-auto bg-gray-50 dark:bg-slate-800 dark:text-slate-100',
-            { 'lg:ml-78': isAsideLgActive }
-        ]">
-            <!-- Navbar -->
-            <NavBar :menu="menuNavBar" class="fixed w-full top-0 z-50" @menu-click="menuClick">
-                <!-- Burger button -->
-                <NavBarItemPlain display="flex" @click.prevent="toggleMenu">
-                    <BaseIcon :path="isAsideMobileExpanded || isAsideLgActive ? mdiBackburger : mdiForwardburger"
-                        size="24" />
-                </NavBarItemPlain>
+    <div class="bg-gray-50 dark:bg-slate-800 min-h-screen">
+        <NavBar :menu="menuNavBar" class="fixed w-full top-0 z-50" @menu-click="menuClick" />
 
-                <NavBarItemPlain display="hidden lg:flex xl:hidden" @click.prevent="isAsideLgActive = true">
-                    <BaseIcon :path="mdiMenu" size="24" />
-                </NavBarItemPlain>
+        <div class="flex min-h-screen pt-14">
+            <AsideMenu :is-aside-mobile-expanded="layoutStore.isAsideMobileExpanded"
+                :is-aside-lg-active="layoutStore.isAsideLgActive" :menu="menuAside" @menu-click="menuClick" />
 
-                <NavBarItemPlain use-margin>
-                    <FormControl placeholder="Tìm kiếm (ctrl+k)" ctrl-k-focus transparent borderless />
-                </NavBarItemPlain>
-            </NavBar>
-
-            <!-- AsideMenu -->
-            <AsideMenu :class="[
-                isAsideMobileExpanded ? 'left-0' : '-left-78',
-                isAsideLgActive ? 'lg:left-0' : 'lg:-left-78',
-                'fixed top-0 h-screen z-40 transition-all duration-300 ease-in-out'
-            ]" :menu="menuAside" :is-aside-mobile-expanded="isAsideMobileExpanded"
-                :is-aside-lg-active="isAsideLgActive" @menu-click="menuClick"
-                @aside-lg-close-click="isAsideLgActive = false" />
-
-            <!-- Main content -->
-            <div :class="[
-                isAsideLgActive ? 'lg:ml-78' : 'lg:ml-0',
-                'transition-all duration-300 ease-in-out'
-            ]">
-                <SectionMain :is-aside-lg-active="isAsideLgActive">
-                    <slot />
-                </SectionMain>
-
-                <FooterBar>
-                    Cần hỗ trợ? Gọi ngay:
-                    <a href="tel:0346542636" target="_blank" class="text-blue-600">0346542636 - Thành</a>
-                </FooterBar>
-            </div>
+            <main class="flex-1 transition-all duration-300 ease-in-out w-full"
+                :class="[layoutStore.isAsideLgActive ? 'lg:pl-24' : 'lg:pl-16']">
+                <slot />
+                <FooterBar />
+            </main>
         </div>
     </div>
 </template>
+
+<style scoped>
+.aside-menu {
+    z-index: 40;
+    transition: transform 0.3s ease;
+}
+
+@media (max-width: 1024px) {
+    .aside-menu {
+        transform: translateX(-100%);
+    }
+
+    .aside-menu[data-expanded="true"] {
+        transform: translateX(0);
+    }
+}
+</style>

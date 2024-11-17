@@ -85,7 +85,7 @@ class OrderService
             ]);
 
             DB::commit();
-            return $order->load('order_items');
+            return $order->load('orderItems');
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -214,8 +214,12 @@ class OrderService
     {
         DB::transaction(function () use ($order) {
             // Kiểm tra điều kiện để hoàn thành order
-            if (!$this->canComplete($order)) {
-                throw new \Exception('Không thể hoàn thành đơn hàng này');
+            if ($order->status === Order::STATUS_COMPLETED) {
+                throw new \Exception('Đơn hàng đã được hoàn thành');
+            }
+
+            if ($order->status === Order::STATUS_CANCELLED) {
+                throw new \Exception('Không thể hoàn thành đơn hàng đã hủy');
             }
 
             // Cập nhật trạng thái order
@@ -223,40 +227,23 @@ class OrderService
             $order->save();
 
             // Xử lý các order items
-            foreach ($order->order_items as $item) {
-                if ($item->item_type === 'product') {
-                    // Cập nhật số lượng sản phẩm trong kho
-                    $this->updateProductInventory($item);
-                } elseif ($item->item_type === 'service' && $item->service_type) {
+            foreach ($order->orderItems as $item) {
+                if ($item->item_type === 'service' && $item->service_type) {
                     // Tạo gói dịch vụ cho khách hàng
                     $this->createServicePackage($order, $item);
                 }
             }
 
-            // Tạo hóa đơn
-            $this->createInvoice($order);
-
-            // Cập nhật điểm tích lũy cho khách hàng
-            $this->updateLoyaltyPoints($order);
+            // Gửi thông báo cho khách hàng
+            $this->notificationService->createNotification([
+                'user_id' => $order->user_id,
+                'title' => 'Đơn hàng hoàn thành',
+                'content' => "Đơn hàng #{$order->id} của bạn đã hoàn thành",
+                'type' => 'order_completed'
+            ]);
         });
-    }
 
-    private function canComplete(Order $order): bool
-    {
-        // Kiểm tra các điều kiện để hoàn thành order
-        return $order->status === Order::STATUS_CONFIRMED
-            && $order->payment_status === 'paid'
-            && (!$this->hasPhysicalProducts($order) || $order->status === Order::STATUS_SHIPPING);
-    }
-
-    private function hasPhysicalProducts(Order $order): bool
-    {
-        return $order->order_items()
-            ->where('item_type', 'product')
-            ->whereHas('product', function ($query) {
-                $query->where('type', 'physical');
-            })
-            ->exists();
+        return $order;
     }
 
     private function createServicePackage(Order $order, OrderItem $item)

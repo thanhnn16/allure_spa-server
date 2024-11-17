@@ -15,21 +15,32 @@ module.exports = {
             gray: "gray",
         },
         extend: {
+            spacing: {
+                '78': '19.5rem',
+            },
             colors: {
-                'dark-bg': '#1a1b1e',
-                'dark-surface': '#2c2e33',
-                'dark-border': '#404040',
+                'dark-bg': '#0f172a',
+                'dark-surface': '#1e293b',
+                'dark-border': '#334155',
                 'dark-text': '#e5e5e5',
                 'dark-muted': '#6b7280',
                 'dark-modal': '#374151',
                 'primary': {
+                    50: '#eff6ff',
+                    100: '#dbeafe',
+                    200: '#bfdbfe',
+                    300: '#93c5fd',
                     400: '#60a5fa',
                     500: '#3b82f6',
                     600: '#2563eb',
+                    700: '#1d4ed8',
                 }
             },
             zIndex: {
                 "-1": "-1",
+                30: '30',
+                40: '40',
+                50: '50'
             },
             flexGrow: {
                 5: "5",
@@ -55,6 +66,20 @@ module.exports = {
             animation: {
                 "fade-out": "fade-out 250ms ease-in-out",
                 "fade-in": "fade-in 250ms ease-in-out",
+            },
+            width: {
+                64: '16rem'
+            },
+            boxShadow: {
+                'aside': '0 2px 8px 0 rgb(0 0 0 / 0.1)',
+                'menu': '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+            },
+            '.no-scrollbar::-webkit-scrollbar': {
+                display: 'none',
+            },
+            '.no-scrollbar': {
+                '-ms-overflow-style': 'none',
+                'scrollbar-width': 'none',
             },
         },
     },

@@ -122,7 +122,7 @@ const calendarOptions = computed(() => ({
     eventDidMount: (info) => {
         const event = info.event;
         const props = event.extendedProps;
-        
+
         let tooltipContent = `
             <div class="p-2">
                 <div class="font-bold">${props.userName || 'Không xác định'}</div>

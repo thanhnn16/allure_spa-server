@@ -46,13 +46,13 @@ const itemHref = computed(() => {
 const componentClass = computed(() => {
     const base = [
         isDropdownActive.value
-            ? `navbar-item-label-active dark:text-slate-400`
-            : `navbar-item-label dark:text-white dark:hover:text-slate-400`,
-        props.item.menu ? 'lg:py-2 lg:px-3' : 'py-2 px-3'
+            ? `navbar-item-label-active`
+            : `navbar-item-label`,
+        'relative flex items-center px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700'
     ]
 
     if (props.item.isDesktopNoLabel) {
-        base.push('lg:w-16', 'lg:justify-center')
+        base.push('lg:w-10', 'lg:justify-center')
     }
 
     return base
@@ -144,33 +144,28 @@ const darkModeIcon = computed(() => {
 
 <template>
     <BaseDivider v-if="item.isDivider" nav-bar />
-    <component :is="is" v-else ref="root" class="block lg:flex items-center relative cursor-pointer"
-        :class="componentClass" :href="itemHref" :target="item.target ?? null" @click="menuClick">
-        <div class="flex items-center" :class="{
-            'bg-gray-100 dark:bg-slate-800 lg:bg-transparent lg:dark:bg-transparent p-3 lg:p-0':
-                item.menu
-        }">
-            <UserAvatarCurrentUser v-if="item.isCurrentUser" :fullName="item.fullName || ''"
-                :avatar-url="item.avatarUrl" size="sm" class="mr-3 inline-flex" />
-            <div v-else-if="item.icon === mdiBell" class="relative">
-                <BaseIcon :path="item.icon" class="transition-colors w-6 h-6 mr-3" />
+    <component :is="is" ref="root" class="block lg:flex items-center relative cursor-pointer" :class="componentClass"
+        :href="itemHref" :target="item.target ?? null" @click="menuClick">
+        <div class="flex items-center gap-2">
+            <div v-if="item.icon === mdiBell" class="relative">
+                <BaseIcon :path="item.icon" class="transition-colors w-5 h-5" />
                 <span v-if="notificationStore.unreadCount"
-                    class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                    class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-medium">
                     {{ notificationStore.unreadCount }}
                 </span>
             </div>
-            <BaseIcon v-else-if="item.icon" :path="darkModeIcon" class="transition-colors w-6 h-6 mr-3" :class="{
+            <BaseIcon v-else-if="item.icon" :path="darkModeIcon" class="transition-colors w-5 h-5" :class="{
                 'text-yellow-500': !layoutStore.isDark && item.isToggleLightDark,
                 'text-blue-500': layoutStore.isDark && item.isToggleLightDark
             }" />
-            <span class="px-2 transition-colors" :class="{ 'lg:hidden': item.isDesktopNoLabel && item.icon }">
+            <span class="transition-colors" :class="{ 'lg:hidden': item.isDesktopNoLabel && item.icon }">
                 {{ itemLabel }}
             </span>
             <BaseIcon v-if="item.menu" :path="isDropdownActive ? mdiChevronUp : mdiChevronDown"
-                class="hidden lg:inline-flex transition-colors" />
+                class="hidden lg:inline-flex w-4 h-4 transition-transform" />
         </div>
         <div v-if="item.menu || item.isNotification"
-            class="text-sm border-b border-gray-100 lg:border lg:bg-white lg:absolute lg:top-full lg:right-0 lg:min-w-[300px] lg:z-20 lg:rounded-lg lg:shadow-lg lg:dark:bg-slate-800 dark:border-slate-700"
+            class="lg:absolute lg:top-full lg:right-0 lg:mt-2 lg:min-w-[300px] bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 overflow-hidden"
             :class="{ 'lg:hidden': !isDropdownActive }">
             <div v-if="item.isNotification">
                 <div v-if="notificationMenu.length === 0" class="p-8 text-center">

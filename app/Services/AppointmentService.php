@@ -12,11 +12,21 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\TimeSlot;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\UserServicePackage;
+use App\Models\ServiceUsageHistory;
 
 class AppointmentService
 {
     protected $firebaseService;
     protected $notificationService;
+
+    // Thêm constant cho các loại lịch hẹn
+    const APPOINTMENT_TYPES = [
+        'service' => 'Thực hiện dịch vụ',
+        'service_package' => 'Thực hiện combo',
+        'consultation' => 'Tư vấn',
+        'others' => 'Khác'
+    ];
 
     public function __construct(
         FirebaseService $firebaseService,
@@ -61,18 +71,25 @@ class AppointmentService
     {
         return DB::transaction(function () use ($data) {
             try {
+                // Validate appointment type
+                if (!isset($data['appointment_type']) || 
+                    !array_key_exists($data['appointment_type'], self::APPOINTMENT_TYPES)) {
+                    throw new \Exception('Loại lịch hẹn không hợp lệ');
+                }
+
+                // Validate service or package selection based on appointment type
+                if ($data['appointment_type'] === 'service' && empty($data['service_id'])) {
+                    throw new \Exception('Vui lòng chọn dịch vụ');
+                }
+
+                if ($data['appointment_type'] === 'service_package' && empty($data['user_service_package_id'])) {
+                    throw new \Exception('Vui lòng chọn gói combo');
+                }
+
                 // Validate and convert types for numeric fields
                 $data['service_id'] = (int) $data['service_id'];
                 $data['slots'] = (int) ($data['slots'] ?? 1);
                 $data['time_slot_id'] = (int) $data['time_slot_id'];
-
-                // Ensure appointment_type is valid
-                if (
-                    !isset($data['appointment_type']) ||
-                    !in_array($data['appointment_type'], Appointment::APPOINTMENT_TYPES)
-                ) {
-                    $data['appointment_type'] = 'others';
-                }
 
                 // Xác định user_id (giữ nguyên dạng string nếu là UUID)
                 $userId = $data['user_id'] ?? Auth::id();
@@ -128,6 +145,25 @@ class AppointmentService
 
                 $appointment = Appointment::create($appointmentData);
 
+                // Nếu là appointment type service_package và có user_service_package_id
+                if ($appointment->appointment_type === 'service_package' && 
+                    isset($data['user_service_package_id'])) {
+                    
+                    $package = UserServicePackage::findOrFail($data['user_service_package_id']);
+                    
+                    // Tính số lần cần trừ dựa vào số slots
+                    $sessionsToDeduct = $appointmentData['slots'];
+                    
+                    // Kiểm tra xem còn đủ số lần không
+                    if ($package->remaining_sessions < $sessionsToDeduct) {
+                        throw new \Exception('Không đủ số lần trong gói combo');
+                    }
+                    
+                    // Cập nhật số lần sử dụng
+                    $package->used_sessions += $sessionsToDeduct;
+                    $package->save();
+                }
+
                 // Load relationships
                 $appointment->load(['user', 'service', 'timeSlot']);
 
@@ -167,7 +203,7 @@ class AppointmentService
 
                 return [
                     'status' => 500,
-                    'message' => 'Đã xảy ra lỗi khi tạo lịch hẹn',
+                    'message' => $e->getMessage(),
                     'data' => null
                 ];
             }
@@ -179,6 +215,25 @@ class AppointmentService
         try {
             $appointment = Appointment::findOrFail($id);
             $oldStatus = $appointment->status;
+
+            // Nếu đang cập nhật status thành completed và là service_package
+            if (isset($data['status']) && 
+                $data['status'] === 'completed' && 
+                $appointment->appointment_type === 'service_package') {
+                
+                // Tìm và cập nhật user_service_package
+                if ($appointment->user_service_package_id) {
+                    $package = UserServicePackage::findOrFail($appointment->user_service_package_id);
+                    
+                    // Tạo service usage history
+                    ServiceUsageHistory::create([
+                        'user_service_package_id' => $package->id,
+                        'used_date' => now(),
+                        'staff_user_id' => $appointment->staff_user_id,
+                        'note' => "Sử dụng {$appointment->slots} lần trong lịch hẹn #{$appointment->id}"
+                    ]);
+                }
+            }
 
             // Chỉ cập nhật các trường được phép
             $updateData = array_filter([
@@ -535,5 +590,11 @@ class AppointmentService
                 'data' => []
             ];
         }
+    }
+
+    // Thêm helper method để lấy danh sách loại lịch hẹn
+    public function getAppointmentTypes()
+    {
+        return self::APPOINTMENT_TYPES;
     }
 }

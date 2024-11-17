@@ -63,16 +63,11 @@ class Order extends Model
     const STATUS_COMPLETED = 'completed'; // Hoàn thành
     const STATUS_CANCELLED = 'cancelled'; // Đã hủy
 
-    public function items()
+    public function orderItems()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->hasMany(OrderItem::class)->with(['product', 'service']);
     }
-
-    public function order_items()
-    {
-        return $this->hasMany(OrderItem::class);
-    }
-
+    
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -103,7 +98,7 @@ class Order extends Model
         return $this->belongsTo(User::class, 'cancelled_by_user_id');
     }
 
-    // Thêm helper methods để kiểm tra trạng thái
+    // Helper methods
     public function isPending()
     {
         return $this->status === self::STATUS_PENDING;
@@ -127,5 +122,25 @@ class Order extends Model
     public function isCancelled()
     {
         return $this->status === self::STATUS_CANCELLED;
+    }
+
+    // Thêm accessor để tính tổng số lượng items
+    public function getTotalItemsAttribute()
+    {
+        return $this->orderItems->sum('quantity');
+    }
+
+    // Thêm accessor để tính tổng tiền trước giảm giá
+    public function getSubtotalAttribute()
+    {
+        return $this->orderItems->sum(function ($item) {
+            return $item->price * $item->quantity;
+        });
+    }
+
+    // Thêm accessor để tính tổng tiền sau giảm giá
+    public function getFinalTotalAttribute()
+    {
+        return $this->subtotal - ($this->discount_amount ?? 0);
     }
 }

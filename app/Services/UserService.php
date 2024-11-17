@@ -20,7 +20,7 @@ class UserService
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('full_name', 'like', '%' . $request->search . '%')
-                  ->orWhere('phone_number', 'like', '%' . $request->search . '%');
+                    ->orWhere('phone_number', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -60,11 +60,23 @@ class UserService
     {
         return User::with([
             'addresses',
-            'userServicePackages.service_combo.service',
+            'userServicePackages' => function ($query) {
+                $query->with([
+                    'service',
+                    'treatmentSessions.staff',
+                    'nextAppointment',
+                    'order.orderItems'
+                ]);
+            },
             'invoices',
             'vouchers',
-            'orders.order_items.product',
-            'orders.order_items.service'
+            'orders' => function ($query) {
+                $query->with([
+                    'orderItems' => function ($query) {
+                        $query->with(['product', 'service']);
+                    }
+                ]);
+            }
         ])->findOrFail($id);
     }
 

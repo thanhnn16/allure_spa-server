@@ -1,10 +1,13 @@
 <script setup>
-import { ref } from 'vue'
-import { mdiClose, mdiDotsVertical } from '@mdi/js'
+import { ref, computed } from 'vue'
 import { containerMaxW } from '@/config.js'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import NavBarMenuList from '@/Components/NavBarMenuList.vue'
 import NavBarItemPlain from '@/Components/NavBarItemPlain.vue'
+import { mdiMenu } from '@mdi/js'
+import { useLayoutStore } from '@/Stores/layoutStore'
+
+const layoutStore = useLayoutStore()
 
 defineProps({
   menu: {
@@ -18,29 +21,57 @@ const emit = defineEmits(['menu-click'])
 const menuClick = (event, item) => {
   emit('menu-click', event, item)
 }
-
-const isMenuNavBarActive = ref(false)
 </script>
 
 <template>
-  <nav
-    class="top-0 inset-x-0 fixed bg-gray-50 h-14 z-10 transition-position w-screen lg:w-auto dark:bg-slate-800"
-  >
-    <div class="flex lg:items-stretch" :class="containerMaxW">
-      <div class="flex flex-1 items-stretch h-14">
+  <nav class="top-0 inset-x-0 fixed bg-white dark:bg-slate-800 h-14 z-30 transition-all duration-300 ease-in-out
+              border-b border-gray-100 dark:border-slate-700">
+    <div class="flex h-full items-center justify-between px-4 lg:px-6">
+      <!-- Left section -->
+      <div class="flex items-center gap-4">
+        <!-- Mobile Burger Menu -->
+        <button class="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+          @click="layoutStore.toggleAside">
+          <BaseIcon :path="mdiMenu" class="w-6 h-6 text-gray-500 dark:text-gray-400" />
+        </button>
+
+        <!-- Brand/Logo -->
+        <div class="flex items-center">
+          <h1 class="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 
+                     bg-clip-text text-transparent">
+            Allure Spa
+          </h1>
+        </div>
+
+        <slot name="left" />
+      </div>
+
+      <!-- Center section -->
+      <div class="flex-1 flex items-center justify-center">
         <slot />
       </div>
-      <div class="flex-none items-stretch flex h-14 lg:hidden">
-        <NavBarItemPlain @click.prevent="isMenuNavBarActive = !isMenuNavBarActive">
-          <BaseIcon :path="isMenuNavBarActive ? mdiClose : mdiDotsVertical" size="24" />
-        </NavBarItemPlain>
-      </div>
-      <div
-        class="max-h-screen-menu overflow-y-auto lg:overflow-visible absolute w-screen top-14 left-0 bg-gray-50 shadow-lg lg:w-auto lg:flex lg:static lg:shadow-none dark:bg-slate-800"
-        :class="[isMenuNavBarActive ? 'block' : 'hidden']"
-      >
+
+      <!-- Right section -->
+      <div class="flex items-center gap-3">
         <NavBarMenuList :menu="menu" @menu-click="menuClick" />
+        <slot name="right" />
       </div>
     </div>
   </nav>
 </template>
+
+<style scoped>
+/* Add smooth transition for menu items */
+:deep(.navbar-item-label) {
+  @apply transition-colors duration-200;
+}
+
+:deep(.navbar-item-label-active) {
+  @apply text-primary-600 dark:text-primary-400;
+}
+
+/* Add hover effect for menu items */
+:deep(.navbar-item-label:hover) {
+  @apply text-primary-600 dark:text-primary-400;
+}
+</style>

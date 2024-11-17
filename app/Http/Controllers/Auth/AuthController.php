@@ -92,7 +92,15 @@ class AuthController extends BaseController
                 'session_id' => session()->getId()
             ]);
 
-            return redirect()->intended(route('dashboard'))->with('auth_check', true);
+            // Tạo lại token CSRF và gán vào session và cookie
+            $newCsrfToken = csrf_token();
+            $request->session()->put('_token', $newCsrfToken);
+
+            $response = redirect()->intended(route('dashboard'))->with('auth_check', true);
+            $response->withCookie(cookie()->forever(config('session.cookie'), session()->getId()));
+            $response->withCookie(cookie('XSRF-TOKEN', $newCsrfToken));
+
+            return $response;
         } catch (ValidationException $e) {
             Log::error('Login validation failed', [
                 'errors' => $e->errors(),

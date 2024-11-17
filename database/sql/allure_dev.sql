@@ -273,7 +273,9 @@ CREATE TABLE orders (
     FOREIGN KEY (voucher_id) REFERENCES vouchers (id) ON DELETE
     SET
         NULL,
-    FOREIGN KEY (cancelled_by_user_id) REFERENCES users (id) ON DELETE SET NULL
+        FOREIGN KEY (cancelled_by_user_id) REFERENCES users (id) ON DELETE
+    SET
+        NULL
 );
 
 -- 31. Bảng order_items
@@ -454,7 +456,7 @@ CREATE INDEX idx_favorites_item_type_id ON favorites (favorite_type, item_id);
 
 -- 36. Bảng notifications
 CREATE TABLE notifications (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    id INT UNSIGNED PRI MARY KEY AUTO_INCREMENT,
     user_id CHAR(36) NOT NULL,
     media_id INT UNSIGNED,
     title VARCHAR(255) NOT NULL,
@@ -487,12 +489,10 @@ CREATE TABLE appointments (
     appointment_date DATE NOT NULL,
     time_slot_id INT UNSIGNED NOT NULL,
     appointment_type ENUM (
-        'facial',
-        'massage',
-        'weight_loss',
-        'hair_removal',
+        'service',
         'consultation',
-        'others'
+        'others',
+        'service_package'
     ) NOT NULL DEFAULT 'others',
     status ENUM ('pending', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'pending',
     note TEXT,

@@ -194,8 +194,7 @@ Route::middleware('throttle:api')->group(function () {
             // Thêm route tạo hóa đơn từ đơn hàng
             Route::post('/{order}/create-invoice', [OrderController::class, 'createInvoice']);
 
-            Route::post('{order}/complete', [OrderController::class, 'complete'])
-                ->middleware('can:complete,order');
+            Route::post('/{order}/complete', [OrderController::class, 'complete']);
 
             // Order status management
             Route::put('/{order}/update-status', [OrderController::class, 'updateOrderStatus']);

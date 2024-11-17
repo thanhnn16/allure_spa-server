@@ -89,7 +89,7 @@ class InvoiceService
             ]);
 
             DB::commit();
-            return $invoice->load(['order.items', 'user']);
+            return $invoice->load(['order.orderItems', 'user']);
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;

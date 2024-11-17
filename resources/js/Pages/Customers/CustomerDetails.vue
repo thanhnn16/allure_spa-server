@@ -25,7 +25,7 @@ const props = defineProps({
 
 const tabs = [
     { id: 'personal', label: 'Thông tin cá nhân', icon: mdiAccount },
-    { id: 'treatments', label: 'Liệu trình', icon: mdiPackageVariant },
+    { id: 'service_combos', label: 'Combo dịch vụ', icon: mdiPackageVariant },
     { id: 'invoices', label: 'Đơn hàng', icon: mdiReceipt },
     { id: 'vouchers', label: 'Vouchers', icon: mdiGift },
 ]
@@ -484,8 +484,16 @@ const cancelOrder = async (orderId) => {
 };
 
 const userServicePackages = computed(() => {
-    return safeUser.value.user_service_packages?.filter(p => p.status !== 'completed') || [];
-});
+    return safeUser.value.user_service_packages?.filter(p =>
+        p.status === 'active' || p.status === 'pending'
+    ).sort((a, b) => {
+        // Sort by status (pending first, then active)
+        if (a.status === 'pending' && b.status !== 'pending') return -1
+        if (a.status !== 'pending' && b.status === 'pending') return 1
+        // Then sort by expiry date
+        return new Date(a.expiry_date) - new Date(b.expiry_date)
+    }) || []
+})
 
 const completedPackages = computed(() => {
     return safeUser.value.user_service_packages?.filter(p => p.status === 'completed') || [];
@@ -516,6 +524,8 @@ const formatPackageStatus = (status) => {
             return 'Chờ bắt đầu';
         case 'completed':
             return 'Hoàn thành';
+        case 'expired':
+            return 'Đã hết hạn';
         default:
             return status;
     }
@@ -544,7 +554,7 @@ const toggleVoucherStatus = async (voucherId) => {
             if (selectedVoucher.value?.id === voucherId) {
                 selectedVoucher.value = response.data.data
             }
-            
+
             notification.value = {
                 type: 'success',
                 message: response.data.message
@@ -556,6 +566,18 @@ const toggleVoucherStatus = async (voucherId) => {
             message: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái voucher'
         }
     }
+}
+
+const showTreatmentHistoryModal = ref(false)
+const selectedPackage = ref(null)
+
+const showTreatmentHistory = (servicePackage) => {
+    selectedPackage.value = servicePackage
+    showTreatmentHistoryModal.value = true
+}
+
+const formatTime = (datetime) => {
+    if (!datetime) return
 }
 </script>
 <template>
@@ -755,19 +777,9 @@ const toggleVoucherStatus = async (voucherId) => {
 
                     <!-- Action buttons -->
                     <div class="mt-4 flex justify-end space-x-2">
-                        <BaseButton 
-                            label="Chi tiết" 
-                            color="info" 
-                            small 
-                            @click="openVoucherDetailModal(voucher)" 
-                        />
-                        <BaseButton 
-                            v-if="voucher.remaining_uses > 0" 
-                            label="Trả lại voucher" 
-                            color="danger" 
-                            small 
-                            @click="returnVoucher(voucher.id)" 
-                        />
+                        <BaseButton label="Chi tiết" color="info" small @click="openVoucherDetailModal(voucher)" />
+                        <BaseButton v-if="voucher.remaining_uses > 0" label="Trả lại voucher" color="danger" small
+                            @click="returnVoucher(voucher.id)" />
                     </div>
                 </div>
 
@@ -796,7 +808,8 @@ const toggleVoucherStatus = async (voucherId) => {
                                                 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': selectedVoucher.status === 'active',
                                                 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': selectedVoucher.status === 'inactive'
                                             }">
-                                                {{ selectedVoucher.status === 'active' ? 'Đang kích hoạt' : 'Đã vô hiệu' }}
+                                                {{ selectedVoucher.status === 'active' ? 'Đang kích hoạt' : 'Đã vô hiệu'
+                                                }}
                                             </div>
                                         </div>
 
@@ -804,45 +817,45 @@ const toggleVoucherStatus = async (voucherId) => {
                                             <div>
                                                 <p class="text-gray-600 dark:text-gray-400">Loại giảm giá</p>
                                                 <p class="font-medium dark:text-white">
-                                                    {{ selectedVoucher.discount_type === 'percentage' ? 'Phần trăm' : 'Số tiền cố định' }}
+                                                    {{ selectedVoucher.discount_type === 'percentage' ? 'Phần trăm' :
+                                                        'Số tiền cố định' }}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p class="text-gray-600 dark:text-gray-400">Giá trị giảm</p>
-                                                <p class="font-medium dark:text-white">{{ selectedVoucher.formatted_discount }}</p>
+                                                <p class="font-medium dark:text-white">{{
+                                                    selectedVoucher.formatted_discount }}</p>
                                             </div>
                                             <div>
                                                 <p class="text-gray-600 dark:text-gray-400">Đơn tối thiểu</p>
-                                                <p class="font-medium dark:text-white">{{ selectedVoucher.min_order_value_formatted }}</p>
+                                                <p class="font-medium dark:text-white">{{
+                                                    selectedVoucher.min_order_value_formatted }}</p>
                                             </div>
                                             <div>
                                                 <p class="text-gray-600 dark:text-gray-400">Giảm tối đa</p>
-                                                <p class="font-medium dark:text-white">{{ selectedVoucher.max_discount_amount_formatted }}</p>
+                                                <p class="font-medium dark:text-white">{{
+                                                    selectedVoucher.max_discount_amount_formatted }}</p>
                                             </div>
                                             <div>
                                                 <p class="text-gray-600 dark:text-gray-400">Ngày bắt đầu</p>
-                                                <p class="font-medium dark:text-white">{{ selectedVoucher.start_date_formatted }}</p>
+                                                <p class="font-medium dark:text-white">{{
+                                                    selectedVoucher.start_date_formatted }}</p>
                                             </div>
                                             <div>
                                                 <p class="text-gray-600 dark:text-gray-400">Ngày kết thúc</p>
-                                                <p class="font-medium dark:text-white">{{ selectedVoucher.end_date_formatted }}</p>
+                                                <p class="font-medium dark:text-white">{{
+                                                    selectedVoucher.end_date_formatted }}</p>
                                             </div>
                                         </div>
 
                                         <div class="pt-4 border-t dark:border-gray-700">
                                             <div class="flex justify-between space-x-3">
-                                                <BaseButton 
-                                                    type="button" 
-                                                    :label="selectedVoucher.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'" 
+                                                <BaseButton type="button"
+                                                    :label="selectedVoucher.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'"
                                                     :color="selectedVoucher.status === 'active' ? 'danger' : 'success'"
-                                                    @click="toggleVoucherStatus(selectedVoucher.id)" 
-                                                />
-                                                <BaseButton 
-                                                    type="button" 
-                                                    label="Đóng" 
-                                                    color="white" 
-                                                    @click="closeVoucherDetailModal" 
-                                                />
+                                                    @click="toggleVoucherStatus(selectedVoucher.id)" />
+                                                <BaseButton type="button" label="Đóng" color="white"
+                                                    @click="closeVoucherDetailModal" />
                                             </div>
                                         </div>
                                     </div>
@@ -1264,53 +1277,7 @@ const toggleVoucherStatus = async (voucherId) => {
             </TransitionRoot>
 
             <!-- Treatments Tab -->
-            <div v-if="activeTab === 'treatments'" class="space-y-6">
-                <!-- Header with Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <CardBox class="!p-6 dark:bg-slate-900">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-green-100 dark:bg-green-900">
-                                <BaseIcon :path="mdiCheckCircle" class="w-6 h-6 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Liệu trình hoàn thành</p>
-                                <p class="text-2xl font-semibold dark:text-white">
-                                    {{ completedTreatments }}
-                                </p>
-                            </div>
-                        </div>
-                    </CardBox>
-
-                    <CardBox class="!p-6 dark:bg-slate-900">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-                                <BaseIcon :path="mdiProgressClock" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Đang thực hiện</p>
-                                <p class="text-2xl font-semibold dark:text-white">
-                                    {{ activeTreatments }}
-                                </p>
-                            </div>
-                        </div>
-                    </CardBox>
-
-                    <CardBox class="!p-6 dark:bg-slate-900">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
-                                <BaseIcon :path="mdiCalendarClock"
-                                    class="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Buổi điều trị tiếp theo</p>
-                                <p class="text-lg font-semibold dark:text-white">
-                                    {{ nextTreatmentDate || 'Chưa có lịch' }}
-                                </p>
-                            </div>
-                        </div>
-                    </CardBox>
-                </div>
-
+            <div v-if="activeTab === 'service_combos'" class="space-y-6">
                 <!-- Active Treatments -->
                 <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
                     <div class="p-4 border-b dark:border-slate-700">
@@ -1318,77 +1285,81 @@ const toggleVoucherStatus = async (voucherId) => {
                     </div>
 
                     <div v-if="userServicePackages?.length" class="divide-y dark:divide-slate-700">
-                        <div v-for="packageTreatment in userServicePackages" :key="packageTreatment.id"
+                        <div v-for="servicePackage in userServicePackages" :key="servicePackage.id"
                             class="p-4 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                            <!-- Package Header -->
                             <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h4 class="font-medium dark:text-white">{{ packageTreatment.service.name }}</h4>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        Gói {{ packageTreatment.package_type }}
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-medium dark:text-white">{{ servicePackage.service_name }}</h4>
+                                        <span :class="{
+                                            'px-2 py-0.5 text-xs font-medium rounded-full': true,
+                                            [`bg-${servicePackage.package_type.color}-100 text-${servicePackage.package_type.color}-800`]: true,
+                                            [`dark:bg-${servicePackage.package_type.color}-900 dark:text-${servicePackage.package_type.color}-200`]: true
+                                        }">
+                                            {{ servicePackage.package_type.name }}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        Hết hạn: {{ servicePackage.formatted_expiry_date || 'Không giới hạn' }}
                                     </p>
                                 </div>
                                 <div :class="{
                                     'px-3 py-1 text-xs font-medium rounded-full': true,
-                                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': packageTreatment.status === 'active',
-                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': packageTreatment.status === 'pending',
-                                    'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200': packageTreatment.status === 'completed'
+                                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': servicePackage.status === 'active',
+                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': servicePackage.status === 'pending',
+                                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': servicePackage.status === 'expired'
                                 }">
-                                    {{ formatPackageStatus(packageTreatment.status) }}
+                                    {{ formatPackageStatus(servicePackage.status) }}
                                 </div>
                             </div>
 
                             <!-- Progress Bar -->
-                            <div class="mb-4">
-                                <div class="flex justify-between text-sm mb-1">
-                                    <span class="text-gray-600 dark:text-gray-400">
-                                        Tiến độ: {{ packageTreatment.used_sessions }}/{{ packageTreatment.total_sessions
-                                        }} buổi
-                                    </span>
-                                    <span class="text-gray-600 dark:text-gray-400">
-                                        {{ Math.round((packageTreatment.used_sessions / packageTreatment.total_sessions)
-                                            * 100) }}%
-                                    </span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                    <div class="bg-blue-600 h-2.5 rounded-full dark:bg-blue-500"
-                                        :style="`width: ${(packageTreatment.used_sessions / packageTreatment.total_sessions) * 100}%`">
-                                    </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mb-4">
+                                <div class="bg-blue-600 h-2.5 rounded-full"
+                                    :style="{ width: `${servicePackage.progress_percentage}%` }"
+                                    :class="{ 'bg-green-600': servicePackage.progress_percentage >= 100 }">
                                 </div>
                             </div>
 
-                            <!-- Treatment History -->
-                            <div class="space-y-3">
-                                <p class="text-sm font-medium dark:text-white">Lịch sử điều trị</p>
-                                <div class="space-y-2">
-                                    <div v-for="session in packageTreatment.treatment_sessions" :key="session.id"
-                                        class="flex items-center space-x-3 text-sm">
-                                        <div class="w-20 text-gray-600 dark:text-gray-400">
-                                            {{ formattedDate(session.treatment_date) }}
-                                        </div>
-                                        <div class="flex-1 dark:text-white">
-                                            {{ session.note || 'Không có ghi chú' }}
-                                        </div>
-                                        <div class="text-gray-600 dark:text-gray-400">
-                                            Thực hiện bởi: {{ session.staff?.full_name || 'N/A' }}
-                                        </div>
-                                    </div>
+                            <!-- Sessions Info -->
+                            <div class="grid grid-cols-3 gap-4 text-sm mb-4">
+                                <div>
+                                    <p class="text-gray-600 dark:text-gray-400">Tổng số buổi</p>
+                                    <p class="font-medium dark:text-white">{{ servicePackage.total_sessions }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600 dark:text-gray-400">Đã sử dụng</p>
+                                    <p class="font-medium dark:text-white">{{ servicePackage.used_sessions }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600 dark:text-gray-400">Còn lại</p>
+                                    <p class="font-medium dark:text-white">{{ servicePackage.remaining_sessions }}</p>
                                 </div>
                             </div>
 
                             <!-- Next Appointment -->
-                            <div v-if="packageTreatment.next_appointment"
+                            <div v-if="servicePackage.next_session_date"
                                 class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                                <div class="flex items-center">
+                                <div class="flex items-center space-x-2">
                                     <BaseIcon :path="mdiCalendarClock"
                                         class="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                    <span class="ml-2 text-sm text-blue-800 dark:text-blue-200">
-                                        Lịch hẹn tiếp theo: {{
-                                            formattedDate(packageTreatment.next_appointment.appointment_date)
-                                        }}
-                                        {{ packageTreatment.next_appointment.appointment_time }}
-                                    </span>
+                                    <div>
+                                        <p class="text-sm font-medium text-blue-900 dark:text-blue-200">
+                                            Buổi điều trị tiếp theo
+                                        </p>
+                                        <p class="text-sm text-blue-800 dark:text-blue-300">
+                                            {{ servicePackage.next_session_date }}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Treatment History Button -->
+                            <button @click="showTreatmentHistory(servicePackage)"
+                                class="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                                Xem lịch sử điều trị
+                            </button>
                         </div>
                     </div>
 
@@ -1397,37 +1368,54 @@ const toggleVoucherStatus = async (voucherId) => {
                         Chưa có liệu trình nào đang thực hiện
                     </div>
                 </div>
+            </div>
 
-                <!-- Treatment History -->
-                <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
-                    <div class="p-4 border-b dark:border-slate-700">
-                        <h3 class="text-lg font-medium dark:text-white">Lịch sử liệu trình</h3>
-                    </div>
+            <!-- Treatment History Modal -->
+            <TransitionRoot appear :show="showTreatmentHistoryModal" as="template">
+                <Dialog as="div" @close="showTreatmentHistoryModal = false" class="relative z-50">
+                    <div class="fixed inset-0 overflow-y-auto">
+                        <div class="flex min-h-full items-center justify-center p-4">
+                            <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-2xl 
+                                bg-white dark:bg-slate-900 p-6 shadow-xl transition-all">
+                                <DialogTitle as="h3" class="text-lg font-medium leading-6 
+                                    text-gray-900 dark:text-white mb-4">
+                                    Lịch sử điều trị
+                                </DialogTitle>
 
-                    <div v-if="completedPackages?.length" class="divide-y dark:divide-slate-700">
-                        <div v-for="packageCompleted in completedPackages" :key="packageCompleted.id"
-                            class="p-4 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h4 class="font-medium dark:text-white">{{ packageCompleted.service.name }}</h4>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        Hoàn thành ngày: {{ formattedDate(packageCompleted.completed_at) }}
-                                    </p>
+                                <div v-if="selectedPackage?.treatmentSessions?.length" class="space-y-4">
+                                    <div v-for="session in selectedPackage.treatmentSessions" :key="session.id"
+                                        class="p-4 border rounded-lg dark:border-gray-700">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <p class="font-medium dark:text-white">
+                                                    {{ formattedDate(session.start_time) }}
+                                                </p>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                    {{ session.notes || 'Không có ghi chú' }}
+                                                </p>
+                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                Thực hiện bởi: {{ session.staff?.full_name || 'N/A' }}
+                                            </p>
+                                        </div>
+                                        <p v-if="session.end_time" class="text-sm text-gray-500 mt-2">
+                                            Thời gian: {{ formatTime(session.start_time) }} - {{
+                                                formatTime(session.end_time) }}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div class="text-sm">
-                                    <span class="text-gray-600 dark:text-gray-400">
-                                        {{ packageCompleted.total_sessions }} buổi
-                                    </span>
+                                <div v-else class="text-center py-4 text-gray-500">
+                                    Chưa có buổi điều trị nào được ghi nhận
                                 </div>
-                            </div>
+
+                                <div class="mt-6 flex justify-end">
+                                    <BaseButton label="Đóng" @click="showTreatmentHistoryModal = false" />
+                                </div>
+                            </DialogPanel>
                         </div>
                     </div>
-
-                    <div v-else class="p-6 text-center text-gray-600 dark:text-gray-400">
-                        Chưa có liệu trình nào hoàn thành
-                    </div>
-                </div>
-            </div>
+                </Dialog>
+            </TransitionRoot>
         </SectionMain>
     </LayoutAuthenticated>
 </template>

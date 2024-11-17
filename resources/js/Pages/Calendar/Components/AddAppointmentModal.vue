@@ -54,7 +54,7 @@
                                 Gói điều trị
                                 <span v-if="isServiceSelected" class="text-sm text-gray-500">(Đã chọn dịch vụ)</span>
                             </label>
-                            <select v-model="form.user_treatment_package_id" :disabled="isServiceSelected"
+                            <select v-model="form.user_service_package_id" :disabled="isServiceSelected"
                                 class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
                                 <option value="">Chọn gói điều trị</option>
                                 <option v-for="pkg in userTreatmentPackages" :key="pkg.id" :value="pkg.id">
@@ -66,10 +66,10 @@
                         <div>
                             <label class="block text-sm font-medium mb-2 dark:text-gray-300">
                                 Dịch vụ
-                                <span v-if="isUserTreatmentPackageSelected" class="text-sm text-gray-500">(Đã chọn
+                                <span v-if="isUserServicePackageSelected" class="text-sm text-gray-500">(Đã chọn
                                     gói)</span>
                             </label>
-                            <select v-model="form.service_id" :disabled="isUserTreatmentPackageSelected"
+                            <select v-model="form.service_id" :disabled="isUserServicePackageSelected"
                                 class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
                                 <option value="">Chọn dịch vụ</option>
                                 <option v-for="service in services" :key="service.id" :value="service.id">
@@ -110,9 +110,7 @@
                             <label class="block text-sm font-medium mb-2 dark:text-gray-300">Loại lịch hẹn</label>
                             <select v-model="form.appointment_type"
                                 class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
-                                <option v-for="type in appointmentTypes" 
-                                    :key="type.value" 
-                                    :value="type.value">
+                                <option v-for="type in appointmentTypes" :key="type.value" :value="type.value">
                                     {{ type.label }}
                                 </option>
                             </select>
@@ -123,10 +121,7 @@
                             <label class="block text-sm font-medium mb-2 dark:text-gray-300">
                                 Số lượng slot <span class="text-red-500">*</span>
                             </label>
-                            <input type="number" 
-                                v-model="form.slots"
-                                min="1"
-                                :max="maxAvailableSlots"
+                            <input type="number" v-model="form.slots" min="1" :max="maxAvailableSlots"
                                 class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200">
                             <span v-if="maxAvailableSlots" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 Còn trống: {{ maxAvailableSlots }} slot
@@ -252,63 +247,35 @@ const modalTitle = computed(() => {
     return props.appointments && props.appointments.length > 0 ? 'Chỉnh sửa lịch hẹn' : 'Thêm lịch hẹn mới'
 })
 
-const isUserTreatmentPackageSelected = computed(() => !!form.value.user_treatment_package_id)
+const isUserServicePackageSelected = computed(() => !!form.value.user_service_package_id)
 const isServiceSelected = computed(() => !!form.value.service_id)
 
 // Thay đổi computed property cho appointmentTypes
-const appointmentTypes = computed(() => {
-    let types = [
-        { value: 'consultation', label: 'Tư vấn' },
-        { value: 'others', label: 'Khác' }
-    ];
+const appointmentTypes = computed(() => [
+    { value: 'service', label: 'Thực hiện dịch vụ' },
+    { value: 'service_package', label: 'Thực hiện combo' },
+    { value: 'consultation', label: 'Tư vấn' },
+    { value: 'others', label: 'Khác' }
+]);
 
-    if (form.value.service_id) {
-        const service = services.value.find(s => s.id === form.value.service_id);
-        if (service?.category?.service_category_name) {
-            // Kiểm tra xem category đã tồn tại trong types chưa
-            const categoryExists = types.some(type =>
-                type.value === service.category.service_category_name
-                    .toLowerCase()
-                    .replace(/ /g, '_')
-            );
-
-            // Nếu chưa tồn tại thì thêm vào đầu mảng
-            if (!categoryExists) {
-                types.unshift({
-                    value: service.category.service_category_name
-                        .toLowerCase()
-                        .replace(/ /g, '_'),
-                    label: service.category.service_category_name
-                });
-            }
-        }
-    }
-
-    return types;
-});
-
-// Cập nhật watch cho service_id
-watch(() => form.value.service_id, async (newServiceId) => {
-    form.value.user_treatment_package_id = '';
-
+// Sửa lại watch cho service_id và user_service_package_id
+watch(() => form.value.service_id, (newServiceId) => {
     if (newServiceId) {
-        const service = services.value.find(s => s.id === newServiceId);
-        if (service?.category?.service_category_name) {
-            // Tự động set appointment_type theo category của service
-            form.value.appointment_type = service.category.service_category_name
-                .toLowerCase()
-                .replace(/ /g, '_');
-        } else {
-            form.value.appointment_type = 'others';
-        }
-
-        if (form.value.appointment_date) {
-            fetchTimeSlots();
-        }
-    } else {
+        form.value.appointment_type = 'service';
+        form.value.user_service_package_id = null; // Reset package selection
+    } else if (!form.value.user_service_package_id) {
         form.value.appointment_type = 'consultation';
     }
-}, { immediate: true });
+});
+
+watch(() => form.value.user_service_package_id, (newPackageId) => {
+    if (newPackageId) {
+        form.value.appointment_type = 'service_package';
+        form.value.service_id = null; // Reset service selection
+    } else if (!form.value.service_id) {
+        form.value.appointment_type = 'consultation';
+    }
+});
 
 // Fetch time slots
 const fetchTimeSlots = async () => {
@@ -517,8 +484,8 @@ function validateForm() {
         isValid = false;
     }
 
-    // Kiểm tra service_id hoặc user_treatment_package_id
-    if (!form.value.service_id && !form.value.user_treatment_package_id) {
+    // Kiểm tra service_id hoặc user_service_package_id
+    if (!form.value.service_id && !form.value.user_service_package_id) {
         errors.value.service = ['Vui lòng chọn dịch vụ hoặc gói điều trị'];
         isValid = false;
     }
@@ -568,7 +535,7 @@ function validateAndSubmit() {
             user_id: form.value.user_id,
             staff_id: form.value.staff_id,
             service_id: form.value.service_id || null,
-            user_treatment_package_id: form.value.user_treatment_package_id || null,
+            user_service_package_id: form.value.user_service_package_id || null,
             appointment_date: form.value.appointment_date,
             time_slot_id: form.value.time_slot_id,
             appointment_type: form.value.appointment_type,
@@ -616,7 +583,7 @@ watch(() => services.value, () => {
 const isFormValid = computed(() => {
     return Boolean(
         form.value.user_id &&
-        form.value.service_id &&
+        (form.value.service_id || form.value.user_service_package_id) &&
         form.value.appointment_date &&
         form.value.time_slot_id &&
         form.value.slots >= 1 &&
@@ -648,6 +615,15 @@ watch(() => form.service_id, async (newServiceId) => {
         } catch (error) {
             console.error('Error fetching service details:', error);
         }
+    }
+});
+
+// Watch user_service_package_id để cập nhật appointment_type
+watch(() => form.value.user_service_package_id, (newPackageId) => {
+    if (newPackageId) {
+        form.value.appointment_type = 'service_package';
+    } else if (!form.value.service_id) {
+        form.value.appointment_type = 'consultation';
     }
 });
 </script>

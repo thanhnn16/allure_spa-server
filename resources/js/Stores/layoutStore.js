@@ -2,14 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
 export const useLayoutStore = defineStore('layout', () => {
-  // Khởi tạo state với giá trị từ localStorage nếu có
   const isDark = ref(localStorage.getItem('darkMode') === 'true')
-  const isAsideLgActive = ref(localStorage.getItem('asideExpanded') === 'true')
+  const isAsideMobileExpanded = ref(false)
 
-  // Watch changes để lưu vào localStorage
   watch(isDark, (newValue) => {
     localStorage.setItem('darkMode', newValue)
-    // Thêm/xóa class dark cho document
     if (newValue) {
       document.documentElement.classList.add('dark')
     } else {
@@ -17,17 +14,14 @@ export const useLayoutStore = defineStore('layout', () => {
     }
   })
 
-  watch(isAsideLgActive, (newValue) => {
-    localStorage.setItem('asideExpanded', newValue)
-  })
-
-  // Actions
   function toggleDarkMode() {
     isDark.value = !isDark.value
   }
 
   function toggleAside() {
-    isAsideLgActive.value = !isAsideLgActive.value
+    if (window.innerWidth < 1024) {
+      isAsideMobileExpanded.value = !isAsideMobileExpanded.value
+    }
   }
 
   // Khởi tạo darkMode khi load app
@@ -37,9 +31,16 @@ export const useLayoutStore = defineStore('layout', () => {
     }
   }
 
+  // Xử lý resize window
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 1024) {
+      isAsideMobileExpanded.value = false
+    }
+  })
+
   return {
     isDark,
-    isAsideLgActive,
+    isAsideMobileExpanded,
     toggleDarkMode,
     toggleAside,
     initDarkMode

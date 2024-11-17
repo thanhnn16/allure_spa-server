@@ -8,8 +8,7 @@ const props = defineProps({
     type: Array,
     required: true
   },
-  isAsideMobileExpanded: Boolean,
-  isAsideLgActive: Boolean
+  isAsideMobileExpanded: Boolean
 })
 
 const emit = defineEmits(['menu-click', 'aside-lg-close-click'])
@@ -63,14 +62,12 @@ onUnmounted(() => {
 <template>
   <div>
     <AsideMenuLayer :menu="menu" :class="[
-      'fixed top-0 z-40 h-screen w-64',
-      isAsideMobileExpanded ? 'left-0' : '-left-64',
-      { 'lg:left-0': isAsideLgActive },
-      { 'lg:-left-64': !isAsideLgActive },
-      'transition-all duration-300 ease-in-out'
+      'transition-all duration-300 ease-in-out',
+      'lg:fixed lg:top-14 lg:left-0',
+      isAsideMobileExpanded ? 'left-0' : '-left-64'
     ]" @menu-click="menuClick" @aside-lg-close-click="asideLgCloseClick" />
 
-    <OverlayLayer v-show="isAsideMobileExpanded || (isAsideLgActive && screenWidth < 1024)" z-index="z-30"
+    <OverlayLayer v-show="isAsideMobileExpanded && screenWidth < 1024" z-index="z-30"
       @overlay-click="asideLgCloseClick" />
   </div>
 </template>
