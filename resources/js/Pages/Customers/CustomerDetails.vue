@@ -10,6 +10,9 @@ import {
     mdiClockOutline,
     mdiCalendar,
     mdiPlus,
+    mdiHome,
+    mdiOfficeBuilding,
+    mdiMapMarker,
 } from '@mdi/js'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
@@ -56,9 +59,13 @@ const notification = ref(null)
 const showDeleteModal = ref(false)
 const showAddressModal = ref(false)
 const editingAddress = ref(null)
+const provinces = ref([])
+const districts = ref([])
+const wards = ref([])
 const addressForm = reactive({
     province: '',
     district: '',
+    ward: '',
     address: '',
     address_type: 'home',
     is_default: false,
@@ -180,11 +187,14 @@ const resetAddressForm = () => {
     Object.assign(addressForm, {
         province: '',
         district: '',
+        ward: '',
         address: '',
         address_type: 'home',
         is_default: false,
         is_temporary: false
     })
+    districts.value = []
+    wards.value = []
 }
 
 const submitAddress = async () => {
@@ -430,6 +440,7 @@ onMounted(() => {
     if (props.user?.id) {
         getUserVouchers();
         getUserServicePackages();
+        loadProvinces(); // Thêm dòng này
     }
     console.log('user', props.user);
     console.log('userServicePackages', props.user.userServicePackages);
@@ -473,7 +484,7 @@ const formatOrderStatus = (status) => {
         case 'completed':
             return 'Hoàn thành';
         case 'cancelled':
-            return 'Đã hủy';
+            return 'Đ�� hủy';
         default:
             return status;
     }
@@ -680,43 +691,65 @@ defineExpose({
     formatDate,
     formatTime
 })
+
+// Thêm watch để handle is_default và is_temporary
+watch(() => addressForm.is_default, (newValue) => {
+    if (newValue) {
+        addressForm.is_temporary = false
+    }
+})
+
+watch(() => addressForm.is_temporary, (newValue) => {
+    if (newValue) {
+        addressForm.is_default = false
+    }
+})
+
+// Thêm methods để load địa chỉ hành chính
+const loadProvinces = async () => {
+    try {
+        const response = await axios.get('https://oapi.vn/api/provinces')
+        provinces.value = response.data.data
+    } catch (error) {
+        console.error('Error loading provinces:', error)
+    }
+}
+
+const loadDistricts = async (provinceCode) => {
+    if (!provinceCode) {
+        districts.value = []
+        wards.value = []
+        return
+    }
+    try {
+        const response = await axios.get(`https://oapi.vn/api/districts/${provinceCode}`)
+        districts.value = response.data.data
+        addressForm.district = ''
+        addressForm.ward = ''
+    } catch (error) {
+        console.error('Error loading districts:', error)
+    }
+}
+
+const loadWards = async (districtCode) => {
+    if (!districtCode) {
+        wards.value = []
+        return
+    }
+    try {
+        const response = await axios.get(`https://oapi.vn/api/wards/${districtCode}`)
+        wards.value = response.data.data
+        addressForm.ward = ''
+    } catch (error) {
+        console.error('Error loading wards:', error)
+    }
+}
 </script>
 <template>
     <LayoutAuthenticated>
 
         <Head title="Chi tiết khách hàng" />
         <SectionMain :is-aside-lg-active="isAsideLgActive">
-            <!-- Header Section -->
-            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6 mb-6">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-4">
-                        <!-- Avatar section -->
-                        <div class="relative">
-                            <UserAvatar :fullName="safeUser.full_name" :avatarUrl="safeUser.avatar_url" size="lg" />
-
-                            <!-- Upload button overlay -->
-                            <label class="absolute bottom-0 right-0 bg-blue-500 dark:bg-blue-600 
-                                rounded-full p-1.5 cursor-pointer hover:bg-blue-600 dark:hover:bg-blue-700 
-                                transition-colors shadow-md">
-                                <input type="file" @change="handleAvatarUpload" accept="image/*" class="hidden">
-                                <BaseIcon :path="mdiCamera" class="w-4 h-4 text-white" />
-                            </label>
-                        </div>
-
-                        <div>
-                            <h1 class="text-2xl font-bold dark:text-white">{{ safeUser.full_name }}</h1>
-                            <p class="text-gray-600 dark:text-gray-400">{{ safeUser.phone_number }}</p>
-                        </div>
-                    </div>
-                    <div class="flex space-x-3">
-                        <BaseButton label="Chỉnh sửa" color="info" @click="openEditModal" :icon="mdiPencil"
-                            class="shadow-md hover:shadow-lg transition-shadow" />
-                        <BaseButton label="Xóa" color="danger" @click="openDeleteModal" :icon="mdiDelete"
-                            class="shadow-md hover:shadow-lg transition-shadow" />
-                    </div>
-                </div>
-            </div>
-
             <!-- Notification -->
             <NotificationBar v-if="notification" :color="notification.type" :icon="mdiAlert">
                 {{ notification.message }}
@@ -740,80 +773,169 @@ defineExpose({
             </div>
 
             <!-- Personal Info Tab -->
-            <div v-if="activeTab === 'personal'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div v-if="activeTab === 'personal'" class="space-y-6">
+                <!-- Customer Overview Card -->
                 <CardBox class="!p-6 dark:bg-slate-900">
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-semibold border-b dark:border-slate-700 pb-2 dark:text-white">
-                            Thông tin cơ bản
-                        </h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <InfoItem v-for="(item, index) in basicInfo" :key="index" :label="item.label"
-                                :value="item.value" class="dark:text-gray-300" />
+                    <div class="flex flex-col md:flex-row md:items-start md:space-x-6">
+                        <!-- Avatar Section -->
+                        <div class="flex flex-col items-center space-y-3 mb-6 md:mb-0">
+                            <div class="relative">
+                                <UserAvatar :fullName="safeUser.full_name" :avatarUrl="safeUser.avatar_url"
+                                    size="2xl" />
+                                <label class="absolute bottom-0 right-0 bg-blue-500 dark:bg-blue-600 
+                                    rounded-full p-2 cursor-pointer hover:bg-blue-600 dark:hover:bg-blue-700 
+                                    transition-colors shadow-md">
+                                    <input type="file" @change="handleAvatarUpload" accept="image/*" class="hidden">
+                                    <BaseIcon :path="mdiCamera" class="w-5 h-5 text-white" />
+                                </label>
+                            </div>
+                            <div class="text-center">
+                                <h2 class="text-xl font-bold dark:text-white">{{ safeUser.full_name }}</h2>
+                                <p class="text-gray-600 dark:text-gray-400">{{ safeUser.phone_number }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Customer Stats -->
+                        <div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                                <div class="flex items-center space-x-2">
+                                    <BaseIcon :path="mdiPackageVariant"
+                                        class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                    <span class="text-sm text-blue-600 dark:text-blue-400">Liệu trình</span>
+                                </div>
+                                <p class="mt-2 text-2xl font-bold text-blue-700 dark:text-blue-300">
+                                    {{ activeTreatments }}
+                                </p>
+                                <p class="text-sm text-blue-600 dark:text-blue-400">Đang thực hiện</p>
+                            </div>
+
+                            <div class="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+                                <div class="flex items-center space-x-2">
+                                    <BaseIcon :path="mdiCheckCircle"
+                                        class="w-6 h-6 text-green-600 dark:text-green-400" />
+                                    <span class="text-sm text-green-600 dark:text-green-400">Hoàn thành</span>
+                                </div>
+                                <p class="mt-2 text-2xl font-bold text-green-700 dark:text-green-300">
+                                    {{ completedTreatments }}
+                                </p>
+                                <p class="text-sm text-green-600 dark:text-green-400">Liệu trình</p>
+                            </div>
+
+                            <div class="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
+                                <div class="flex items-center space-x-2">
+                                    <BaseIcon :path="mdiTicketPercent"
+                                        class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                                    <span class="text-sm text-purple-600 dark:text-purple-400">Điểm</span>
+                                </div>
+                                <p class="mt-2 text-2xl font-bold text-purple-700 dark:text-purple-300">
+                                    {{ safeUser.point || 0 }}
+                                </p>
+                                <p class="text-sm text-purple-600 dark:text-purple-400">Tích lũy</p>
+                            </div>
+
+                            <div class="bg-orange-50 dark:bg-orange-900/30 p-4 rounded-lg">
+                                <div class="flex items-center space-x-2">
+                                    <BaseIcon :path="mdiReceipt" class="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                                    <span class="text-sm text-orange-600 dark:text-orange-400">Đơn hàng</span>
+                                </div>
+                                <p class="mt-2 text-2xl font-bold text-orange-700 dark:text-orange-300">
+                                    {{ safeUser.purchase_count || 0 }}
+                                </p>
+                                <p class="text-sm text-orange-600 dark:text-orange-400">Tổng số</p>
+                            </div>
                         </div>
                     </div>
                 </CardBox>
 
-                <CardBox class="!p-6 dark:bg-slate-900">
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-semibold border-b dark:border-slate-700 pb-2 dark:text-white">
-                            Thông tin bổ sung
-                        </h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <InfoItem v-for="(item, index) in additionalInfo" :key="index" :label="item.label"
-                                :value="item.value" class="dark:text-gray-300" />
+                <!-- Basic Info & Additional Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <CardBox class="!p-6 dark:bg-slate-900">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold dark:text-white">Thông tin cơ bản</h3>
+                            <BaseButton label="Chỉnh sửa" color="info" @click="openEditModal" :icon="mdiPencil" small />
                         </div>
-                        <div class="mt-4">
-                            <label class="font-medium dark:text-white">Ghi chú:</label>
-                            <p class="text-gray-600 dark:text-gray-400 mt-1">
-                                {{ safeUser.note || 'Không có ghi chú' }}
-                            </p>
-                        </div>
-                    </div>
-                </CardBox>
-
-                <CardBox class="!p-6 dark:bg-slate-900">
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
-                            <h3 class="text-lg font-semibold dark:text-white">Địa chỉ</h3>
-                            <BaseButton label="Thêm địa chỉ" color="info" @click="openAddAddressModal"
-                                class="shadow-md hover:shadow-lg transition-shadow" />
-                        </div>
-
-                        <div v-if="safeUser.addresses?.length" class="space-y-4">
-                            <div v-for="address in safeUser.addresses" :key="address.id"
-                                class="p-4 border rounded-lg dark:border-slate-700 relative"
-                                :class="{ 'border-blue-500 dark:border-blue-400': address.is_default }">
-                                <div class="flex justify-between">
-                                    <div class="space-y-1">
-                                        <p class="font-medium dark:text-white">{{ address.address }}</p>
-                                        <p class="text-gray-600 dark:text-gray-400">
-                                            {{ address.district }}, {{ address.province }}
-                                        </p>
-                                        <div class="flex space-x-2 text-sm">
-                                            <span v-if="address.is_default" class="text-blue-600 dark:text-blue-400">
-                                                Địa chỉ mặc định
-                                            </span>
-                                            <span v-if="address.is_temporary"
-                                                class="text-yellow-600 dark:text-yellow-400">
-                                                Địa chỉ tạm thời
-                                            </span>
-                                            <span class="text-gray-500 dark:text-gray-400">
-                                                {{ formatAddressType(address.address_type) }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="flex space-x-2">
-                                        <BaseButton color="info" :icon="mdiPencil" small
-                                            @click="editAddress(address)" />
-                                        <BaseButton color="danger" :icon="mdiDelete" small
-                                            @click="deleteAddress(address)" />
-                                    </div>
+                        <div class="space-y-4">
+                            <div v-for="(item, index) in basicInfo" :key="index"
+                                class="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ item.label }}</p>
+                                    <p class="font-medium dark:text-white">{{ item.value }}</p>
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400">
-                            Chưa có địa chỉ nào được thêm
+                    </CardBox>
+
+                    <CardBox class="!p-6 dark:bg-slate-900">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold dark:text-white">Thông tin bổ sung</h3>
                         </div>
+                        <div class="space-y-4">
+                            <div v-for="(item, index) in additionalInfo" :key="index"
+                                class="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ item.label }}</p>
+                                    <p class="font-medium dark:text-white">{{ item.value }}</p>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Ghi chú</p>
+                                <p class="font-medium dark:text-white mt-1">{{ safeUser.note || 'Không có ghi chú' }}
+                                </p>
+                            </div>
+                        </div>
+                    </CardBox>
+                </div>
+
+                <!-- Addresses Section -->
+                <CardBox class="!p-6 dark:bg-slate-900">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold dark:text-white">Địa chỉ</h3>
+                        <BaseButton label="Thêm địa chỉ" color="info" @click="openAddAddressModal" :icon="mdiPlus"
+                            small />
+                    </div>
+
+                    <div v-if="safeUser.addresses?.length" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div v-for="address in safeUser.addresses" :key="address.id"
+                            class="p-4 rounded-lg border dark:border-slate-700 hover:shadow-md transition-shadow relative"
+                            :class="{ 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30': address.is_default }">
+                            <div class="flex justify-between">
+                                <div class="space-y-2">
+                                    <div class="flex items-start space-x-2">
+                                        <BaseIcon :path="address.address_type === 'home' ? mdiHome : mdiOfficeBuilding"
+                                            class="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                                        <div>
+                                            <p class="font-medium dark:text-white">{{ address.address }}</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                {{ address.district }}, {{ address.province }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span v-if="address.is_default"
+                                            class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
+                                            Mặc định
+                                        </span>
+                                        <span v-if="address.is_temporary"
+                                            class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
+                                            Tạm thời
+                                        </span>
+                                        <span
+                                            class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 rounded-full">
+                                            {{ formatAddressType(address.address_type) }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <BaseButton color="info" :icon="mdiPencil" small @click="editAddress(address)" />
+                                    <BaseButton color="danger" :icon="mdiDelete" small
+                                        @click="deleteAddress(address)" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <BaseIcon :path="mdiMapMarker" class="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>Chưa có địa chỉ nào được thêm</p>
                     </div>
                 </CardBox>
             </div>
@@ -1127,18 +1249,44 @@ defineExpose({
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                 Tỉnh/Thành phố *
                                             </label>
-                                            <input v-model="addressForm.province" type="text" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                            <select v-model="addressForm.province" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                                     dark:bg-slate-800 dark:text-white focus:border-blue-500 
-                                                    focus:ring-blue-500" placeholder="Nhập tỉnh/thành phố">
+                                                    focus:ring-blue-500">
+                                                <option value="">-- Chọn tỉnh/thành phố --</option>
+                                                <option v-for="province in provinces" :key="province.code"
+                                                    :value="province.code">
+                                                    {{ province.name }}
+                                                </option>
+                                            </select>
                                         </div>
 
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                 Quận/Huyện *
                                             </label>
-                                            <input v-model="addressForm.district" type="text" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                            <select v-model="addressForm.district" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                                     dark:bg-slate-800 dark:text-white focus:border-blue-500 
-                                                    focus:ring-blue-500" placeholder="Nhập quận/huyện">
+                                                    focus:ring-blue-500">
+                                                <option value="">-- Chọn quận/huyện --</option>
+                                                <option v-for="district in districts" :key="district.code"
+                                                    :value="district.code">
+                                                    {{ district.name }}
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Phường/Xã *
+                                            </label>
+                                            <select v-model="addressForm.ward" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                                    dark:bg-slate-800 dark:text-white focus:border-blue-500 
+                                                    focus:ring-blue-500">
+                                                <option value="">-- Chọn phường/xã --</option>
+                                                <option v-for="ward in wards" :key="ward.code" :value="ward.code">
+                                                    {{ ward.name }}
+                                                </option>
+                                            </select>
                                         </div>
 
                                         <div>
@@ -1438,13 +1586,6 @@ defineExpose({
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Treatment History Button -->
-                            <button @click="showTreatmentHistory(servicePackage)"
-                                class="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                                Xem lịch sử dịch vụ
-                            </button>
-
                             <!-- Next Appointment -->
                             <div v-if="servicePackage.next_appointment_details"
                                 class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-100 dark:border-blue-800">
