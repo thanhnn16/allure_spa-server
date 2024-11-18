@@ -242,6 +242,9 @@ Route::middleware('throttle:api')->group(function () {
         
 
         Route::post('treatment-sessions', [ServiceUsageHistoryController::class, 'store']);
+
+        Route::get('services/{service}/translations', [ServiceController::class, 'getTranslations']);
+        Route::post('services/{service}/translations', [ServiceController::class, 'updateTranslations']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

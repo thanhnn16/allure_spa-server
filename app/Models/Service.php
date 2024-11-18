@@ -151,12 +151,21 @@ class Service extends Model
 
     public function getIsFavoriteAttribute()
     {
-        if (Auth::check()) {
+        if (!Auth::check()) {
             return false;
         }
 
+        $userId = Auth::id();
+
+        if ($this->relationLoaded('favorites')) {
+            return $this->favorites
+                ->where('user_id', $userId)
+                ->where('favorite_type', 'service')
+                ->isNotEmpty();
+        }
+
         return $this->favorites()
-            ->where('user_id', Auth::id())
+            ->where('user_id', $userId)
             ->where('favorite_type', 'service')
             ->exists();
     }

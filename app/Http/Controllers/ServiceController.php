@@ -409,4 +409,48 @@ class ServiceController extends BaseController
             return $this->respondWithError('Error fetching services: ' . $e->getMessage());
         }
     }
+
+    public function getTranslations(Service $service)
+    {
+        try {
+            $translations = $service->translations()
+                ->select('language', 'field', 'value')
+                ->get()
+                ->groupBy('language')
+                ->map(function ($items) {
+                    return $items->mapWithKeys(function ($item) {
+                        return [$item->field => $item->value];
+                    });
+                });
+
+            return $this->respondWithJson($translations, 'Translations retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->respondWithError('Error fetching translations: ' . $e->getMessage());
+        }
+    }
+
+    public function updateTranslations(Request $request, Service $service)
+    {
+        try {
+            DB::beginTransaction();
+            
+            foreach ($request->translations as $language => $fields) {
+                foreach ($fields as $field => $value) {
+                    $service->translations()->updateOrCreate(
+                        [
+                            'language' => $language,
+                            'field' => $field,
+                        ],
+                        ['value' => $value]
+                    );
+                }
+            }
+            
+            DB::commit();
+            return $this->respondWithJson(null, 'Translations updated successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->respondWithError('Error updating translations: ' . $e->getMessage());
+        }
+    }
 }

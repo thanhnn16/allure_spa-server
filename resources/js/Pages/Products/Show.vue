@@ -2,7 +2,10 @@
     <LayoutAuthenticated>
 
         <Head :title="'Chi tiết sản phẩm: ' + product.name" />
-        <SectionMain>
+        <SectionMain :breadcrumbs="[
+            { label: 'Danh sách sản phẩm', href: route('products.index') },
+            { label: product.name }
+        ]">
             <div class="flex justify-between items-center mb-6">
                 <SectionTitleLineWithButton :icon="mdiPackageVariantClosed" :title="'Chi tiết sản phẩm'" main />
             </div>

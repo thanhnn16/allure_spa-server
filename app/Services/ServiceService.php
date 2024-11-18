@@ -50,7 +50,8 @@ class ServiceService
             'ratings' => function ($query) {
                 $query->where('status', 'approved')
                     ->where('rating_type', 'service');
-            }
+            },
+            'favorites' // Tải trước quan hệ favorites
         ])
             ->withCount(['ratings as total_ratings' => function ($query) {
                 $query->where('status', 'approved')
@@ -61,38 +62,15 @@ class ServiceService
                     ->where('rating_type', 'service');
             }], 'stars');
 
-        // Load translations
-        $query->with(['translations' => function ($query) {
-            $query->select('translatable_id', 'language', 'field', 'value');
-        }]);
-
         if (Auth::check()) {
-            $query->with(['favorites' => function ($query) {
-                $query->where('user_id', Auth::id())
+            $userId = Auth::id();
+            $query->withCount(['favorites as favorites_count' => function ($query) use ($userId) {
+                $query->where('user_id', $userId)
                     ->where('favorite_type', 'service');
-            }])
-                ->withCount([
-                    'favorites as favorites_count' => function ($query) {
-                        $query->where('user_id', Auth::id())
-                            ->where('favorite_type', 'service');
-                    }
-                ]);
+            }]);
         }
 
-        $service = $query->findOrFail($id);
-
-        // Process translations
-        $translations = [];
-        foreach ($service->translations as $translation) {
-            if (!isset($translations[$translation->language])) {
-                $translations[$translation->language] = [];
-            }
-            $translations[$translation->language][$translation->field] = $translation->value;
-        }
-
-        $service->translations_array = $translations;
-
-        return $service;
+        return $query->findOrFail($id);
     }
 
     public function updateService(int $id, array $data): ?Service

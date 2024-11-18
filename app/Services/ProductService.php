@@ -81,11 +81,6 @@ class ProductService
 
     public function getProductById($id)
     {
-        Log::info('Current user:', [
-            'auth_id' => Auth::id(),
-            'is_authenticated' => Auth::check()
-        ]);
-
         $query = Product::with([
             'category',
             'media',
@@ -94,37 +89,27 @@ class ProductService
             'ratings' => function ($query) {
                 $query->where('status', 'approved')
                     ->where('rating_type', 'product');
-            }
+            },
+            'favorites' // Tải trước quan hệ favorites
         ])
-        ->withCount(['ratings as total_ratings' => function ($query) {
-            $query->where('status', 'approved')
-                ->where('rating_type', 'product');
-        }])
-        ->withAvg(['ratings as average_rating' => function ($query) {
-            $query->where('status', 'approved')
-                ->where('rating_type', 'product');
-        }], 'stars');
+            ->withCount(['ratings as total_ratings' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'product');
+            }])
+            ->withAvg(['ratings as average_rating' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'product');
+            }], 'stars');
 
         if (Auth::check()) {
             $userId = Auth::id();
-            Log::info('Loading favorites for user:', ['user_id' => $userId]);
-            
             $query->withCount(['favorites as favorites_count' => function ($query) use ($userId) {
                 $query->where('user_id', $userId)
-                      ->where('favorite_type', 'product');
+                    ->where('favorite_type', 'product');
             }]);
         }
 
-        $product = $query->findOrFail($id);
-        
-        Log::info('Product favorites data:', [
-            'product_id' => $product->id,
-            'favorites' => $product->favorites->toArray(),
-            'favorites_count' => $product->favorites_count ?? 0,
-            'is_favorite' => $product->is_favorite
-        ]);
-
-        return $product;
+        return $query->findOrFail($id);
     }
 
     public function updateProduct($id, array $data)

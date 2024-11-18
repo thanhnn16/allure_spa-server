@@ -149,24 +149,12 @@ class Product extends Model
         }
 
         $userId = Auth::id();
-        
-        // Add logging
-        Log::info('Checking is_favorite:', [
-            'user_id' => $userId,
-            'favorites_loaded' => $this->relationLoaded('favorites'),
-            'favorites_count_exists' => isset($this->favorites_count),
-            'favorites' => $this->relationLoaded('favorites') ? $this->favorites->toArray() : null
-        ]);
 
         if ($this->relationLoaded('favorites')) {
             return $this->favorites
                 ->where('user_id', $userId)
                 ->where('favorite_type', 'product')
                 ->isNotEmpty();
-        }
-
-        if (isset($this->favorites_count)) {
-            return $this->favorites_count > 0;
         }
 
         return $this->favorites()

@@ -1,141 +1,174 @@
 <template>
-  <Head :title="'Chi tiết dịch vụ: ' + service.service_name" />
-  <AuthenticatedLayout>
-    <template #header>
-      <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-        Chi tiết dịch vụ
-      </h2>
-    </template>
+  <LayoutAuthenticated>
+    <Head :title="'Chi tiết dịch vụ: ' + service.service_name" />
+    <SectionMain :breadcrumbs="[
+      { label: 'Danh sách dịch vụ', href: route('services.index') },
+      { label: service.service_name }
+    ]">
+      <div class="flex justify-between items-center mb-6">
+        <SectionTitleLineWithButton :icon="mdiPackageVariantClosed" :title="'Chi tiết dịch vụ'" main />
+      </div>
 
-    <div class="py-12">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-          <div class="p-6 sm:p-8">
-            <div class="flex justify-between items-center mb-6">
-              <h1 class="text-3xl font-bold text-gray-900">{{ service.service_name }}</h1>
-              <BaseButtons type="justify-end" no-wrap>
-                <BaseButton
-                  color="info"
-                  label="Quay lại"
-                  :icon="mdiArrowLeft"
-                  @click="goBack"
-                />
-                <BaseButton
-                  :href="route('services.edit', service.id)"
-                  color="info"
-                  label="Chỉnh sửa"
-                  :icon="mdiPencil"
-                />
-                <BaseButton
-                  color="danger"
-                  label="Xóa"
-                  :icon="mdiTrashCan"
-                  @click="confirmDelete"
-                />
-              </BaseButtons>
+      <CardBox class="mb-6 dark:bg-dark-surface">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div class="bg-white dark:bg-dark-surface rounded-xl shadow-lg p-4">
+              <Carousel v-if="service.media && service.media.length > 0" :items="processedMedia"
+                :settings="carouselSettings" class="rounded-lg overflow-hidden">
+              </Carousel>
+              <img v-else src="/images/placeholder-service.jpg" :alt="service.service_name"
+                class="w-full h-auto rounded-lg shadow">
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <BaseButton :icon="mdiImage" label="Quản lý ảnh" color="success"
+                class="flex-grow md:flex-grow-0" @click="showManageImagesModal = true" />
+              <BaseButton :icon="mdiPencil" label="Chỉnh sửa" color="info"
+                class="flex-grow md:flex-grow-0" @click="showEditModal = true" />
+              <BaseButton :icon="mdiTranslate" label="Quản lý bản dịch" color="warning"
+                class="flex-grow md:flex-grow-0" @click="showTranslationsModal = true" />
+              <BaseButton :icon="mdiDelete" label="Xóa" color="danger" class="flex-grow md:flex-grow-0"
+                @click="showDeleteModal = true" />
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-dark-surface rounded-xl shadow-lg p-6 space-y-6">
+            <div class="border-b dark:border-dark-border pb-4">
+              <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ service.service_name }}</h3>
+              <p class="text-gray-600 dark:text-gray-400 mt-2">
+                {{ service.category ? service.category.service_category_name : 'Không có danh mục' }}
+              </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <img
-                  :src="service.media && service.media.length > 0 ? service.media[0].url : 'https://via.placeholder.com/600x400'"
-                  :alt="service.service_name"
-                  class="w-full h-auto rounded-lg shadow-lg object-cover"
-                />
-              </div>
-              <div class="space-y-4">
-                <p class="text-gray-600">
-                  <span class="font-semibold">Danh mục:</span>
-                  {{ service.category ? service.category.service_category_name : 'Không có danh mục' }}
-                </p>
-                <p class="text-3xl font-bold text-green-600">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-gray-50 dark:bg-dark-bg rounded-lg p-4">
+                <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400">Giá dịch vụ đơn lẻ</h4>
+                <p class="text-2xl font-bold text-green-600 dark:text-green-500">
                   {{ formatPrice(service.single_price) }}
                 </p>
-                <p class="text-gray-700">
-                  <span class="font-semibold">Thời gian:</span>
-                  {{ service.duration }} phút
-                </p>
-                <p v-if="service.description" class="text-gray-700">
-                  <span class="font-semibold">Mô tả:</span>
-                  {{ service.description }}
-                </p>
-                <p class="text-gray-700">
-                  <span class="font-semibold">Combo 5 lần:</span>
+              </div>
+              <div class="bg-gray-50 dark:bg-dark-bg rounded-lg p-4">
+                <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400">Thời gian</h4>
+                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ service.duration }} phút</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-gray-50 dark:bg-dark-bg rounded-lg p-4">
+                <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400">Combo 5 lần</h4>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100">
                   {{ formatPrice(service.combo_5_price) }}
                 </p>
-                <p class="text-gray-700">
-                  <span class="font-semibold">Combo 10 lần:</span>
+              </div>
+              <div class="bg-gray-50 dark:bg-dark-bg rounded-lg p-4">
+                <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400">Combo 10 lần</h4>
+                <p class="text-xl font-bold text-gray-900 dark:text-gray-100">
                   {{ formatPrice(service.combo_10_price) }}
-                </p>
-                <p class="text-gray-700">
-                  <span class="font-semibold">Thời hạn sử dụng combo:</span>
-                  {{ service.validity_period }} ngày
                 </p>
               </div>
             </div>
 
-            <!-- Remove the staff section as it's not present in the provided data -->
-
+            <div class="space-y-4">
+              <div v-if="service.description" class="border-b dark:border-dark-border pb-4">
+                <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Mô tả</h4>
+                <p class="text-gray-600 dark:text-gray-400 whitespace-pre-line">{{ service.description }}</p>
+              </div>
+              <div class="border-b dark:border-dark-border pb-4">
+                <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Thời hạn sử dụng combo</h4>
+                <p class="text-gray-600 dark:text-gray-400">{{ service.validity_period }} ngày</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </CardBox>
 
-    <CardBoxModal
-      v-model="showDeleteModal"
-      title="Xác nhận xóa"
-      button="danger"
-      has-cancel
-    >
-      <p>Bạn có chắc chắn muốn xóa dịch vụ này?</p>
-      <p class="text-sm text-gray-500 mt-2">
-        Hành động này sẽ xóa mềm dịch vụ. Bạn có thể khôi phục nó sau này nếu cần.
-      </p>
-      <template #footer>
-        <BaseButtons>
-          <BaseButton label="Xóa dịch vụ" color="danger" @click="deleteService" :disabled="form.processing" />
-          <BaseButton label="Hủy" color="info" @click="showDeleteModal = false" outline />
-        </BaseButtons>
-      </template>
-    </CardBoxModal>
-  </AuthenticatedLayout>
+      <!-- Price History Section -->
+      <CardBox class="mb-6 dark:bg-dark-surface">
+        <h3 class="text-xl font-semibold mb-4 dark:text-gray-100">Lịch sử giá</h3>
+        <div class="overflow-x-auto">
+          <template v-if="service.price_history && service.price_history.length > 0">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+              <!-- ... (giữ nguyên phần bảng lịch sử giá) ... -->
+            </table>
+          </template>
+          <p v-else class="text-gray-500 italic">Chưa có dữ liệu lịch sử giá.</p>
+        </div>
+      </CardBox>
+    </SectionMain>
+
+    <!-- Modals -->
+    <EditServiceModal v-model="showEditModal" :service="service" @close="showEditModal = false"
+      @service-updated="handleServiceUpdated" />
+
+    <DeleteConfirmModal v-if="showDeleteModal" v-model="showDeleteModal" :service="service" @close="showDeleteModal = false"
+      @service-deleted="handleServiceDeleted" />
+
+    <ManageImagesModal v-model="showManageImagesModal" :service="service" @close="showManageImagesModal = false"
+      @updated="handleImagesUpdated" />
+
+    <TranslationsModal v-model="showTranslationsModal" :service="service" @close="showTranslationsModal = false"
+      @translations-updated="handleTranslationsUpdated" />
+  </LayoutAuthenticated>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Head, useForm, router } from '@inertiajs/vue3'
-import { mdiPencil, mdiTrashCan, mdiArrowLeft } from '@mdi/js'
-import AuthenticatedLayout from '@/Layouts/LayoutAuthenticated.vue'
+import { ref, computed } from 'vue'
+import { Head, router } from '@inertiajs/vue3'
+import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
+import SectionMain from '@/Components/SectionMain.vue'
+import CardBox from '@/Components/CardBox.vue'
 import BaseButton from '@/Components/BaseButton.vue'
-import BaseButtons from '@/Components/BaseButtons.vue'
-import CardBoxModal from '@/Components/CardBoxModal.vue'
+import SectionTitleLineWithButton from '@/Components/SectionTitleLineWithButton.vue'
+import Carousel from '@/Components/Carousel.vue'
+import { mdiPackageVariantClosed, mdiPencil, mdiDelete, mdiImage, mdiTranslate } from '@mdi/js'
+
+// Thêm các import cho modal components
+import EditServiceModal from './Components/EditServiceModal.vue'
+import DeleteConfirmModal from './Components/DeleteConfirmModal.vue'
+import ManageImagesModal from './Components/ManageImagesModal.vue'
+import TranslationsModal from './Components/TranslationsModal.vue'
 
 const props = defineProps({
   service: Object,
 })
 
+const showEditModal = ref(false)
 const showDeleteModal = ref(false)
-const form = useForm({})
+const showManageImagesModal = ref(false)
+const showTranslationsModal = ref(false)
+
+const carouselSettings = {
+  itemsToShow: 1,
+  snapAlign: 'center',
+}
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
 }
 
-const confirmDelete = () => {
-  showDeleteModal.value = true
+const processedMedia = computed(() => {
+  return props.service.media?.map(item => ({
+    ...item,
+    file_path: item.file_path.startsWith('http') 
+      ? item.file_path 
+      : `/storage/${item.file_path.replace(/^\/+/, '')}`
+  })) ?? []
+})
+
+const handleServiceUpdated = () => {
+  showEditModal.value = false
+  router.reload({ only: ['service'] })
 }
 
-const deleteService = () => {
-  form.delete(route('services.destroy', props.service.id), {
-    preserveScroll: true,
-    preserveState: false,
-    onSuccess: () => {
-      showDeleteModal.value = false
-    },
-  })
-}
-
-const goBack = () => {
+const handleServiceDeleted = () => {
+  showDeleteModal.value = false
   router.visit(route('services.index'))
+}
+
+const handleImagesUpdated = () => {
+  router.reload({ only: ['service'] })
+}
+
+const handleTranslationsUpdated = () => {
+  router.reload({ only: ['service'] })
 }
 </script>
