@@ -1,11 +1,10 @@
 <script setup>
-import { ref, reactive, computed, defineComponent, h, onMounted, watch } from 'vue'
-import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { Dialog, DialogPanel, DialogTitle, TransitionRoot } from '@headlessui/vue'
 import {
     mdiAccount, mdiPackageVariant, mdiReceipt, mdiGift, mdiDelete,
     mdiAlert, mdiPencil, mdiTicketPercent, mdiCamera,
     mdiCheckCircle,
-    mdiProgressClock,
     mdiCalendarClock,
     mdiClockOutline,
     mdiCalendar,
@@ -13,6 +12,8 @@ import {
     mdiHome,
     mdiOfficeBuilding,
     mdiMapMarker,
+    mdiClose,
+    mdiCheck,
 } from '@mdi/js'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
@@ -20,7 +21,7 @@ import CardBox from '@/Components/CardBox.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import { Head } from '@inertiajs/vue3'
-import NotificationBar from '@/Components/NotificationBar.vue'
+import { useToast } from 'vue-toastification'
 import axios from 'axios'
 import UserAvatar from '@/Components/UserAvatar.vue'
 
@@ -32,6 +33,8 @@ const props = defineProps({
     upcomingBirthdays: Number
 })
 
+const toast = useToast()
+
 const tabs = [
     { id: 'personal', label: 'Thông tin cá nhân', icon: mdiAccount },
     { id: 'service_combos', label: 'Combo dịch vụ', icon: mdiPackageVariant },
@@ -39,23 +42,7 @@ const tabs = [
     { id: 'vouchers', label: 'Vouchers', icon: mdiGift },
 ]
 
-const InfoItem = defineComponent({
-    props: {
-        label: String,
-        value: [String, Number]
-    },
-    render() {
-        return h('div', [
-            h('span', { class: 'text-gray-600 dark:text-gray-400 text-sm' }, this.label),
-            h('p', { class: 'font-medium dark:text-white' }, this.value || 'N/A')
-        ])
-    }
-})
-
 const activeTab = ref('personal')
-const showEditModal = ref(false)
-const editedUser = reactive({ ...props.user })
-const notification = ref(null)
 const showDeleteModal = ref(false)
 const showAddressModal = ref(false)
 const editingAddress = ref(null)
@@ -97,32 +84,8 @@ const newVoucherForm = reactive({
 const showVoucherDetailModal = ref(false)
 const selectedVoucher = ref(null)
 
-const openEditModal = () => {
-    showEditModal.value = true
-}
-
-const closeEditModal = () => {
-    showEditModal.value = false
-}
-
 const openDeleteModal = () => {
     showDeleteModal.value = true
-}
-
-const closeDeleteModal = () => {
-    showDeleteModal.value = false
-}
-
-
-const updateUser = async () => {
-    try {
-        const response = await axios.put(`/users/${props.user.id}`, editedUser)
-        Object.assign(props.user, response.data.user)
-        showEditModal.value = false
-        notification.value = { type: 'success', message: response.data.message }
-    } catch (error) {
-        notification.value = { type: 'danger', message: error.response?.data?.message || 'Có lỗi xảy ra' }
-    }
 }
 
 
@@ -132,8 +95,9 @@ const formattedDate = (date) => {
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
 };
 
-const formatGender = computed(() => {
-    switch (props.user.gender) {
+// Định nghĩa formatGender trước khi sử dụng trong computed property
+const formatGender = (gender) => {
+    switch (gender) {
         case 'male':
             return 'Nam';
         case 'female':
@@ -141,7 +105,7 @@ const formatGender = computed(() => {
         default:
             return 'Khác';
     }
-});
+};
 
 const safeUser = computed(() => props.user || {});
 
@@ -149,15 +113,61 @@ const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
+// Thêm reactive object để lưu trạng thái editing
+const editingStates = reactive({
+    full_name: false,
+    phone_number: false,
+    email: false,
+    gender: false,
+    date_of_birth: false
+})
 
 const basicInfo = computed(() => [
-    { label: 'Họ và tên', value: safeUser.value.full_name },
-    { label: 'Số điện thoại', value: safeUser.value.phone_number },
-    { label: 'Email', value: safeUser.value.email },
-    { label: 'Giới tính', value: formatGender.value },
-    { label: 'Ngày sinh', value: formattedDate(safeUser.value.date_of_birth) },
-    { label: 'Trạng thái', value: safeUser.value.deleted_at ? 'Đã bị xóa' : 'Đang hoạt động' }
-]);
+    {
+        label: 'Họ và tên',
+        key: 'full_name',
+        value: props.user?.full_name,
+        editValue: props.user?.full_name,
+        get isEditing() { return editingStates.full_name },
+    },
+    {
+        label: 'Số điện thoại',
+        key: 'phone_number',
+        value: props.user?.phone_number,
+        editValue: props.user?.phone_number,
+        get isEditing() { return editingStates.phone_number },
+        type: 'tel',
+    },
+    {
+        label: 'Email',
+        key: 'email',
+        value: props.user?.email,
+        editValue: props.user?.email,
+        get isEditing() { return editingStates.email },
+        type: 'email',
+    },
+    {
+        label: 'Giới tính',
+        key: 'gender',
+        value: formatGender(props.user?.gender),
+        editValue: props.user?.gender,
+        get isEditing() { return editingStates.gender },
+        type: 'select',
+        options: [
+            { value: 'male', label: 'Nam' },
+            { value: 'female', label: 'Nữ' },
+            { value: 'other', label: 'Khác' },
+        ],
+    },
+    {
+        label: 'Ngày sinh',
+        key: 'date_of_birth',
+        value: formatDate(props.user?.date_of_birth),
+        editValue: props.user?.date_of_birth,
+        get isEditing() { return editingStates.date_of_birth },
+        type: 'date',
+    },
+])
 
 const additionalInfo = computed(() => [
     { label: 'Điểm tích lũy', value: safeUser.value.point },
@@ -207,20 +217,13 @@ const submitAddress = async () => {
             await axios.post('/addresses', data)
         }
 
-        // Refresh user data
         const response = await axios.get(`/users/${props.user.id}`)
         Object.assign(props.user, response.data.data)
 
         closeAddressModal()
-        notification.value = {
-            type: 'success',
-            message: `Đã ${editingAddress.value ? 'cập nhật' : 'thêm'} địa chỉ thành công`
-        }
+        toast.success(`Đã ${editingAddress.value ? 'cập nhật' : 'thêm'} địa chỉ thành công`)
     } catch (error) {
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'C lỗi xảy ra'
-        }
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra')
     }
 }
 
@@ -231,15 +234,9 @@ const deleteAddress = async (address) => {
         await axios.delete(`/addresses/${address.id}`)
         const response = await axios.get(`/users/${props.user.id}`)
         Object.assign(props.user, response.data.data)
-        notification.value = {
-            type: 'success',
-            message: 'Đã xóa địa chỉ thành công'
-        }
+        toast.success('Đã xóa địa chỉ thành công')
     } catch (error) {
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa địa chỉ'
-        }
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa địa chỉ')
     }
 }
 
@@ -273,21 +270,14 @@ const handleAvatarUpload = async (event) => {
             }
         })
 
-        // Update user data with new avatar
         if (response.data.data.user) {
             Object.assign(props.user, response.data.data.user)
         }
 
-        notification.value = {
-            type: 'success',
-            message: 'Avatar đã được cập nhật thành công'
-        }
+        toast.success('Avatar đã được cập nhật thành công')
     } catch (error) {
         console.error('Upload error:', error)
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi tải lên avatar'
-        }
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tải lên avatar')
     }
 }
 
@@ -310,15 +300,9 @@ const assignVoucher = async () => {
         props.user.vouchers = response.data.data
 
         closeAssignVoucherModal()
-        notification.value = {
-            type: 'success',
-            message: 'Đã gán voucher thành công'
-        }
+        toast.success('Đã gán voucher thành công')
     } catch (error) {
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi gán voucher'
-        }
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi gán voucher')
     }
 }
 
@@ -349,16 +333,10 @@ const createAndAssignVoucher = async () => {
 
         showCreateVoucherForm.value = false;
         closeAssignVoucherModal();
-        notification.value = {
-            type: 'success',
-            message: 'Đã tạo và gán voucher thành công'
-        };
+        toast.success('Đã tạo và gán voucher thành công')
     } catch (error) {
         console.error('Error creating/assigning voucher:', error);
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo và gán voucher'
-        };
+        toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo và gán voucher')
     }
 };
 
@@ -392,15 +370,9 @@ const returnVoucher = async (voucherId) => {
         const response = await axios.get(`/vouchers/user/${props.user.id}/vouchers`)
         props.user.vouchers = response.data.data
 
-        notification.value = {
-            type: 'success',
-            message: 'Đã trả lại voucher thành công'
-        }
+        toast.success('Đã trả lại voucher thành công')
     } catch (error) {
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi trả lại voucher'
-        }
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi trả lại voucher')
     }
 }
 
@@ -413,10 +385,7 @@ const getUserVouchers = async () => {
         }
     } catch (error) {
         console.error('Error fetching vouchers:', error);
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Không thể tải danh sách voucher'
-        };
+        toast.error(error.response?.data?.message || 'Không thể tải danh sách voucher')
     }
 };
 
@@ -428,10 +397,7 @@ const getUserServicePackages = async () => {
         }
     } catch (error) {
         console.error('Error fetching service packages:', error);
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Không thể tải danh sách liệu trình'
-        };
+        toast.error(error.response?.data?.message || 'Không thể tải danh sách liệu trình')
     }
 };
 
@@ -463,10 +429,7 @@ const loadAvailableVouchers = async () => {
         }
     } catch (error) {
         console.error('Error loading vouchers:', error);
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Không thể tải danh sách voucher'
-        };
+        toast.error(error.response?.data?.message || 'Không thể tải danh sách voucher')
     }
 };
 
@@ -500,15 +463,9 @@ const cancelOrder = async (orderId) => {
         const userResponse = await axios.get(`/users/${props.user.id}`);
         Object.assign(props.user, userResponse.data.data);
 
-        notification.value = {
-            type: 'success',
-            message: 'Đã hủy đơn hàng thành công'
-        };
+        toast.success('Đã hủy đơn hàng thành công')
     } catch (error) {
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi hủy đơn hàng'
-        };
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy đơn hàng')
     }
 };
 
@@ -586,16 +543,10 @@ const toggleVoucherStatus = async (voucherId) => {
                 selectedVoucher.value = response.data.data
             }
 
-            notification.value = {
-                type: 'success',
-                message: response.data.message
-            }
+            toast.success(response.data.message)
         }
     } catch (error) {
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái voucher'
-        }
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái voucher')
     }
 }
 
@@ -639,15 +590,9 @@ const submitTreatmentSession = async () => {
         Object.assign(props.user, userResponse.data.data)
 
         closeAddTreatmentModal()
-        notification.value = {
-            type: 'success',
-            message: 'Thêm lịch sử dịch vụ thành công'
-        }
+        toast.success('Thêm lịch sử dịch vụ thành công')
     } catch (error) {
-        notification.value = {
-            type: 'danger',
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm lịch sử dịch vụ'
-        }
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi thêm lịch sử dịch vụ')
     }
 }
 
@@ -660,10 +605,7 @@ const loadStaffList = async () => {
         staffList.value = response.data.data
     } catch (error) {
         console.error('Error loading staff:', error)
-        notification.value = {
-            type: 'danger',
-            message: 'Không thể tải danh sách nhân viên'
-        }
+        toast.error('Không thể tải danh sách nhân viên')
     }
 }
 
@@ -744,17 +686,41 @@ const loadWards = async (districtCode) => {
         console.error('Error loading wards:', error)
     }
 }
+
+// Cập nhật các methods để sử dụng editingStates
+const startEdit = (item) => {
+    item.editValue = props.user[item.key]
+    editingStates[item.key] = true
+}
+
+const cancelEdit = (item) => {
+    editingStates[item.key] = false
+    item.editValue = props.user[item.key]
+}
+
+const saveField = async (item) => {
+    try {
+        const response = await axios.put(`/api/user/profile`, {
+            [item.key]: item.editValue
+        })
+
+        if (response.data.success) {
+            props.user[item.key] = item.editValue
+            editingStates[item.key] = false
+
+            toast.success('Cập nhật thành công')
+        }
+    } catch (error) {
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật')
+        item.editValue = props.user[item.key]
+    }
+}
 </script>
 <template>
     <LayoutAuthenticated>
 
         <Head title="Chi tiết khách hàng" />
         <SectionMain :is-aside-lg-active="isAsideLgActive">
-            <!-- Notification -->
-            <NotificationBar v-if="notification" :color="notification.type" :icon="mdiAlert">
-                {{ notification.message }}
-            </NotificationBar>
-
             <!-- Tabs -->
             <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-4 mb-6">
                 <div class="flex space-x-2">
@@ -852,14 +818,37 @@ const loadWards = async (districtCode) => {
                     <CardBox class="!p-6 dark:bg-slate-900">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-semibold dark:text-white">Thông tin cơ bản</h3>
-                            <BaseButton label="Chỉnh sửa" color="info" @click="openEditModal" :icon="mdiPencil" small />
                         </div>
                         <div class="space-y-4">
                             <div v-for="(item, index) in basicInfo" :key="index"
                                 class="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                                 <div class="flex-1">
                                     <p class="text-sm text-gray-600 dark:text-gray-400">{{ item.label }}</p>
-                                    <p class="font-medium dark:text-white">{{ item.value }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <template v-if="item.isEditing">
+                                            <!-- Select input for gender -->
+                                            <select v-if="item.type === 'select'" v-model="item.editValue" class="flex-1 rounded-md border-gray-300 dark:border-gray-600 
+                                                    dark:bg-slate-800 dark:text-white shadow-sm 
+                                                    focus:border-blue-500 focus:ring-blue-500">
+                                                <option v-for="option in item.options" :key="option.value"
+                                                    :value="option.value">
+                                                    {{ option.label }}
+                                                </option>
+                                            </select>
+                                            <!-- Regular input for other fields -->
+                                            <input v-else v-model="item.editValue" :type="item.type || 'text'" class="flex-1 rounded-md border-gray-300 dark:border-gray-600 
+                                                    dark:bg-slate-800 dark:text-white shadow-sm 
+                                                    focus:border-blue-500 focus:ring-blue-500">
+                                            <BaseButton color="success" :icon="mdiCheck" small
+                                                @click="saveField(item)" />
+                                            <BaseButton color="danger" :icon="mdiClose" small
+                                                @click="cancelEdit(item)" />
+                                        </template>
+                                        <template v-else>
+                                            <p class="font-medium dark:text-white flex-1">{{ item.value }}</p>
+                                            <BaseButton color="info" :icon="mdiPencil" small @click="startEdit(item)" />
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1188,48 +1177,10 @@ const loadWards = async (districtCode) => {
                         Chưa có đơn hàng nào
                     </h3>
                     <p class="mt-2 text-gray-600 dark:text-gray-400">
-                        Khách hàng chưa thực hiện đơn hàng nào.
+                        Khách hàng chưa thc hiện đơn hàng nào.
                     </p>
                 </div>
             </div>
-
-            <!-- Edit Modal -->
-            <TransitionRoot appear :show="showEditModal" as="template">
-                <Dialog as="div" @close="closeEditModal" class="relative z-50">
-                    <!-- ... modal backdrop ... -->
-                    <div class="fixed inset-0 overflow-y-auto">
-                        <div class="flex min-h-full items-center justify-center p-4">
-                            <TransitionChild as="template" enter="duration-300 ease-out" enter-from="opacity-0 scale-95"
-                                enter-to="opacity-100 scale-100" leave="duration-200 ease-in"
-                                leave-from="opacity-100 scale-100" leave-to="opacity-0 scale-95">
-                                <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-2xl 
-                                    bg-white dark:bg-slate-900 p-6 shadow-xl transition-all">
-                                    <DialogTitle as="h3" class="text-lg font-medium leading-6 
-                                        text-gray-900 dark:text-white mb-4">
-                                        Chỉnh sửa thông tin khách hàng
-                                    </DialogTitle>
-
-                                    <form @submit.prevent="updateUser" class="space-y-4">
-                                        <!-- Form fields với dark mode classes -->
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div class="space-y-2">
-                                                <label
-                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                    Họ và tên
-                                                </label>
-                                                <input v-model="editedUser.full_name" class="w-full rounded-md border-gray-300 dark:border-gray-600 
-                                                        dark:bg-slate-800 dark:text-white shadow-sm 
-                                                        focus:border-blue-500 focus:ring-blue-500" required>
-                                            </div>
-                                            <!-- Thêm dark mode classes tương tự cho các input khác -->
-                                        </div>
-                                    </form>
-                                </DialogPanel>
-                            </TransitionChild>
-                        </div>
-                    </div>
-                </Dialog>
-            </TransitionRoot>
 
             <!-- Address Modal -->
             <TransitionRoot appear :show="showAddressModal" as="template">
@@ -1494,7 +1445,7 @@ const loadWards = async (districtCode) => {
 
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Số lần sử dụng cho mỗi người dùng *
+                                                Số lần s�� dụng cho mỗi người dùng *
                                             </label>
                                             <input v-model.number="newVoucherForm.uses_per_user" type="number" required
                                                 min="1" class="w-full rounded-md border-gray-300 dark:border-gray-600 

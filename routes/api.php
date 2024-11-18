@@ -104,7 +104,9 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/user/addresses/{address}', [AddressController::class, 'update']);
         Route::delete('/user/addresses/{address}', [AddressController::class, 'destroy']);
         Route::get('/user/my-addresses', [AddressController::class, 'getAddressByUser']);
-
+        // Sửa lại route cập nhật user profile
+        
+        Route::put('/user/profile', [UserController::class, 'updateProfile']);
         // Rating routes
         Route::get('/ratings', [RatingController::class, 'index']);
         Route::get('/products/{productId}/ratings', [RatingController::class, 'getProductRatings']);
@@ -229,9 +231,6 @@ Route::middleware('throttle:api')->group(function () {
             Route::post('/{id}/toggle-status', [VoucherController::class, 'toggleStatus']);
         });
 
-        // Sửa lại route cập nhật user profile
-        Route::put('/user/profile', [UserController::class, 'updateProfile']);
-
         // Service Usage Routes
         Route::post('service-packages/{package}/usage', [ServiceUsageController::class, 'recordUsage']);
         Route::get('service-packages/{package}/history', [ServiceUsageController::class, 'getUsageHistory']);
@@ -239,7 +238,7 @@ Route::middleware('throttle:api')->group(function () {
         // Banner API routes
         Route::post('banners', [BannerController::class, 'store'])->name('banners.store');
         Route::delete('banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
-        
+
 
         Route::post('treatment-sessions', [ServiceUsageHistoryController::class, 'store']);
 
