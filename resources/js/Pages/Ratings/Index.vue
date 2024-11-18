@@ -7,18 +7,19 @@ import CardBox from '@/Components/CardBox.vue'
 import BaseButtons from '@/Components/BaseButtons.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import FormControl from '@/Components/FormControl.vue'
-import NotificationBar from '@/Components/NotificationBar.vue'
 import { mdiStar, mdiStarOutline, mdiCheck, mdiClose, mdiImage } from '@mdi/js'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import axios from 'axios'
+import { useToast } from 'vue-toastification'
 
 const ratings = ref([])
 const loading = ref(false)
 const currentPage = ref(1)
 const lastPage = ref(1)
-const notification = ref(null)
-const filterStatus = ref('pending') // pending, approved, rejected
+const filterStatus = ref('')
 const searchQuery = ref('')
+
+const toast = useToast()
 
 const fetchRatings = async () => {
     loading.value = true
@@ -52,13 +53,7 @@ const updateRatingStatus = async (ratingId, newStatus) => {
 }
 
 const showNotification = (message, type = 'success') => {
-    notification.value = {
-        message,
-        type
-    }
-    setTimeout(() => {
-        notification.value = null
-    }, 3000)
+    toast[type](message)
 }
 
 const renderStars = (count) => {
@@ -131,6 +126,7 @@ onMounted(() => {
                         <select v-model="filterStatus" class="rounded-lg border-gray-300 dark:bg-slate-800 dark:border-slate-700 dark:text-gray-100 
                                    focus:border-blue-500 focus:ring-blue-500 transition-colors duration-150"
                             @change="fetchRatings">
+                            <option value="">Tất cả</option>
                             <option value="pending">Chờ duyệt</option>
                             <option value="approved">Đã duyệt</option>
                             <option value="rejected">Đã từ chối</option>
@@ -272,12 +268,6 @@ onMounted(() => {
                 </div>
             </CardBox>
         </SectionMain>
-
-        <!-- Notification -->
-        <NotificationBar v-if="notification" :color="notification.type"
-            :icon="notification.type === 'success' ? mdiCheck : mdiClose" class="animate-fade-in">
-            {{ notification.message }}
-        </NotificationBar>
     </LayoutAuthenticated>
 </template>
 
