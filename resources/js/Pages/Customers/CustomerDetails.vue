@@ -1467,7 +1467,7 @@ const saveField = async (item) => {
                 </Dialog>
             </TransitionRoot>
 
-            <!-- Treatments Tab -->
+            <!-- Service Packages Tab -->
             <div v-if="activeTab === 'service_combos'" class="space-y-6">
                 <!-- Active Treatments -->
                 <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
@@ -1494,11 +1494,10 @@ const saveField = async (item) => {
                                     </p>
                                 </div>
                                 <BaseButton v-if="servicePackage.remaining_sessions > 0" color="info"
-                                    label="Thêm buổi dịch v���" :icon="mdiPlus"
+                                    label="Thêm buổi dịch vụ" :icon="mdiPlus"
                                     @click="openAddTreatmentModal(servicePackage)" />
                             </div>
 
-                            <!-- Progress Bar - Di chuyển vào trong vòng lặp -->
                             <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mb-4">
                                 <div class="bg-blue-600 h-2.5 rounded-full"
                                     :style="{ width: `${servicePackage.progress_percentage}%` }"
