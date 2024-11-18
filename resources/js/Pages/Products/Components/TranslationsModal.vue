@@ -137,13 +137,22 @@ const loadExistingTranslations = async () => {
         const response = await axios.get(`/api/products/${props.product.id}/translations`)
         const existingTranslations = response.data.data
 
+        // Khởi tạo lại translations cho mỗi ngôn ngữ
         availableLanguages.forEach(lang => {
             translations.value[lang.code] = translations.value[lang.code] || {}
+
+            // Khởi tạo các trường có thể dịch với giá trị mặc định
             translatableFields.forEach(field => {
-                translations.value[lang.code][field.key] =
-                    existingTranslations?.[lang.code]?.[field.key] || ''
+                // Kiểm tra xem có bản dịch cho trường này không
+                if (existingTranslations?.[lang.code]?.[field.key]) {
+                    translations.value[lang.code][field.key] = existingTranslations[lang.code][field.key]
+                } else {
+                    translations.value[lang.code][field.key] = ''
+                }
             })
         })
+
+        console.log('Loaded translations:', translations.value) // Debug log
     } catch (error) {
         console.error('Error loading translations:', error)
         toast.error('Không thể tải bản dịch')
@@ -186,6 +195,13 @@ watch(() => props.modelValue, (newVal) => {
         loadExistingTranslations()
     }
 })
+
+// Thêm watcher để theo dõi khi product thay đổi
+watch(() => props.product, (newProduct) => {
+    if (newProduct?.id) {
+        loadExistingTranslations()
+    }
+}, { deep: true })
 </script>
 
 <style scoped>
@@ -221,8 +237,10 @@ watch(() => props.modelValue, (newVal) => {
 
 /* Thêm style cho custom scrollbar */
 .custom-scrollbar {
-    scrollbar-width: thin; /* For Firefox */
-    scrollbar-color: rgba(156, 163, 175, 0.5) transparent; /* For Firefox */
+    scrollbar-width: thin;
+    /* For Firefox */
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+    /* For Firefox */
 }
 
 .custom-scrollbar::-webkit-scrollbar {

@@ -441,30 +441,25 @@ class ProductController extends BaseController
         try {
             $translations = [];
 
-            // Sửa lại tên cột trong truy vấn
+            // Lấy tất cả bản dịch của sản phẩm
             $translationsFromDb = DB::table('translations')
                 ->where('translatable_id', $product->id)
                 ->where('translatable_type', Product::class)
                 ->select('language', 'field', 'value')
                 ->get();
 
-            // Sửa lại tên biến để phù hợp với cấu trúc bảng
+            // Tổ chức lại dữ liệu theo cấu trúc language -> field -> value
             foreach ($translationsFromDb as $translation) {
-                $language = $translation->language;
-                $field = $translation->field;
-
-                if (!isset($translations[$language])) {
-                    $translations[$language] = [];
+                if (!isset($translations[$translation->language])) {
+                    $translations[$translation->language] = [];
                 }
-
-                $translations[$language][$field] = $translation->value;
+                $translations[$translation->language][$translation->field] = $translation->value;
             }
 
             // Log để debug
-            Log::info('Product translations from DB:', [
+            Log::info('Product translations:', [
                 'product_id' => $product->id,
-                'translations' => $translations,
-                'raw_data' => $translationsFromDb
+                'translations' => $translations
             ]);
 
             return $this->respondWithJson($translations, 'Translations retrieved successfully');

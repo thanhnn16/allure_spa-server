@@ -284,85 +284,41 @@ class OrderController extends BaseController
      *     path="/api/orders",
      *     operationId="createOrder",
      *     summary="Tạo đơn hàng mới",
-     *     description="Tạo một đơn hàng mới với sản phẩm và/hoặc dịch vụ",
+     *     description="Tạo một đơn hàng mới với các sản phẩm/dịch vụ",
      *     tags={"Orders"},
-     *     security={{ "sanctum": {} }},
+     *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
+     *         description="Thông tin đơn hàng",
      *         @OA\JsonContent(
      *             required={"payment_method_id", "order_items"},
-     *             @OA\Property(
-     *                 property="payment_method_id",
-     *                 type="integer",
-     *                 description="ID phương thức thanh toán"
-     *             ),
-     *             @OA\Property(
-     *                 property="shipping_address_id",
-     *                 type="integer",
-     *                 nullable=true,
-     *                 description="ID địa chỉ giao hàng (bắt buộc nếu có sản phẩm)"
-     *             ),
-     *             @OA\Property(
-     *                 property="voucher_id",
-     *                 type="integer",
-     *                 nullable=true,
-     *                 description="ID voucher giảm giá"
-     *             ),
-     *             @OA\Property(
-     *                 property="note",
-     *                 type="string",
-     *                 nullable=true,
-     *                 description="Ghi chú cho đơn hàng"
-     *             ),
+     *             @OA\Property(property="payment_method_id", type="integer", description="ID phương thức thanh toán"),
+     *             @OA\Property(property="shipping_address_id", type="integer", nullable=true, description="ID địa chỉ giao hàng"),
+     *             @OA\Property(property="voucher_id", type="integer", nullable=true, description="ID voucher áp dụng"),
+     *             @OA\Property(property="note", type="string", nullable=true, description="Ghi chú đơn hàng"),
      *             @OA\Property(
      *                 property="order_items",
      *                 type="array",
      *                 description="Danh sách sản phẩm/dịch vụ trong đơn hàng",
      *                 @OA\Items(
-     *                     @OA\Property(
-     *                         property="item_type",
-     *                         type="string",
-     *                         enum={"product", "service"},
-     *                         description="Loại item (sản phẩm hoặc dịch vụ)"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="item_id",
-     *                         type="integer",
-     *                         description="ID của sản phẩm hoặc dịch vụ"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="service_type",
-     *                         type="string",
-     *                         enum={"single", "combo_5", "combo_10"},
-     *                         nullable=true,
-     *                         description="Loại dịch vụ (bắt buộc khi item_type là service)"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="quantity",
-     *                         type="integer",
-     *                         minimum=1,
-     *                         description="Số lượng"
-     *                     ),
-     *                     @OA\Property(
-     *                         property="price",
-     *                         type="number",
-     *                         format="float",
-     *                         minimum=0,
-     *                         description="Giá của item"
-     *                     )
+     *                     @OA\Property(property="item_type", type="string", enum={"product", "service"}, description="Loại item"),
+     *                     @OA\Property(property="item_id", type="integer", description="ID của sản phẩm/dịch vụ"),
+     *                     @OA\Property(property="service_type", type="string", enum={"single", "combo_5", "combo_10"}, nullable=true, description="Loại dịch vụ (chỉ áp dụng cho dịch vụ)"),
+     *                     @OA\Property(property="quantity", type="integer", minimum=1, description="Số lượng"),
+     *                     @OA\Property(property="price", type="number", format="float", minimum=0, description="Đơn giá")
      *                 )
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Đơn hàng được tạo thành công",
+     *         description="Tạo đơn hàng thành công",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Đơn hàng đã được tạo thành công"),
      *             @OA\Property(
      *                 property="data",
-     *                 ref="#/components/schemas/OrderResponse"
+     *                 ref="#/components/schemas/Order"
      *             )
      *         )
      *     ),
@@ -375,10 +331,10 @@ class OrderController extends BaseController
      *             @OA\Property(
      *                 property="errors",
      *                 type="object",
-     *                 @OA\AdditionalProperties(
-     *                     type="array",
-     *                     @OA\Items(type="string")
-     *                 )
+     *                 example={
+     *                     "payment_method_id": {"Phương thức thanh toán không được để trống"},
+     *                     "order_items": {"Đơn hàng phải có ít nhất một sản phẩm/dịch vụ"}
+     *                 }
      *             )
      *         )
      *     ),
@@ -389,10 +345,6 @@ class OrderController extends BaseController
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Sản phẩm không đủ số lượng trong kho")
      *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Chưa xác thực"
      *     )
      * )
      */
