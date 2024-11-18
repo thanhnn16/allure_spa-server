@@ -4,7 +4,8 @@
         <LayoutAuthenticated>
 
             <Head title="Chi tiết hóa đơn" />
-            <SectionMain>
+            <SectionMain
+                :breadcrumbs="[{ label: 'Quản lý hóa đơn', href: route('invoices.index') }, { label: `Hóa đơn #${invoice.id}` }]">
                 <div class="container mx-auto px-4 py-8">
                     <!-- Header -->
                     <div class="flex justify-between items-center mb-6">
@@ -19,10 +20,6 @@
                                 class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded flex items-center">
                                 <i class="fas fa-times mr-2"></i> Hủy hóa đơn
                             </button>
-                            <Link :href="route('invoices.index')"
-                                class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
-                            Quay lại
-                            </Link>
                         </div>
                     </div>
 

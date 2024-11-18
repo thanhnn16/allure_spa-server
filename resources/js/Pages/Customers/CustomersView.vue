@@ -138,6 +138,7 @@ onMounted(() => {
 
 <template>
     <LayoutAuthenticated>
+
         <Head title="Quản lý khách hàng" />
         <SectionMain>
             <SectionTitleLineWithButton :icon="mdiTableAccount" title="Danh sách khách hàng" main>
@@ -181,8 +182,7 @@ onMounted(() => {
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block mb-2 dark:text-slate-300">Giới tính</label>
-                            <select v-model="form.gender" 
-                                class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
+                            <select v-model="form.gender" class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
                                 dark:border-slate-700 dark:text-slate-300">
                                 <option value="">Tất cả</option>
                                 <option value="male">Nam</option>
@@ -192,8 +192,7 @@ onMounted(() => {
                         </div>
                         <div>
                             <label class="block mb-2 dark:text-slate-300">Độ tuổi</label>
-                            <select v-model="form.age_range" 
-                                class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
+                            <select v-model="form.age_range" class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
                                 dark:border-slate-700 dark:text-slate-300">
                                 <option value="">Tất cả</option>
                                 <option value="0-18">0-18</option>
@@ -204,8 +203,7 @@ onMounted(() => {
                         </div>
                         <div>
                             <label class="block mb-2 dark:text-slate-300">Điểm tích lũy</label>
-                            <select v-model="form.loyalty_points_range" 
-                                class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
+                            <select v-model="form.loyalty_points_range" class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
                                 dark:border-slate-700 dark:text-slate-300">
                                 <option value="">Tất cả</option>
                                 <option value="0-100">0-100</option>
@@ -216,8 +214,7 @@ onMounted(() => {
                         </div>
                         <div>
                             <label class="block mb-2 dark:text-slate-300">Số lần mua hàng</label>
-                            <select v-model="form.purchase_count_range" 
-                                class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
+                            <select v-model="form.purchase_count_range" class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
                                 dark:border-slate-700 dark:text-slate-300">
                                 <option value="">Tất cả</option>
                                 <option value="0-1">0-1</option>
@@ -230,21 +227,17 @@ onMounted(() => {
 
                     <div class="mb-4">
                         <label class="block mb-2 dark:text-slate-300">Ngày tạo tài khoản</label>
-                        <input type="date" v-model="form.created_at_range" 
-                            class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
+                        <input type="date" v-model="form.created_at_range" class="w-full px-4 py-2 border rounded-md dark:bg-slate-800 
                             dark:border-slate-700 dark:text-slate-300">
                     </div>
                 </div>
 
                 <div class="mt-4">
-                    <input v-model="form.search" type="text" 
-                        placeholder="Tìm kiếm theo tên hoặc số điện thoại"
-                        class="w-full px-4 py-2 mb-4 border rounded-md dark:bg-slate-800 
+                    <input v-model="form.search" type="text" placeholder="Tìm kiếm theo tên hoặc số điện thoại" class="w-full px-4 py-2 mb-4 border rounded-md dark:bg-slate-800 
                         dark:border-slate-700 dark:text-slate-300 
                         placeholder:dark:text-slate-500">
-                    
-                    <select v-model="form.per_page" @change="handlePerPageChange" 
-                        class="px-10 py-2 border rounded-md dark:bg-slate-800 
+
+                    <select v-model="form.per_page" @change="handlePerPageChange" class="px-10 py-2 border rounded-md dark:bg-slate-800 
                         dark:border-slate-700 dark:text-slate-300">
                         <option :value="10">Xem 10 mỗi trang</option>
                         <option :value="25">Xem 25 mỗi trang</option>
@@ -270,8 +263,8 @@ onMounted(() => {
                 <div class="dark:text-slate-300">
                     Nhập từ Excel thành công
                     <div v-if="importStats">
-                        Tổng số: {{ importStats.total }}, 
-                        Thành công: {{ importStats.successful }}, 
+                        Tổng số: {{ importStats.total }},
+                        Thành công: {{ importStats.successful }},
                         Thất bại: {{ importStats.failed }}
                     </div>
                 </div>
@@ -285,8 +278,7 @@ onMounted(() => {
                 <BaseButton label="Xem chi tiết" small @click="showImportErrors = true" />
             </NotificationBar>
 
-            <CardBox v-if="showImportErrors" title="Lỗi nhập dữ liệu" is-modal 
-                class="dark:bg-slate-900">
+            <CardBox v-if="showImportErrors" title="Lỗi nhập dữ liệu" is-modal class="dark:bg-slate-900">
                 <template #footer>
                     <BaseButton label="Đóng" color="info" @click="showImportErrors = false" />
                 </template>

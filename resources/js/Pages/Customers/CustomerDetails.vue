@@ -720,7 +720,8 @@ const saveField = async (item) => {
     <LayoutAuthenticated>
 
         <Head title="Chi tiết khách hàng" />
-        <SectionMain :is-aside-lg-active="isAsideLgActive">
+        <SectionMain
+            :breadcrumbs="[{ label: 'Quản lý khách hàng', href: route('users.index') }, { label: safeUser.full_name }]">
             <!-- Tabs -->
             <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-4 mb-6">
                 <div class="flex space-x-2">

@@ -1,9 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { containerMaxW } from '@/config.js'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import NavBarMenuList from '@/Components/NavBarMenuList.vue'
-import NavBarItemPlain from '@/Components/NavBarItemPlain.vue'
 import { mdiMenu } from '@mdi/js'
 import { useLayoutStore } from '@/Stores/layoutStore'
 
@@ -38,7 +35,7 @@ const menuClick = (event, item) => {
         <!-- Brand/Logo -->
         <div class="flex items-center">
           <h1 class="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 
-                     bg-clip-text text-transparent">
+                     bg-clip-text text-transparent dark:from-primary-400 dark:to-primary-300">
             Allure Spa
           </h1>
         </div>
@@ -63,7 +60,7 @@ const menuClick = (event, item) => {
 <style scoped>
 /* Add smooth transition for menu items */
 :deep(.navbar-item-label) {
-  @apply transition-colors duration-200;
+  @apply transition-colors duration-200 text-gray-700 dark:text-gray-300;
 }
 
 :deep(.navbar-item-label-active) {
