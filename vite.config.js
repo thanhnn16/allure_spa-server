@@ -48,7 +48,10 @@ export default defineConfig({
                 ]
             },
             workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2}'],
+                globPatterns: [
+                    '**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2}',
+                    'offline.html'
+                ],
                 runtimeCaching: [
                     {
                         urlPattern: /^https:\/\/api\.yourwebsite\.com\/.*/,
@@ -112,15 +115,20 @@ export default defineConfig({
                 skipWaiting: true,
                 clientsClaim: true,
                 navigateFallback: '/offline.html',
-                navigateFallbackAllowlist: [/^(?!\/__)/],
+                navigateFallbackDenylist: [
+                    /^\/api\//,    // Không áp dụng cho API calls
+                    /^\/admin\//,  // Không áp dụng cho routes admin
+                    /\.[a-z]+$/i,  // Không áp dụng cho static files
+                ],
             },
-            registerType: 'autoUpdate',
             strategies: 'generateSW',
+            registerType: 'autoUpdate',
             injectRegister: 'auto',
             devOptions: {
                 enabled: true,
                 type: 'module'
-            }
+            },
+            includeAssets: ['offline.html', 'images/offline.svg'],
         }),
     ],
     build: {

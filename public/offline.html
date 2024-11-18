@@ -224,10 +224,15 @@
                 event.target.classList.add("active");
             }
 
-            // Check if browser is online
-            window.addEventListener("online", function () {
-                window.location.reload();
-            });
+            // Check connection status
+            function updateOnlineStatus() {
+                if (navigator.onLine) {
+                    window.location.reload();
+                }
+            }
+
+            window.addEventListener("online", updateOnlineStatus);
+            window.addEventListener("offline", updateOnlineStatus);
         </script>
     </body>
 </html>

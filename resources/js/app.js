@@ -96,6 +96,19 @@ const registerServiceWorker = async () => {
     }
 };
 
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('SW registered:', registration);
+            })
+            .catch(error => {
+                console.log('SW registration failed:', error);
+            });
+    });
+}
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
