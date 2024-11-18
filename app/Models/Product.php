@@ -116,9 +116,7 @@ class Product extends Model
     public function ratings()
     {
         return $this->morphMany(Rating::class, 'item')
-            ->where('rating_type', 'product')
-            ->with(['user', 'media'])
-            ->latest();
+            ->where('rating_type', 'product');
     }
 
     public function approvedRatings()
@@ -130,7 +128,7 @@ class Product extends Model
     public function getRatingSummaryAttribute()
     {
         // Get approved ratings only
-        $approvedRatings = $this->approvedRatings()
+        $approvedRatings = $this->ratings()
             ->where('status', 'approved')
             ->where('rating_type', 'product');
 
@@ -138,11 +136,11 @@ class Product extends Model
             'average_rating' => round($this->average_rating, 1) ?? 0,
             'total_ratings' => $this->total_ratings ?? 0,
             'rating_distribution' => [
-                5 => $approvedRatings->where('stars', 5)->count(),
-                4 => $approvedRatings->where('stars', 4)->count(),
-                3 => $approvedRatings->where('stars', 3)->count(),
-                2 => $approvedRatings->where('stars', 2)->count(),
-                1 => $approvedRatings->where('stars', 1)->count(),
+                5 => $approvedRatings->clone()->where('stars', 5)->count(),
+                4 => $approvedRatings->clone()->where('stars', 4)->count(),
+                3 => $approvedRatings->clone()->where('stars', 3)->count(),
+                2 => $approvedRatings->clone()->where('stars', 2)->count(),
+                1 => $approvedRatings->clone()->where('stars', 1)->count(),
             ]
         ];
     }
