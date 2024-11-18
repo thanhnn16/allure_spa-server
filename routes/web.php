@@ -104,7 +104,7 @@ Route::middleware('auth')->group(function () {
 
     // Mobile App routes - Web Interface
     Route::get('banners', [BannerController::class, 'index'])->name('banners.web');
-    // Không cần các route khác vì sẽ xử lý qua API
+    Route::post('banners/reorder', [BannerController::class, 'reorder'])->name('banners.reorder');
 
     // Report routes
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

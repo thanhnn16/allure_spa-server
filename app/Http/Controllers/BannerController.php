@@ -63,7 +63,12 @@ class BannerController extends BaseController
     public function store(Request $request)
     {
         $banner = $this->bannerService->createBanner($request->all());
-        return $this->respondWithJson($banner, 'Banner created successfully', 201);
+        
+        if ($request->wantsJson()) {
+            return $this->respondWithJson($banner, 'Banner created successfully', 201);
+        }
+        
+        return redirect()->route('banners.web')->with('success', 'Banner created successfully');
     }
 
     /**
@@ -91,7 +96,12 @@ class BannerController extends BaseController
     public function update(Request $request, $id)
     {
         $banner = $this->bannerService->updateBanner($id, $request->all());
-        return $this->respondWithJson($banner, 'Banner updated successfully');
+        
+        if ($request->wantsJson()) {
+            return $this->respondWithJson($banner, 'Banner updated successfully');
+        }
+        
+        return redirect()->route('banners.web')->with('success', 'Banner updated successfully');
     }
 
     /**
@@ -114,6 +124,19 @@ class BannerController extends BaseController
     public function destroy($id)
     {
         $this->bannerService->deleteBanner($id);
-        return $this->respondWithJson(null, 'Banner deleted successfully');
+        
+        if (request()->wantsJson()) {
+            return $this->respondWithJson(null, 'Banner deleted successfully');
+        }
+        
+        return redirect()->route('banners.web')->with('success', 'Banner deleted successfully');
+    }
+
+    public function reorder(Request $request)
+    {
+        foreach ($request->orders as $order) {
+            Banner::where('id', $order['id'])->update(['order' => $order['order']]);
+        }
+        return $this->respondWithJson(null, 'Order updated successfully');
     }
 }

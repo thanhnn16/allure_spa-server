@@ -66,6 +66,8 @@ Route::middleware('throttle:api')->group(function () {
     Route::post('/zalo/generate-code-verifier', [ZaloAuthController::class, 'generateCodeVerifier']);
     Route::post('/zalo/callback', [ZaloAuthController::class, 'callback']);
 
+    Route::get('banners', [BannerController::class, 'index'])->name('banners.index');
+
 
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/fcm/token', [AuthController::class, 'storeFcmToken']);
@@ -235,7 +237,10 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('service-packages/{package}/history', [ServiceUsageController::class, 'getUsageHistory']);
 
         // Banner API routes
-        Route::apiResource('banners', BannerController::class);
+        Route::post('banners', [BannerController::class, 'store'])->name('banners.store');
+        Route::put('banners/{banner}', [BannerController::class, 'update'])->name('banners.update');
+        Route::delete('banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
+        
 
         Route::post('treatment-sessions', [ServiceUsageHistoryController::class, 'store']);
     });

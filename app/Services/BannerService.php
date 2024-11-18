@@ -15,7 +15,7 @@ class BannerService
     public function createBanner($data)
     {
         if (isset($data['image']) && $data['image']) {
-            $path = Storage::disk('public')->put('banners', $data['image']);
+            $path = $data['image']->store('banners', 'public');
             $data['image_url'] = $path;
         }
 
@@ -27,12 +27,11 @@ class BannerService
         $banner = Banner::findOrFail($id);
 
         if (isset($data['image']) && $data['image']) {
-            // Delete old image
             if ($banner->image_url) {
                 Storage::disk('public')->delete($banner->image_url);
             }
             
-            $path = Storage::disk('public')->put('banners', $data['image']);
+            $path = $data['image']->store('banners', 'public');
             $data['image_url'] = $path;
         }
 

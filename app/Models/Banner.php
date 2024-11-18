@@ -44,4 +44,22 @@ class Banner extends Model
         'start_date' => 'date',
         'end_date' => 'date'
     ];
+
+    // Thêm accessor để lấy full URL của hình ảnh
+    protected $appends = ['full_image_url'];
+
+    public function getFullImageUrlAttribute()
+    {
+        if (!$this->image_url) {
+            return null;
+        }
+
+        // Nếu image_url đã là URL đầy đủ
+        if (filter_var($this->image_url, FILTER_VALIDATE_URL)) {
+            return $this->image_url;
+        }
+
+        // Nếu không, tạo URL đầy đủ từ storage
+        return asset('storage/' . $this->image_url);
+    }
 }
