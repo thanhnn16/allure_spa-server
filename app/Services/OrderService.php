@@ -449,9 +449,27 @@ class OrderService
             }
         }
 
-        // Validate items are not empty
-        if (empty($data['orderItems'])) {
+        // Sửa validate items không được rỗng
+        if (!isset($data['order_items']) || empty($data['order_items'])) {
             throw new \Exception('Đơn hàng phải có ít nhất một sản phẩm hoặc dịch vụ');
+        }
+
+        // Thêm validate cho từng item
+        foreach ($data['order_items'] as $item) {
+            if (!isset($item['item_type']) || !in_array($item['item_type'], ['product', 'service'])) {
+                throw new \Exception('Loại item không hợp lệ');
+            }
+
+            if (!isset($item['item_id']) || !isset($item['quantity']) || !isset($item['price'])) {
+                throw new \Exception('Thiếu thông tin cho item đơn hàng');
+            }
+
+            // Validate service_type nếu là service
+            if ($item['item_type'] === 'service' && 
+                (!isset($item['service_type']) || 
+                 !in_array($item['service_type'], ['single', 'combo_5', 'combo_10']))) {
+                throw new \Exception('Loại dịch vụ không hợp lệ');
+            }
         }
 
         return true;
