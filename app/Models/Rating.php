@@ -54,7 +54,7 @@ class Rating extends Model
 
     public function item()
     {
-        return $this->morphTo();
+        return $this->morphTo(__FUNCTION__, 'rating_type', 'item_id');
     }
 
     public function product()
