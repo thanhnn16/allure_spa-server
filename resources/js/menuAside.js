@@ -20,6 +20,7 @@ import {
     mdiChartBar,
     mdiViewCarousel,
     mdiPackageVariant,
+    mdiStar,
 } from '@mdi/js'
 
 export default [
@@ -120,6 +121,11 @@ export default [
                 icon: mdiRobot
             },
         ]
+    },
+    {
+        label: 'Quản lý đánh giá',
+        icon: mdiStar,
+        route: 'ratings.index'
     },
     {
         label: 'Tạo báo cáo',

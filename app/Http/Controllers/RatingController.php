@@ -8,6 +8,7 @@ use App\Http\Requests\CreateRatingRequest;
 use OpenApi\Annotations as OA;
 use App\Models\Rating;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 /**
  * @OA\Schema(
@@ -136,7 +137,12 @@ class RatingController extends BaseController
     public function index(Request $request)
     {
         $ratings = $this->ratingService->getAllRatings($request->all());
-        return $this->respondWithJson($ratings, 'Danh sách đánh giá');
+        if ($request->wantsJson()) {
+            return $this->respondWithJson($ratings, 'Danh sách đánh giá');
+        }
+        return Inertia::render('Ratings/Index', [
+            'ratings' => $ratings
+        ]);
     }
 
     /**
@@ -482,7 +488,7 @@ class RatingController extends BaseController
     public function update(Request $request, $id)
     {
         $rating = Rating::findOrFail($id);
-        
+
         if ($rating->user_id !== Auth::user()->id) {
             return $this->respondWithJson(null, 'Bạn không có quyền sửa đánh giá này', 403);
         }
