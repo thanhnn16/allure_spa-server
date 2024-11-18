@@ -7,12 +7,18 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class RatingService
 {
     public function getAllRatings(array $params = [])
     {
-        return $this->getRatingsQuery($params)->paginate($params['per_page'] ?? 15);
+        return $this->getRatingsQuery($params)->with([
+            'user',
+            'media',
+            'item',
+            'orderItem'
+        ])->paginate($params['per_page'] ?? 15);
     }
 
     public function getRatingsByProduct($productId, array $params = [])
@@ -38,12 +44,7 @@ class RatingService
 
     protected function getRatingsQuery(array $params = []): Builder
     {
-        $query = Rating::query()->with([
-            'user',
-            'media',
-            'product',
-            'service'
-        ]);
+        $query = Rating::query();
 
         if (isset($params['status'])) {
             $query->where('status', $params['status']);
@@ -54,7 +55,6 @@ class RatingService
         } else {
             $query->latest();
         }
-
         return $query;
     }
 

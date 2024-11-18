@@ -68,7 +68,7 @@ const formatDate = (dateString) => {
 
 // Thêm computed để format rating type
 const formatRatingType = (type) => {
-    return type === 'product' ? 'Sản phẩm' : 'Dịch vụ'
+    return type === 'product' ? 'SP' : 'DV'
 }
 
 // Thêm computed để lấy status color
@@ -198,7 +198,7 @@ onMounted(() => {
                                     </span>
                                 </td>
                                 <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                    {{ rating.item?.name }}
+                                    {{ rating.item?.name || rating.item?.service_name }}
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="flex space-x-1">

@@ -33,7 +33,7 @@ class Rating extends Model
         'user_id',
         'order_item_id',
         'rating_type',
-        'item_id', 
+        'item_id',
         'stars',
         'comment',
         'status'
@@ -55,16 +55,6 @@ class Rating extends Model
     public function item()
     {
         return $this->morphTo('item', 'rating_type', 'item_id');
-    }
-
-    public function product()
-    {
-        return $this->belongsTo(Product::class, 'item_id');
-    }
-
-    public function service()
-    {
-        return $this->belongsTo(Service::class, 'item_id');
     }
 
     public function scopePending($query)
@@ -90,7 +80,7 @@ class Rating extends Model
 
     public function getMediaUrlsAttribute()
     {
-        return $this->media->map(function($media) {
+        return $this->media->map(function ($media) {
             return [
                 'id' => $media->id,
                 'type' => $media->type,

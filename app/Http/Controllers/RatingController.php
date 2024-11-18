@@ -8,6 +8,7 @@ use App\Http\Requests\CreateRatingRequest;
 use OpenApi\Annotations as OA;
 use App\Models\Rating;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 /**
@@ -137,6 +138,7 @@ class RatingController extends BaseController
     public function index(Request $request)
     {
         $ratings = $this->ratingService->getAllRatings($request->all());
+        Log::info('ratings', [$ratings]);
         if ($request->wantsJson()) {
             return $this->respondWithJson($ratings, 'Danh sách đánh giá');
         }
