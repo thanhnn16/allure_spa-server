@@ -650,7 +650,7 @@ watch(() => addressForm.is_temporary, (newValue) => {
 // Thêm methods để load địa chỉ hành chính
 const loadProvinces = async () => {
     try {
-        const response = await axios.get('https://oapi.vn/api/provinces')
+        const response = await axios.get('/api/address/provinces')
         provinces.value = response.data.data
     } catch (error) {
         console.error('Error loading provinces:', error)
@@ -664,7 +664,7 @@ const loadDistricts = async (provinceCode) => {
         return
     }
     try {
-        const response = await axios.get(`https://oapi.vn/api/districts/${provinceCode}`)
+        const response = await axios.get(`/api/address/districts/${provinceCode}`)
         districts.value = response.data.data
         addressForm.district = ''
         addressForm.ward = ''
@@ -679,7 +679,7 @@ const loadWards = async (districtCode) => {
         return
     }
     try {
-        const response = await axios.get(`https://oapi.vn/api/wards/${districtCode}`)
+        const response = await axios.get(`/api/address/wards/${districtCode}`)
         wards.value = response.data.data
         addressForm.ward = ''
     } catch (error) {
@@ -1445,7 +1445,7 @@ const saveField = async (item) => {
 
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                Số lần s�� dụng cho mỗi người dùng *
+                                                Số lần s dụng cho mỗi người dùng *
                                             </label>
                                             <input v-model.number="newVoucherForm.uses_per_user" type="number" required
                                                 min="1" class="w-full rounded-md border-gray-300 dark:border-gray-600 
@@ -1493,7 +1493,7 @@ const saveField = async (item) => {
                                     </p>
                                 </div>
                                 <BaseButton v-if="servicePackage.remaining_sessions > 0" color="info"
-                                    label="Thêm buổi dịch vụ" :icon="mdiPlus"
+                                    label="Thêm buổi dịch v���" :icon="mdiPlus"
                                     @click="openAddTreatmentModal(servicePackage)" />
                             </div>
 

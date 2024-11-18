@@ -104,8 +104,13 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/user/addresses/{address}', [AddressController::class, 'update']);
         Route::delete('/user/addresses/{address}', [AddressController::class, 'destroy']);
         Route::get('/user/my-addresses', [AddressController::class, 'getAddressByUser']);
+
+        Route::get('/address/provinces', [AddressController::class, 'getProvinces']);
+        Route::get('/address/districts/{provinceCode}', [AddressController::class, 'getDistricts']);
+        Route::get('/address/wards/{districtCode}', [AddressController::class, 'getWards']);
+
         // Sửa lại route cập nhật user profile
-        
+
         Route::put('/user/profile', [UserController::class, 'updateProfile']);
         // Rating routes
         Route::get('/ratings', [RatingController::class, 'index']);

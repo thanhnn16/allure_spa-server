@@ -6,7 +6,9 @@ use App\Models\Address;
 use App\Services\AddressService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use OpenApi\Annotations as OA;
+use Illuminate\Support\Facades\Cache;
 
 class AddressController extends BaseController
 {
@@ -248,6 +250,42 @@ class AddressController extends BaseController
             return $this->respondWithJson($addresses, 'Lấy danh sách địa chỉ thành công');
         } catch (\Exception $e) {
             return $this->respondWithJson(null, 'Lỗi khi lấy danh sách địa chỉ: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function getProvinces()
+    {
+        try {
+            return Cache::remember('provinces', 86400, function () {
+                $response = Http::get('https://oapi.vn/api/provinces');
+                return response()->json($response->json());
+            });
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getDistricts($provinceCode)
+    {
+        try {
+            return Cache::remember("districts_{$provinceCode}", 86400, function () use ($provinceCode) {
+                $response = Http::get("https://oapi.vn/api/districts/{$provinceCode}");
+                return response()->json($response->json());
+            });
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getWards($districtCode)
+    {
+        try {
+            return Cache::remember("wards_{$districtCode}", 86400, function () use ($districtCode) {
+                $response = Http::get("https://oapi.vn/api/wards/{$districtCode}");
+                return response()->json($response->json());
+            });
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 }
