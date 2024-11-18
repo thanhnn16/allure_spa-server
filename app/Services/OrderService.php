@@ -40,10 +40,8 @@ class OrderService
             // Validate order data first
             $this->validateOrderData($data);
 
-            // Đảm bảo key order_items tồn tại
-            if (!isset($data['order_items'])) {
-                throw new \Exception('Thiếu thông tin order_items');
-            }
+            // Đảm bảo có user_id
+            $userId = $data['user_id'] ?? Auth::id();
 
             // Tính toán với key order_items
             $calculatedTotals = $this->calculateOrderTotals($data['order_items']);
@@ -61,7 +59,7 @@ class OrderService
 
             // Create order with calculated values
             $orderData = [
-                'user_id' => Auth::user()->id,
+                'user_id' => $userId,
                 'total_amount' => $calculatedTotals['subtotal'],
                 'shipping_address_id' => $data['shipping_address_id'] ?? null,
                 'payment_method_id' => $data['payment_method_id'],
@@ -301,7 +299,7 @@ class OrderService
             ],
             'shipping' => [
                 'title' => 'Đơn hàng đang được giao',
-                'content' => "Đơn hàng #{$order->id} của bạn đang được giao đến bạn"
+                'content' => "Đơn hàng #{$order->id} c���a bạn đang được giao đến bạn"
             ],
             'completed' => [
                 'title' => 'Đơn hàng hoàn thành',
@@ -451,38 +449,58 @@ class OrderService
             throw new \Exception('Phương thức thanh toán không tồn tại');
         }
 
-        // Validate shipping address if required
-        if (isset($data['shipping_address_id'])) {
-            $address = Address::where('user_id', Auth::id())
-                ->where('id', $data['shipping_address_id'])
-                ->first();
-            if (!$address) {
-                throw new \Exception('Địa chỉ giao hàng không tồn tại');
-            }
+        // Validate user_id - Sửa phần này
+        $userId = $data['user_id'] ?? Auth::id();
+        if (!$userId) {
+            throw new \Exception('Thiếu thông tin khách hàng');
         }
 
-        // Sửa key từ orderItems thành order_items
+        // Kiểm tra user có tồn tại không
+        $user = \App\Models\User::find($userId);
+        if (!$user) {
+            throw new \Exception('Không tìm thấy thông tin khách hàng');
+        }
+
+        // Validate order items
         if (!isset($data['order_items']) || empty($data['order_items'])) {
             throw new \Exception('Đơn hàng phải có ít nhất một sản phẩm hoặc dịch vụ');
         }
 
-        // Thêm validate cho từng item
+        // Validate từng item
         foreach ($data['order_items'] as $item) {
             if (!isset($item['item_type']) || !in_array($item['item_type'], ['product', 'service'])) {
                 throw new \Exception('Loại item không hợp lệ');
             }
 
-            if (!isset($item['item_id']) || !isset($item['quantity']) || !isset($item['price'])) {
-                throw new \Exception('Thiếu thông tin cho item đơn hàng');
+            if (!isset($item['item_id'])) {
+                throw new \Exception('Thiếu ID sản phẩm/dịch vụ');
             }
 
-            // Validate service_type nếu là service
-            if (
-                $item['item_type'] === 'service' &&
-                (!isset($item['service_type']) ||
-                    !in_array($item['service_type'], ['single', 'combo_5', 'combo_10']))
-            ) {
-                throw new \Exception('Loại dịch vụ không hợp lệ');
+            // Kiểm tra sự tồn tại của sản phẩm/dịch vụ
+            if ($item['item_type'] === 'product') {
+                $product = Product::find($item['item_id']);
+                if (!$product) {
+                    throw new \Exception('Sản phẩm không tồn tại');
+                }
+            } else {
+                $service = Service::find($item['item_id']);
+                if (!$service) {
+                    throw new \Exception('Dịch vụ không tồn tại');
+                }
+            }
+
+            if (!isset($item['quantity']) || $item['quantity'] < 1) {
+                throw new \Exception('Số lượng không hợp lệ');
+            }
+
+            // Validate service_type cho dịch vụ
+            if ($item['item_type'] === 'service') {
+                if (
+                    !isset($item['service_type']) ||
+                    !in_array($item['service_type'], ['single', 'combo_5', 'combo_10'])
+                ) {
+                    throw new \Exception('Loại dịch vụ không hợp lệ');
+                }
             }
         }
 

@@ -383,6 +383,9 @@ class OrderController extends BaseController
     public function store(Request $request)
     {
         try {
+            // Log request data
+            Log::info('Order creation request:', $request->all());
+
             $validatedData = $request->validate([
                 'payment_method_id' => 'required|exists:payment_methods,id',
                 'shipping_address_id' => 'nullable|exists:addresses,id',
@@ -404,8 +407,9 @@ class OrderController extends BaseController
                 201
             );
         } catch (\Exception $e) {
-            Log::error('Order creation failed: ' . $e->getMessage(), [
+            Log::error('Order creation failed:', [
                 'request' => $request->all(),
+                'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 

@@ -325,18 +325,41 @@ export default {
         // Form submission
         const submitForm = async () => {
             try {
-                form.value.total_amount = calculateFinalTotal()
-                form.value.discount_amount = calculateDiscount()
+                // Kiểm tra user đã được chọn
+                if (!form.value.user_id) {
+                    toast.error('Vui lòng chọn khách hàng');
+                    return;
+                }
 
-                const response = await axios.post('/orders', form.value)
+                // Log để debug
+                console.log('Form data before submit:', form.value);
 
-                toast.success('Đơn hàng đã được tạo thành công!')
+                // Kiểm tra có item nào chưa
+                if (form.value.order_items.length === 0) {
+                    toast.error('Vui lòng thêm ít nhất một sản phẩm hoặc dịch vụ');
+                    return;
+                }
 
-                // Redirect to order detail page
-                router.visit(`/orders/${response.data.data.id}`)
+                // Kiểm tra từng item đã đầy đủ thông tin
+                for (const item of form.value.order_items) {
+                    if (!item.item_id || !item.selectedItem) {
+                        toast.error('Vui lòng chọn đầy đủ thông tin cho tất cả sản phẩm/dịch vụ');
+                        return;
+                    }
+                }
+
+                // Cập nhật tổng tiền trước khi gửi
+                form.value.total_amount = calculateTotal();
+                form.value.discount_amount = calculateDiscount();
+
+                const response = await axios.post('/orders', form.value);
+
+                toast.success('Đơn hàng đã được tạo thành công!');
+                router.visit(`/orders/${response.data.data.id}`);
             } catch (error) {
-                console.error('Error creating order:', error)
-                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn hàng!')
+                console.error('Error creating order:', error);
+                const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn hàng!';
+                toast.error(errorMessage);
             }
         }
 
