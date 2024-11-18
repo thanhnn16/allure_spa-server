@@ -1,0 +1,1 @@
+import{c as o,aU as n,a2 as r,b1 as p,j as l}from"./@vue-BRgAy5zV.js";const u={__name:"BaseButtons",props:{type:{type:String,default:"justify-start"},noWrap:Boolean},setup(t){const e=t,a=o(()=>[e.type,e.noWrap?"flex-nowrap":"flex-wrap"]);return(s,c)=>(n(),r("div",{class:l(["flex items-center",a.value])},[p(s.$slots,"default")],2))}};export{u as _};
