@@ -4219,6 +4219,34 @@
                 }
             }
         },
+        "/api/ratings/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Ratings"
+                ],
+                "summary": "Duyệt đánh giá",
+                "operationId": "24b2c0ba2912637039e5a7e894a0f2ff",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                }
+            }
+        },
+        "/api/ratings/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Ratings"
+                ],
+                "summary": "Từ chối đánh giá",
+                "operationId": "dd42255f87d64b02b23b7cbfdaa01675",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                }
+            }
+        },
         "/api/services": {
             "get": {
                 "tags": [
