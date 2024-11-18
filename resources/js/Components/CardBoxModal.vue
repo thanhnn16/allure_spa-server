@@ -70,7 +70,7 @@ window.addEventListener('keydown', (e) => {
         </div>
 
         <!-- Footer -->
-        <footer class="p-5 border-t dark:border-dark-border">
+        <footer v-if="hasButton || $slots.footer" class="p-5 border-t dark:border-dark-border">
           <BaseButtons v-if="hasButton" class="justify-end gap-3">
             <BaseButton v-if="hasCancel" label="Hủy" :color="button" outline @click="cancel" />
             <BaseButton :label="buttonLabel" :color="button" @click="confirm" />

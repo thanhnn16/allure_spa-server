@@ -26,7 +26,7 @@
                 <div class="space-y-2">
                   <p><span class="text-gray-500">Họ tên:</span> {{ order.user.full_name }}</p>
                   <p><span class="text-gray-500">Email:</span> {{ order.user.email }}</p>
-                  <p><span class="text-gray-500">Điện thoại:</span> {{ order.user.phone }}</p>
+                  <p><span class="text-gray-500">Điện thoại:</span> {{ order.user.phone_number }}</p>
                 </div>
               </div>
 
@@ -35,7 +35,7 @@
                 <h4 class="font-medium mb-2">Thông tin đặt hàng</h4>
                 <div class="space-y-2">
                   <p><span class="text-gray-500">Ngày đặt:</span> {{ formatDateTime(order.created_at) }}</p>
-                  <p><span class="text-gray-500">Phương thức:</span> {{ order.payment_method?.name }}</p>
+                  <p><span class="text-gray-500">Phương thức:</span> {{ order.payment_method?.method_name }}</p>
                   <p v-if="order.voucher"><span class="text-gray-500">Mã giảm giá:</span> {{ order.voucher.code }}</p>
                 </div>
               </div>
@@ -47,9 +47,11 @@
               <div v-if="order.shipping_address" class="bg-gray-50 dark:bg-dark-bg/50 p-3 rounded-lg">
                 <p class="font-medium">{{ order.shipping_address.address }}</p>
                 <p class="text-gray-600 dark:text-gray-400">
-                  {{ formatAddress(order.shipping_address) }}
+                  {{ formatAddress(order.shipping_address) }} ({{ order.shipping_address.ward.name }}, {{
+                    order.shipping_address.district.name }}, {{ order.shipping_address.province.name }})
                 </p>
               </div>
+              <p v-else class="text-gray-500 text-sm">Chưa có địa chỉ giao hàng</p>
             </div>
           </CardBox>
 
@@ -169,29 +171,38 @@
           <!-- Card trạng thái và actions -->
           <CardBox>
             <div class="space-y-4">
-              <div class="flex justify-between items-center">
-                <span class="text-gray-500">Trạng thái</span>
-                <StatusBadge :status="order.status" size="lg" />
+              <!-- Phần trạng thái -->
+              <div>
+                <h3 class="text-lg font-medium mb-3">Trạng thái đơn hàng</h3>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-600">Trạng thái hiện tại</span>
+                  <StatusBadge :status="order.status" class="px-3 py-1" />
+                </div>
               </div>
 
-              <div class="space-y-3">
-                <button v-if="canUpdateStatus" @click="openUpdateStatusModal" class="w-full btn-primary">
-                  <i class="mdi mdi-pencil mr-2"></i>
+              <!-- Phần actions -->
+              <div class="space-y-3 pt-3 border-t dark:border-dark-border">
+                <button v-if="canUpdateStatus" @click="openUpdateStatusModal"
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
+                  <i class="mdi mdi-pencil-outline mr-2"></i>
                   Cập nhật trạng thái
                 </button>
 
-                <button v-if="canComplete" @click="openCompleteModal" class="w-full btn-success">
-                  <i class="mdi mdi-check-circle mr-2"></i>
-                  Hoàn thành đơn hàng
+                <button v-if="canCancel" @click="openCancelModal"
+                  class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
+                  <i class="mdi mdi-close-circle-outline mr-2"></i>
+                  Hủy đơn hàng
                 </button>
 
-                <button v-if="canCancel" @click="openCancelModal" class="w-full btn-danger">
-                  <i class="mdi mdi-close-circle mr-2"></i>
-                  Hủy đơn hàng
+                <button v-if="canComplete" @click="openCompleteModal"
+                  class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
+                  <i class="mdi mdi-check-circle-outline mr-2"></i>
+                  Hoàn thành đơn hàng
                 </button>
               </div>
             </div>
           </CardBox>
+
 
           <!-- Card thông tin thanh toán -->
           <CardBox>
@@ -445,7 +456,6 @@ export default {
         if (response.data.success) {
           toast.success('Hóa đơn đã được tạo thành công');
 
-          // Chuyển hướng đến trang chi tiết hóa đơn mới
           router.visit(route('invoices.show', response.data.data.id));
         } else {
           throw new Error(response.data.message);
@@ -629,8 +639,27 @@ export default {
     }
 
     // Thêm các hàm xử lý sự kiện
-    const handleStatusUpdated = () => {
-      router.reload();
+    const handleStatusUpdated = async (data) => {
+      loading.value = true;
+      try {
+        const response = await axios.put(route('orders.update', props.order.id), {
+          status: data.status,
+          note: data.note
+        });
+
+        if (response.data.success) {
+          toast.success('Cập nhật trạng thái thành công');
+          router.reload();
+        } else {
+          throw new Error(response.data.message || 'Có lỗi xảy ra');
+        }
+      } catch (error) {
+        console.error('Error updating order status:', error);
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
+      } finally {
+        loading.value = false;
+        showStatusModal.value = false;
+      }
     }
 
     const handleInvoiceCreated = () => {
@@ -647,7 +676,7 @@ export default {
 
     // Thêm các hàm helper cho item
     const getItemName = (item) => {
-      return item.product?.name || item.service?.name || 'N/A';
+      return item.product?.name || item.service?.service_name || 'N/A';
     }
 
     const getItemImage = (item) => {
@@ -673,6 +702,12 @@ export default {
         cancelNote.value = ''
       }
     })
+
+    // Thêm hàm formatAddress
+    const formatAddress = (address) => {
+      if (!address) return '';
+      return `${address.ward}, ${address.district}, ${address.province}`;
+    }
 
     return {
       showStatusModal,
@@ -721,6 +756,7 @@ export default {
       getItemName,
       getItemImage,
       canCancel,
+      formatAddress,
     }
   }
 }
