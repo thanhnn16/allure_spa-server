@@ -14,6 +14,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 /**
  * @OA\Tag(
@@ -450,7 +452,15 @@ class OrderController extends BaseController
                 201
             );
         } catch (\Exception $e) {
-            return $this->respondWithError($e->getMessage());
+            Log::error('Order creation failed: ' . $e->getMessage(), [
+                'request' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this->respondWithError(
+                $e->getMessage(),
+                $e instanceof ValidationException ? 422 : 400
+            );
         }
     }
 

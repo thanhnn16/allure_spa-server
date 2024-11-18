@@ -27,26 +27,13 @@ class BaseController extends Controller
         return Inertia::render($component, $props);
     }
 
-    protected function respondWithError($errorCode, $status = 400): JsonResponse
+    protected function respondWithError($message, $statusCode = 400)
     {
-        $statusCodes = [
-            AuthErrorCode::USER_NOT_FOUND->value => 404,
-            AuthErrorCode::WRONG_PASSWORD->value => 401,
-            AuthErrorCode::EMAIL_ALREADY_EXISTS->value => 422,
-            AuthErrorCode::PHONE_ALREADY_EXISTS->value => 422,
-            AuthErrorCode::VALIDATION_ERROR->value => 422,
-            AuthErrorCode::MISSING_CONTACT_INFO->value => 422,
-            AuthErrorCode::SERVER_ERROR->value => 500,
-            AuthErrorCode::UNAUTHORIZED_ACCESS->value => 403
-        ];
-
-        $status = $statusCodes[$errorCode] ?? $status;
-
         return response()->json([
-            'status_code' => $errorCode,
-            'message' => $status,
             'success' => false,
+            'message' => $message,
+            'status_code' => $statusCode,
             'data' => null
-        ], $status);
+        ], $statusCode);
     }
 }
