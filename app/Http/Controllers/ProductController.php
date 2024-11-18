@@ -260,11 +260,10 @@ class ProductController extends BaseController
      *     )
      * )
      */
-    public function show(Product $product)
+    public function show(Request $request, Product $product)
     {
-        $product = $this->productService->getProductById($product->id);
-        $categories = $this->productService->getAllCategories();
-
+        $userId = $request->query('user_id');
+        $product = $this->productService->getProductById($product->id, $userId);
         $product->load(['category', 'media', 'priceHistory', 'attributes', 'favorites']);
 
         if (request()->expectsJson()) {
@@ -273,7 +272,6 @@ class ProductController extends BaseController
 
         return $this->respondWithInertia('Products/Show', [
             'product' => $product,
-            'categories' => $categories,
         ]);
     }
 
@@ -442,7 +440,7 @@ class ProductController extends BaseController
     {
         try {
             $translations = [];
-            
+
             // Sửa lại tên cột trong truy vấn
             $translationsFromDb = DB::table('translations')
                 ->where('translatable_id', $product->id)
@@ -454,11 +452,11 @@ class ProductController extends BaseController
             foreach ($translationsFromDb as $translation) {
                 $language = $translation->language;
                 $field = $translation->field;
-                
+
                 if (!isset($translations[$language])) {
                     $translations[$language] = [];
                 }
-                
+
                 $translations[$language][$field] = $translation->value;
             }
 

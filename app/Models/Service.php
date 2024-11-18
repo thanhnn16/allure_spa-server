@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\HasTranslations;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Schema(
@@ -82,6 +83,9 @@ class Service extends Model
 
     protected $appends = ['rating_summary', 'is_favorite', 'translations_array'];
 
+    // Thêm property để lưu user_id tạm thời
+    public $current_user_id = null;
+
     public function media()
     {
         return $this->morphMany(Media::class, 'mediable');
@@ -151,23 +155,36 @@ class Service extends Model
 
     public function getIsFavoriteAttribute()
     {
-        if (!Auth::check()) {
+        if (!$this->current_user_id) {
+            Log::info('No user_id provided for service, is_favorite = false');
             return false;
         }
 
-        $userId = Auth::id();
+        Log::info('Checking is_favorite for service:', [
+            'service_id' => $this->id,
+            'user_id' => $this->current_user_id,
+            'favorites_relation_loaded' => $this->relationLoaded('favorites')
+        ]);
 
         if ($this->relationLoaded('favorites')) {
-            return $this->favorites
-                ->where('user_id', $userId)
+            $isFavorite = $this->favorites
+                ->where('user_id', $this->current_user_id)
                 ->where('favorite_type', 'service')
                 ->isNotEmpty();
+
+            Log::info('Checking is_favorite from loaded relation:', [
+                'favorites_count' => $this->favorites->count(),
+                'filtered_favorites' => $this->favorites
+                    ->where('user_id', $this->current_user_id)
+                    ->where('favorite_type', 'service')
+                    ->toArray(),
+                'is_favorite' => $isFavorite
+            ]);
+
+            return $isFavorite;
         }
 
-        return $this->favorites()
-            ->where('user_id', $userId)
-            ->where('favorite_type', 'service')
-            ->exists();
+        return false;
     }
 
     public function translations()

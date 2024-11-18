@@ -71,6 +71,8 @@ class Product extends Model
         'product_notes'
     ];
 
+    public $current_user_id = null;
+
     public function category()
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
@@ -144,23 +146,36 @@ class Product extends Model
 
     public function getIsFavoriteAttribute()
     {
-        if (!Auth::check()) {
+        if (!$this->current_user_id) {
+            Log::info('No user_id provided, is_favorite = false');
             return false;
         }
 
-        $userId = Auth::id();
+        Log::info('Checking is_favorite for:', [
+            'product_id' => $this->id,
+            'user_id' => $this->current_user_id,
+            'favorites_relation_loaded' => $this->relationLoaded('favorites')
+        ]);
 
         if ($this->relationLoaded('favorites')) {
-            return $this->favorites
-                ->where('user_id', $userId)
+            $isFavorite = $this->favorites
+                ->where('user_id', $this->current_user_id)
                 ->where('favorite_type', 'product')
                 ->isNotEmpty();
+
+            Log::info('Checking is_favorite from loaded relation:', [
+                'favorites_count' => $this->favorites->count(),
+                'filtered_favorites' => $this->favorites
+                    ->where('user_id', $this->current_user_id)
+                    ->where('favorite_type', 'product')
+                    ->toArray(),
+                'is_favorite' => $isFavorite
+            ]);
+
+            return $isFavorite;
         }
 
-        return $this->favorites()
-            ->where('user_id', $userId)
-            ->where('favorite_type', 'product')
-            ->exists();
+        return false;
     }
 
     /**

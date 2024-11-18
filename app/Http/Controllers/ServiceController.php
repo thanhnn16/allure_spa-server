@@ -324,7 +324,8 @@ class ServiceController extends BaseController
      */
     public function show(Request $request, Service $service)
     {
-        $service = $this->serviceService->getServiceById($service->id);
+        $userId = $request->query('user_id');
+        $service = $this->serviceService->getServiceById($service->id, $userId);
 
         if (!$service) {
             if ($request->expectsJson()) {
@@ -385,14 +386,14 @@ class ServiceController extends BaseController
         try {
             $services = Service::with('category')
                 ->select([
-                    'id', 
-                    'service_name', 
+                    'id',
+                    'service_name',
                     'single_price as price',
                     'duration',
                     'category_id'
                 ])
                 ->get()
-                ->map(function($service) {
+                ->map(function ($service) {
                     return [
                         'id' => $service->id,
                         'name' => $service->service_name,
@@ -403,7 +404,6 @@ class ServiceController extends BaseController
                 });
 
             return $this->respondWithJson($services, 'Services retrieved successfully');
-            
         } catch (\Exception $e) {
             Log::error('Error fetching services for appointment: ' . $e->getMessage());
             return $this->respondWithError('Error fetching services: ' . $e->getMessage());
@@ -433,7 +433,7 @@ class ServiceController extends BaseController
     {
         try {
             DB::beginTransaction();
-            
+
             foreach ($request->translations as $language => $fields) {
                 foreach ($fields as $field => $value) {
                     $service->translations()->updateOrCreate(
@@ -445,7 +445,7 @@ class ServiceController extends BaseController
                     );
                 }
             }
-            
+
             DB::commit();
             return $this->respondWithJson(null, 'Translations updated successfully');
         } catch (\Exception $e) {
