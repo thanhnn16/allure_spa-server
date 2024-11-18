@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AllureSpa - Offline</title>
+        <style>
+            /* Modern CSS Reset */
+            *,
+            *::before,
+            *::after {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            /* Custom Properties */
+            :root {
+                --primary-color: #ff4b6e;
+                --text-color: #333;
+                --bg-color: #f8f9fa;
+                --shadow-color: rgba(0, 0, 0, 0.1);
+            }
+
+            body {
+                font-family:
+                    "Segoe UI",
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                background: var(--bg-color);
+                color: var(--text-color);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem;
+            }
+
+            .offline-container {
+                max-width: 500px;
+                width: 100%;
+                text-align: center;
+                padding: 2rem;
+                background: white;
+                border-radius: 1rem;
+                box-shadow: 0 10px 30px var(--shadow-color);
+                animation: slideUp 0.5s ease-out;
+            }
+
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .icon-container {
+                margin-bottom: 2rem;
+            }
+
+            .wifi-icon {
+                width: 80px;
+                height: 80px;
+                fill: var(--primary-color);
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+                50% {
+                    transform: scale(1.1);
+                    opacity: 0.7;
+                }
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            h1 {
+                color: var(--text-color);
+                font-size: 1.8rem;
+                margin-bottom: 1rem;
+                font-weight: 600;
+            }
+
+            p {
+                color: #666;
+                line-height: 1.6;
+                margin-bottom: 2rem;
+            }
+
+            .retry-button {
+                background: var(--primary-color);
+                color: white;
+                border: none;
+                padding: 1rem 2rem;
+                border-radius: 2rem;
+                font-size: 1rem;
+                cursor: pointer;
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
+                font-weight: 500;
+                text-decoration: none;
+                display: inline-block;
+            }
+
+            .retry-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(255, 75, 110, 0.3);
+            }
+
+            .retry-button:active {
+                transform: translateY(0);
+            }
+
+            .language-switcher {
+                margin-top: 2rem;
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+            }
+
+            .language-button {
+                background: none;
+                border: 1px solid #ddd;
+                padding: 0.5rem 1rem;
+                border-radius: 1rem;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .language-button:hover {
+                background: #f0f0f0;
+            }
+
+            .language-button.active {
+                background: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="offline-container">
+            <div class="icon-container">
+                <svg
+                    class="wifi-icon"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <path
+                        d="M12 6.5c3.79 0 7.17 2.13 8.82 5.5-1.65 3.37-5.02 5.5-8.82 5.5S4.83 15.37 3.18 12C4.83 8.63 8.21 6.5 12 6.5m0-2C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5-2.5-1.12-2.5-2.5 1.12-2.5 2.5-2.5m0-2c-2.48 0-4.5 2.02-4.5 4.5s2.02 4.5 4.5 4.5 4.5-2.02 4.5-4.5-2.02-4.5-4.5-4.5z"
+                    />
+                </svg>
+            </div>
+            <h1 id="title">Không có kết nối mạng</h1>
+            <p id="message">
+                Vui lòng kiểm tra kết nối internet của bạn và thử lại.
+            </p>
+            <a href="/" class="retry-button" id="retry-button">Thử lại</a>
+
+            <div class="language-switcher">
+                <button
+                    class="language-button active"
+                    onclick="changeLanguage('vi')"
+                >
+                    Tiếng Việt
+                </button>
+                <button class="language-button" onclick="changeLanguage('en')">
+                    English
+                </button>
+                <button class="language-button" onclick="changeLanguage('ja')">
+                    日本語
+                </button>
+            </div>
+        </div>
+
+        <script>
+            const translations = {
+                en: {
+                    title: "You're Offline",
+                    message:
+                        "Please check your internet connection and try again.",
+                    button: "Retry",
+                },
+                vi: {
+                    title: "Không có kết nối mạng",
+                    message:
+                        "Vui lòng kiểm tra kết nối internet của bạn và thử lại.",
+                    button: "Thử lại",
+                },
+                ja: {
+                    title: "オフラインです",
+                    message:
+                        "インターネット接続を確認して、もう一度お試しください。",
+                    button: "再試行",
+                },
+            };
+
+            function changeLanguage(lang) {
+                document.getElementById("title").textContent =
+                    translations[lang].title;
+                document.getElementById("message").textContent =
+                    translations[lang].message;
+                document.getElementById("retry-button").textContent =
+                    translations[lang].button;
+
+                // Update active button
+                document
+                    .querySelectorAll(".language-button")
+                    .forEach((button) => {
+                        button.classList.remove("active");
+                    });
+                event.target.classList.add("active");
+            }
+
+            // Check if browser is online
+            window.addEventListener("online", function () {
+                window.location.reload();
+            });
+        </script>
+    </body>
+</html>

@@ -48,7 +48,19 @@ export default defineConfig({
                 ]
             },
             workbox: {
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2}'],
                 runtimeCaching: [
+                    {
+                        urlPattern: /^https:\/\/api\.yourwebsite\.com\/.*/,
+                        handler: 'NetworkFirst',
+                        options: {
+                            cacheName: 'api-cache',
+                            networkTimeoutSeconds: 10,
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
+                    },
                     {
                         urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
                         handler: 'CacheFirst',
@@ -78,9 +90,37 @@ export default defineConfig({
                             },
                         },
                     },
+                    {
+                        urlPattern: /\.(png|jpg|jpeg|svg|gif)$/,
+                        handler: 'CacheFirst',
+                        options: {
+                            cacheName: 'image-cache',
+                            expiration: {
+                                maxEntries: 60,
+                                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+                            }
+                        }
+                    },
+                    {
+                        urlPattern: new RegExp('/$'),
+                        handler: 'StaleWhileRevalidate',
+                        options: {
+                            cacheName: 'navigation-cache'
+                        }
+                    }
                 ],
+                skipWaiting: true,
+                clientsClaim: true,
+                navigateFallback: '/offline.html',
+                navigateFallbackAllowlist: [/^(?!\/__)/],
             },
             registerType: 'autoUpdate',
+            strategies: 'generateSW',
+            injectRegister: 'auto',
+            devOptions: {
+                enabled: true,
+                type: 'module'
+            }
         }),
     ],
     build: {
