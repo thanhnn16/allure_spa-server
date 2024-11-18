@@ -115,13 +115,22 @@ class Product extends Model
 
     public function ratings()
     {
-        return $this->morphMany(Rating::class, 'item', 'rating_type', 'item_id');
+        return $this->morphMany(Rating::class, 'item')
+            ->where('rating_type', 'product')
+            ->with(['user', 'media'])
+            ->latest();
+    }
+
+    public function approvedRatings()
+    {
+        return $this->ratings()
+            ->where('status', 'approved');
     }
 
     public function getRatingSummaryAttribute()
     {
         // Get approved ratings only
-        $approvedRatings = $this->ratings()
+        $approvedRatings = $this->approvedRatings()
             ->where('status', 'approved')
             ->where('rating_type', 'product');
 

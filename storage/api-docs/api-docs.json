@@ -7117,6 +7117,10 @@
                         "description": "ID của người dùng đánh giá",
                         "type": "string"
                     },
+                    "order_item_id": {
+                        "description": "ID của item trong đơn hàng",
+                        "type": "integer"
+                    },
                     "rating_type": {
                         "description": "Loại đánh giá",
                         "type": "string",
@@ -7136,14 +7140,6 @@
                     "comment": {
                         "description": "Bình luận đánh giá",
                         "type": "string"
-                    },
-                    "image_id": {
-                        "description": "ID của hình ảnh đính kèm",
-                        "type": "integer"
-                    },
-                    "video_id": {
-                        "description": "ID của video đính kèm",
-                        "type": "integer"
                     },
                     "status": {
                         "description": "Trạng thái đánh giá",

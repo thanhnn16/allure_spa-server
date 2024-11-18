@@ -10,6 +10,56 @@ use App\Models\Rating;
 use Illuminate\Support\Facades\Auth;
 
 /**
+ * @OA\Schema(
+ *     schema="Rating",
+ *     title="Đánh giá",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="user_id", type="string", format="uuid"),
+ *     @OA\Property(property="order_item_id", type="integer"),
+ *     @OA\Property(property="rating_type", type="string", enum={"product", "service"}),
+ *     @OA\Property(property="item_id", type="integer"),
+ *     @OA\Property(property="stars", type="integer", minimum=1, maximum=5),
+ *     @OA\Property(property="comment", type="string", nullable=true),
+ *     @OA\Property(property="status", type="string", enum={"pending", "approved", "rejected"}),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(
+ *         property="media",
+ *         type="array",
+ *         @OA\Items(
+ *             @OA\Property(property="id", type="integer"),
+ *             @OA\Property(property="type", type="string"),
+ *             @OA\Property(property="url", type="string")
+ *         )
+ *     ),
+ *     @OA\Property(property="user", ref="#/components/schemas/User"),
+ *     @OA\Property(property="order_item", ref="#/components/schemas/OrderItem")
+ * )
+ */
+
+/**
+ * @OA\Schema(
+ *     schema="PaginatedRatingResponse",
+ *     @OA\Property(property="current_page", type="integer"),
+ *     @OA\Property(
+ *         property="data",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/Rating")
+ *     ),
+ *     @OA\Property(property="first_page_url", type="string"),
+ *     @OA\Property(property="from", type="integer"),
+ *     @OA\Property(property="last_page", type="integer"),
+ *     @OA\Property(property="last_page_url", type="string"),
+ *     @OA\Property(property="next_page_url", type="string", nullable=true),
+ *     @OA\Property(property="path", type="string"),
+ *     @OA\Property(property="per_page", type="integer"),
+ *     @OA\Property(property="prev_page_url", type="string", nullable=true),
+ *     @OA\Property(property="to", type="integer"),
+ *     @OA\Property(property="total", type="integer")
+ * )
+ */
+
+/**
  * @OA\Tag(
  *     name="Ratings",
  *     description="API Endpoints để quản lý đánh giá"

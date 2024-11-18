@@ -168,4 +168,11 @@ class Order extends Model
             $this->invoice &&
             $this->invoice->status === Invoice::STATUS_PAID;
     }
+
+    public function getUnratedItems()
+    {
+        return $this->orderItems()->whereDoesntHave('ratings', function($query) {
+            $query->where('user_id', $this->user_id);
+        })->get();
+    }
 }

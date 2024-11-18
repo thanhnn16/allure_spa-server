@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Rating;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\Order;
+use App\Models\OrderItem;
+use Illuminate\Support\Facades\Auth;
 
 class RatingService
 {
@@ -83,11 +85,42 @@ class RatingService
         ]));
     }
 
+    public function createRatingFromOrderItem(array $data, OrderItem $orderItem)
+    {
+        $rating = Rating::create([
+            'user_id' => Auth::id(),
+            'order_item_id' => $orderItem->id,
+            'rating_type' => $orderItem->item_type,
+            'item_id' => $orderItem->item_id,
+            'stars' => $data['stars'],
+            'comment' => $data['comment'] ?? null,
+            'status' => 'pending'
+        ]);
+
+        // Xử lý media nếu có
+        if (!empty($data['media_ids'])) {
+            $rating->attachMedia($data['media_ids']);
+        }
+
+        return $rating->load('media'); // Return với media đã attach
+    }
+
     public function updateRating(Rating $rating, array $data)
     {
-        $rating->update(array_merge($data, [
+        $rating->update([
+            'stars' => $data['stars'],
+            'comment' => $data['comment'] ?? null,
             'is_edited' => true
-        ]));
-        return $rating->fresh();
+        ]);
+
+        // Xử lý media mới nếu có
+        if (!empty($data['media_ids'])) {
+            // Xóa media cũ
+            $rating->media()->delete();
+            // Attach media mới
+            $rating->attachMedia($data['media_ids']);
+        }
+
+        return $rating->fresh(['media']);
     }
 }

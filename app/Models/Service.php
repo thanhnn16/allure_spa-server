@@ -99,7 +99,16 @@ class Service extends Model
 
     public function ratings()
     {
-        return $this->morphMany(Rating::class, 'item', 'rating_type', 'item_id');
+        return $this->morphMany(Rating::class, 'item')
+            ->where('rating_type', 'service')
+            ->with(['user', 'media']) // Eager load relationships
+            ->latest();
+    }
+
+    public function approvedRatings()
+    {
+        return $this->ratings()
+            ->where('status', 'approved');
     }
 
     public function category()
@@ -126,7 +135,7 @@ class Service extends Model
     public function getRatingSummaryAttribute()
     {
         // Get approved ratings only
-        $approvedRatings = $this->ratings()
+        $approvedRatings = $this->approvedRatings()
             ->where('status', 'approved')
             ->where('rating_type', 'service');
 

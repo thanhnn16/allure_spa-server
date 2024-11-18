@@ -29,14 +29,10 @@ class CreateRatingRequest extends FormRequest
     public function rules()
     {
         return [
-            'user_id' => 'required|exists:users,id',
-            'rating_type' => 'required|in:service,product',
-            'item_id' => 'required|integer',
             'stars' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string',
-            'image_id' => 'nullable|exists:images,id',
-            'video_id' => 'nullable|exists:videos,id',
-            'status' => 'required|in:pending,approved,rejected',
+            'comment' => 'nullable|string|max:1000',
+            'media_ids' => 'nullable|array',
+            'media_ids.*' => 'exists:media,id'
         ];
     }
 }

@@ -83,4 +83,17 @@ class OrderItem extends Model
                 $query->where('item_type', 'product');
             });
     }
+
+    // Quan hệ với Rating
+    public function rating()
+    {
+        return $this->hasOne(Rating::class)
+            ->latest();
+    }
+
+    // Kiểm tra item đã được đánh giá chưa
+    public function isRated()
+    {
+        return $this->rating()->exists();
+    }
 }
