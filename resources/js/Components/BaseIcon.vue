@@ -24,7 +24,6 @@ const spanClass = computed(() => `inline-flex justify-center items-center ${prop
 
 const iconSize = computed(() => props.size ?? 16)
 </script>
-
 <template>
   <span :class="spanClass">
     <svg viewBox="0 0 24 24" :width="iconSize" :height="iconSize" class="inline-block">

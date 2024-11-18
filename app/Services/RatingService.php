@@ -38,7 +38,12 @@ class RatingService
 
     protected function getRatingsQuery(array $params = []): Builder
     {
-        $query = Rating::query()->with(['user', 'media']);
+        $query = Rating::query()->with([
+            'user',
+            'media',
+            'product',
+            'service'
+        ]);
 
         if (isset($params['status'])) {
             $query->where('status', $params['status']);
@@ -55,22 +60,29 @@ class RatingService
 
     public function createRatingFromOrder(array $data, $userId)
     {
-        // Check if user has purchased the item
-        $order = Order::whereHas('items', function ($query) use ($data) {
+        // Tìm order item phù hợp
+        $order = Order::whereHas('orderItems', function ($query) use ($data) {
             $query->where('item_type', $data['rating_type'])
                 ->where('item_id', $data['item_id']);
         })
-        ->where('user_id', $userId)
-        ->where('status', 'completed')
-        ->first();
+            ->where('user_id', $userId)
+            ->where('status', 'completed')
+            ->first();
 
         if (!$order) {
             throw new \Exception('Bạn chỉ có thể đánh giá sản phẩm/dịch vụ đã mua', 403);
         }
 
-        // Check if user has already rated this item
+        // Lấy order item tương ứng
+        $orderItem = $order->orderItems()
+            ->where('item_type', $data['rating_type'])
+            ->where('item_id', $data['item_id'])
+            ->first();
+
+        // Kiểm tra đánh giá đã tồn tại
         $existingRating = Rating::where([
             'user_id' => $userId,
+            'order_item_id' => $orderItem->id,
             'rating_type' => $data['rating_type'],
             'item_id' => $data['item_id']
         ])->first();
@@ -79,8 +91,10 @@ class RatingService
             throw new \Exception('Bạn đã đánh giá sản phẩm/dịch vụ này rồi', 403);
         }
 
+        // Tạo rating mới với order_item_id
         return Rating::create(array_merge($data, [
             'user_id' => $userId,
+            'order_item_id' => $orderItem->id,
             'status' => 'pending'
         ]));
     }
@@ -107,20 +121,30 @@ class RatingService
 
     public function updateRating(Rating $rating, array $data)
     {
-        $rating->update([
-            'stars' => $data['stars'],
-            'comment' => $data['comment'] ?? null,
-            'is_edited' => true
-        ]);
+        $rating->update($data);
 
         // Xử lý media mới nếu có
-        if (!empty($data['media_ids'])) {
+        if (!empty($data['media_id'])) {
             // Xóa media cũ
             $rating->media()->delete();
             // Attach media mới
-            $rating->attachMedia($data['media_ids']);
+            $rating->attachMedia($data['media_id']);
         }
 
         return $rating->fresh(['media']);
+    }
+
+    public function approveRating(Rating $rating)
+    {
+        return $rating->update([
+            'status' => 'approved'
+        ]);
+    }
+
+    public function rejectRating(Rating $rating)
+    {
+        return $rating->update([
+            'status' => 'rejected'
+        ]);
     }
 }

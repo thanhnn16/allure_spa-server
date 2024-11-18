@@ -68,7 +68,10 @@ const formatCurrency = (amount) => {
 const handleSubmit = async () => {
     loading.value = true
     try {
-        emit('created', { note: note.value })
+        await emit('created', { note: note.value })
+        note.value = '' // Reset form
+    } catch (error) {
+        console.error('Error creating invoice:', error)
     } finally {
         loading.value = false
     }

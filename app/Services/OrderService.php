@@ -412,13 +412,6 @@ class OrderService
         $pointsEarned = floor($order->final_total / 1000); // 1 point per 1000
         $order->user->increment('loyalty_points', $pointsEarned);
 
-        Log::on($order->user)
-            ->by($order)
-            ->withProperties([
-                'points_earned' => $pointsEarned,
-                'order_id' => $order->id
-            ])
-            ->log('earned_loyalty_points');
 
         return $pointsEarned;
     }

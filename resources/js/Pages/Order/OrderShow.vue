@@ -245,12 +245,13 @@
             <!-- Khi chưa có hóa đơn -->
             <div v-else class="text-center py-6">
               <div class="mb-4">
-                <i class="mdi mdi-file-document-outline text-5xl text-gray-400"></i>
+                <i class="mdi mdi-file-document-plus-outline text-5xl text-gray-400"></i>
               </div>
               <p class="text-gray-500 mb-4">Chưa có hóa đơn cho đơn hàng này</p>
-              <button v-if="canCreateInvoice" @click="openCreateInvoiceModal" class="btn-success w-full">
-                <i class="mdi mdi-plus mr-2"></i>
-                Tạo hóa đơn
+              <button v-if="canCreateInvoice" @click="openCreateInvoiceModal"
+                class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
+                <i class="mdi mdi-plus-circle-outline mr-2 text-xl"></i>
+                Tạo hóa đơn mới
               </button>
             </div>
           </CardBox>
@@ -285,8 +286,10 @@ import CompleteOrderModal from '@/Components/CompleteOrderModal.vue'
 import CancelOrderModal from '@/Components/CancelOrderModal.vue'
 import axios from 'axios'
 import { useToast } from "vue-toastification"
+import BaseIcon from '@/Components/BaseIcon.vue'
 
 export default {
+  name: 'OrderShow',
   components: {
     Head,
     Link,
@@ -299,7 +302,8 @@ export default {
     UpdateStatusModal,
     CreateInvoiceModal,
     CompleteOrderModal,
-    CancelOrderModal
+    CancelOrderModal,
+    BaseIcon,
   },
   props: {
     order: Object,
@@ -662,9 +666,31 @@ export default {
       }
     }
 
-    const handleInvoiceCreated = () => {
-      router.reload();
-    }
+    const handleInvoiceCreated = async (data) => {
+      loading.value = true;
+      try {
+        const response = await axios.post(`/api/orders/${props.order.id}/create-invoice`, {
+          note: data.note
+        });
+
+        if (response.data.success) {
+          toast.success('Tạo hóa đơn thành công');
+          if (response.data.data?.id) {
+            router.visit(route('invoices.show', response.data.data.id));
+          } else {
+            router.reload();
+          }
+        } else {
+          throw new Error(response.data.message || 'Có lỗi xảy ra');
+        }
+      } catch (error) {
+        console.error('Error creating invoice:', error);
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo hóa đơn');
+      } finally {
+        loading.value = false;
+        showCreateInvoiceModal.value = false;
+      }
+    };
 
     const handleOrderCompleted = () => {
       router.reload();

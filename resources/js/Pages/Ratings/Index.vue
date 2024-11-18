@@ -9,6 +9,7 @@ import BaseButton from '@/Components/BaseButton.vue'
 import FormControl from '@/Components/FormControl.vue'
 import NotificationBar from '@/Components/NotificationBar.vue'
 import { mdiStar, mdiStarOutline, mdiCheck, mdiClose, mdiImage } from '@mdi/js'
+import BaseIcon from '@/Components/BaseIcon.vue'
 import axios from 'axios'
 
 const ratings = ref([])
@@ -45,6 +46,7 @@ const updateRatingStatus = async (ratingId, newStatus) => {
         showNotification('Cập nhật trạng thái thành công', 'success')
         await fetchRatings()
     } catch (error) {
+        console.error('Error updating rating status:', error)
         showNotification('Không thể cập nhật trạng thái', 'danger')
     }
 }

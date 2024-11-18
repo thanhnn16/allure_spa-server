@@ -489,17 +489,52 @@ class RatingController extends BaseController
     {
         $rating = Rating::findOrFail($id);
 
-        if ($rating->user_id !== Auth::user()->id) {
+        // Check if the user is the owner of the rating or an admin
+        if ($rating->user_id !== Auth::user()->id && Auth::user()->role !== 'admin') {
             return $this->respondWithJson(null, 'Bạn không có quyền sửa đánh giá này', 403);
         }
 
-        $validated = $request->validate([
-            'stars' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string',
-            'media_id' => 'nullable|integer|exists:media,id'
-        ]);
-
-        $rating = $this->ratingService->updateRating($rating, $validated);
+        $rating = $this->ratingService->updateRating($rating, $request->all());
         return $this->respondWithJson($rating, 'Đánh giá đã được cập nhật thành công');
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/ratings/{id}/approve",
+     *     summary="Duyệt đánh giá",
+     *     tags={"Ratings"},
+     *     @OA\Response(response=200, description="Successful operation")
+     * )
+     */
+    public function approve($id)
+    {
+        $rating = Rating::findOrFail($id);
+
+        if (Auth::user()->role !== 'admin') {
+            return $this->respondWithJson(null, 'Bạn không có quyền duyệt đánh giá', 403);
+        }
+
+        $this->ratingService->approveRating($rating);
+        return $this->respondWithJson($rating, 'Đánh giá đã được duyệt');
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/ratings/{id}/reject",
+     *     summary="Từ chối đánh giá",
+     *     tags={"Ratings"},
+     *     @OA\Response(response=200, description="Successful operation")
+     * )
+     */
+    public function reject($id)
+    {
+        $rating = Rating::findOrFail($id);
+
+        if (Auth::user()->role !== 'admin') {
+            return $this->respondWithJson(null, 'Bạn không có quyền từ chối đánh giá', 403);
+        }
+
+        $this->ratingService->rejectRating($rating);
+        return $this->respondWithJson($rating, 'Đánh giá đã bị từ chối');
     }
 }

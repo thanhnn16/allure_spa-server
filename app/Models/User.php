@@ -125,7 +125,11 @@ class User extends Authenticatable
 
     public function getAvatarUrlAttribute()
     {
-        return $this->media ? $this->media->full_url : null;
+        if ($this->media) {
+            return $this->media->full_url;
+        }
+        // Return default avatar URL
+        return asset('images/default-avatar.png');
     }
 
     public function cart()
