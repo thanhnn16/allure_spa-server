@@ -24,7 +24,7 @@ class NotificationService
         $notification = Notification::create([
             'user_id' => $data['user_id'],
             'title' => $data['title'],
-            'content' => $data['content'], 
+            'content' => $data['content'],
             'type' => $data['type'],
             'is_read' => false
         ]);
@@ -65,7 +65,7 @@ class NotificationService
             ->orderBy('created_at', 'desc');
 
         $unreadCount = $query->clone()->where('is_read', false)->count();
-        
+
         $skip = ($page - 1) * $perPage;
         $notifications = $query->skip($skip)
             ->take($perPage)

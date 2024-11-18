@@ -95,8 +95,6 @@ class AppointmentController extends BaseController
 
             $appointments = $this->appointmentService->getAppointments($request);
 
-            Log::info('Appointments:', $appointments->toArray());
-
             // Format appointments for calendar view
             $formattedAppointments = $appointments->map(function ($appointment) {
                 $timeSlot = $appointment->timeSlot;
@@ -211,18 +209,20 @@ class AppointmentController extends BaseController
 
             // Prepare appointment data from validated input
             $appointmentData = [
+                'user_id' => $validated['user_id'],
                 'appointment_date' => $validated['appointment_date'],
                 'time_slot_id' => $validated['time_slot_id'],
                 'appointment_type' => $validated['appointment_type'],
                 'status' => $validated['status'],
                 'slots' => $validated['slots'],
                 'note' => $validated['note'] ?? null,
+                'staff_user_id' => $validated['staff_id']
             ];
 
             // Add service_id or user_service_package_id based on appointment type
-            if (isset($validated['service_id'])) {
+            if ($validated['appointment_type'] === 'service' && isset($validated['service_id'])) {
                 $appointmentData['service_id'] = $validated['service_id'];
-            } elseif (isset($validated['user_service_package_id'])) {
+            } elseif ($validated['appointment_type'] === 'service_package' && isset($validated['user_service_package_id'])) {
                 $userServicePackage = UserServicePackage::findOrFail($validated['user_service_package_id']);
                 $appointmentData['service_id'] = $userServicePackage->service_id;
                 $appointmentData['user_service_package_id'] = $validated['user_service_package_id'];
@@ -234,12 +234,6 @@ class AppointmentController extends BaseController
                 $result['data'] ?? null,
                 $result['message'] ?? 'Đặt lịch hẹn thành công',
                 $result['status'] ?? 200
-            );
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return $this->respondWithJson(
-                null,
-                'Dữ liệu không hợp lệ: ' . implode(', ', $e->errors()),
-                422
             );
         } catch (\Exception $e) {
             Log::error('Error creating appointment: ' . $e->getMessage());

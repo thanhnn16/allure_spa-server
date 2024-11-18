@@ -122,7 +122,6 @@ class AppointmentService
                     ];
                 }
 
-                // Create appointment with explicit data mapping
                 $appointmentData = [
                     'user_id' => $userId,
                     'service_id' => $data['service_id'],
@@ -376,40 +375,58 @@ class AppointmentService
         }
     }
 
-    public function cancelAppointment($id, $note)
+    public function cancelAppointment($id, $note, $isAutoCancel = false)
     {
         try {
             $appointment = Appointment::with('timeSlot')->findOrFail($id);
-            $currentUser = Auth::user();
 
-            // Kiểm tra quyền hủy cuộc hẹn (admin có thể hủy mọi cuộc hẹn)
-            if ($appointment->user_id !== $currentUser->id && $currentUser->role !== 'admin') {
-                return [
-                    'status' => 403,
-                    'message' => 'Bạn không có quyền hủy cuộc hẹn này',
-                    'data' => null,
-                    'success' => false
-                ];
-            }
+            // Nếu là hủy tự động, bỏ qua các kiểm tra về quyền và thời gian
+            if (!$isAutoCancel) {
+                $currentUser = Auth::user();
 
-            // Kiểm tra thời gian bắt đầu của cuộc hẹn
-            $appointmentStart = Carbon::parse($appointment->appointment_date)
-                ->setTimeFromTimeString($appointment->timeSlot->start_time);
+                // Kiểm tra quyền hủy cuộc hẹn
+                if ($appointment->user_id !== $currentUser->id && $currentUser->role !== 'admin') {
+                    return [
+                        'status' => 403,
+                        'message' => 'Bạn không có quyền hủy cuộc hẹn này',
+                        'data' => null,
+                        'success' => false
+                    ];
+                }
 
-            if ($appointmentStart <= now()) {
-                return [
-                    'status' => 422,
-                    'message' => 'Không thể hủy cuộc hẹn đã bắt đầu hoặc đã kết thúc',
-                    'data' => null,
-                    'success' => false
-                ];
+                // Kiểm tra thời gian bắt đầu của cuộc hẹn
+                $appointmentStart = Carbon::parse($appointment->appointment_date)
+                    ->setTimeFromTimeString($appointment->timeSlot->start_time);
+
+                if ($appointmentStart <= now()) {
+                    return [
+                        'status' => 422,
+                        'message' => 'Không thể hủy cuộc hẹn đã bắt đầu hoặc đã kết thúc',
+                        'data' => null,
+                        'success' => false
+                    ];
+                }
             }
 
             $appointment->update([
                 'status' => 'cancelled',
-                'cancelled_by' => $currentUser->id,
+                'cancelled_by' => $isAutoCancel ? null : Auth::id(),
                 'cancelled_at' => now(),
                 'cancellation_note' => $note,
+            ]);
+
+            // Gửi thông báo cho khách hàng
+            $this->notificationService->createNotification([
+                'user_id' => $appointment->user_id,
+                'title' => 'Lịch hẹn đã bị hủy',
+                'content' => $isAutoCancel ?
+                    'Lịch hẹn của bạn đã bị hủy tự động do quá thời gian' :
+                    'Lịch hẹn của bạn đã bị hủy',
+                'type' => 'appointment_cancelled',
+                'data' => [
+                    'appointment_id' => $appointment->id,
+                    'is_auto_cancel' => $isAutoCancel
+                ]
             ]);
 
             return [

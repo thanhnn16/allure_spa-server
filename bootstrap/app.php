@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Session\Middleware\AuthenticateSession as MiddlewareAuthenticateSession;
+use Illuminate\Console\Scheduling\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,9 +15,17 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
+    ->withCommands([
+        \App\Console\Commands\CancelExpiredAppointments::class,
+    ])
+    ->withSchedule(function (Schedule $schedule) {
+        $schedule->command('appointments:cancel-expired')
+            ->hourly()
+            ->withoutOverlapping();
+    })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
-        
+
         $middleware->alias([
             'auth.session' => MiddlewareAuthenticateSession::class,
         ]);
