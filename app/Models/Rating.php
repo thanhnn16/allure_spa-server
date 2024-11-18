@@ -54,19 +54,17 @@ class Rating extends Model
 
     public function item()
     {
-        return $this->morphTo(__FUNCTION__, 'rating_type', 'item_id');
+        return $this->morphTo('item', 'rating_type', 'item_id');
     }
 
     public function product()
     {
-        return $this->belongsTo(Product::class, 'item_id')
-            ->where('rating_type', 'product');
+        return $this->belongsTo(Product::class, 'item_id');
     }
 
     public function service()
     {
-        return $this->belongsTo(Service::class, 'item_id')
-            ->where('rating_type', 'service');
+        return $this->belongsTo(Service::class, 'item_id');
     }
 
     public function scopePending($query)
