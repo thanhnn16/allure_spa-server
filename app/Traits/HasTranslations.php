@@ -43,4 +43,16 @@ trait HasTranslations
             ->get()
             ->pluck('value', 'language');
     }
+
+    public function getAllTranslations()
+    {
+        return $this->translations()
+            ->get()
+            ->groupBy('language')
+            ->map(function ($items) {
+                return $items->mapWithKeys(function ($item) {
+                    return [$item->field => $item->value];
+                });
+            });
+    }
 }

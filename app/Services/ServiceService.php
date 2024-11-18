@@ -21,7 +21,8 @@ class ServiceService
     {
         $query = Service::with([
             'category',
-            'media' // Media model đã có $appends = ['full_url'] nên sẽ tự động thêm full_url
+            'media',
+            'translations'
         ]);
 
         if (!empty($filters['search'])) {
@@ -51,22 +52,11 @@ class ServiceService
         $query = Service::with([
             'category',
             'media',
-            'priceHistory' => function ($query) {
-                $query->orderBy('effective_from', 'desc');
-            },
+            'priceHistory',
+            'translations',
             'ratings' => function ($query) {
                 $query->where('status', 'approved')
                     ->where('rating_type', 'service');
-            },
-            'favorites' => function($query) use ($userId) {
-                Log::info('Loading favorites with conditions:', [
-                    'user_id' => $userId,
-                    'favorite_type' => 'service'
-                ]);
-                $query->where('favorite_type', 'service');
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                }
             }
         ])
         ->withCount(['ratings as total_ratings' => function ($query) {
@@ -82,13 +72,6 @@ class ServiceService
         
         // Set user_id vào service instance để dùng trong getIsFavoriteAttribute
         $service->current_user_id = $userId;
-
-        Log::info('Service retrieved:', [
-            'service_id' => $service->id,
-            'favorites_loaded' => $service->relationLoaded('favorites'),
-            'favorites_count' => $service->favorites->count(),
-            'favorites_data' => $service->favorites->toArray()
-        ]);
 
         return $service;
     }

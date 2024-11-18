@@ -30,16 +30,11 @@ class ProductService
 
     public function getProducts($request)
     {
-        $query = Product::with(['category', 'media']);
-
-        if (Auth::check()) {
-            $query->withCount([
-                'favorites as favorites_count' => function ($query) {
-                    $query->where('user_id', Auth::id())
-                        ->where('favorite_type', 'product');
-                }
-            ]);
-        }
+        $query = Product::with([
+            'category',
+            'media',
+            'translations'
+        ]);
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
@@ -92,41 +87,25 @@ class ProductService
             'media',
             'priceHistory',
             'attributes',
+            'translations',
             'ratings' => function ($query) {
                 $query->where('status', 'approved')
                     ->where('rating_type', 'product');
-            },
-            'favorites' => function($query) use ($userId) {
-                Log::info('Loading favorites with conditions:', [
-                    'user_id' => $userId,
-                    'favorite_type' => 'product'
-                ]);
-                $query->where('favorite_type', 'product');
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                }
             }
         ])
-        ->withCount(['ratings as total_ratings' => function ($query) {
-            $query->where('status', 'approved')
-                ->where('rating_type', 'product');
-        }])
-        ->withAvg(['ratings as average_rating' => function ($query) {
-            $query->where('status', 'approved')
-                ->where('rating_type', 'product');
-        }], 'stars');
+            ->withCount(['ratings as total_ratings' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'product');
+            }])
+            ->withAvg(['ratings as average_rating' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'product');
+            }], 'stars');
 
         $product = $query->findOrFail($id);
 
         // Set user_id vào product instance để dùng trong getIsFavoriteAttribute
         $product->current_user_id = $userId;
-
-        Log::info('Product retrieved:', [
-            'product_id' => $product->id,
-            'favorites_loaded' => $product->relationLoaded('favorites'),
-            'favorites_count' => $product->favorites->count(),
-            'favorites_data' => $product->favorites->toArray()
-        ]);
 
         return $product;
     }

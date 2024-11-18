@@ -57,7 +57,7 @@ class Product extends Model
 
     protected $morphClass = 'product';
 
-    protected $appends = ['media', 'rating_summary', 'is_favorite', 'translations_array'];
+    protected $appends = ['media', 'rating_summary', 'is_favorite'];
 
     protected $translatable = [
         'name',
@@ -151,31 +151,10 @@ class Product extends Model
             return false;
         }
 
-        Log::info('Checking is_favorite for:', [
-            'product_id' => $this->id,
-            'user_id' => $this->current_user_id,
-            'favorites_relation_loaded' => $this->relationLoaded('favorites')
-        ]);
-
-        if ($this->relationLoaded('favorites')) {
-            $isFavorite = $this->favorites
-                ->where('user_id', $this->current_user_id)
-                ->where('favorite_type', 'product')
-                ->isNotEmpty();
-
-            Log::info('Checking is_favorite from loaded relation:', [
-                'favorites_count' => $this->favorites->count(),
-                'filtered_favorites' => $this->favorites
-                    ->where('user_id', $this->current_user_id)
-                    ->where('favorite_type', 'product')
-                    ->toArray(),
-                'is_favorite' => $isFavorite
-            ]);
-
-            return $isFavorite;
-        }
-
-        return false;
+        return Favorite::where('user_id', $this->current_user_id)
+            ->where('item_id', $this->id)
+            ->where('favorite_type', 'product')
+            ->exists();
     }
 
     /**
@@ -276,10 +255,5 @@ class Product extends Model
     public function translations()
     {
         return $this->morphMany(\App\Models\Translation::class, 'translatable');
-    }
-
-    public function getTranslationsArrayAttribute()
-    {
-        return $this->attributes['translations_array'] ?? [];
     }
 }

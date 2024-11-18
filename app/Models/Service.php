@@ -81,7 +81,7 @@ class Service extends Model
         'description'
     ];
 
-    protected $appends = ['rating_summary', 'is_favorite', 'translations_array'];
+    protected $appends = ['rating_summary', 'is_favorite'];
 
     // Thêm property để lưu user_id tạm thời
     public $current_user_id = null;
@@ -160,53 +160,9 @@ class Service extends Model
             return false;
         }
 
-        Log::info('Checking is_favorite for service:', [
-            'service_id' => $this->id,
-            'user_id' => $this->current_user_id,
-            'favorites_relation_loaded' => $this->relationLoaded('favorites')
-        ]);
-
-        if ($this->relationLoaded('favorites')) {
-            $isFavorite = $this->favorites
-                ->where('user_id', $this->current_user_id)
-                ->where('favorite_type', 'service')
-                ->isNotEmpty();
-
-            Log::info('Checking is_favorite from loaded relation:', [
-                'favorites_count' => $this->favorites->count(),
-                'filtered_favorites' => $this->favorites
-                    ->where('user_id', $this->current_user_id)
-                    ->where('favorite_type', 'service')
-                    ->toArray(),
-                'is_favorite' => $isFavorite
-            ]);
-
-            return $isFavorite;
-        }
-
-        return false;
-    }
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsArrayAttribute()
-    {
-        $translations = [];
-
-        // Lấy tất cả bản dịch của service
-        $allTranslations = $this->translations;
-
-        // Nhóm các bản dịch theo ngôn ngữ
-        foreach ($allTranslations as $translation) {
-            if (!isset($translations[$translation->language])) {
-                $translations[$translation->language] = [];
-            }
-            $translations[$translation->language][$translation->field] = $translation->value;
-        }
-
-        return $translations;
+        return Favorite::where('user_id', $this->current_user_id)
+            ->where('item_id', $this->id)
+            ->where('favorite_type', 'service')
+            ->exists();
     }
 }
