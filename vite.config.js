@@ -24,7 +24,7 @@ export default defineConfig({
         }),
         compression({
             algorithm: 'brotliCompress',
-            quality: 11,
+            quality: 7,
         }),
         VitePWA({
             manifest: {
@@ -84,7 +84,7 @@ export default defineConfig({
         }),
     ],
     build: {
-        chunkSizeWarningLimit: 1000,
+        chunkSizeWarningLimit: 1500,
         rollupOptions: {
             output: {
                 manualChunks(id) {
