@@ -1,11 +1,17 @@
 <script setup>
-import { ref, onMounted, nextTick, computed, watch, onUnmounted } from 'vue'
+import { ref, onMounted, nextTick, computed, watch, onUnmounted, onBeforeUnmount } from 'vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import { usePage, Head } from '@inertiajs/vue3'
 import axios from 'axios'
 import moment from 'moment'
 import debounce from 'lodash/debounce'
 import SectionMain from '@/Components/SectionMain.vue'
+import { ref as vueRef } from 'vue'
+import {
+    mdiImage,
+    mdiEmoticonOutline
+} from '@mdi/js'
+import 'emoji-picker-element';
 
 const props = defineProps({
     chats: Array
@@ -23,6 +29,12 @@ const currentPage = ref(1)
 const hasMoreMessages = ref(false)
 const isLoadingMore = ref(false)
 const isFirstLoad = ref(true)
+const fileInput = vueRef(null)
+const selectedFile = ref(null)
+const isUploading = ref(false)
+const previewUrl = ref(null)
+const showEmojiPicker = ref(false)
+const emojiPickerContainer = ref(null)
 
 // Format thời gian tin nhắn
 const formatTime = (timestamp) => {
@@ -56,27 +68,6 @@ const searchUsers = debounce(async () => {
 }, 300)
 
 // Tạo chat mới
-const startNewChat = async (userId) => {
-    try {
-        isLoading.value = true
-        const response = await axios.post('/chats', { user_id: userId })
-        const newChat = response.data.data
-
-        // Thêm chat mới vào danh sách nếu chưa tồn tại
-        if (!props.chats.find(c => c.id === newChat.id)) {
-            props.chats.unshift(newChat)
-        }
-
-        selectedChat.value = newChat
-        await loadMessages(newChat.id)
-        searchQuery.value = ''
-        suggestedUsers.value = []
-    } catch (error) {
-        console.error('Error creating chat:', error)
-    } finally {
-        isLoading.value = false
-    }
-}
 
 // Load tin nhắn của chat
 const loadMessages = async (chatId, page = 1, append = false) => {
@@ -131,14 +122,26 @@ const loadMessages = async (chatId, page = 1, append = false) => {
 
 // Gửi tin nhắn mới
 const sendMessage = async () => {
-    if (!selectedChat.value || !newMessage.value.trim()) return;
+    if (!selectedChat.value || (!newMessage.value.trim() && !selectedFile.value)) return
 
     try {
-        const formData = new FormData();
-        formData.append('chat_id', selectedChat.value.id);
-        formData.append('message', newMessage.value);
+        isUploading.value = true
+        const formData = new FormData()
+        formData.append('chat_id', selectedChat.value.id)
 
-        const response = await axios.post('/chats/send', formData);
+        if (newMessage.value.trim()) {
+            formData.append('message', newMessage.value)
+        }
+
+        if (selectedFile.value) {
+            formData.append('file', selectedFile.value)
+        }
+
+        const response = await axios.post('/chats/send', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
 
         if (!Array.isArray(messages.value)) {
             messages.value = [];
@@ -162,10 +165,30 @@ const sendMessage = async () => {
         // Force cuộn xuống sau khi gửi tin nhắn
         await nextTick();
         scrollToBottom(true);
+
+        // Reset file selection
+        selectedFile.value = null
+        previewUrl.value = null
+        if (fileInput.value) {
+            fileInput.value.value = ''
+        }
     } catch (error) {
-        console.error('Error sending message:', error);
+        console.error('Error sending message:', error)
+    } finally {
+        isUploading.value = false
     }
-};
+}
+
+// Thêm hàm để cancel file upload
+const cancelFileUpload = () => {
+    selectedFile.value = null
+    previewUrl.value = null
+    if (fileInput.value) {
+        fileInput.value.value = ''
+    }
+}
+
+// Thêm hàm xử lý file
 
 // Thiết lập Echo listener khi component được mount
 onMounted(() => {
@@ -175,27 +198,70 @@ onMounted(() => {
 
     // Sử dụng handler function đã tách riêng
     window.addEventListener('refresh-chat-messages', handleRefreshMessages)
+    document.addEventListener('click', handleClickOutside)
 })
 
 // Cleanup event listener
 onUnmounted(() => {
-    // Cleanup Echo listener cho chat hiện tại
+    cleanup()
+})
+
+// Update the cleanup function
+const cleanup = () => {
+    // Cleanup Echo listener
     if (selectedChat.value?.id) {
         Echo.leave(`chat.${selectedChat.value.id}`)
     }
 
-    // Cleanup event listener với handler function cụ thể
+    // Remove event listeners
     window.removeEventListener('refresh-chat-messages', handleRefreshMessages)
+    document.removeEventListener('click', handleClickOutside)
     
-    // Reset các ref về null hoặc giá trị mặc định
-    selectedChat.value = null
-    messages.value = []
-    suggestedUsers.value = []
+    // Reset all state to initial values
     searchQuery.value = ''
     currentPage.value = 1
     hasMoreMessages.value = false
     isLoadingMore.value = false
     isFirstLoad.value = true
+    isLoading.value = false
+    isUploading.value = false
+    showEmojiPicker.value = false
+    newMessage.value = ''
+    selectedChat.value = null
+    messages.value = []
+    suggestedUsers.value = []
+    selectedFile.value = null
+    
+    // Cleanup URLs
+    if (previewUrl.value) {
+        URL.revokeObjectURL(previewUrl.value)
+        previewUrl.value = null
+    }
+    
+    // Reset file input
+    if (fileInput.value) {
+        fileInput.value.value = ''
+    }
+}
+
+// Update the watch for selectedChat
+watch(() => selectedChat.value, (newChat, oldChat) => {
+    if (oldChat?.id) {
+        Echo.leave(`chat.${oldChat.id}`)
+    }
+    
+    if (newChat?.id) {
+        subscribeToChat(newChat.id)
+    }
+}, { deep: true })
+
+// Ensure proper cleanup on component unmount
+onBeforeUnmount(() => {
+    cleanup()
+})
+
+onUnmounted(() => {
+    cleanup()
 })
 
 // Tách handler function ra riêng
@@ -231,16 +297,6 @@ const subscribeToChat = (chatId) => {
             }
         });
 };
-
-// Watch selectedChat để đăng ký/hủy đăng ký Echo listener
-watch(() => selectedChat.value?.id, (newChatId, oldChatId) => {
-    if (oldChatId) {
-        Echo.leave(`chat.${oldChatId}`)
-    }
-    if (newChatId) {
-        subscribeToChat(newChatId)
-    }
-})
 
 // Watch searchQuery
 watch(searchQuery, searchUsers)
@@ -293,12 +349,14 @@ const markAsRead = async (chatId) => {
 
 // Format date time helper
 const formatDateTime = (datetime) => {
-    const date = new Date(datetime);
-    return new Intl.DateTimeFormat('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    }).format(date);
+    if (!datetime) return '';
+
+    try {
+        return moment(datetime).format('HH:mm');
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return '';
+    }
 };
 
 // Thêm hàm xử lý scroll để tải thêm tin nhắn
@@ -316,154 +374,272 @@ const handleScroll = debounce(async (e) => {
         container.scrollTop = newHeight - previousHeight
     }
 }, 200)
+
+// Add this method to handle emoji selection
+const onEmojiSelect = (event) => {
+    const emoji = event.detail.unicode
+    newMessage.value += emoji
+    showEmojiPicker.value = false
+}
+
+// Add this to handle clicking outside emoji picker
+const handleClickOutside = (event) => {
+    if (emojiPickerContainer.value && !emojiPickerContainer.value.contains(event.target)) {
+        showEmojiPicker.value = false
+    }
+}
 </script>
 <template>
     <LayoutAuthenticated>
 
         <Head title="Chats" />
-        <!-- Thay đổi SectionMain để fix layout -->
         <SectionMain>
-            <div class="flex h-[calc(100vh-4rem)] bg-gray-100"> <!-- Điều chỉnh chiều cao -->
-                <!-- Sidebar danh sách chat -->
-                <div class="w-1/3 min-w-[300px] max-w-[400px] border-r bg-white flex flex-col">
-                    <!-- Thêm min/max width -->
-                    <!-- Search box -->
-                    <div class="p-4 border-b">
+            <div class="flex h-[calc(100vh-6rem)] bg-white dark:bg-dark-surface rounded-lg shadow-lg mx-4">
+                <div class="w-1/3 min-w-[300px] max-w-[400px] border-r dark:border-dark-border flex flex-col">
+                    <div class="p-4 border-b dark:border-dark-border bg-gray-50 dark:bg-dark-surface">
                         <div class="relative">
                             <input v-model="searchQuery" type="text" placeholder="Tìm kiếm người dùng..."
-                                class="w-full px-4 py-2 rounded-lg border bg-gray-50 focus:outline-none focus:border-blue-500">
-                            <!-- Loading indicator -->
-                            <div v-if="isLoading" class="absolute right-3 top-1/2 -translate-y-1/2">
-                                <div
-                                    class="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin">
-                                </div>
-                            </div>
-
-                            <!-- Dropdown tìm kiếm -->
-                            <div v-if="searchQuery && suggestedUsers.length"
-                                class="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                                <div v-for="user in suggestedUsers" :key="user.id" @click="startNewChat(user.id)"
-                                    class="flex items-center space-x-3 p-3 hover:bg-gray-50 cursor-pointer transition duration-150">
-                                    <img :src="user.avatar || 'storage/images/users/default.png'" :alt="user.full_name"
-                                        class="w-10 h-10 rounded-full object-cover">
-                                    <div>
-                                        <div class="font-medium">{{ user.full_name }}</div>
-                                        <div class="text-sm text-gray-500">{{ user.phone_number }}</div>
-                                    </div>
-                                </div>
-                            </div>
+                                class="w-full px-4 py-3 pl-10 rounded-full border bg-white dark:bg-dark-modal dark:border-dark-border dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </span>
                         </div>
                     </div>
 
-                    <!-- Danh sách chat -->
-                    <div class="flex-1 overflow-y-auto">
-                        <div v-if="chats.length === 0" class="p-4 text-center text-gray-500">
-                            Chưa có cuộc trò chuyện nào
+                    <div class="flex-1 overflow-y-auto aside-scrollbars">
+                        <div v-if="chats.length === 0" class="flex flex-col items-center justify-center h-full p-4">
+                            <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            <p class="text-gray-500 dark:text-gray-400">Chưa có cuộc trò chuyện nào</p>
                         </div>
                         <div v-else>
                             <div v-for="chat in chats" :key="chat.id" @click="selectChat(chat)" :class="[
-                                'p-4 border-b hover:bg-gray-50 cursor-pointer transition duration-150',
-                                selectedChat?.id === chat.id ? 'bg-blue-50' : ''
+                                'p-4 hover:bg-gray-50 dark:hover:bg-dark-hover cursor-pointer transition-all duration-200',
+                                selectedChat?.id === chat.id ? 'bg-primary-50 dark:bg-primary-900/20' : ''
                             ]">
                                 <div class="flex items-center space-x-3">
-                                    <img :src="getOtherUser(chat).avatar || 'storage/images/users/default.png'"
-                                        :alt="getOtherUser(chat).full_name" class="w-12 h-12 rounded-full object-cover">
+                                    <div class="relative">
+                                        <img :src="getOtherUser(chat).avatar || 'storage/images/users/default.png'"
+                                            :alt="getOtherUser(chat).full_name"
+                                            class="w-12 h-12 rounded-full object-cover ring-2 ring-offset-2 dark:ring-offset-dark-surface"
+                                            :class="[
+                                                selectedChat?.id === chat.id
+                                                    ? 'ring-primary-500'
+                                                    : 'ring-transparent'
+                                            ]">
+                                        <span
+                                            class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-dark-surface rounded-full"></span>
+                                    </div>
                                     <div class="flex-1 min-w-0">
-                                        <div class="font-medium">{{ getOtherUser(chat).full_name }}</div>
-                                        <div class="text-sm text-gray-500 truncate">
-                                            {{ chat.messages && chat.messages.length > 0
-                                                ? chat.messages[0].message
-                                                : 'Bắt đầu cuộc trò chuyện' }}
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-medium dark:text-dark-text">
+                                                {{ getOtherUser(chat).full_name }}
+                                            </span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                {{ formatDateTime(chat.messages?.[0]?.created_at) }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                {{ chat.messages && chat.messages.length > 0
+                                                    ? chat.messages[0].message
+                                                    : 'Bắt đầu cuộc trò chuyện' }}
+                                            </p>
+                                            <div v-if="hasUnreadMessages(chat)"
+                                                class="flex-shrink-0 w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center">
+                                                <span class="text-xs text-white">1</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div v-if="hasUnreadMessages(chat)"
-                                        class="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Chat area -->
-                <div class="flex-1 flex flex-col overflow-hidden"> <!-- Thêm overflow-hidden -->
+                <div class="flex-1 flex flex-col bg-gray-50 dark:bg-dark-bg">
                     <template v-if="selectedChat">
-                        <!-- Chat header -->
-                        <div class="p-4 border-b bg-white">
-                            <div class="flex items-center space-x-3">
-                                <img :src="getOtherUser(selectedChat).avatar || 'storage/images/users/default.png'"
-                                    :alt="getOtherUser(selectedChat).full_name"
-                                    class="w-10 h-10 rounded-full object-cover">
-                                <div>
-                                    <div class="font-medium">{{ getOtherUser(selectedChat).full_name }}</div>
-                                    <div class="text-sm text-gray-500">
-                                        {{ getOtherUser(selectedChat).phone_number }}
+                        <div class="p-4 bg-white dark:bg-dark-surface border-b dark:border-dark-border">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="relative">
+                                        <img :src="getOtherUser(selectedChat).avatar || 'storage/images/users/default.png'"
+                                            :alt="getOtherUser(selectedChat).full_name"
+                                            class="w-10 h-10 rounded-full object-cover">
                                     </div>
+                                    <div>
+                                        <div class="font-medium dark:text-dark-text">
+                                            {{ getOtherUser(selectedChat).full_name }}
+                                        </div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            {{ getOtherUser(selectedChat).phone_number }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <button
+                                        class="p-2 text-gray-500 hover:text-primary-500 dark:text-gray-400 dark:hover:text-primary-400 rounded-full hover:bg-gray-100 dark:hover:bg-dark-hover transition-all">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Messages -->
-                        <div ref="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+                        <div ref="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-4 aside-scrollbars"
                             @scroll="handleScroll">
-                            <!-- Thêm loading indicator cho "Load more" -->
                             <div v-if="isLoadingMore" class="flex justify-center py-2">
                                 <div
-                                    class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin">
+                                    class="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin">
                                 </div>
                             </div>
 
                             <div v-if="isLoading" class="flex justify-center">
                                 <div
-                                    class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">
+                                    class="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin">
                                 </div>
                             </div>
+
                             <template v-else>
                                 <div v-if="messages && messages.length > 0">
-                                    <div v-for="message in messages" :key="message.id"
-                                        :class="['flex mb-4', message.sender_id === user.id ? 'justify-end' : 'justify-start']">
+                                    <div v-for="(message) in messages" :key="message.id" :class="[
+                                        'flex mb-4',
+                                        message.sender_id === user.id ? 'justify-end' : 'justify-start'
+                                    ]">
+                                        <div v-if="message.sender_id !== user.id" class="flex-shrink-0 mr-3">
+                                            <img :src="getOtherUser(selectedChat).avatar || 'storage/images/users/default.png'"
+                                                class="w-8 h-8 rounded-full">
+                                        </div>
+
                                         <div :class="[
-                                            'max-w-[70%] rounded-lg p-3',
-                                            message.sender_id === user.id ? 'bg-blue-500 text-white' : 'bg-white'
+                                            'max-w-[70%]',
+                                            message.sender_id === user.id ? 'order-1' : 'order-2'
                                         ]">
-                                            <div class="break-words whitespace-pre-wrap">{{ message.message }}</div>
                                             <div :class="[
-                                                'text-xs mt-1',
-                                                message.sender_id === user.id ? 'text-blue-100' : 'text-gray-500'
+                                                'px-4 py-2 rounded-2xl',
+                                                message.sender_id === user.id
+                                                    ? 'bg-primary-500 text-white rounded-br-none'
+                                                    : 'bg-white dark:bg-dark-surface dark:text-dark-text rounded-bl-none'
+                                            ]">
+                                                <div v-if="message.file_url" class="mb-2">
+                                                    <img v-if="message.file_type?.startsWith('image/')"
+                                                        :src="message.file_url"
+                                                        class="rounded-lg max-w-full max-h-[300px] object-contain"
+                                                        alt="Uploaded image" />
+                                                    <video v-else-if="message.file_type?.startsWith('video/')"
+                                                        :src="message.file_url"
+                                                        class="rounded-lg max-w-full max-h-[300px]" controls />
+                                                </div>
+
+                                                <div class="break-words whitespace-pre-wrap">
+                                                    {{ message.message }}
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-1 text-xs" :class="[
+                                                message.sender_id === user.id
+                                                    ? 'text-right text-gray-500 dark:text-gray-400'
+                                                    : 'text-left text-gray-500 dark:text-gray-400'
                                             ]">
                                                 {{ formatTime(message.created_at) }}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div v-else class="flex justify-center items-center h-full">
-                                    <div class="text-gray-500">Chưa có tin nhắn nào</div>
-                                </div>
                             </template>
                         </div>
 
-                        <!-- Message input -->
-                        <div class="p-4 bg-white border-t">
-                            <form @submit.prevent="sendMessage" class="flex space-x-2">
-                                <input v-model="newMessage" type="text" placeholder="Nhập tin nhắn..."
-                                    class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
-                                <button type="submit" :disabled="!newMessage.trim() || isLoading" :class="[
-                                    'px-6 py-2 rounded-lg transition duration-150',
-                                    newMessage.trim() && !isLoading
-                                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                ]">
-                                    <span v-if="isLoading">Đang gửi...</span>
-                                    <span v-else>Gửi</span>
+                        <div class="p-4 bg-white dark:bg-dark-surface border-t dark:border-dark-border">
+                            <div v-if="selectedFile" class="mb-4">
+                                <div class="relative inline-block group">
+                                    <img v-if="previewUrl && selectedFile.type.startsWith('image/')" :src="previewUrl"
+                                        class="max-h-[200px] rounded-lg border dark:border-dark-border" alt="Preview" />
+                                    <video v-else-if="previewUrl && selectedFile.type.startsWith('video/')"
+                                        :src="previewUrl"
+                                        class="max-h-[200px] rounded-lg border dark:border-dark-border" controls />
+                                    <button @click="cancelFileUpload"
+                                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors shadow-lg">
+                                        <span class="w-4 h-4 block">
+                                            <svg viewBox="0 0 24 24" class="w-full h-full">
+                                                <path fill="currentColor"
+                                                    d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+                                            </svg>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <form @submit.prevent="sendMessage" class="flex items-end space-x-3">
+                                <div class="flex-1 relative">
+                                    <input v-model="newMessage" type="text" placeholder="Nhập tin nhắn..."
+                                        class="w-full px-4 py-3 pr-24 border rounded-full dark:bg-dark-modal dark:border-dark-border dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all" />
+
+                                    <div
+                                        class="absolute right-2 bottom-1/2 transform translate-y-1/2 flex items-center space-x-2">
+                                        <div class="relative" ref="emojiPickerContainer">
+                                            <button type="button" @click="showEmojiPicker = !showEmojiPicker"
+                                                class="p-2 text-gray-500 hover:text-primary-500 dark:text-gray-400 dark:hover:text-primary-400 rounded-full hover:bg-gray-100 dark:hover:bg-dark-hover transition-all">
+                                                <svg viewBox="0 0 24 24" class="w-5 h-5">
+                                                    <path fill="currentColor" :d="mdiEmoticonOutline" />
+                                                </svg>
+                                            </button>
+
+                                            <emoji-picker v-if="showEmojiPicker"
+                                                class="absolute bottom-full right-0 mb-2"
+                                                @emoji-click="onEmojiSelect"></emoji-picker>
+                                        </div>
+
+                                        <button type="button" @click="() => fileInput.click()"
+                                            class="p-2 text-gray-500 hover:text-primary-500 dark:text-gray-400 dark:hover:text-primary-400 rounded-full hover:bg-gray-100 dark:hover:bg-dark-hover transition-all">
+                                            <svg viewBox="0 0 24 24" class="w-5 h-5">
+                                                <path fill="currentColor" :d="mdiImage" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button type="submit" :disabled="(!newMessage.trim() && !selectedFile) || isUploading"
+                                    class="p-3 rounded-full transition-all duration-200 flex items-center justify-center min-w-[3rem] disabled:opacity-50"
+                                    :class="[
+                                        (newMessage.trim() || selectedFile) && !isUploading
+                                            ? 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg'
+                                            : 'bg-gray-200 dark:bg-dark-modal text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                                    ]">
+                                    <span class="w-6 h-6 block">
+                                        <svg v-if="isUploading" class="animate-spin" viewBox="0 0 24 24">
+                                            <path fill="currentColor" d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
+                                        </svg>
+                                        <svg v-else viewBox="0 0 24 24">
+                                            <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+                                        </svg>
+                                    </span>
                                 </button>
                             </form>
                         </div>
                     </template>
 
-                    <!-- Empty state -->
-                    <div v-else class="flex-1 flex items-center justify-center bg-gray-50">
-                        <div class="text-center text-gray-500">
-                            <div class="text-xl mb-2">👋 Chào mừng đến với tin nhắn</div>
-                            <div>Chọn một cuộc trò chuyện để bắt đầu</div>
+                    <div v-else class="flex-1 flex items-center justify-center bg-gray-50 dark:bg-dark-bg">
+                        <div class="text-center space-y-4">
+                            <div
+                                class="w-20 h-20 mx-auto bg-gray-200 dark:bg-dark-modal rounded-full flex items-center justify-center">
+                                <svg class="w-10 h-10 text-gray-500 dark:text-gray-400" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                            </div>
+                            <div class="space-y-2">
+                                <p class="text-xl font-medium dark:text-dark-text">Chào mừng đến với tin nhắn</p>
+                                <p class="text-gray-500 dark:text-gray-400">Chọn một cuộc trò chuyện để bắt đầu</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -473,9 +649,8 @@ const handleScroll = debounce(async (e) => {
 </template>
 
 <style scoped>
-/* Thêm styles để đảm bảo scroll hoạt động đúng */
 :deep(.section-main) {
-    padding: 0;
+    padding: 1rem;
     height: calc(100vh - 4rem);
 }
 
@@ -495,5 +670,95 @@ const handleScroll = debounce(async (e) => {
 .messages-container::-webkit-scrollbar-thumb {
     background-color: rgba(156, 163, 175, 0.5);
     border-radius: 3px;
+}
+
+/* Add transition for icons */
+.svg-icon {
+    transition: color 0.15s ease-in-out;
+}
+
+/* Cập nhật styles */
+:deep(.section-main) {
+    padding: 1rem;
+    height: calc(100vh - 4rem);
+}
+
+/* Custom scrollbar styles */
+.aside-scrollbars {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.aside-scrollbars::-webkit-scrollbar {
+    width: 4px;
+}
+
+.aside-scrollbars::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.aside-scrollbars::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 2px;
+}
+
+.aside-scrollbars:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.7);
+}
+
+/* Smooth transitions */
+.svg-icon {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Message animations */
+.message-enter-active,
+.message-leave-active {
+    transition: all 0.3s ease;
+}
+
+.message-enter-from,
+.message-leave-to {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+/* Loading animation */
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(-25%);
+        animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+
+    50% {
+        transform: translateY(0);
+        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+}
+
+.animate-bounce {
+    animation: bounce 1s infinite;
+}
+
+/* Emoji picker customization */
+emoji-picker {
+    --background: var(--surface-background);
+    --border-color: var(--border-color);
+    --indicator-color: var(--primary-color);
+    --input-border-color: var(--border-color);
+    --input-font-color: var(--text-color);
+    --input-placeholder-color: var(--text-secondary);
+    --category-font-color: var(--text-secondary);
+    height: 350px;
+    z-index: 100;
+}
+
+.dark emoji-picker {
+    --background: var(--dark-modal);
+    --border-color: var(--dark-border);
+    --text-color: var(--dark-text);
+    --category-font-color: var(--dark-text-secondary);
 }
 </style>
