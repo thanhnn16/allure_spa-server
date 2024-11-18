@@ -8,9 +8,13 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\UserServicePackage;
+use App\Models\UserVoucher;
+use App\Models\Voucher;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\PaymentMethod;
+use App\Models\Address;
 
 class OrderService
 {
@@ -30,39 +34,53 @@ class OrderService
         try {
             DB::beginTransaction();
 
-            // Validate and prepare data
+            // Validate order data first
+            $this->validateOrderData($data);
+
+            // Validate items and calculate total
+            $calculatedTotals = $this->calculateOrderTotals($data['orderItems']);
+
+            // Validate and process voucher if provided
+            $discountAmount = 0;
+            if (isset($data['voucher_id'])) {
+                $voucher = Voucher::findOrFail($data['voucher_id']);
+                $this->validateVoucher($voucher, $calculatedTotals['subtotal'], Auth::id());
+                $discountAmount = $this->calculateVoucherDiscount($voucher, $calculatedTotals['subtotal']);
+
+                // Update voucher usage after validation
+                $this->updateVoucherUsage($voucher, Auth::id());
+            }
+
+            // Create order with calculated values
             $orderData = [
                 'user_id' => Auth::user()->id,
-                'total_amount' => $data['total_amount'],
+                'total_amount' => $calculatedTotals['subtotal'],
+                'shipping_address_id' => $data['shipping_address_id'] ?? null,
                 'payment_method_id' => $data['payment_method_id'],
-                'status' => request()->is('api/*') ? 'pending' : 'confirmed',
+                'status' => request()->is('api/*') ? Order::STATUS_PENDING : Order::STATUS_CONFIRMED,
+                'discount_amount' => $discountAmount,
+                'voucher_id' => $data['voucher_id'] ?? null,
+                'note' => $data['note'] ?? null
             ];
-
-            // Optional fields
-            if (isset($data['voucher_id'])) {
-                $orderData['voucher_id'] = $data['voucher_id'];
-            }
-
-            if (isset($data['discount_amount'])) {
-                $orderData['discount_amount'] = $data['discount_amount'];
-            }
-
-            if (isset($data['note'])) {
-                $orderData['note'] = $data['note'];
-            }
 
             $order = Order::create($orderData);
 
-            // Create order items
-            foreach ($data['orderItems'] as $item) {
+            // Create order items with validated data
+            foreach ($calculatedTotals['items'] as $item) {
                 OrderItem::create([
                     'order_id' => $order->id,
                     'item_type' => $item['item_type'],
                     'item_id' => $item['item_id'],
                     'service_type' => $item['service_type'] ?? null,
                     'quantity' => $item['quantity'],
-                    'price' => $item['price'],
+                    'price' => $item['unit_price'],
                 ]);
+
+                // Reserve stock for products
+                if ($item['item_type'] === 'product') {
+                    $product = Product::find($item['item_id']);
+                    $product->decrement('quantity', $item['quantity']);
+                }
             }
 
             // Gửi thông báo cho admin
@@ -85,12 +103,102 @@ class OrderService
                 'type' => 'order_created'
             ]);
 
+            // Verify final calculations
+            $order->recalculateTotal();
+
             DB::commit();
-            return $order->load('orderItems');
+            return $order->load(['orderItems', 'user', 'shippingAddress', 'paymentMethod']);
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
+    }
+
+    private function calculateOrderTotals(array $items)
+    {
+        $calculatedItems = [];
+        $subtotal = 0;
+
+        foreach ($items as $item) {
+            // Get actual price based on item type
+            if ($item['item_type'] === 'product') {
+                $product = Product::findOrFail($item['item_id']);
+                $unitPrice = $product->price;
+
+                // Check stock
+                if (!$product->hasStock($item['quantity'])) {
+                    throw new \Exception("Sản phẩm {$product->name} không đủ số lượng trong kho");
+                }
+            } else {
+                $service = Service::findOrFail($item['item_id']);
+                $unitPrice = $this->getServicePrice($service, $item['service_type'] ?? 'single');
+            }
+
+            // Validate price matches
+            if (abs($unitPrice - $item['price']) > 0.01) {
+                throw new \Exception('Giá sản phẩm/dịch vụ không hợp lệ');
+            }
+
+            $itemTotal = $unitPrice * $item['quantity'];
+            $subtotal += $itemTotal;
+
+            $calculatedItems[] = array_merge($item, ['unit_price' => $unitPrice]);
+        }
+
+        return [
+            'items' => $calculatedItems,
+            'subtotal' => $subtotal
+        ];
+    }
+
+    private function getServicePrice(Service $service, string $serviceType)
+    {
+        return match ($serviceType) {
+            'single' => $service->single_price,
+            'combo_5' => $service->combo_5_price,
+            'combo_10' => $service->combo_10_price,
+            default => throw new \Exception('Loại dịch vụ không hợp lệ')
+        };
+    }
+
+    private function validateVoucher(Voucher $voucher, float $subtotal, string $userId)
+    {
+        // Check if voucher is active
+        if (!$voucher->is_active) {
+            throw new \Exception('Voucher không còn hiệu lực');
+        }
+
+        // Check minimum order value
+        if ($subtotal < $voucher->min_order_value) {
+            throw new \Exception('Giá trị đơn hàng chưa đạt giá trị tối thiểu để sử dụng voucher');
+        }
+
+        // Check user usage limit
+        $userVoucher = UserVoucher::where('user_id', $userId)
+            ->where('voucher_id', $voucher->id)
+            ->first();
+
+        if ($userVoucher && $userVoucher->remaining_uses <= 0) {
+            throw new \Exception('Bạn đã hết lượt sử dụng voucher này');
+        }
+    }
+
+    private function calculateVoucherDiscount(Voucher $voucher, float $subtotal)
+    {
+        $discountAmount = 0;
+
+        if ($voucher->discount_type === 'percentage') {
+            $discountAmount = $subtotal * ($voucher->discount_value / 100);
+        } else {
+            $discountAmount = $voucher->discount_value;
+        }
+
+        // Apply maximum discount limit if set
+        if ($voucher->max_discount_amount > 0) {
+            $discountAmount = min($discountAmount, $voucher->max_discount_amount);
+        }
+
+        return $discountAmount;
     }
 
     public function updateOrderStatus($order, $status, $note = null)
@@ -321,5 +429,65 @@ class OrderService
             'combo_10' => '10_times',
             default => null
         };
+    }
+
+    private function validateOrderData(array $data)
+    {
+        // Validate payment method
+        $paymentMethod = PaymentMethod::findOrFail($data['payment_method_id']);
+        if ($paymentMethod->status !== 'active') {
+            throw new \Exception('Phương thức thanh toán không khả dụng');
+        }
+
+        // Validate shipping address if required
+        if (isset($data['shipping_address_id'])) {
+            $address = Address::where('user_id', Auth::id())
+                ->where('id', $data['shipping_address_id'])
+                ->firstOrFail();
+        }
+
+        // Validate items are not empty
+        if (empty($data['orderItems'])) {
+            throw new \Exception('Đơn hàng phải có ít nhất một sản phẩm hoặc dịch vụ');
+        }
+
+        return true;
+    }
+
+    private function updateVoucherUsage(Voucher $voucher, string $userId)
+    {
+        DB::transaction(function () use ($voucher, $userId) {
+            // Update voucher usage count
+            $voucher->increment('used_times');
+
+            // Update or create user voucher record
+            $userVoucher = UserVoucher::firstOrNew([
+                'user_id' => $userId,
+                'voucher_id' => $voucher->id
+            ]);
+
+            if (!$userVoucher->exists) {
+                $userVoucher->fill([
+                    'remaining_uses' => $voucher->uses_per_user - 1,
+                    'total_uses' => 1
+                ]);
+            } else {
+                $userVoucher->increment('total_uses');
+                $userVoucher->decrement('remaining_uses');
+            }
+
+            $userVoucher->save();
+        });
+    }
+
+    // Thêm method mới để xử lý rollback stock khi cần
+    private function rollbackProductStock(Order $order)
+    {
+        foreach ($order->orderItems as $item) {
+            if ($item->item_type === 'product') {
+                $product = Product::find($item->item_id);
+                $product->increment('quantity', $item->quantity);
+            }
+        }
     }
 }

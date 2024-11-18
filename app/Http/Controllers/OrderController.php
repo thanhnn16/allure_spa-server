@@ -53,19 +53,6 @@ class OrderController extends BaseController
      * )
      */
 
-    /**
-     * @OA\Schema(
-     *     schema="OrderResponse",
-     *     @OA\Property(property="success", type="boolean"),
-     *     @OA\Property(property="message", type="string"),
-     *     @OA\Property(
-     *         property="data",
-     *         type="object",
-     *         ref="#/components/schemas/Order"
-     *     )
-     * )
-     */
-
 
     protected $orderService;
     protected $productService;
@@ -293,84 +280,175 @@ class OrderController extends BaseController
     /**
      * @OA\Post(
      *     path="/api/orders",
-     *     summary="Create new order",
-     *     description="Create a new order with items",
+     *     operationId="createOrder",
+     *     summary="Tạo đơn hàng mới",
+     *     description="Tạo một đơn hàng mới với sản phẩm và/hoặc dịch vụ",
      *     tags={"Orders"},
      *     security={{ "sanctum": {} }},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"payment_method_id", "order_items", "total_amount"},
-     *             @OA\Property(property="payment_method_id", type="integer", description="Payment method ID"),
-     *             @OA\Property(property="voucher_id", type="integer", nullable=true, description="Optional voucher ID"),
-     *             @OA\Property(property="total_amount", type="number", format="float", description="Total order amount"),
-     *             @OA\Property(property="discount_amount", type="number", format="float", nullable=true, description="Optional discount amount"),
-     *             @OA\Property(property="note", type="string", nullable=true, description="Optional order note"),
+     *             required={"payment_method_id", "order_items"},
+     *             @OA\Property(
+     *                 property="payment_method_id",
+     *                 type="integer",
+     *                 description="ID phương thức thanh toán"
+     *             ),
+     *             @OA\Property(
+     *                 property="shipping_address_id",
+     *                 type="integer",
+     *                 nullable=true,
+     *                 description="ID địa chỉ giao hàng (bắt buộc nếu có sản phẩm)"
+     *             ),
+     *             @OA\Property(
+     *                 property="voucher_id",
+     *                 type="integer",
+     *                 nullable=true,
+     *                 description="ID voucher giảm giá"
+     *             ),
+     *             @OA\Property(
+     *                 property="note",
+     *                 type="string",
+     *                 nullable=true,
+     *                 description="Ghi chú cho đơn hàng"
+     *             ),
      *             @OA\Property(
      *                 property="order_items",
      *                 type="array",
-     *                 description="Array of order items",
+     *                 description="Danh sách sản phẩm/dịch vụ trong đơn hàng",
      *                 @OA\Items(
-     *                     required={"item_type", "item_id", "quantity", "price"},
-     *                     @OA\Property(property="item_type", type="string", enum={"product", "service"}, description="Type of item"),
-     *                     @OA\Property(property="item_id", type="integer", description="ID of product or service"),
-     *                     @OA\Property(property="service_type", type="string", nullable=true, enum={"single", "combo_5", "combo_10"}, description="Service type if item_type is service"),
-     *                     @OA\Property(property="quantity", type="integer", minimum=1, description="Quantity of item"),
-     *                     @OA\Property(property="price", type="number", format="float", description="Price per item")
+     *                     @OA\Property(
+     *                         property="item_type",
+     *                         type="string",
+     *                         enum={"product", "service"},
+     *                         description="Loại item (sản phẩm hoặc dịch vụ)"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="item_id",
+     *                         type="integer",
+     *                         description="ID của sản phẩm hoặc dịch vụ"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="service_type",
+     *                         type="string",
+     *                         enum={"single", "combo_5", "combo_10"},
+     *                         nullable=true,
+     *                         description="Loại dịch vụ (bắt buộc khi item_type là service)"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="quantity",
+     *                         type="integer",
+     *                         minimum=1,
+     *                         description="Số lượng"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="price",
+     *                         type="number",
+     *                         format="float",
+     *                         minimum=0,
+     *                         description="Giá của item"
+     *                     )
      *                 )
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Order created successfully",
+     *         description="Đơn hàng được tạo thành công",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Order created successfully"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Order")
+     *             @OA\Property(property="message", type="string", example="Đơn hàng đã được tạo thành công"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 ref="#/components/schemas/OrderResponse"
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Validation error",
+     *         description="Dữ liệu không hợp lệ",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="The given data was invalid"),
-     *             @OA\Property(property="errors", type="object")
+     *             @OA\Property(property="message", type="string", example="Dữ liệu không hợp lệ"),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\AdditionalProperties(
+     *                     type="array",
+     *                     @OA\Items(type="string")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Lỗi nghiệp vụ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Sản phẩm không đủ số lượng trong kho")
      *         )
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Unauthenticated",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Unauthenticated")
-     *         )
+     *         description="Chưa xác thực"
      *     )
      * )
      */
 
+    /**
+     * @OA\Schema(
+     *     schema="OrderResponse",
+     *     title="Order Response",
+     *     description="Chi tiết đơn hàng trong response",
+     *     @OA\Property(property="id", type="integer", example=789),
+     *     @OA\Property(property="user_id", type="string", format="uuid"),
+     *     @OA\Property(property="total_amount", type="number", format="float"),
+     *     @OA\Property(property="discount_amount", type="number", format="float"),
+     *     @OA\Property(
+     *         property="status",
+     *         type="string",
+     *         enum={"pending", "confirmed", "shipping", "completed", "cancelled"}
+     *     ),
+     *     @OA\Property(property="shipping_address_id", type="integer", nullable=true),
+     *     @OA\Property(property="payment_method_id", type="integer"),
+     *     @OA\Property(property="voucher_id", type="integer", nullable=true),
+     *     @OA\Property(property="note", type="string", nullable=true),
+     *     @OA\Property(
+     *         property="order_items",
+     *         type="array",
+     *         @OA\Items(ref="#/components/schemas/OrderItem")
+     *     ),
+     *     @OA\Property(property="user", ref="#/components/schemas/User"),
+     *     @OA\Property(property="shipping_address", ref="#/components/schemas/Address"),
+     *     @OA\Property(property="payment_method", ref="#/components/schemas/PaymentMethod"),
+     *     @OA\Property(property="created_at", type="string", format="date-time"),
+     *     @OA\Property(property="updated_at", type="string", format="date-time")
+     * )
+     */
 
     public function store(Request $request)
     {
         try {
             $validatedData = $request->validate([
                 'payment_method_id' => 'required|exists:payment_methods,id',
+                'shipping_address_id' => 'nullable|exists:addresses,id',
                 'voucher_id' => 'nullable|exists:vouchers,id',
+                'note' => 'nullable|string|max:500',
                 'order_items' => 'required|array|min:1',
                 'order_items.*.item_type' => 'required|in:product,service',
-                'order_items.*.item_id' => 'required',
-                'order_items.*.service_type' => 'nullable|in:single,combo_5,combo_10',
+                'order_items.*.item_id' => 'required|integer',
+                'order_items.*.service_type' => 'nullable|required_if:order_items.*.item_type,service|in:single,combo_5,combo_10',
                 'order_items.*.quantity' => 'required|integer|min:1',
                 'order_items.*.price' => 'required|numeric|min:0',
-                'total_amount' => 'required|numeric|min:0',
-                'discount_amount' => 'nullable|numeric|min:0',
-                'note' => 'nullable|string'
             ]);
 
             $order = $this->orderService->createOrder($validatedData);
 
-            return $this->respondWithJson($order->load('orderItems'), 'Đơn hàng đã được tạo thành công');
+            return $this->respondWithJson(
+                $order,
+                'Đơn hàng đã được tạo thành công',
+                201
+            );
         } catch (\Exception $e) {
             return $this->respondWithError($e->getMessage());
         }

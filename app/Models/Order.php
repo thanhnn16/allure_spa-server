@@ -143,4 +143,29 @@ class Order extends Model
     {
         return $this->subtotal - ($this->discount_amount ?? 0);
     }
+
+    public function recalculateTotal()
+    {
+        $subtotal = $this->orderItems->sum(function ($item) {
+            return $item->price * $item->quantity;
+        });
+        
+        $this->total_amount = $subtotal;
+        $this->save();
+        
+        return $this;
+    }
+
+    public function canBeCancelled()
+    {
+        return in_array($this->status, ['pending', 'confirmed']) &&
+            (!$this->invoice || $this->invoice->status !== Invoice::STATUS_PAID);
+    }
+
+    public function canBeCompleted()
+    {
+        return $this->status === self::STATUS_SHIPPING &&
+            $this->invoice &&
+            $this->invoice->status === Invoice::STATUS_PAID;
+    }
 }
