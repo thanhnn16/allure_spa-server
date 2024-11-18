@@ -434,16 +434,19 @@ class OrderService
     private function validateOrderData(array $data)
     {
         // Validate payment method
-        $paymentMethod = PaymentMethod::findOrFail($data['payment_method_id']);
-        if ($paymentMethod->status !== 'active') {
-            throw new \Exception('Phương thức thanh toán không khả dụng');
+        $paymentMethod = PaymentMethod::find($data['payment_method_id']);
+        if (!$paymentMethod) {
+            throw new \Exception('Phương thức thanh toán không tồn tại');
         }
 
         // Validate shipping address if required
         if (isset($data['shipping_address_id'])) {
             $address = Address::where('user_id', Auth::id())
                 ->where('id', $data['shipping_address_id'])
-                ->firstOrFail();
+                ->first();
+            if (!$address) {
+                throw new \Exception('Địa chỉ giao hàng không tồn tại');
+            }
         }
 
         // Validate items are not empty
