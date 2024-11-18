@@ -139,4 +139,17 @@ class BannerController extends BaseController
         }
         return $this->respondWithJson(null, 'Order updated successfully');
     }
+
+    public function toggle($id)
+    {
+        $banner = Banner::findOrFail($id);
+        $banner->is_active = !$banner->is_active;
+        $banner->save();
+        
+        if (request()->wantsJson()) {
+            return $this->respondWithJson($banner, 'Banner status updated successfully');
+        }
+        
+        return redirect()->route('banners.web')->with('success', 'Banner status updated successfully');
+    }
 }

@@ -25,6 +25,8 @@ module.exports = {
                 'dark-text': '#e5e5e5',
                 'dark-muted': '#6b7280',
                 'dark-modal': '#374151',
+                'dark-hover': '#2d3748',
+                'dark-active': '#4a5568',
                 'primary': {
                     50: '#eff6ff',
                     100: '#dbeafe',
@@ -34,6 +36,8 @@ module.exports = {
                     500: '#3b82f6',
                     600: '#2563eb',
                     700: '#1d4ed8',
+                    800: '#1e40af',
+                    900: '#1e3a8a',
                 }
             },
             zIndex: {

@@ -9,11 +9,14 @@ class BannerService
 {
     public function getAllBanners()
     {
-        return Banner::orderBy('created_at', 'desc')->get();
+        return Banner::orderBy('order', 'asc')->get();
     }
 
     public function createBanner($data)
     {
+        $maxOrder = Banner::max('order') ?? 0;
+        $data['order'] = $maxOrder + 1;
+
         if (isset($data['image']) && $data['image']) {
             $path = $data['image']->store('banners', 'public');
             $data['image_url'] = $path;

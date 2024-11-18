@@ -238,7 +238,6 @@ Route::middleware('throttle:api')->group(function () {
 
         // Banner API routes
         Route::post('banners', [BannerController::class, 'store'])->name('banners.store');
-        Route::put('banners/{banner}', [BannerController::class, 'update'])->name('banners.update');
         Route::delete('banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
         
 
