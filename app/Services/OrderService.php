@@ -34,11 +34,19 @@ class OrderService
         try {
             DB::beginTransaction();
 
+            // Log request data để debug
+            Log::info('Order creation data:', $data);
+
             // Validate order data first
             $this->validateOrderData($data);
 
-            // Validate items and calculate total
-            $calculatedTotals = $this->calculateOrderTotals($data['orderItems']);
+            // Đảm bảo key order_items tồn tại
+            if (!isset($data['order_items'])) {
+                throw new \Exception('Thiếu thông tin order_items');
+            }
+
+            // Tính toán với key order_items
+            $calculatedTotals = $this->calculateOrderTotals($data['order_items']);
 
             // Validate and process voucher if provided
             $discountAmount = 0;
@@ -110,6 +118,10 @@ class OrderService
             return $order->load(['orderItems', 'user', 'shippingAddress', 'paymentMethod']);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Order creation failed:', [
+                'error' => $e->getMessage(),
+                'data' => $data
+            ]);
             throw $e;
         }
     }
@@ -136,7 +148,7 @@ class OrderService
 
             // Validate price matches
             if (abs($unitPrice - $item['price']) > 0.01) {
-                throw new \Exception('Giá sản phẩm/dịch vụ không hợp lệ');
+                throw new \Exception('Giá sản phẩm/dịch vụ không hợp lệ hoặc không đúng với giá hiện tại');
             }
 
             $itemTotal = $unitPrice * $item['quantity'];
@@ -449,7 +461,7 @@ class OrderService
             }
         }
 
-        // Sửa validate items không được rỗng
+        // Sửa key từ orderItems thành order_items
         if (!isset($data['order_items']) || empty($data['order_items'])) {
             throw new \Exception('Đơn hàng phải có ít nhất một sản phẩm hoặc dịch vụ');
         }
@@ -465,9 +477,11 @@ class OrderService
             }
 
             // Validate service_type nếu là service
-            if ($item['item_type'] === 'service' && 
-                (!isset($item['service_type']) || 
-                 !in_array($item['service_type'], ['single', 'combo_5', 'combo_10']))) {
+            if (
+                $item['item_type'] === 'service' &&
+                (!isset($item['service_type']) ||
+                    !in_array($item['service_type'], ['single', 'combo_5', 'combo_10']))
+            ) {
                 throw new \Exception('Loại dịch vụ không hợp lệ');
             }
         }
