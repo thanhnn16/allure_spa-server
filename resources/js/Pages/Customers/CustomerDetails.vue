@@ -484,7 +484,7 @@ const formatOrderStatus = (status) => {
         case 'completed':
             return 'Hoàn thành';
         case 'cancelled':
-            return 'Đ�� hủy';
+            return 'Đã hủy';
         default:
             return status;
     }
@@ -1139,7 +1139,7 @@ const loadWards = async (districtCode) => {
                                     </div>
                                     <div>
                                         <p class="font-medium dark:text-white">
-                                            {{ item.product?.name || item.service?.name || 'Sản phẩm đã xóa' }}
+                                            {{ item.product?.name || item.service?.service_name || 'Sản phẩm đã xóa' }}
                                         </p>
                                         <p class="text-sm text-gray-600 dark:text-gray-400">
                                             {{ formatCurrency(item.price) }} x {{ item.quantity }}
