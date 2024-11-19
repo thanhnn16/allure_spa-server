@@ -15,6 +15,7 @@ class AppointmentRequest extends FormRequest
     public function rules()
     {
         return [
+            'user_id' => 'nullable|exists:users,id',
             'appointment_date' => 'required|date|after_or_equal:today',
             'time_slot_id' => 'required|exists:time_slots,id',
             'appointment_type' => 'required|in:service,service_package,consultation,others',
