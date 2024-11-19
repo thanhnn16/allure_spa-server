@@ -63,6 +63,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import CardBoxModal from './CardBoxModal.vue'
+import axios from 'axios'
 
 const props = defineProps({
     modelValue: Boolean,
@@ -84,7 +85,17 @@ const handleSubmit = async () => {
 
     loading.value = true
     try {
-        emit('completed', { note: note.value })
+        const response = await axios.post(`/api/orders/${props.order.id}/complete`, {
+            note: note.value
+        })
+
+        if (response.data.success) {
+            emit('completed')
+            emit('update:modelValue', false)
+            note.value = ''
+        }
+    } catch (error) {
+        console.error('Error completing order:', error)
     } finally {
         loading.value = false
     }

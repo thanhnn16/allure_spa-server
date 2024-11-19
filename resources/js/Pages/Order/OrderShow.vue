@@ -264,7 +264,8 @@
 
       <CreateInvoiceModal v-model="showCreateInvoiceModal" :order="order" @created="handleInvoiceCreated" />
 
-      <CompleteOrderModal v-model="showCompleteModal" :order="order" @completed="handleOrderCompleted" />
+      <CompleteOrderModal v-model="showCompleteModal" :order="order" :has-service-combo="hasServiceCombo"
+        @completed="handleOrderCompleted" />
 
       <CancelOrderModal v-model="showCancelModal" :order="order" @cancelled="handleOrderCancelled" />
     </SectionMain>
@@ -693,7 +694,11 @@ export default {
     };
 
     const handleOrderCompleted = () => {
-      router.reload();
+      toast.success('Đơn hàng đã được hoàn thành thành công')
+      if (hasServiceCombo.value) {
+        toast.info('Các gói liệu trình đã được tạo cho khách hàng')
+      }
+      router.reload()
     }
 
     const handleOrderCancelled = () => {
