@@ -89,7 +89,6 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/users/search', [UserController::class, 'searchUsers']);
         Route::get('/users/get-staff-list', [UserController::class, 'getStaffList']);
         Route::get('/users/{userId}/service-packages', [UserController::class, 'getUserServicePackages']);
-
         Route::get('/user-service-packages/{user}', [UserController::class, 'getUserServicePackages']);
 
         Route::post('/import', [ImportController::class, 'importAll']);

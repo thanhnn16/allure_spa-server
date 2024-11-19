@@ -259,20 +259,29 @@ class UserController extends BaseController
     {
         try {
             $packages = UserServicePackage::where('user_id', $userId)
+                ->whereNull('deleted_at')
                 ->with([
                     'service',
                     'nextAppointment',
                     'nextAppointment.timeSlot',
                     'nextAppointment.staff',
                     'treatmentSessions',
-                    'order'
+                    'treatmentSessions.staff',
+                    'order',
+                    'order.orderItems'
                 ])
                 ->get();
+
+            Log::info('Fetched packages:', [
+                'user_id' => $userId,
+                'count' => $packages->count(),
+                'packages' => $packages->toArray()
+            ]);
 
             return $this->respondWithJson($packages, 'User treatment packages retrieved successfully');
         } catch (\Exception $e) {
             Log::error('Error fetching user treatment packages: ' . $e->getMessage());
-            return $this->respondWithError('Error fetching user treatment packages', 500);
+            return $this->respondWithError('Error fetching user treatment packages: ' . $e->getMessage(), 500);
         }
     }
 
@@ -407,17 +416,6 @@ class UserController extends BaseController
             return $this->respondWithJson($user);
         } catch (\Exception $e) {
             return $this->respondWithJson(null, $e->getMessage(), 500);
-        }
-    }
-
-    public function getUserTreatmentPackages($userId)
-    {
-        try {
-            $packages = $this->userService->getUserServicePackages($userId);
-            return $this->respondWithJson($packages, 'User treatment packages retrieved successfully');
-        } catch (\Exception $e) {
-            Log::error('Error fetching user treatment packages: ' . $e->getMessage());
-            return $this->respondWithError('Error fetching user treatment packages', 500);
         }
     }
 
