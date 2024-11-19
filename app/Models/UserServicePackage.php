@@ -27,12 +27,7 @@ class UserServicePackage extends Model
 
     protected $with = [
         'service',
-        'nextAppointment',
-        'nextAppointment.timeSlot',
-        'nextAppointment.staff',
         'order',
-        'treatmentSessions',
-        'treatmentSessions.staff'
     ];
 
     protected $appends = [
@@ -128,21 +123,13 @@ class UserServicePackage extends Model
 
     public function nextAppointment()
     {
-        return $this->hasOneThrough(
-            Appointment::class,
-            'appointment_service_package',
-            'user_service_package_id',
-            'id',
-            'id',
-            'appointment_id'
-        )
-        ->where('appointments.status', 'pending')
-        ->where('appointments.appointment_type', 'service_package')
-        ->where('appointments.appointment_date', '>=', now())
-        ->where('appointments.user_id', $this->user_id)
-        ->where('appointments.service_id', $this->service_id)
-        ->orderBy('appointments.appointment_date', 'asc')
-        ->orderBy('appointments.time_slot_id', 'asc');
+        return $this->appointments()
+            ->whereIn('appointments.status', ['pending', 'confirmed'])
+            ->where('appointments.appointment_type', 'service_package')
+            ->where('appointments.appointment_date', '>=', now())
+            ->orderBy('appointments.appointment_date', 'asc')
+            ->orderBy('appointments.time_slot_id', 'asc')
+            ->first();
     }
 
     public function getProgressPercentageAttribute(): int
@@ -161,7 +148,7 @@ class UserServicePackage extends Model
     public function getNextSessionDateAttribute(): ?string
     {
         $nextAppointment = $this->nextAppointment;
-        
+
         if (!$nextAppointment) {
             return null;
         }
@@ -171,8 +158,8 @@ class UserServicePackage extends Model
 
     public function getNextAppointmentDetailsAttribute()
     {
-        $nextAppointment = $this->nextAppointment;
-        
+        $nextAppointment = $this->nextAppointment();
+
         if (!$nextAppointment) {
             return null;
         }

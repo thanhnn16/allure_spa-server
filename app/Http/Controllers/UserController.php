@@ -262,9 +262,6 @@ class UserController extends BaseController
                 ->whereNull('deleted_at')
                 ->with([
                     'service',
-                    'nextAppointment.timeSlot',
-                    'nextAppointment.staff',
-                    'treatmentSessions.staff',
                     'order.orderItems'
                 ])
                 ->get();
@@ -274,15 +271,6 @@ class UserController extends BaseController
             Log::error('Error fetching user treatment packages: ' . $e->getMessage());
             return $this->respondWithError('Error fetching user treatment packages: ' . $e->getMessage(), 500);
         }
-    }
-
-    public function debugAuth(Request $request)
-    {
-        return $this->respondWithJson([
-            'user' => Auth::user(),
-            'authenticated' => Auth::check(),
-            'token' => $request->bearerToken(),
-        ], 'Debug auth information');
     }
 
     public function import(ImportUsersRequest $request)
