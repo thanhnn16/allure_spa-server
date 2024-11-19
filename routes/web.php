@@ -156,7 +156,7 @@ Route::middleware('auth')->group(function () {
     Broadcast::routes();
 
     // Add new route for user treatment packages
-    Route::get('/api/user-treatment-packages/{userId}', [UserController::class, 'getUserTreatmentPackages'])
+    Route::get('/api/user-treatment-packages/{userId}', [UserController::class, 'getUserServicePackages'])
         ->name('api.user.treatment-packages');
 
     // Product routes
