@@ -353,11 +353,6 @@ class OrderService
         try {
             DB::beginTransaction();
 
-            // Kiểm tra điều kiện để hoàn thành order
-            if ($order->status === Order::STATUS_COMPLETED) {
-                throw new \Exception('Đơn hàng đã được hoàn thành');
-            }
-
             if ($order->status === Order::STATUS_CANCELLED) {
                 throw new \Exception('Không thể hoàn thành đơn hàng đã hủy');
             }
