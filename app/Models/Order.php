@@ -67,7 +67,7 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class)->with(['product', 'service']);
     }
-    
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -149,10 +149,10 @@ class Order extends Model
         $subtotal = $this->orderItems->sum(function ($item) {
             return $item->price * $item->quantity;
         });
-        
+
         $this->total_amount = $subtotal;
         $this->save();
-        
+
         return $this;
     }
 
@@ -164,14 +164,32 @@ class Order extends Model
 
     public function canBeCompleted()
     {
-        return $this->status === self::STATUS_SHIPPING &&
-            $this->invoice &&
-            $this->invoice->status === Invoice::STATUS_PAID;
+        // Kiểm tra điều kiện cơ bản
+        if (!$this->invoice || $this->invoice->status !== Invoice::STATUS_PAID) {
+            return false;
+        }
+
+        // Kiểm tra có service combo không
+        $hasServiceCombo = $this->orderItems()
+            ->where('item_type', 'service')
+            ->whereIn('service_type', ['combo_5', 'combo_10'])
+            ->exists();
+
+        // Nếu không có service combo, return true
+        if (!$hasServiceCombo) {
+            return true;
+        }
+
+        // Kiểm tra đã có service package chưa bằng query builder
+        $hasServicePackages = UserServicePackage::where('order_id', $this->id)->exists();
+
+        // Trả về true nếu chưa có service package
+        return !$hasServicePackages;
     }
 
     public function getUnratedItems()
     {
-        return $this->orderItems()->whereDoesntHave('ratings', function($query) {
+        return $this->orderItems()->whereDoesntHave('ratings', function ($query) {
             $query->where('user_id', $this->user_id);
         })->get();
     }
