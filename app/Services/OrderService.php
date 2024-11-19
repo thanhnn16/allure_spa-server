@@ -331,7 +331,7 @@ class OrderService
         // Định nghĩa flow cho phép
         $allowedTransitions = [
             Order::STATUS_PENDING => [Order::STATUS_CONFIRMED, Order::STATUS_CANCELLED],
-            Order::STATUS_CONFIRMED => [Order::STATUS_SHIPPING, Order::STATUS_CANCELLED],
+            Order::STATUS_CONFIRMED => [Order::STATUS_SHIPPING, Order::STATUS_CANCELLED, Order::STATUS_COMPLETED],
             Order::STATUS_SHIPPING => [Order::STATUS_COMPLETED],
             Order::STATUS_COMPLETED => [], // Trạng thái cuối
             Order::STATUS_CANCELLED => [], // Trạng thái cuối
