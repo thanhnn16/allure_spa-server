@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
 import CardBox from '@/Components/CardBox.vue'
@@ -40,11 +40,26 @@ const formData = ref({
 })
 
 // Computed properties
+const isServicePackage = computed(() => formData.value.appointment_type === 'service_package')
+const isServiceOnly = computed(() => formData.value.appointment_type === 'service')
+
 const availableTimeSlots = computed(() => {
-    return props.timeSlots.map(slot => ({
-        ...slot,
-        displayText: `${slot.start_time.substring(0, 5)} - ${slot.end_time.substring(0, 5)} (${slot.current_bookings}/${slot.max_bookings})`
-    }))
+    const currentDate = formData.value.appointment_date
+    const currentAppointmentId = props.appointment.id
+    
+    return props.timeSlots.map(slot => {
+        // Tính toán số booking hiện tại, trừ đi booking của appointment hiện tại
+        const currentBookings = slot.current_bookings - (
+            slot.id === props.appointment.time_slot_id ? formData.value.slots : 0
+        )
+        
+        return {
+            ...slot,
+            current_bookings: currentBookings,
+            available: currentBookings < slot.max_bookings,
+            displayText: `${slot.start_time.substring(0, 5)} - ${slot.end_time.substring(0, 5)} (${currentBookings}/${slot.max_bookings})`
+        }
+    })
 })
 
 const statusOptions = computed(() => [
@@ -110,6 +125,50 @@ const fetchUserTreatmentPackages = async () => {
         console.error('Error fetching user treatment packages:', error)
     }
 }
+
+const fetchTimeSlots = async () => {
+    try {
+        const response = await axios.get(`/api/appointments/available-time-slots`, {
+            params: {
+                date: formData.value.appointment_date,
+                service_id: formData.value.service_id
+            }
+        })
+        if (response.data.success) {
+            props.timeSlots = response.data.data
+        }
+    } catch (error) {
+        console.error('Error fetching time slots:', error)
+        toast.error('Không thể tải danh sách khung giờ')
+    }
+}
+
+watch(() => formData.value.appointment_date, (newDate) => {
+    if (newDate) {
+        fetchTimeSlots()
+    }
+})
+
+watch(() => formData.value.service_id, (newServiceId) => {
+    if (newServiceId) {
+        formData.value.user_service_package_id = null
+        formData.value.appointment_type = 'service'
+        fetchTimeSlots()
+    }
+})
+
+watch(() => formData.value.user_service_package_id, (newPackageId) => {
+    if (newPackageId) {
+        formData.value.service_id = null
+        formData.value.appointment_type = 'service_package'
+        
+        // Tìm và set service_id từ package đã chọn
+        const selectedPackage = userTreatmentPackages.value.find(p => p.id === newPackageId)
+        if (selectedPackage?.service_id) {
+            fetchTimeSlots()
+        }
+    }
+})
 
 onMounted(() => {
     fetchStaffList()
@@ -210,8 +269,10 @@ onMounted(() => {
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Ngày hẹn
                             </label>
-                            <input type="date" v-model="formData.appointment_date"
-                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" />
+                            <input type="date" 
+                                   v-model="formData.appointment_date"
+                                   :min="new Date().toISOString().split('T')[0]"
+                                   class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" />
                         </div>
 
                         <!-- Time Slot -->
@@ -220,9 +281,14 @@ onMounted(() => {
                                 Khung giờ
                             </label>
                             <select v-model="formData.time_slot_id"
-                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
-                                <option v-for="slot in availableTimeSlots" :key="slot.id" :value="slot.id">
+                                    class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+                                <option value="">Chọn khung giờ</option>
+                                <option v-for="slot in availableTimeSlots" 
+                                        :key="slot.id" 
+                                        :value="slot.id"
+                                        :disabled="!slot.available || slot.current_bookings + formData.slots > slot.max_bookings">
                                     {{ slot.displayText }}
+                                    {{ !slot.available ? '(Đã đầy)' : '' }}
                                 </option>
                             </select>
                         </div>
@@ -234,14 +300,17 @@ onMounted(() => {
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Dịch vụ
-                                <span v-if="formData.user_service_package_id" class="text-sm text-gray-500">
-                                    (Đã chọn gói)
+                                <span v-if="isServicePackage" class="text-sm text-gray-500">
+                                    (Đã chọn gói điều trị)
                                 </span>
                             </label>
-                            <select v-model="formData.service_id" :disabled="formData.user_service_package_id"
-                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+                            <select v-model="formData.service_id" 
+                                    :disabled="isServicePackage"
+                                    class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
                                 <option value="">Chọn dịch vụ</option>
-                                <option v-for="service in services" :key="service.id" :value="service.id">
+                                <option v-for="service in services" 
+                                        :key="service.id" 
+                                        :value="service.id">
                                     {{ service.name }}
                                 </option>
                             </select>
@@ -251,14 +320,18 @@ onMounted(() => {
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Gói điều trị
-                                <span v-if="formData.service_id" class="text-sm text-gray-500">
-                                    (Đã chọn dịch vụ)
+                                <span v-if="isServiceOnly" class="text-sm text-gray-500">
+                                    (Đã chọn dịch vụ đơn lẻ)
                                 </span>
                             </label>
-                            <select v-model="formData.user_service_package_id" :disabled="formData.service_id"
-                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+                            <select v-model="formData.user_service_package_id" 
+                                    :disabled="isServiceOnly"
+                                    class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
                                 <option value="">Chọn gói điều trị</option>
-                                <option v-for="pkg in userTreatmentPackages" :key="pkg.id" :value="pkg.id">
+                                <option v-for="pkg in userTreatmentPackages" 
+                                        :key="pkg.id" 
+                                        :value="pkg.id"
+                                        :disabled="pkg.remaining_sessions < formData.slots">
                                     {{ pkg.service?.name }} ({{ pkg.remaining_sessions }} buổi)
                                 </option>
                             </select>
