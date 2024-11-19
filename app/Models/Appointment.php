@@ -194,7 +194,8 @@ class Appointment extends Model
     // Thêm relationship với UserServicePackage
     public function userServicePackage()
     {
-        return $this->belongsTo(UserServicePackage::class, 'service_id', 'service_id')
+        return $this->belongsTo(UserServicePackage::class)
+            ->where('service_id', $this->service_id)
             ->where('user_id', $this->user_id)
             ->whereNull('deleted_at')
             ->where(function ($query) {

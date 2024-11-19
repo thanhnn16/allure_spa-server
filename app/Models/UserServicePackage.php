@@ -127,6 +127,9 @@ class UserServicePackage extends Model
             ->where('appointment_type', 'service_package')
             ->where('status', 'pending')
             ->where('appointment_date', '>=', now())
+            ->whereHas('userServicePackage', function($query) {
+                $query->where('id', $this->id);
+            })
             ->orderBy('appointment_date', 'asc')
             ->orderBy('time_slot_id', 'asc');
     }
