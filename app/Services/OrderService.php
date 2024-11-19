@@ -52,8 +52,6 @@ class OrderService
                 $voucher = Voucher::findOrFail($data['voucher_id']);
                 $this->validateVoucher($voucher, $calculatedTotals['subtotal'], Auth::id());
                 $discountAmount = $this->calculateVoucherDiscount($voucher, $calculatedTotals['subtotal']);
-
-                // Update voucher usage after validation
                 $this->updateVoucherUsage($voucher, Auth::id());
             }
 
@@ -89,28 +87,36 @@ class OrderService
                 }
             }
 
-            // Gửi thông báo cho admin
-            $this->notificationService->notifyAdmins(
-                'Đơn hàng mới',
-                "Có đơn hàng mới từ khách hàng {$order->user->full_name}",
-                'new_order',
-                [
-                    'type' => 'order',
-                    'order_id' => $order->id,
-                    'action' => 'created'
-                ]
-            );
-
-            // Gửi thông báo cho khách hàng
-            $this->notificationService->createNotification([
-                'user_id' => $order->user_id,
-                'title' => 'Đặt hàng thành công',
-                'content' => "Đơn hàng #{$order->id} đã được tạo thành công",
-                'type' => 'order_created'
-            ]);
-
             // Verify final calculations
             $order->recalculateTotal();
+
+            try {
+                // Gửi thông báo cho admin
+                $this->notificationService->notifyAdmins(
+                    'Đơn hàng mới',
+                    "Có đơn hàng mới từ khách hàng {$order->user->full_name}",
+                    'new_order',
+                    [
+                        'type' => 'order',
+                        'order_id' => $order->id,
+                        'action' => 'created'
+                    ]
+                );
+
+                // Gửi thông báo cho khách hàng
+                $this->notificationService->createNotification([
+                    'user_id' => $order->user_id,
+                    'title' => 'Đặt hàng thành công',
+                    'content' => "Đơn hàng #{$order->id} đã được tạo thành công",
+                    'type' => 'order_created'
+                ]);
+            } catch (\Exception $e) {
+                // Log lỗi nhưng không throw exception
+                Log::error('Failed to send notifications:', [
+                    'error' => $e->getMessage(),
+                    'order_id' => $order->id
+                ]);
+            }
 
             DB::commit();
             return $order->load(['orderItems', 'user', 'shippingAddress', 'paymentMethod']);
@@ -118,6 +124,7 @@ class OrderService
             DB::rollBack();
             Log::error('Order creation failed:', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'data' => $data
             ]);
             throw $e;
@@ -163,12 +170,16 @@ class OrderService
 
     private function getServicePrice(Service $service, string $serviceType)
     {
-        return match ($serviceType) {
-            'single' => $service->single_price,
-            'combo_5' => $service->combo_5_price,
-            'combo_10' => $service->combo_10_price,
-            default => throw new \Exception('Loại dịch vụ không hợp lệ')
-        };
+        switch ($serviceType) {
+            case 'single':
+                return $service->single_price;
+            case 'combo_5':
+                return $service->combo_5_price;
+            case 'combo_10':
+                return $service->combo_10_price;
+            default:
+                throw new \Exception('Loại dịch vụ không hợp lệ');
+        }
     }
 
     private function validateVoucher(Voucher $voucher, float $subtotal, string $userId)
@@ -299,7 +310,7 @@ class OrderService
             ],
             'shipping' => [
                 'title' => 'Đơn hàng đang được giao',
-                'content' => "Đơn hàng #{$order->id} c���a bạn đang được giao đến bạn"
+                'content' => "Đơn hàng #{$order->id} của bạn đang được giao đến bạn"
             ],
             'completed' => [
                 'title' => 'Đơn hàng hoàn thành',
@@ -442,7 +453,7 @@ class OrderService
             throw new \Exception('Phương thức thanh toán không tồn tại');
         }
 
-        // Validate user_id - Sửa phần này
+        // Validate user_id
         $userId = $data['user_id'] ?? Auth::id();
         if (!$userId) {
             throw new \Exception('Thiếu thông tin khách hàng');
@@ -473,12 +484,19 @@ class OrderService
             if ($item['item_type'] === 'product') {
                 $product = Product::find($item['item_id']);
                 if (!$product) {
-                    throw new \Exception('Sản phẩm không tồn tại');
+                    throw new \Exception("Sản phẩm với ID {$item['item_id']} không tồn tại");
                 }
             } else {
-                $service = Service::find($item['item_id']);
+                // Sửa phần này để kiểm tra dịch vụ
+                $service = Service::where('id', $item['item_id'])->first();
                 if (!$service) {
-                    throw new \Exception('Dịch vụ không tồn tại');
+                    throw new \Exception("Dịch vụ với ID {$item['item_id']} không tồn tại");
+                }
+
+                // Validate giá dịch vụ
+                $servicePrice = $this->getServicePrice($service, $item['service_type'] ?? 'single');
+                if (abs($servicePrice - $item['price']) > 0.01) {
+                    throw new \Exception("Giá dịch vụ không khớp với giá hiện tại");
                 }
             }
 
