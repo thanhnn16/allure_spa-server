@@ -194,10 +194,11 @@
                   Hủy đơn hàng
                 </button>
 
-                <button v-if="needsServicePackageCreation" @click="openCompleteModal"
+                <button v-if="needsServicePackageCreation" 
+                  @click="openCompleteModal"
                   class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
                   <i class="mdi mdi-check-circle-outline mr-2"></i>
-                  Tạo gói dịch vụ
+                  {{ order.status === 'completed' ? 'Tạo gói dịch vụ' : 'Hoàn thành đơn hàng' }}
                 </button>
               </div>
             </div>
@@ -558,7 +559,7 @@ export default {
         })
 
         if (response.data.success) {
-          toast.success('Đơn hàng đã được hủy thành công')
+          toast.success('Đơn h��ng đã được hủy thành công')
           router.reload()
         }
       } catch (error) {
@@ -740,13 +741,15 @@ export default {
       return `${address.ward}, ${address.district}, ${address.province}`;
     }
 
-    // Thêm computed property mới để kiểm tra điều kiện hiển thị nút hoàn thành
+    // Cập nhật computed property needsServicePackageCreation
     const needsServicePackageCreation = computed(() => {
-      if (!props.order.invoice || props.order.invoice.status !== 'paid') {
+      // Kiểm tra có phải đơn hàng đã thanh toán hoặc đã hoàn thành
+      if (!props.order.invoice || 
+          (props.order.invoice.status !== 'paid' && props.order.status !== 'completed')) {
         return false;
       }
 
-      // Kiểm tra có service items không
+      // Kiểm tra có service items combo không
       const serviceItems = props.order.order_items.filter(
         item => item.item_type === 'service' && ['combo_5', 'combo_10'].includes(item.service_type)
       );
@@ -756,9 +759,12 @@ export default {
       }
 
       // Kiểm tra đã có service package chưa
-      return !props.order.user_service_packages?.some(
+      const hasServicePackages = props.order.user_service_packages?.some(
         userServicePackage => userServicePackage.order_id === props.order.id
       );
+
+      // Trả về true nếu có service items nhưng chưa có service package
+      return !hasServicePackages;
     });
 
     return {
