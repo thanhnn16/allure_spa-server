@@ -364,11 +364,20 @@ class OrderService
             $order->status = Order::STATUS_COMPLETED;
             $order->save();
 
-            // Xử lý các order items
+            // Xử lý các order items và tạo service packages nếu chưa có
             foreach ($order->orderItems as $item) {
                 if ($item->item_type === 'service' && $item->service_type) {
-                    // Tạo gói dịch vụ cho khách hàng
-                    $this->createServicePackage($order, $item);
+                    // Kiểm tra xem đã có service package chưa
+                    $existingPackage = UserServicePackage::where([
+                        'order_id' => $order->id,
+                        'service_id' => $item->item_id,
+                        'user_id' => $order->user_id
+                    ])->first();
+
+                    if (!$existingPackage) {
+                        // Tạo gói dịch vụ cho khách hàng nếu chưa có
+                        $this->createServicePackage($order, $item);
+                    }
                 }
             }
 
@@ -381,7 +390,6 @@ class OrderService
                     'type' => 'order_completed'
                 ]);
             } catch (\Exception $e) {
-                // Log lỗi nhưng không throw exception
                 Log::error('Failed to send completion notification:', [
                     'error' => $e->getMessage(),
                     'order_id' => $order->id
