@@ -389,27 +389,11 @@ const getUserVouchers = async () => {
     }
 };
 
-const getUserServicePackages = async () => {
-    try {
-        const response = await axios.get(`/api/users/${props.user.id}/service-packages`);
-        if (response.data.data) {
-            props.user.userServicePackages = response.data.data;
-        }
-    } catch (error) {
-        console.error('Error fetching service packages:', error);
-        toast.error(error.response?.data?.message || 'Không thể tải danh sách liệu trình')
-    }
-};
-
 onMounted(() => {
     if (props.user?.id) {
         getUserVouchers();
-        getUserServicePackages();
         loadProvinces();
     }
-    console.log(props.user);
-    console.log(props.user.userServicePackages);
-    console.log(props.user.userServicePackages[0].next_appointment);
 });
 
 const loadAvailableVouchers = async () => {
@@ -461,11 +445,11 @@ const cancelOrder = async (orderId) => {
 };
 
 const userServicePackages = computed(() => {
-    if (!safeUser.value?.userServicePackages) {
+    if (!safeUser.value?.user_service_packages) {
         return [];
     }
 
-    return safeUser.value.userServicePackages
+    return safeUser.value.user_service_packages
         .filter(p => p && (p.status === 'active' || p.status === 'pending'))
         .sort((a, b) => {
             if (a.status === 'pending' && b.status !== 'pending') return -1;
@@ -475,7 +459,7 @@ const userServicePackages = computed(() => {
 });
 
 const completedPackages = computed(() => {
-    return safeUser.value.userServicePackages?.filter(p => p.status === 'completed') || [];
+    return safeUser.value.user_service_packages?.filter(p => p.status === 'completed') || [];
 });
 
 const completedTreatments = computed(() => {

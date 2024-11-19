@@ -66,15 +66,6 @@ class UserService
             'invoices',
             'vouchers',
             'media',
-            'userServicePackages' => function ($query) {
-                $query->with([
-                    'service',
-                    'appointments' => function ($q) {
-                        $q->with(['timeSlot', 'staff']);
-                    },
-                    'order.orderItems'
-                ]);
-            }
         ])->findOrFail($id);
     }
 
