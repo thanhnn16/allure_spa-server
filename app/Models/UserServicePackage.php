@@ -127,6 +127,7 @@ class UserServicePackage extends Model
             ->whereIn('appointments.status', ['pending', 'confirmed'])
             ->where('appointments.appointment_type', 'service_package')
             ->where('appointments.appointment_date', '>=', now())
+            ->where('appointments.user_id', $this->user_id)
             ->orderBy('appointments.appointment_date', 'asc')
             ->orderBy('appointments.time_slot_id', 'asc')
             ->first();
