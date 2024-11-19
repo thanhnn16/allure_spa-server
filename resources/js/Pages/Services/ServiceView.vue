@@ -136,8 +136,6 @@ const props = defineProps({
     filters: Object,
 })
 
-console.log('Received props:', props);
-
 const showFilters = ref(false)
 
 const form = useForm({

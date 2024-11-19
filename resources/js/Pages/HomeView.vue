@@ -92,10 +92,6 @@ const fetchDashboardData = async () => {
     if (response.data.salesData && response.data.salesData.length > 0) {
       updateChartData()
     }
-
-    console.log('Sales Data:', response.data.salesData)
-    console.log('Chart Data:', chartData.value)
-
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
   } finally {
@@ -178,7 +174,6 @@ const chartOptions = computed(() => ({
 
 const updateChartData = () => {
   if (!salesData.value || !Array.isArray(salesData.value) || salesData.value.length === 0) {
-    console.log('No sales data available')
     return
   }
 
@@ -197,7 +192,6 @@ const updateChartData = () => {
 }
 
 watch(salesData, (newValue) => {
-  console.log('Sales Data changed:', newValue)
   updateChartData()
 }, { deep: true })
 

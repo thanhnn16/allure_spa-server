@@ -489,11 +489,7 @@ function validateForm() {
 }
 
 function validateAndSubmit() {
-    console.log('validateAndSubmit called');
-    console.log('isFormValid:', isFormValid.value);
-
     if (!isFormValid.value) {
-        console.log('Form is not valid');
         return;
     }
 
@@ -511,16 +507,13 @@ function validateAndSubmit() {
         user_service_package_id: form.value.user_service_package_id || null
     };
 
-    console.log('Submitting form data:', formData);
     submitAppointment(formData);
 }
 
 function submitAppointment(formData) {
-    console.log('submitAppointment called with:', formData);
 
     axios.post(route('appointments.store'), formData)
         .then(response => {
-            console.log('Submit response:', response);
             if (response.data.success) {
                 emit('appointmentAdded', response.data.data);
                 props.closeModal();
@@ -641,20 +634,6 @@ function getValidationMessage() {
         return 'Vui lòng chỉ chọn một trong hai: dịch vụ hoặc gói điều trị';
     return 'Vui lòng điền đầy đủ thông tin';
 }
-
-// Thêm watch để debug
-watch(() => isFormValid.value, (newValue) => {
-    console.log('Form valid status:', newValue);
-    console.log('Form values:', {
-        user_id: form.value.user_id,
-        staff_id: form.value.staff_id,
-        appointment_date: form.value.appointment_date,
-        time_slot_id: form.value.time_slot_id,
-        slots: form.value.slots,
-        service_id: form.value.service_id,
-        user_service_package_id: form.value.user_service_package_id
-    });
-});
 </script>
 
 <style scoped>

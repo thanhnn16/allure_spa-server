@@ -383,10 +383,8 @@ class OrderController extends BaseController
     public function store(Request $request)
     {
         try {
-            // Log request data
-            Log::info('Order creation request:', $request->all());
-
             $validatedData = $request->validate([
+                'user_id' => 'nullable|exists:users,id',
                 'payment_method_id' => 'required|exists:payment_methods,id',
                 'shipping_address_id' => 'nullable|exists:addresses,id',
                 'voucher_id' => 'nullable|exists:vouchers,id',

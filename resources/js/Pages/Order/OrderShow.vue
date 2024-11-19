@@ -310,9 +310,6 @@ export default {
     order: Object,
   },
   setup(props) {
-    console.log('Order data:', props.order)
-    console.log('Invoice data:', props.order.invoice)
-
     const showStatusModal = ref(false)
     const showPaymentModal = ref(false)
     const showCreateInvoiceModal = ref(false)
@@ -750,7 +747,6 @@ export default {
     const needsServicePackageCreation = computed(() => {
       // Kiểm tra nếu đơn hàng đã hoàn thành nhưng chưa có gói dịch vụ
 
-      console.log('props.order', props.order)
       if (props.order.status === 'completed') {
         const hasServicePackages = props.order.userServicePackages?.some(
           userServicePackage => userServicePackage.order_id === props.order.id

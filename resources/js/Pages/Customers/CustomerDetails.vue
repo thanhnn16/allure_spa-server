@@ -390,10 +390,8 @@ const getUserVouchers = async () => {
 };
 
 const getUserServicePackages = async () => {
-    console.log('Loading service packages for user:', props.user.id);
     try {
         const response = await axios.get(`/api/users/${props.user.id}/service-packages`);
-        console.log('response', response)
         if (response.data.data) {
             props.user.userServicePackages = response.data.data;
         }
@@ -409,23 +407,11 @@ onMounted(() => {
         getUserServicePackages();
         loadProvinces();
     }
-    console.log('user', props.user);
-    console.log('user id', props.user.id);
-    console.log('userServicePackages', props.user.userServicePackages);
-});
-
-// Add isAsideLgActive ref
-const isAsideLgActive = ref(true)
-
-// Thêm watch để theo dõi thay đổi của availableVouchers
-watch(availableVouchers, (newValue) => {
-    console.log('availableVouchers changed:', newValue);
 });
 
 const loadAvailableVouchers = async () => {
     try {
         const response = await axios.get('/vouchers');
-        console.log('Available vouchers response:', response.data);
         if (response.data.success) {
             availableVouchers.value = response.data.data;
         }

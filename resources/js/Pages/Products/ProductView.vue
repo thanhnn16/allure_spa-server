@@ -203,7 +203,6 @@ const getProductImage = (product) => {
 }
 
 const products = computed(() => {
-    console.log('Products data:', props.products);
     return props.products;
 });
 

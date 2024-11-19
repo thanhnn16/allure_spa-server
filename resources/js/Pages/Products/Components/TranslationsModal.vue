@@ -151,8 +151,6 @@ const loadExistingTranslations = async () => {
                 }
             })
         })
-
-        console.log('Loaded translations:', translations.value) // Debug log
     } catch (error) {
         console.error('Error loading translations:', error)
         toast.error('Không thể tải bản dịch')

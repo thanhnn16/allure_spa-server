@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
 import CardBox from '@/Components/CardBox.vue'
@@ -169,11 +169,6 @@ const handleStatusChange = async (newStatus) => {
         isStatusUpdating.value = false
     }
 }
-
-
-onMounted(() => {
-    console.log('Appointment Data:', props.appointment);
-});
 
 // Thêm computed property để format thời gian
 const appointmentDateTime = computed(() => {

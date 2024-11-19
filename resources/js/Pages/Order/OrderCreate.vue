@@ -331,9 +331,6 @@ export default {
                     return;
                 }
 
-                // Log để debug
-                console.log('Form data before submit:', form.value);
-
                 // Kiểm tra có item nào chưa
                 if (form.value.order_items.length === 0) {
                     toast.error('Vui lòng thêm ít nhất một sản phẩm hoặc dịch vụ');

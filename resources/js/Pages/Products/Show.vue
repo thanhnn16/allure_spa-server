@@ -250,14 +250,6 @@ const productDetails = {
     storage_instructions: 'Hướng dẫn bảo quản',
     product_notes: 'Ghi chú sản phẩm'
 }
-
-onMounted(() => {
-    console.log('Chi tiết sản phẩm:', props.product)
-    if (props.product.media && props.product.media.length > 0) {
-        console.log('Đường dẫn hình ảnh gốc:', props.product.media[0].file_path)
-        console.log('Đường dẫn hình ảnh đã xử lý:', processedMedia.value[0].file_path)
-    }
-})
 </script>
 
 <style scoped>
