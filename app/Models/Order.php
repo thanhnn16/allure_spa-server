@@ -172,11 +172,6 @@ class Order extends Model
                 return false;
             }
 
-            // 2. Kiểm tra trạng thái order hiện tại
-            if ($this->status === self::STATUS_COMPLETED) {
-                Log::info('Order #' . $this->id . ' is already completed');
-                return false;
-            }
 
             if ($this->status === self::STATUS_CANCELLED) {
                 Log::info('Order #' . $this->id . ' is cancelled');

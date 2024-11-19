@@ -350,7 +350,9 @@ class OrderService
 
     public function completeOrder(Order $order)
     {
-        DB::transaction(function () use ($order) {
+        try {
+            DB::beginTransaction();
+
             // Kiểm tra điều kiện để hoàn thành order
             if ($order->status === Order::STATUS_COMPLETED) {
                 throw new \Exception('Đơn hàng đã được hoàn thành');
@@ -360,11 +362,12 @@ class OrderService
                 throw new \Exception('Không thể hoàn thành đơn hàng đã hủy');
             }
 
-            // Cập nhật trạng thái order
-            $order->status = Order::STATUS_COMPLETED;
-            $order->save();
+            // Kiểm tra invoice và trạng thái thanh toán
+            if (!$order->invoice || $order->invoice->status !== Invoice::STATUS_PAID) {
+                throw new \Exception('Không thể hoàn thành đơn hàng chưa thanh toán đủ');
+            }
 
-            // Xử lý các order items và tạo service packages nếu chưa có
+            // Kiểm tra và tạo service packages cho các service combo
             foreach ($order->orderItems as $item) {
                 if ($item->item_type === 'service' && $item->service_type) {
                     // Kiểm tra xem đã có service package chưa
@@ -381,6 +384,10 @@ class OrderService
                 }
             }
 
+            // Cập nhật trạng thái order
+            $order->status = Order::STATUS_COMPLETED;
+            $order->save();
+
             try {
                 // Gửi thông báo cho khách hàng
                 $this->notificationService->createNotification([
@@ -395,9 +402,13 @@ class OrderService
                     'order_id' => $order->id
                 ]);
             }
-        });
 
-        return $order;
+            DB::commit();
+            return $order->fresh();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     private function createServicePackage(Order $order, OrderItem $item)
