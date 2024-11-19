@@ -177,7 +177,7 @@ class AppointmentService
                     'user_id' => $appointment->user_id,
                     'title' => 'Đặt lịch thành công',
                     'content' => "Bạn đã đặt lịch {$appointment->service->name} vào ngày {$appointment->appointment_date}",
-                    'type' => 'appointment_created',
+                    'type' => 'appointment',
                     'data' => [
                         'appointment_id' => $appointment->id,
                     ]
@@ -255,7 +255,7 @@ class AppointmentService
                     'user_id' => $appointment->user_id,
                     'title' => 'Cập nhật lịch hẹn',
                     'content' => $statusMessage,
-                    'type' => 'appointment_status_changed',
+                    'type' => 'appointment',
                     'data' => [
                         'appointment_id' => $appointment->id,
                         'status' => $data['status'],
@@ -422,7 +422,7 @@ class AppointmentService
                 'content' => $isAutoCancel ?
                     'Lịch hẹn của bạn đã bị hủy tự động do quá thời gian' :
                     'Lịch hẹn của bạn đã bị hủy',
-                'type' => 'appointment_cancelled',
+                'type' => 'appointment',
                 'data' => [
                     'appointment_id' => $appointment->id,
                     'is_auto_cancel' => $isAutoCancel

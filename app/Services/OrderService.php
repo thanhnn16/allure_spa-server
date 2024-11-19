@@ -108,7 +108,7 @@ class OrderService
                     'user_id' => $order->user_id,
                     'title' => 'Đặt hàng thành công',
                     'content' => "Đơn hàng #{$order->id} đã được tạo thành công",
-                    'type' => 'order_created'
+                    'type' => 'order'
                 ]);
             } catch (\Exception $e) {
                 // Log lỗi nhưng không throw exception
@@ -275,7 +275,7 @@ class OrderService
                         'user_id' => $order->user_id,
                         'title' => $notificationData['title'],
                         'content' => $notificationData['content'],
-                        'type' => 'order_status_changed'
+                        'type' => 'order'
                     ]);
                 }
 
@@ -389,7 +389,7 @@ class OrderService
                     'user_id' => $order->user_id,
                     'title' => 'Đơn hàng hoàn thành',
                     'content' => "Đơn hàng #{$order->id} của bạn đã hoàn thành",
-                    'type' => 'order_completed'
+                    'type' => 'order'
                 ]);
             } catch (\Exception $e) {
                 Log::error('Failed to send completion notification:', [
