@@ -93,7 +93,10 @@ const canComplete = computed(() => {
 })
 
 const handleSubmit = async () => {
-    if (!canComplete.value) return
+    if (!canComplete.value) {
+        // Add error notification here
+        return
+    }
 
     loading.value = true
     try {
@@ -107,7 +110,10 @@ const handleSubmit = async () => {
             note.value = ''
         }
     } catch (error) {
-        console.error('Error completing order:', error)
+        // Add error handling
+        const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi hoàn thành đơn hàng'
+        // Show error notification here
+        console.error('Error completing order:', errorMessage)
     } finally {
         loading.value = false
     }

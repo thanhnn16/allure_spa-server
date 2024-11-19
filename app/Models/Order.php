@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Schema(
@@ -164,27 +165,59 @@ class Order extends Model
 
     public function canBeCompleted()
     {
-        // Kiểm tra điều kiện cơ bản
-        if (!$this->invoice || $this->invoice->status !== Invoice::STATUS_PAID) {
+        try {
+            // 1. Kiểm tra invoice và trạng thái thanh toán
+            if (!$this->invoice || $this->invoice->status !== Invoice::STATUS_PAID) {
+                Log::info('Order #' . $this->id . ' cannot be completed: Invoice not found or not paid');
+                return false;
+            }
+
+            // 2. Kiểm tra trạng thái order hiện tại
+            if ($this->status === self::STATUS_COMPLETED) {
+                Log::info('Order #' . $this->id . ' is already completed');
+                return false;
+            }
+
+            if ($this->status === self::STATUS_CANCELLED) {
+                Log::info('Order #' . $this->id . ' is cancelled');
+                return false;
+            }
+
+            // 3. Kiểm tra các service combo trong order
+            $serviceComboItems = $this->orderItems()
+                ->where('item_type', 'service')
+                ->whereIn('service_type', ['combo_5', 'combo_10'])
+                ->get();
+
+            // Nếu không có service combo, return true
+            if ($serviceComboItems->isEmpty()) {
+                Log::info('Order #' . $this->id . ' has no service combos');
+                return true;
+            }
+
+            // 4. Kiểm tra đã tạo service package chưa
+            foreach ($serviceComboItems as $item) {
+                $existingPackage = UserServicePackage::where([
+                    'order_id' => $this->id,
+                    'service_id' => $item->item_id,
+                    'user_id' => $this->user_id
+                ])->exists();
+
+                if ($existingPackage) {
+                    Log::info('Order #' . $this->id . ' already has service package for service #' . $item->item_id);
+                    return false;
+                }
+            }
+
+            Log::info('Order #' . $this->id . ' can be completed');
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Error checking if order can be completed:', [
+                'order_id' => $this->id,
+                'error' => $e->getMessage()
+            ]);
             return false;
         }
-
-        // Kiểm tra có service combo không
-        $hasServiceCombo = $this->orderItems()
-            ->where('item_type', 'service')
-            ->whereIn('service_type', ['combo_5', 'combo_10'])
-            ->exists();
-
-        // Nếu không có service combo, return true
-        if (!$hasServiceCombo) {
-            return true;
-        }
-
-        // Kiểm tra đã có service package chưa bằng query builder
-        $hasServicePackages = UserServicePackage::where('order_id', $this->id)->exists();
-
-        // Trả về true nếu chưa có service package
-        return !$hasServicePackages;
     }
 
     public function getUnratedItems()

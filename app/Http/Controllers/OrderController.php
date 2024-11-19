@@ -713,9 +713,14 @@ class OrderController extends BaseController
                 return $this->respondWithError('Bạn không có quyền thực hiện hành động này', 403);
             }
 
+            // Add validation check
+            if (!$order->canBeCompleted()) {
+                return $this->respondWithError('Không thể hoàn thành đơn hàng này. Vui lòng kiểm tra lại điều kiện.', 400);
+            }
+
             $completedOrder = $this->orderService->completeOrder($order);
 
-            // Cập nhật tồn kho cho các sản phẩm
+            // Update inventory for products
             foreach ($order->orderItems as $item) {
                 if ($item->item_type === 'product') {
                     $this->orderService->updateProductInventory($item);
@@ -727,7 +732,7 @@ class OrderController extends BaseController
                 'Đơn hàng đã hoàn thành thành công'
             );
         } catch (\Exception $e) {
-            return $this->respondWithError($e->getMessage());
+            return $this->respondWithError($e->getMessage(), 400);
         }
     }
 }
