@@ -29,12 +29,10 @@ class Appointment extends Model
 
     // Thêm constant cho appointment types
     const APPOINTMENT_TYPES = [
-        'facial',
-        'massage',
-        'weight_loss',
-        'hair_removal',
+        'service',
         'consultation',
-        'others'
+        'others',
+        'service_package'
     ];
 
     protected $fillable = [
@@ -191,5 +189,18 @@ class Appointment extends Model
     public function cancelledBy()
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    // Thêm relationship với UserServicePackage
+    public function userServicePackage()
+    {
+        return $this->belongsTo(UserServicePackage::class, 'service_id', 'service_id')
+            ->where('user_id', $this->user_id)
+            ->whereNull('deleted_at')
+            ->where(function ($query) {
+                $query->where('expiry_date', '>=', now())
+                    ->orWhereNull('expiry_date');
+            })
+            ->where('remaining_sessions', '>', 0);
     }
 }

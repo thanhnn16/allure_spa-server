@@ -122,11 +122,12 @@ class UserServicePackage extends Model
 
     public function nextAppointment()
     {
-        return $this->belongsTo(Appointment::class, 'service_id', 'service_id')
+        return $this->hasOne(Appointment::class, 'service_id', 'service_id')
             ->where('user_id', $this->user_id)
             ->where('status', '!=', 'cancelled')
+            ->where('status', '!=', 'completed')
             ->where(function ($query) {
-                $query->where('appointment_date', '>', now())
+                $query->where('appointment_date', '>', now()->format('Y-m-d'))
                     ->orWhere(function ($q) {
                         $q->where('appointment_date', '=', now()->format('Y-m-d'))
                             ->whereHas('timeSlot', function ($q) {
@@ -135,7 +136,8 @@ class UserServicePackage extends Model
                     });
             })
             ->orderBy('appointment_date', 'asc')
-            ->orderBy('time_slot_id', 'asc');
+            ->orderBy('time_slot_id', 'asc')
+            ->latest();
     }
 
     public function getProgressPercentageAttribute(): int
