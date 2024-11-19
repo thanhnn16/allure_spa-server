@@ -4,12 +4,18 @@ namespace App\Services;
 
 use App\Models\ServiceUsageHistory;
 use App\Models\UserServicePackage;
+use App\Models\Appointment;
 use Illuminate\Support\Facades\DB;
-use Exception;
-use Illuminate\Support\Facades\Log;
 
 class ServiceUsageHistoryService
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * Record a new treatment session
      */
@@ -19,8 +25,22 @@ class ServiceUsageHistoryService
         try {
             // Kiểm tra gói dịch vụ còn hiệu lực
             $package = UserServicePackage::findOrFail($data['user_service_package_id']);
-            if ($package->status === 'expired' || $package->remaining_sessions <= 0) {
-                throw new \Exception('Gói dịch vụ đã hết hạn hoặc hết số buổi');
+
+            // Kiểm tra tính hợp lệ của gói dịch vụ
+            if ($package->status === 'expired') {
+                throw new \Exception('Gói dịch vụ đã hết hạn');
+            }
+
+            if ($package->remaining_sessions <= 0) {
+                throw new \Exception('Gói dịch vụ đã hết số buổi sử dụng');
+            }
+
+            // Kiểm tra xem có appointment_id không
+            if (!empty($data['appointment_id'])) {
+                $appointment = Appointment::find($data['appointment_id']);
+                if ($appointment && $appointment->status !== 'completed') {
+                    throw new \Exception('Chỉ có thể ghi nhận sử dụng dịch vụ cho lịch hẹn đã hoàn thành');
+                }
             }
 
             // Ghi nhận lịch sử điều trị
@@ -30,20 +50,15 @@ class ServiceUsageHistoryService
                 'end_time' => $data['end_time'] ?? null,
                 'staff_user_id' => $data['staff_user_id'],
                 'result' => $data['result'] ?? null,
-                'notes' => $data['notes'] ?? null
+                'notes' => $data['notes'] ?? null,
+                'appointment_id' => $data['appointment_id'] ?? null
             ]);
 
-            // Cập nhật số buổi đã sử dụng
+            // Cập nhật số buổi đã sử dụng (luôn trừ 1 bất kể số slot của lịch hẹn)
             $package->used_sessions += 1;
             $package->save();
 
-            // Nếu đây là buổi cuối cùng, cập nhật trạng thái gói
-            if ($package->remaining_sessions === 0) {
-                $package->status = 'completed';
-                $package->save();
-            }
-
-            // Kiểm tra và thông báo khi còn 2 buổi cuối
+            // Kiểm tra và thông báo khi còn ít buổi
             $this->checkAndNotifyLowSessions($package);
 
             DB::commit();
@@ -56,11 +71,13 @@ class ServiceUsageHistoryService
 
     private function checkAndNotifyLowSessions(UserServicePackage $package): void
     {
-        // Thông báo khi còn 2 buổi cuối
         if ($package->remaining_sessions === 2) {
-            // Gửi thông báo cho khách hàng
-            // Có thể thêm notification system riêng
-            Log::info("Package {$package->id} for user {$package->user_id} has only 2 sessions remaining");
+            $this->notificationService->createNotification([
+                'user_id' => $package->user_id,
+                'title' => 'Gói dịch vụ của bạn còn 2 buổi cuối',
+                'content' => 'Bạn cần đến thực hiện dịch vụ sớm để không bị mất gói dịch vụ',
+                'type' => 'appointment'
+            ]);
         }
     }
 }

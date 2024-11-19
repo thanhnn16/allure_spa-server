@@ -31,7 +31,8 @@ class ServiceUsageHistory extends Model
         'end_time',
         'staff_user_id',
         'result',
-        'notes'
+        'notes',
+        'appointment_id'
     ];
 
     protected $casts = [
@@ -50,5 +51,10 @@ class ServiceUsageHistory extends Model
     {
         return $this->belongsTo(User::class, 'staff_user_id')
             ->select(['id', 'full_name', 'phone_number', 'email']);
+    }
+
+    public function appointment()
+    {
+        return $this->belongsTo(Appointment::class);
     }
 }

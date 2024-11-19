@@ -143,17 +143,12 @@ class AppointmentService
                 ) {
                     $package = UserServicePackage::findOrFail($data['user_service_package_id']);
 
-                    // Kiểm tra số lần còn lại
-                    $sessionsToDeduct = $appointmentData['slots'];
-                    if ($package->remaining_sessions < $sessionsToDeduct) {
+                    // Chỉ kiểm tra số lần còn lại, không trừ số lần sử dụng
+                    if ($package->remaining_sessions < 1) {
                         throw new \Exception('Không đủ số lần trong gói combo');
                     }
 
-                    // Cập nhật số lần sử dụng
-                    $package->used_sessions += $sessionsToDeduct;
-                    $package->save();
-
-                    // Sử dụng bảng trung gian để liên kết
+                    // Chỉ liên kết gói dịch vụ với lịch hẹn
                     $appointment->userServicePackages()->attach($package->id, [
                         'created_at' => now(),
                         'updated_at' => now()
@@ -218,17 +213,16 @@ class AppointmentService
                 $data['status'] === 'completed' &&
                 $appointment->appointment_type === 'service_package'
             ) {
-
-                // Tìm và cập nhật user_service_package
-                if ($appointment->user_service_package_id) {
-                    $package = UserServicePackage::findOrFail($appointment->user_service_package_id);
-
+                // Tìm gói dịch vụ liên quan
+                $package = $appointment->userServicePackage;
+                if ($package) {
                     // Tạo service usage history
                     ServiceUsageHistory::create([
                         'user_service_package_id' => $package->id,
                         'used_date' => now(),
                         'staff_user_id' => $appointment->staff_user_id,
-                        'note' => "Sử dụng {$appointment->slots} lần trong lịch hẹn #{$appointment->id}"
+                        'note' => $data['note'] ?? "Hoàn thành lịch hẹn #{$appointment->id}",
+                        'appointment_id' => $appointment->id
                     ]);
                 }
             }

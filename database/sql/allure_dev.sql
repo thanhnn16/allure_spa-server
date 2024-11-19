@@ -375,12 +375,16 @@ CREATE TABLE service_usage_histories (
     end_time TIMESTAMP NOT NULL,
     result TEXT,
     notes TEXT,
+    appointment_id INT UNSIGNED,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_service_package_id) REFERENCES user_service_packages (id) ON DELETE
     SET
         NULL,
         FOREIGN KEY (staff_user_id) REFERENCES users (id) ON DELETE
+    SET
+        NULL,
+        FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE
     SET
         NULL
 );
