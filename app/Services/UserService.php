@@ -69,11 +69,7 @@ class UserService
             'userServicePackages' => function ($query) {
                 $query->with([
                     'service',
-                    'treatmentSessions' => function ($q) {
-                        $q->with('staff')
-                            ->orderBy('start_time', 'desc');
-                    },
-                    'nextAppointment' => function ($q) {
+                    'appointments' => function ($q) {
                         $q->with(['timeSlot', 'staff']);
                     },
                     'order.orderItems'
