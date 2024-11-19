@@ -437,7 +437,7 @@ class AppointmentController extends BaseController
     public function edit($id)
     {
         $appointment = $this->appointmentService->getAppointmentDetails($id);
-        return $this->respondWithInertia('Appointments/Edit', ['appointment' => $appointment['data']]);
+        return $this->respondWithInertia('Calendar/Edit', ['appointment' => $appointment['data']]);
     }
 
     /**

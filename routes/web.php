@@ -84,6 +84,8 @@ Route::middleware('auth')->group(function () {
 
     // Appointment routes
     Route::resource('appointments', AppointmentController::class);
+    Route::get('/appointments/{appointment}/edit', [AppointmentController::class, 'edit'])
+        ->name('appointments.edit');
 
     // Favorite routes
 
