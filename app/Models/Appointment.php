@@ -194,13 +194,7 @@ class Appointment extends Model
     // Thêm relationship với UserServicePackage
     public function userServicePackage()
     {
-        return $this->hasOne(UserServicePackage::class, 'user_id', 'user_id')
-            ->where('service_id', $this->service_id)
-            ->whereNull('deleted_at')
-            ->where(function ($query) {
-                $query->where('expiry_date', '>=', now())
-                    ->orWhereNull('expiry_date');
-            })
-            ->where('remaining_sessions', '>', 0);
+        return $this->belongsTo(UserServicePackage::class, 'service_id', 'service_id')
+            ->where('user_id', $this->user_id);
     }
 }
