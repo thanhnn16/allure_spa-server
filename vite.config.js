@@ -49,8 +49,7 @@ export default defineConfig({
             },
             workbox: {
                 globPatterns: [
-                    '**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2}',
-                    'offline.html'
+                    '**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2}'
                 ],
                 runtimeCaching: [
                     {
@@ -128,7 +127,7 @@ export default defineConfig({
                 enabled: true,
                 type: 'module'
             },
-            includeAssets: ['offline.html', 'images/offline.svg'],
+            includeAssets: ['../offline.html', 'images/offline.svg'],
         }),
     ],
     build: {
