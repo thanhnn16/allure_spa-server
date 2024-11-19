@@ -403,13 +403,12 @@
                         </div>
                     </div>
                 </div>
+                <div class="print-container" style="display: none;">
+                    <PrintInvoiceTemplate ref="printTemplateRef" :invoice="invoice"
+                        style="visibility: visible !important;" />
+                </div>
             </SectionMain>
         </LayoutAuthenticated>
-
-        <!-- Thêm PrintInvoiceTemplate ở đây, ngoài LayoutAuthenticated -->
-        <div class="print-container" style="display: none;">
-            <PrintInvoiceTemplate ref="printTemplateRef" :invoice="invoice" style="visibility: visible !important;" />
-        </div>
 
         <!-- Thêm modal xác nhận hủy hóa đơn -->
         <div v-if="showCancelModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
