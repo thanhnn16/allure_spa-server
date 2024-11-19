@@ -407,6 +407,9 @@ onMounted(() => {
         getUserServicePackages();
         loadProvinces();
     }
+    console.log(props.user);
+    console.log(props.user.userServicePackages);
+    console.log(props.user.userServicePackages[0].next_appointment);
 });
 
 const loadAvailableVouchers = async () => {
