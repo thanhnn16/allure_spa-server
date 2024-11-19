@@ -132,7 +132,7 @@ class UserServicePackage extends Model
             ->orderBy('appointments.time_slot_id', 'asc')
             ->first();
     }
-    
+
     public function getProgressPercentageAttribute(): int
     {
         if (!$this->total_sessions) {
@@ -148,7 +148,7 @@ class UserServicePackage extends Model
 
     public function getNextSessionDateAttribute(): ?string
     {
-        $nextAppointment = $this->nextAppointment()->first();
+        $nextAppointment = $this->nextAppointment();
 
         if (!$nextAppointment) {
             return null;
@@ -159,7 +159,7 @@ class UserServicePackage extends Model
 
     public function getNextAppointmentDetailsAttribute()
     {
-        $nextAppointment = $this->nextAppointment()->first();
+        $nextAppointment = $this->nextAppointment();
 
         if (!$nextAppointment) {
             return null;
