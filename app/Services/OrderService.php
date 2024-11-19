@@ -268,29 +268,37 @@ class OrderService
             // Chuẩn bị thông báo dựa trên trạng thái
             $notificationData = $this->prepareStatusNotification($order, $status);
 
-            // Gửi thông báo cho khách hàng
-            if ($notificationData) {
-                $this->notificationService->createNotification([
-                    'user_id' => $order->user_id,
-                    'title' => $notificationData['title'],
-                    'content' => $notificationData['content'],
-                    'type' => 'order_status_changed'
-                ]);
-            }
+            try {
+                // Gửi thông báo cho khách hàng
+                if ($notificationData) {
+                    $this->notificationService->createNotification([
+                        'user_id' => $order->user_id,
+                        'title' => $notificationData['title'],
+                        'content' => $notificationData['content'],
+                        'type' => 'order_status_changed'
+                    ]);
+                }
 
-            // Gửi thông báo cho admin khi đơn hàng bị hủy
-            if ($status === 'cancelled') {
-                $this->notificationService->notifyAdmins(
-                    'Đơn hàng bị hủy',
-                    "Đơn hàng #{$order->id} đã bị hủy bởi " .
-                        (Auth::user()->role === 'admin' ? 'Admin' : 'khách hàng'),
-                    'order_cancelled',
-                    [
-                        'type' => 'order',
-                        'order_id' => $order->id,
-                        'action' => 'cancelled'
-                    ]
-                );
+                // Gửi thông báo cho admin khi đơn hàng bị hủy
+                if ($status === 'cancelled') {
+                    $this->notificationService->notifyAdmins(
+                        'Đơn hàng bị hủy',
+                        "Đơn hàng #{$order->id} đã bị hủy bởi " .
+                            (Auth::user()->role === 'admin' ? 'Admin' : 'khách hàng'),
+                        'order_cancelled',
+                        [
+                            'type' => 'order',
+                            'order_id' => $order->id,
+                            'action' => 'cancelled'
+                        ]
+                    );
+                }
+            } catch (\Exception $e) {
+                // Log lỗi nhưng không throw exception
+                Log::error('Failed to send notifications:', [
+                    'error' => $e->getMessage(),
+                    'order_id' => $order->id
+                ]);
             }
 
             DB::commit();
@@ -364,13 +372,21 @@ class OrderService
                 }
             }
 
-            // Gửi thông báo cho khách hàng
-            $this->notificationService->createNotification([
-                'user_id' => $order->user_id,
-                'title' => 'Đơn hàng hoàn thành',
-                'content' => "Đơn hàng #{$order->id} của bạn đã hoàn thành",
-                'type' => 'order_completed'
-            ]);
+            try {
+                // Gửi thông báo cho khách hàng
+                $this->notificationService->createNotification([
+                    'user_id' => $order->user_id,
+                    'title' => 'Đơn hàng hoàn thành',
+                    'content' => "Đơn hàng #{$order->id} của bạn đã hoàn thành",
+                    'type' => 'order_completed'
+                ]);
+            } catch (\Exception $e) {
+                // Log lỗi nhưng không throw exception
+                Log::error('Failed to send completion notification:', [
+                    'error' => $e->getMessage(),
+                    'order_id' => $order->id
+                ]);
+            }
         });
 
         return $order;
