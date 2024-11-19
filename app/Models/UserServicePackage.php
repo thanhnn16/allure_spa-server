@@ -148,7 +148,7 @@ class UserServicePackage extends Model
 
     public function getNextSessionDateAttribute(): ?string
     {
-        $nextAppointment = $this->nextAppointment;
+        $nextAppointment = $this->nextAppointment()->first();
 
         if (!$nextAppointment) {
             return null;
@@ -159,7 +159,7 @@ class UserServicePackage extends Model
 
     public function getNextAppointmentDetailsAttribute()
     {
-        $nextAppointment = $this->nextAppointment();
+        $nextAppointment = $this->nextAppointment()->first();
 
         if (!$nextAppointment) {
             return null;
