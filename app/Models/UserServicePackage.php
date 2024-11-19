@@ -127,15 +127,12 @@ class UserServicePackage extends Model
             ->where('appointment_type', 'service_package')
             ->where('status', 'pending')
             ->where('appointment_date', '>=', now())
-            ->where(function ($query) {
-                $query->where('user_id', $this->user_id)
-                    ->where('service_id', $this->service_id);
-            })
             ->whereHas('userServicePackage', function ($query) {
-                $query->where(function ($q) {
-                    $q->where('expiry_date', '>=', now())
-                        ->orWhereNull('expiry_date');
-                })
+                $query->where('id', $this->id)
+                    ->where(function ($q) {
+                        $q->where('expiry_date', '>=', now())
+                            ->orWhereNull('expiry_date');
+                    })
                     ->where('remaining_sessions', '>', 0)
                     ->whereNull('deleted_at');
             })
