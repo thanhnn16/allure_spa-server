@@ -154,7 +154,8 @@ class UserServicePackage extends Model
 
     public function getNextSessionDateAttribute(): ?string
     {
-        $nextAppointment = $this->nextAppointment;
+        $nextAppointment = $this->nextAppointment()->first();
+
         if (!$nextAppointment) {
             return null;
         }
@@ -164,19 +165,21 @@ class UserServicePackage extends Model
 
     public function getNextAppointmentDetailsAttribute()
     {
-        if (!$this->nextAppointment) {
+        $nextAppointment = $this->nextAppointment()->first();
+
+        if (!$nextAppointment) {
             return null;
         }
 
         return [
-            'date' => $this->nextAppointment->appointment_date->format('d/m/Y'),
+            'date' => $nextAppointment->appointment_date->format('d/m/Y'),
             'time' => [
-                'start' => $this->nextAppointment->timeSlot->start_time,
-                'end' => $this->nextAppointment->timeSlot->end_time
+                'start' => $nextAppointment->timeSlot->start_time,
+                'end' => $nextAppointment->timeSlot->end_time
             ],
-            'staff' => $this->nextAppointment->staff ? [
-                'id' => $this->nextAppointment->staff->id,
-                'full_name' => $this->nextAppointment->staff->full_name
+            'staff' => $nextAppointment->staff ? [
+                'id' => $nextAppointment->staff->id,
+                'full_name' => $nextAppointment->staff->full_name
             ] : null
         ];
     }
