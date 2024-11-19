@@ -390,8 +390,10 @@ const getUserVouchers = async () => {
 };
 
 const getUserServicePackages = async () => {
+    console.log('Loading service packages for user:', props.user.id);
     try {
         const response = await axios.get(`/api/users/${props.user.id}/service-packages`);
+        console.log('response', response)
         if (response.data.data) {
             props.user.userServicePackages = response.data.data;
         }
@@ -401,14 +403,14 @@ const getUserServicePackages = async () => {
     }
 };
 
-// Update onMounted to fetch both vouchers and service packages
 onMounted(() => {
     if (props.user?.id) {
         getUserVouchers();
         getUserServicePackages();
-        loadProvinces(); // Thêm dòng này
+        loadProvinces();
     }
     console.log('user', props.user);
+    console.log('user id', props.user.id);
     console.log('userServicePackages', props.user.userServicePackages);
 });
 
