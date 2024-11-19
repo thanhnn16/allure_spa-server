@@ -262,21 +262,12 @@ class UserController extends BaseController
                 ->whereNull('deleted_at')
                 ->with([
                     'service',
-                    'nextAppointment',
                     'nextAppointment.timeSlot',
                     'nextAppointment.staff',
-                    'treatmentSessions',
                     'treatmentSessions.staff',
-                    'order',
                     'order.orderItems'
                 ])
                 ->get();
-
-            Log::info('Fetched packages:', [
-                'user_id' => $userId,
-                'count' => $packages->count(),
-                'packages' => $packages->toArray()
-            ]);
 
             return $this->respondWithJson($packages, 'User treatment packages retrieved successfully');
         } catch (\Exception $e) {

@@ -128,15 +128,21 @@ class UserServicePackage extends Model
 
     public function nextAppointment()
     {
-        return $this->appointments()
-            ->where('appointments.status', 'pending')
-            ->where('appointments.appointment_type', 'service_package')
-            ->where('appointments.appointment_date', '>=', now())
-            ->where('appointments.user_id', $this->user_id)
-            ->where('appointments.service_id', $this->service_id)
-            ->orderBy('appointments.appointment_date', 'asc')
-            ->orderBy('appointments.time_slot_id', 'asc')
-            ->limit(1);
+        return $this->hasOneThrough(
+            Appointment::class,
+            'appointment_service_package',
+            'user_service_package_id',
+            'id',
+            'id',
+            'appointment_id'
+        )
+        ->where('appointments.status', 'pending')
+        ->where('appointments.appointment_type', 'service_package')
+        ->where('appointments.appointment_date', '>=', now())
+        ->where('appointments.user_id', $this->user_id)
+        ->where('appointments.service_id', $this->service_id)
+        ->orderBy('appointments.appointment_date', 'asc')
+        ->orderBy('appointments.time_slot_id', 'asc');
     }
 
     public function getProgressPercentageAttribute(): int
@@ -154,8 +160,8 @@ class UserServicePackage extends Model
 
     public function getNextSessionDateAttribute(): ?string
     {
-        $nextAppointment = $this->nextAppointment()->first();
-
+        $nextAppointment = $this->nextAppointment;
+        
         if (!$nextAppointment) {
             return null;
         }
@@ -165,8 +171,8 @@ class UserServicePackage extends Model
 
     public function getNextAppointmentDetailsAttribute()
     {
-        $nextAppointment = $this->nextAppointment()->first();
-
+        $nextAppointment = $this->nextAppointment;
+        
         if (!$nextAppointment) {
             return null;
         }
