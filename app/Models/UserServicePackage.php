@@ -136,8 +136,7 @@ class UserServicePackage extends Model
                     });
             })
             ->orderBy('appointment_date', 'asc')
-            ->orderBy('time_slot_id', 'asc')
-            ->latest();
+            ->orderBy('time_slot_id', 'asc');
     }
 
     public function getProgressPercentageAttribute(): int
