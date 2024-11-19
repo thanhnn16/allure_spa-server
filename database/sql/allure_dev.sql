@@ -791,3 +791,14 @@ CREATE TABLE failed_jobs (
     exception LONGTEXT,
     failed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Thêm bảng appointment_service_package
+CREATE TABLE appointment_service_package (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    appointment_id INT UNSIGNED NOT NULL,
+    user_service_package_id INT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (appointment_id) REFERENCES appointments (id),
+    FOREIGN KEY (user_service_package_id) REFERENCES user_service_packages (id)
+);

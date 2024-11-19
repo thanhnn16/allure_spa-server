@@ -141,13 +141,10 @@ class AppointmentService
                     $appointment->appointment_type === 'service_package' &&
                     isset($data['user_service_package_id'])
                 ) {
-
                     $package = UserServicePackage::findOrFail($data['user_service_package_id']);
 
-                    // Tính số lần cần trừ dựa vào số slots
+                    // Kiểm tra số lần còn lại
                     $sessionsToDeduct = $appointmentData['slots'];
-
-                    // Kiểm tra xem còn đủ số lần không
                     if ($package->remaining_sessions < $sessionsToDeduct) {
                         throw new \Exception('Không đủ số lần trong gói combo');
                     }
@@ -155,6 +152,12 @@ class AppointmentService
                     // Cập nhật số lần sử dụng
                     $package->used_sessions += $sessionsToDeduct;
                     $package->save();
+
+                    // Sử dụng bảng trung gian để liên kết
+                    $appointment->userServicePackages()->attach($package->id, [
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
                 }
 
                 // Load relationships
@@ -274,6 +277,20 @@ class AppointmentService
                             'action' => 'cancelled'
                         ]
                     );
+                }
+            }
+
+            // Nếu thay đổi gói dịch vụ
+            if (isset($data['user_service_package_id'])) {
+                // Xóa liên kết cũ
+                $appointment->userServicePackages()->detach();
+
+                // Thêm liên kết mới
+                if ($data['user_service_package_id']) {
+                    $appointment->userServicePackages()->attach($data['user_service_package_id'], [
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
                 }
             }
 

@@ -120,24 +120,23 @@ class UserServicePackage extends Model
             ->orderBy('start_time', 'desc');
     }
 
+    public function appointments()
+    {
+        return $this->belongsToMany(Appointment::class, 'appointment_service_package')
+            ->withTimestamps();
+    }
+
     public function nextAppointment()
     {
-        return $this->hasOne(Appointment::class, 'service_id', 'service_id')
-            ->where('user_id', $this->user_id)
-            ->where('appointment_type', 'service_package')
-            ->where('status', 'pending')
-            ->where('appointment_date', '>=', now())
-            ->whereHas('userServicePackage', function ($query) {
-                $query->where('id', $this->id)
-                    ->where(function ($q) {
-                        $q->where('expiry_date', '>=', now())
-                            ->orWhereNull('expiry_date');
-                    })
-                    ->where('remaining_sessions', '>', 0)
-                    ->whereNull('deleted_at');
-            })
-            ->orderBy('appointment_date', 'asc')
-            ->orderBy('time_slot_id', 'asc');
+        return $this->appointments()
+            ->where('appointments.status', 'pending')
+            ->where('appointments.appointment_type', 'service_package')
+            ->where('appointments.appointment_date', '>=', now())
+            ->where('appointments.user_id', $this->user_id)
+            ->where('appointments.service_id', $this->service_id)
+            ->orderBy('appointments.appointment_date', 'asc')
+            ->orderBy('appointments.time_slot_id', 'asc')
+            ->limit(1);
     }
 
     public function getProgressPercentageAttribute(): int

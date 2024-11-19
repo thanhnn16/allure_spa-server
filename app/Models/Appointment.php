@@ -47,6 +47,7 @@ class Appointment extends Model
         'slots',
         'cancelled_by',
         'cancelled_at',
+        'user_service_package_id',
         'cancellation_note'
     ];
 
@@ -192,9 +193,15 @@ class Appointment extends Model
     }
 
     // Thêm relationship với UserServicePackage
-    public function userServicePackage()
+    public function userServicePackages()
     {
-        return $this->belongsTo(UserServicePackage::class, 'service_id', 'service_id')
-            ->where('user_id', $this->user_id);
+        return $this->belongsToMany(UserServicePackage::class, 'appointment_service_package')
+            ->withTimestamps();
+    }
+
+    // Helper method để lấy gói dịch vụ đầu tiên
+    public function getUserServicePackageAttribute()
+    {
+        return $this->userServicePackages->first();
     }
 }
