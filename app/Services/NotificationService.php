@@ -9,6 +9,36 @@ class NotificationService
     protected $firebaseService;
     protected $fcmTokenService;
 
+    // Add notification type constants
+    const NOTIFICATION_TYPES = [
+        'appointment' => [
+            'new' => 'new_appointment',
+            'status' => 'appointment_status',
+            'cancelled' => 'appointment_cancelled',
+            'reminder' => 'appointment_reminder',
+        ],
+        'order' => [
+            'new' => 'new_order',
+            'status' => 'order_status',
+            'cancelled' => 'order_cancelled',
+            'completed' => 'order_completed',
+        ],
+        'service' => [
+            'expiring' => 'service_expiring',
+            'low_sessions' => 'service_low_sessions',
+            'completed' => 'service_completed',
+        ],
+        'payment' => [
+            'success' => 'payment_success',
+            'failed' => 'payment_failed',
+            'pending' => 'payment_pending',
+        ],
+        'chat' => 'new_message',
+        'review' => 'new_review',
+        'promotion' => 'promotion',
+        'system' => 'system'
+    ];
+
     public function __construct(
         FirebaseService $firebaseService,
         FcmTokenService $fcmTokenService
@@ -20,32 +50,62 @@ class NotificationService
     // Create notification and send FCM
     public function createNotification($data)
     {
+        // Validate notification type
+        if (!$this->isValidNotificationType($data['type'])) {
+            throw new \Exception('Invalid notification type');
+        }
+
         // Create notification record
         $notification = Notification::create([
             'user_id' => $data['user_id'],
             'title' => $data['title'],
-            'content' => $data['content'],
+            'content' => $data['content'], 
             'type' => $data['type'],
+            'data' => $data['data'] ?? null,
             'is_read' => false
         ]);
 
-        // Get user's FCM tokens
-        $tokens = $this->fcmTokenService->getUserTokens($data['user_id']);
+        // Send FCM notification with standardized type
+        $this->sendFCMNotification($notification);
 
-        // Send FCM notification
+        return $notification;
+    }
+
+    private function isValidNotificationType($type) 
+    {
+        $validTypes = array_merge(
+            array_values(self::NOTIFICATION_TYPES['appointment']),
+            array_values(self::NOTIFICATION_TYPES['order']),
+            [
+                self::NOTIFICATION_TYPES['chat'],
+                self::NOTIFICATION_TYPES['review'],
+                self::NOTIFICATION_TYPES['promotion'],
+                self::NOTIFICATION_TYPES['payment'],
+                self::NOTIFICATION_TYPES['system']
+            ]
+        );
+        
+        return in_array($type, $validTypes);
+    }
+
+    private function sendFCMNotification($notification)
+    {
+        // Get user's FCM tokens
+        $tokens = $this->fcmTokenService->getUserTokens($notification->user_id);
+
+        // Send to each token
         foreach ($tokens as $token) {
             $this->firebaseService->sendMessage(
                 $token,
-                $data['title'],
-                $data['content'],
+                $notification->title,
+                $notification->content,
                 [
                     'notification_id' => $notification->id,
-                    'type' => $data['type']
+                    'type' => $notification->type,
+                    'data' => $notification->data
                 ]
             );
         }
-
-        return $notification;
     }
 
     // Send notification to all admins

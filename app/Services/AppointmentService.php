@@ -14,6 +14,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\UserServicePackage;
 use App\Models\ServiceUsageHistory;
+use App\Services\NotificationService;
 
 class AppointmentService
 {
@@ -173,11 +174,11 @@ class AppointmentService
                 // Gửi thông báo cho khách hàng
                 $this->notificationService->createNotification([
                     'user_id' => $appointment->user_id,
-                    'title' => 'Đặt lịch thành công',
-                    'content' => "Bạn đã đặt lịch {$appointment->service->name} vào ngày {$appointment->appointment_date}",
-                    'type' => 'appointment',
+                    'title' => 'Đặt lịch hẹn thành công',
+                    'content' => "Lịch hẹn của bạn đã được đặt vào {$appointment->appointment_date}",
+                    'type' => NotificationService::NOTIFICATION_TYPES['appointment']['new'],
                     'data' => [
-                        'appointment_id' => $appointment->id,
+                        'appointment_id' => $appointment->id
                     ]
                 ]);
 
@@ -245,17 +246,15 @@ class AppointmentService
 
             // Gửi thông báo khi trạng thái thay đổi
             if (isset($data['status']) && $data['status'] !== $oldStatus) {
-                $statusMessage = $this->getStatusMessage($data['status']);
-
                 // Thông báo cho khách hàng
                 $this->notificationService->createNotification([
                     'user_id' => $appointment->user_id,
                     'title' => 'Cập nhật lịch hẹn',
-                    'content' => $statusMessage,
-                    'type' => 'appointment',
+                    'content' => "Lịch hẹn #{$appointment->id} " . $this->getStatusMessage($data['status']),
+                    'type' => NotificationService::NOTIFICATION_TYPES['appointment']['status'],
                     'data' => [
                         'appointment_id' => $appointment->id,
-                        'status' => $data['status'],
+                        'status' => $data['status']
                     ]
                 ]);
 
@@ -433,9 +432,10 @@ class AppointmentService
                 'content' => $isAutoCancel ?
                     'Lịch hẹn của bạn đã bị hủy tự động do quá thời gian' :
                     'Lịch hẹn của bạn đã bị hủy',
-                'type' => 'appointment',
+                'type' => NotificationService::NOTIFICATION_TYPES['appointment']['cancelled'],
                 'data' => [
                     'appointment_id' => $appointment->id,
+                    'cancelled_by' => Auth::id(),
                     'is_auto_cancel' => $isAutoCancel
                 ]
             ]);

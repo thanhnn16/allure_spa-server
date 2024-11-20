@@ -108,7 +108,10 @@ class OrderService
                     'user_id' => $order->user_id,
                     'title' => 'Đặt hàng thành công',
                     'content' => "Đơn hàng #{$order->id} đã được tạo thành công",
-                    'type' => 'order'
+                    'type' => NotificationService::NOTIFICATION_TYPES['order']['new'],
+                    'data' => [
+                        'order_id' => $order->id
+                    ]
                 ]);
             } catch (\Exception $e) {
                 // Log lỗi nhưng không throw exception
@@ -275,7 +278,11 @@ class OrderService
                         'user_id' => $order->user_id,
                         'title' => $notificationData['title'],
                         'content' => $notificationData['content'],
-                        'type' => 'order'
+                        'type' => NotificationService::NOTIFICATION_TYPES['order']['status'],
+                        'data' => [
+                            'order_id' => $order->id,
+                            'status' => $status
+                        ]
                     ]);
                 }
 
@@ -389,7 +396,10 @@ class OrderService
                     'user_id' => $order->user_id,
                     'title' => 'Đơn hàng hoàn thành',
                     'content' => "Đơn hàng #{$order->id} của bạn đã hoàn thành",
-                    'type' => 'order'
+                    'type' => NotificationService::NOTIFICATION_TYPES['order']['completed'],
+                    'data' => [
+                        'order_id' => $order->id
+                    ]
                 ]);
             } catch (\Exception $e) {
                 Log::error('Failed to send completion notification:', [

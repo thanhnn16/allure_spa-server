@@ -74,9 +74,14 @@ class ServiceUsageHistoryService
         if ($package->remaining_sessions === 2) {
             $this->notificationService->createNotification([
                 'user_id' => $package->user_id,
-                'title' => 'Gói dịch vụ của bạn còn 2 buổi cuối',
-                'content' => 'Bạn cần đến thực hiện dịch vụ sớm để không bị mất gói dịch vụ',
-                'type' => 'appointment'
+                'title' => 'Gói dịch vụ sắp hết hạn',
+                'content' => "Gói dịch vụ {$package->service->name} của bạn còn 2 buổi cuối",
+                'type' => NotificationService::NOTIFICATION_TYPES['service']['low_sessions'],
+                'data' => [
+                    'package_id' => $package->id,
+                    'service_id' => $package->service_id,
+                    'remaining_sessions' => $package->remaining_sessions
+                ]
             ]);
         }
     }
