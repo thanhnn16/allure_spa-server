@@ -21,6 +21,7 @@ import {
     mdiViewCarousel,
     mdiPackageVariant,
     mdiStar,
+    mdiTicketPercent,
 } from '@mdi/js'
 
 export default [
@@ -126,6 +127,11 @@ export default [
         label: 'Quản lý đánh giá',
         icon: mdiStar,
         route: 'ratings.index'
+    },
+    {
+        label: 'Quản lý Voucher',
+        icon: mdiTicketPercent,
+        route: 'vouchers.index'
     },
     {
         label: 'Tạo báo cáo',

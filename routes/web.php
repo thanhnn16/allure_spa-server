@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function () {
 
     // Voucher routes
     Route::resource('vouchers', VoucherController::class);
+    Route::patch('vouchers/{voucher}/toggle-status', [VoucherController::class, 'toggleStatus'])->name('vouchers.toggle-status');
     Route::prefix('vouchers')->group(function () {
         Route::post('/assign-to-user', [VoucherController::class, 'assignToUser']);
         Route::get('/user/{userId}/vouchers', [VoucherController::class, 'getUserVouchers']);
