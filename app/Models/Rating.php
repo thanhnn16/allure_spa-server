@@ -39,7 +39,7 @@ class Rating extends Model
         'status'
     ];
 
-    protected $with = ['media'];
+    protected $with = ['media', 'user'];
     protected $appends = ['media_urls'];
 
     public function user()
@@ -84,7 +84,8 @@ class Rating extends Model
             return [
                 'id' => $media->id,
                 'type' => $media->type,
-                'url' => $media->full_url
+                'url' => $media->full_url,
+                'position' => $media->position
             ];
         });
     }

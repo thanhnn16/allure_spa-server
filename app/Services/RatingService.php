@@ -14,12 +14,14 @@ class RatingService
 {
     public function getAllRatings(array $params = [])
     {
-        return $this->getRatingsQuery($params)->with([
-            'user',
-            'media',
-            'item',
-            'orderItem'
-        ])->paginate($params['per_page'] ?? 15);
+        return $this->getRatingsQuery($params)
+            ->with([
+                'user',
+                'item',
+                'orderItem',
+                'media'
+            ])
+            ->paginate($params['per_page'] ?? 15);
     }
 
     public function getRatingsByProduct($productId, array $params = [])
@@ -27,6 +29,7 @@ class RatingService
         return $this->getRatingsQuery($params)
             ->where('rating_type', 'product')
             ->where('item_id', $productId)
+            ->with(['user', 'media'])
             ->paginate($params['per_page'] ?? 15);
     }
 
@@ -35,6 +38,7 @@ class RatingService
         return $this->getRatingsQuery($params)
             ->where('rating_type', 'service')
             ->where('item_id', $serviceId)
+            ->with(['user', 'media'])
             ->paginate($params['per_page'] ?? 15);
     }
 
@@ -104,7 +108,7 @@ class RatingService
     {
         try {
             DB::beginTransaction();
-            
+
             // Tạo rating
             $rating = Rating::create([
                 'user_id' => Auth::id(),
@@ -124,7 +128,6 @@ class RatingService
 
             DB::commit();
             return $rating->load('media');
-            
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -135,7 +138,7 @@ class RatingService
     {
         try {
             DB::beginTransaction();
-            
+
             $rating->update([
                 'stars' => $data['stars'] ?? $rating->stars,
                 'comment' => $data['comment'] ?? $rating->comment,
@@ -147,7 +150,7 @@ class RatingService
                 foreach ($rating->media as $media) {
                     app(MediaService::class)->delete($media);
                 }
-                
+
                 // Upload ảnh mới
                 $mediaService = app(MediaService::class);
                 $mediaService->createMultiple($rating, $data['images'], 'image');
@@ -155,7 +158,6 @@ class RatingService
 
             DB::commit();
             return $rating->fresh(['media']);
-            
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -174,5 +176,15 @@ class RatingService
         return $rating->update([
             'status' => 'rejected'
         ]);
+    }
+
+    public function getApprovedRatings($type, $itemId, array $params = [])
+    {
+        return $this->getRatingsQuery($params)
+            ->where('rating_type', $type)
+            ->where('item_id', $itemId)
+            ->where('status', 'approved')
+            ->with(['user', 'media'])
+            ->paginate($params['per_page'] ?? 15);
     }
 }
