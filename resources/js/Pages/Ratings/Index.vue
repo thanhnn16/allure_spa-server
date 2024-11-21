@@ -7,10 +7,11 @@ import CardBox from '@/Components/CardBox.vue'
 import BaseButtons from '@/Components/BaseButtons.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import FormControl from '@/Components/FormControl.vue'
-import { mdiStar, mdiStarOutline, mdiCheck, mdiClose, mdiImage } from '@mdi/js'
+import { mdiStar, mdiStarOutline, mdiCheck, mdiClose, mdiImage, mdiMagnify, mdiClose as mdiCloseCircle } from '@mdi/js'
 import BaseIcon from '@/Components/BaseIcon.vue'
 import axios from 'axios'
 import { useToast } from 'vue-toastification'
+import ImageGalleryModal from '@/Components/ImageGalleryModal.vue'
 
 const ratings = ref([])
 const loading = ref(false)
@@ -18,6 +19,9 @@ const currentPage = ref(1)
 const lastPage = ref(1)
 const filterStatus = ref('')
 const searchQuery = ref('')
+const showGalleryModal = ref(false)
+const selectedImages = ref([])
+const selectedImageIndex = ref(0)
 
 const toast = useToast()
 
@@ -88,6 +92,17 @@ const getStatusText = (status) => {
         rejected: 'Đã từ chối'
     }
     return texts[status] || status
+}
+
+const openGallery = (images, startIndex = 0) => {
+    selectedImages.value = images
+    selectedImageIndex.value = startIndex
+    showGalleryModal.value = true
+}
+
+const getMediaCountText = (mediaCount) => {
+    if (!mediaCount) return ''
+    return `(${mediaCount} ảnh)`
 }
 
 onMounted(() => {
@@ -211,16 +226,26 @@ onMounted(() => {
                                     <div class="truncate">{{ rating.comment }}</div>
                                 </td>
                                 <td class="px-4 py-4">
-                                    <div class="flex gap-2">
-                                        <div v-for="media in rating.media_urls" :key="media.id"
-                                            class="relative group cursor-pointer">
-                                            <img :src="media.url" class="w-12 h-12 object-cover rounded-lg transition-transform duration-200 
-                                                       hover:scale-105 hover:shadow-lg"
-                                                @click="() => window.open(media.url, '_blank')" />
-                                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 
-                                                      rounded-lg transition-all duration-200">
+                                    <div v-if="rating.media_urls?.length" class="flex items-center gap-2">
+                                        <div class="flex -space-x-1">
+                                            <div v-for="(media, index) in rating.media_urls.slice(0, 3)" :key="media.id"
+                                                class="relative group cursor-pointer"
+                                                @click="openGallery(rating.media_urls, index)">
+                                                <img :src="media.url" class="w-12 h-12 object-cover rounded-lg border-2 border-white dark:border-slate-800
+                                                            transition-all duration-200 hover:z-10 hover:scale-110"
+                                                    :style="{ zIndex: index }"
+                                                    :alt="`Ảnh đánh giá ${index + 1}`" />
                                             </div>
                                         </div>
+
+                                        <span v-if="rating.media_urls.length > 3"
+                                            class="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-500"
+                                            @click="openGallery(rating.media_urls, 3)">
+                                            +{{ rating.media_urls.length - 3 }} ảnh khác
+                                        </span>
+                                    </div>
+                                    <div v-else class="text-sm text-gray-400 dark:text-gray-600 italic">
+                                        Không có ảnh
                                     </div>
                                 </td>
                                 <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
@@ -269,6 +294,9 @@ onMounted(() => {
             </CardBox>
         </SectionMain>
     </LayoutAuthenticated>
+
+    <ImageGalleryModal v-if="showGalleryModal" :images="selectedImages" :initial-index="selectedImageIndex"
+        @close="showGalleryModal = false" />
 </template>
 
 <style scoped>
