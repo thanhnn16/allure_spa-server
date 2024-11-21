@@ -166,6 +166,7 @@ class UserServicePackage extends Model
         }
 
         return [
+            'id' => $nextAppointment->id,
             'date' => $nextAppointment->appointment_date->format('d/m/Y'),
             'time' => [
                 'start' => $nextAppointment->timeSlot->start_time,
