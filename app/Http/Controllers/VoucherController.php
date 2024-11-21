@@ -63,7 +63,7 @@ class VoucherController extends BaseController
      */
     public function create()
     {
-        //
+        return $this->respondWithInertia('Vouchers/Form');
     }
 
     /**
@@ -116,7 +116,10 @@ class VoucherController extends BaseController
      */
     public function edit(string $id)
     {
-        //
+        $voucher = Voucher::findOrFail($id);
+        return $this->respondWithInertia('Vouchers/Form', [
+            'voucher' => $voucher
+        ]);
     }
 
     /**
@@ -124,7 +127,40 @@ class VoucherController extends BaseController
      */
     public function update(Request $request, string $id)
     {
-        //
+        try {
+            $voucher = Voucher::findOrFail($id);
+
+            $validated = $request->validate([
+                'code' => 'required|string|unique:vouchers,code,' . $id,
+                'description' => 'nullable|string',
+                'discount_type' => 'required|in:percentage,fixed',
+                'discount_value' => 'required|numeric|min:0',
+                'min_order_value' => 'required|numeric|min:0',
+                'max_discount_amount' => 'required|numeric|min:0',
+                'usage_limit' => 'required_if:is_unlimited,false|integer|min:1',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after:start_date',
+                'is_unlimited' => 'required|boolean',
+                'uses_per_user' => 'required|integer|min:1',
+                'status' => 'required|in:active,inactive'
+            ]);
+
+            $voucher->update($validated);
+
+            if ($request->wantsJson()) {
+                return $this->respondWithJson($voucher);
+            }
+
+            return redirect()->route('vouchers.index')
+                ->with('success', 'Voucher đã được cập nhật thành công');
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return $this->respondWithError($e->getMessage());
+            }
+            return redirect()->back()
+                ->withErrors(['error' => $e->getMessage()])
+                ->withInput();
+        }
     }
 
     /**
@@ -132,7 +168,18 @@ class VoucherController extends BaseController
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $voucher = Voucher::findOrFail($id);
+            $voucher->delete();
+
+            return response()->json([
+                'message' => 'Voucher đã được xóa thành công'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 
     /**

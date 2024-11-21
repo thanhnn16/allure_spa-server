@@ -33,6 +33,19 @@ const toggleVoucherStatus = async (voucher) => {
     }
 }
 
+const deleteVoucher = async (id) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa voucher này?')) {
+        return
+    }
+
+    try {
+        await axios.delete(`/api/vouchers/${id}`)
+        await fetchVouchers() // Refresh list
+    } catch (error) {
+        console.error('Error deleting voucher:', error)
+    }
+}
+
 onMounted(() => {
     fetchVouchers()
 })
