@@ -487,11 +487,29 @@ class UserController extends BaseController
     public function uploadAvatar(Request $request)
     {
         try {
+            // Kiểm tra file upload
+            if (!$request->hasFile('avatar')) {
+                return $this->respondWithJson(null, 'No avatar file uploaded', 400);
+            }
+
             $request->validate([
                 'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ], [
+                'avatar.required' => 'Please select an image file',
+                'avatar.image' => 'The file must be an image',
+                'avatar.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif',
+                'avatar.max' => 'The image must not be greater than 2MB'
             ]);
 
             $user = $request->user();
+            $avatarFile = $request->file('avatar');
+
+            // Log thông tin file để debug
+            Log::info('Avatar upload attempt:', [
+                'original_name' => $avatarFile->getClientOriginalName(),
+                'size' => $avatarFile->getSize(),
+                'mime_type' => $avatarFile->getMimeType()
+            ]);
 
             // Xóa avatar cũ nếu có
             if ($user->media) {
@@ -499,7 +517,7 @@ class UserController extends BaseController
             }
 
             // Upload avatar mới
-            $media = $this->mediaService->create($user, $request->file('avatar'), 'image');
+            $media = $this->mediaService->create($user, $avatarFile, 'image');
 
             // Cập nhật user
             $user->media_id = $media->id;
@@ -511,8 +529,17 @@ class UserController extends BaseController
                 'user' => $user,
                 'avatar_url' => $media->full_url
             ], 'Avatar uploaded successfully');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Avatar validation error:', [
+                'errors' => $e->errors()
+            ]);
+            return $this->respondWithJson(null, $e->errors()['avatar'][0], 422);
         } catch (\Exception $e) {
-            Log::error('Upload avatar error: ' . $e->getMessage());
+            Log::error('Upload avatar error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return $this->respondWithJson(
                 null,
                 'Failed to upload avatar: ' . $e->getMessage(),
