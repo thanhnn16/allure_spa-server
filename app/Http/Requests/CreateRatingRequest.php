@@ -29,10 +29,22 @@ class CreateRatingRequest extends FormRequest
     public function rules()
     {
         return [
+            'rating_type' => 'required|in:product,service',
+            'item_id' => 'required|integer',
             'stars' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:1000',
-            'media_ids' => 'nullable|array',
-            'media_ids.*' => 'exists:media,id'
+            'comment' => 'nullable|string',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|mimes:jpeg,png,jpg|max:5120'
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'images.max' => 'Tối đa chỉ được gửi 5 ảnh',
+            'images.*.image' => 'File phải là ảnh',
+            'images.*.mimes' => 'Ảnh phải có định dạng jpeg, png hoặc jpg',
+            'images.*.max' => 'Mỗi ảnh không được vượt quá 5MB'
         ];
     }
 }

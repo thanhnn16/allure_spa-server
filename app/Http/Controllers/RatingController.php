@@ -421,17 +421,63 @@ class RatingController extends BaseController
      *             @OA\Property(property="item_id", type="integer"),
      *             @OA\Property(property="stars", type="integer", minimum=1, maximum=5),
      *             @OA\Property(property="comment", type="string"),
-     *             @OA\Property(property="media_id", type="integer")
+     *             @OA\Property(
+     *                 property="images",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="string",
+     *                     format="binary"
+     *                 ),
+     *                 description="Tối đa 5 ảnh, mỗi ảnh không quá 5MB"
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Rating created successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/Rating")
+     *         description="Đánh giá đã được tạo thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Đánh giá đã được tạo thành công"),
+     *             @OA\Property(property="status_code", type="integer", example=201),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 allOf={
+     *                     @OA\Schema(ref="#/components/schemas/Rating"),
+     *                     @OA\Schema(
+     *                         @OA\Property(
+     *                             property="media",
+     *                             type="array",
+     *                             @OA\Items(ref="#/components/schemas/Media")
+     *                         )
+     *                     )
+     *                 }
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Forbidden - User hasn't purchased the item"
+     *         description="Lỗi xác thực hoặc quyền hạn",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Bạn chỉ có thể đánh giá sản phẩm/dịch vụ đã mua"),
+     *             @OA\Property(property="status_code", type="integer", example=403),
+     *             @OA\Property(property="success", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Dữ liệu không hợp lệ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="images",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="Tối đa chỉ được gửi 5 ảnh")
+     *                 )
+     *             )
+     *         )
      *     )
      * )
      */
@@ -442,11 +488,15 @@ class RatingController extends BaseController
             'item_id' => 'required|integer',
             'stars' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string',
-            'media_id' => 'nullable|integer|exists:media,id'
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|mimes:jpeg,png,jpg|max:5120'
         ]);
 
         try {
-            $rating = $this->ratingService->createRatingFromOrder($validated, Auth::user()->id);
+            $rating = $this->ratingService->createRatingFromOrder(
+                array_merge($validated, ['images' => $request->file('images')]),
+                Auth::user()->id
+            );
             return $this->respondWithJson($rating, 'Đánh giá đã được tạo thành công', 201);
         } catch (\Exception $e) {
             return $this->respondWithJson(null, $e->getMessage(), 403);
@@ -469,21 +519,72 @@ class RatingController extends BaseController
      *         @OA\JsonContent(
      *             @OA\Property(property="stars", type="integer", minimum=1, maximum=5),
      *             @OA\Property(property="comment", type="string"),
-     *             @OA\Property(property="media_id", type="integer")
+     *             @OA\Property(
+     *                 property="images",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="string",
+     *                     format="binary"
+     *                 ),
+     *                 description="Tối đa 5 ảnh, mỗi ảnh không quá 5MB. Nếu gửi ảnh mới, tất cả ảnh cũ sẽ bị xóa"
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Rating updated successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/Rating")
+     *         description="Đánh giá đã được cập nhật thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Đánh giá đã được cập nhật thành công"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 allOf={
+     *                     @OA\Schema(ref="#/components/schemas/Rating"),
+     *                     @OA\Schema(
+     *                         @OA\Property(
+     *                             property="media",
+     *                             type="array",
+     *                             @OA\Items(ref="#/components/schemas/Media")
+     *                         )
+     *                     )
+     *                 }
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Forbidden - Not owner of the rating"
+     *         description="Không có quyền cập nhật",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Bạn không có quyền sửa đánh giá này"),
+     *             @OA\Property(property="status_code", type="integer", example=403),
+     *             @OA\Property(property="success", type="boolean", example=false)
+     *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Rating not found"
+     *         description="Không tìm thấy đánh giá",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Not Found"),
+     *             @OA\Property(property="status_code", type="integer", example=404),
+     *             @OA\Property(property="success", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Dữ liệu không hợp lệ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="images",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="Tối đa chỉ được gửi 5 ảnh")
+     *                 )
+     *             )
+     *         )
      *     )
      * )
      */
@@ -491,12 +592,22 @@ class RatingController extends BaseController
     {
         $rating = Rating::findOrFail($id);
 
-        // Check if the user is the owner of the rating or an admin
         if ($rating->user_id !== Auth::user()->id && Auth::user()->role !== 'admin') {
             return $this->respondWithJson(null, 'Bạn không có quyền sửa đánh giá này', 403);
         }
 
-        $rating = $this->ratingService->updateRating($rating, $request->all());
+        $validated = $request->validate([
+            'stars' => 'sometimes|required|integer|min:1|max:5',
+            'comment' => 'nullable|string',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|mimes:jpeg,png,jpg|max:5120'
+        ]);
+
+        $rating = $this->ratingService->updateRating($rating, array_merge(
+            $validated,
+            ['images' => $request->file('images')]
+        ));
+
         return $this->respondWithJson($rating, 'Đánh giá đã được cập nhật thành công');
     }
 

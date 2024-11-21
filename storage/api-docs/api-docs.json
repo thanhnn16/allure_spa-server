@@ -4133,8 +4133,13 @@
                                     "comment": {
                                         "type": "string"
                                     },
-                                    "media_id": {
-                                        "type": "integer"
+                                    "images": {
+                                        "description": "Tối đa 5 ảnh, mỗi ảnh không quá 5MB",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -4144,17 +4149,98 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Rating created successfully",
+                        "description": "Đánh giá đã được tạo thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Rating"
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đánh giá đã được tạo thành công"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 201
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Rating"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "media": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/Media"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     },
                     "403": {
-                        "description": "Forbidden - User hasn't purchased the item"
+                        "description": "Lỗi xác thực hoặc quyền hạn",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bạn chỉ có thể đánh giá sản phẩm/dịch vụ đã mua"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "images": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Tối đa chỉ được gửi 5 ảnh"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -4190,8 +4276,13 @@
                                     "comment": {
                                         "type": "string"
                                     },
-                                    "media_id": {
-                                        "type": "integer"
+                                    "images": {
+                                        "description": "Tối đa 5 ảnh, mỗi ảnh không quá 5MB. Nếu gửi ảnh mới, tất cả ảnh cũ sẽ bị xóa",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -4201,20 +4292,122 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Rating updated successfully",
+                        "description": "Đánh giá đã được cập nhật thành công",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Rating"
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đánh giá đã được cập nhật thành công"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Rating"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "media": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/Media"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     },
                     "403": {
-                        "description": "Forbidden - Not owner of the rating"
+                        "description": "Không có quyền cập nhật",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bạn không có quyền sửa đánh giá này"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Rating not found"
+                        "description": "Không tìm thấy đánh giá",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Not Found"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 404
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "images": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Tối đa chỉ được gửi 5 ảnh"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }

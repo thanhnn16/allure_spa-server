@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class RatingService
 {
@@ -101,37 +102,64 @@ class RatingService
 
     public function createRatingFromOrderItem(array $data, OrderItem $orderItem)
     {
-        $rating = Rating::create([
-            'user_id' => Auth::id(),
-            'order_item_id' => $orderItem->id,
-            'rating_type' => $orderItem->item_type,
-            'item_id' => $orderItem->item_id,
-            'stars' => $data['stars'],
-            'comment' => $data['comment'] ?? null,
-            'status' => 'pending'
-        ]);
+        try {
+            DB::beginTransaction();
+            
+            // Tạo rating
+            $rating = Rating::create([
+                'user_id' => Auth::id(),
+                'order_item_id' => $orderItem->id,
+                'rating_type' => $orderItem->item_type,
+                'item_id' => $orderItem->item_id,
+                'stars' => $data['stars'],
+                'comment' => $data['comment'] ?? null,
+                'status' => 'pending'
+            ]);
 
-        // Xử lý media nếu có
-        if (!empty($data['media_ids'])) {
-            $rating->attachMedia($data['media_ids']);
+            // Upload và lưu ảnh nếu có
+            if (!empty($data['images'])) {
+                $mediaService = app(MediaService::class);
+                $mediaService->createMultiple($rating, $data['images'], 'image');
+            }
+
+            DB::commit();
+            return $rating->load('media');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        return $rating->load('media'); // Return với media đã attach
     }
 
     public function updateRating(Rating $rating, array $data)
     {
-        $rating->update($data);
+        try {
+            DB::beginTransaction();
+            
+            $rating->update([
+                'stars' => $data['stars'] ?? $rating->stars,
+                'comment' => $data['comment'] ?? $rating->comment,
+            ]);
 
-        // Xử lý media mới nếu có
-        if (!empty($data['media_id'])) {
-            // Xóa media cũ
-            $rating->media()->delete();
-            // Attach media mới
-            $rating->attachMedia($data['media_id']);
+            // Xử lý ảnh mới nếu có
+            if (!empty($data['images'])) {
+                // Xóa ảnh cũ
+                foreach ($rating->media as $media) {
+                    app(MediaService::class)->delete($media);
+                }
+                
+                // Upload ảnh mới
+                $mediaService = app(MediaService::class);
+                $mediaService->createMultiple($rating, $data['images'], 'image');
+            }
+
+            DB::commit();
+            return $rating->fresh(['media']);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        return $rating->fresh(['media']);
     }
 
     public function approveRating(Rating $rating)
