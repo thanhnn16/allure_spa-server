@@ -33,8 +33,27 @@ class ProductService
         $query = Product::with([
             'category',
             'media',
-            'translations'
-        ]);
+            'translations',
+            'ratings' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'product');
+            }
+        ])
+            ->withCount(['ratings as total_ratings' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'product');
+            }])
+            ->withAvg(['ratings as average_rating' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'product');
+            }], 'stars');
+
+        if (Auth::check()) {
+            $userId = Auth::id();
+            $query->each(function ($product) use ($userId) {
+                $product->current_user_id = $userId;
+            });
+        }
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
