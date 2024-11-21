@@ -23,7 +23,7 @@ class VoucherController extends BaseController
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         try {
             $vouchers = Voucher::where('status', 'active')
@@ -40,19 +40,26 @@ class VoucherController extends BaseController
 
             Log::info('Fetched vouchers:', ['count' => $vouchers->count(), 'vouchers' => $vouchers]);
 
-            return response()->json([
-                'success' => true,
-                'data' => $vouchers,
-                'message' => ''
+            if ($request->wantsJson()) {
+                return $this->respondWithJson($vouchers);
+            }
+
+            return $this->respondWithInertia('Vouchers/Index', [
+                'vouchers' => $vouchers,
+                'can' => [
+                    'create' => $request->user()->can('create', Voucher::class),
+                    'edit' => $request->user()->can('update', Voucher::class),
+                    'delete' => $request->user()->can('delete', Voucher::class),
+                ]
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching vouchers:', ['error' => $e->getMessage()]);
 
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'data' => null
-            ], 400);
+            if ($request->wantsJson()) {
+                return $this->respondWithError($e->getMessage());
+            }
+
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
