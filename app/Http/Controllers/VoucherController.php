@@ -46,11 +46,6 @@ class VoucherController extends BaseController
 
             return $this->respondWithInertia('Vouchers/Index', [
                 'vouchers' => $vouchers,
-                'can' => [
-                    'create' => $request->user()->can('create', Voucher::class),
-                    'edit' => $request->user()->can('update', Voucher::class),
-                    'delete' => $request->user()->can('delete', Voucher::class),
-                ]
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching vouchers:', ['error' => $e->getMessage()]);
