@@ -684,12 +684,12 @@ export default {
         });
 
         const getItemName = (item) => {
-            if (item.item_type === 'service') {
-                return item.service?.service_name || 'Dịch vụ không xác định';
-            } else if (item.item_type === 'product') {
-                return item.product?.name || 'Sản phẩm không xác định';
-            }
-            return 'Không xác định';
+            // if (item.item_type === 'service') {
+            //     return item.service?.service_name || 'Dịch vụ không xác định';
+            // } else if (item.item_type === 'product') {
+            //     return item.product?.name || 'Sản phẩm không xác định';
+            // }
+            return item.item_name ?? 'Không xác định';
         }
 
         const formatServiceType = (type) => {

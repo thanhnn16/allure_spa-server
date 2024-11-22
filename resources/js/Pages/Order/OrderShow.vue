@@ -710,7 +710,7 @@ export default {
 
     // Thêm các hàm helper cho item
     const getItemName = (item) => {
-      return item.product?.name || item.service?.service_name || 'N/A';
+      return item.item_name;
     }
 
     const getItemImage = (item) => {
