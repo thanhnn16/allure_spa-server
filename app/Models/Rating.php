@@ -95,7 +95,7 @@ class Rating extends Model
         $position = 0;
         foreach ($mediaIds as $mediaId) {
             Media::where('id', $mediaId)->update([
-                'mediable_type' => 'rating',
+                'mediable_type' => Rating::class,
                 'mediable_id' => $this->id,
                 'position' => $position++
             ]);

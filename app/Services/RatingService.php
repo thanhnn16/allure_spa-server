@@ -65,43 +65,63 @@ class RatingService
 
     public function createRatingFromOrder(array $data, $userId)
     {
-        // Tìm order item phù hợp
-        $order = Order::whereHas('orderItems', function ($query) use ($data) {
-            $query->where('item_type', $data['rating_type'])
-                ->where('item_id', $data['item_id']);
-        })
-            ->where('user_id', $userId)
-            ->where('status', 'completed')
-            ->first();
+        try {
+            DB::beginTransaction();
+            
+            // Tìm order item phù hợp
+            $order = Order::whereHas('orderItems', function ($query) use ($data) {
+                $query->where('item_type', $data['rating_type'])
+                    ->where('item_id', $data['item_id']);
+            })
+                ->where('user_id', $userId)
+                ->where('status', 'completed')
+                ->first();
 
-        if (!$order) {
-            throw new \Exception('Bạn chỉ có thể đánh giá sản phẩm/dịch vụ đã mua', 403);
+            if (!$order) {
+                throw new \Exception('Bạn chỉ có thể đánh giá sản phẩm/dịch vụ đã mua', 403);
+            }
+
+            // Lấy order item tương ứng
+            $orderItem = $order->orderItems()
+                ->where('item_type', $data['rating_type'])
+                ->where('item_id', $data['item_id'])
+                ->first();
+
+            // Kiểm tra đánh giá đã tồn tại
+            $existingRating = Rating::where([
+                'user_id' => $userId,
+                'order_item_id' => $orderItem->id,
+                'rating_type' => $data['rating_type'],
+                'item_id' => $data['item_id']
+            ])->first();
+
+            if ($existingRating) {
+                throw new \Exception('Bạn đã đánh giá sản phẩm/dịch vụ này rồi', 403);
+            }
+
+            // Tạo rating mới
+            $rating = Rating::create([
+                'user_id' => $userId,
+                'order_item_id' => $orderItem->id,
+                'rating_type' => $data['rating_type'],
+                'item_id' => $data['item_id'],
+                'stars' => $data['stars'],
+                'comment' => $data['comment'] ?? null,
+                'status' => 'pending'
+            ]);
+
+            // Upload và lưu ảnh nếu có
+            if (!empty($data['images'])) {
+                $mediaService = app(MediaService::class);
+                $mediaService->createMultiple($rating, $data['images'], 'image');
+            }
+
+            DB::commit();
+            return $rating->load('media');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        // Lấy order item tương ứng
-        $orderItem = $order->orderItems()
-            ->where('item_type', $data['rating_type'])
-            ->where('item_id', $data['item_id'])
-            ->first();
-
-        // Kiểm tra đánh giá đã tồn tại
-        $existingRating = Rating::where([
-            'user_id' => $userId,
-            'order_item_id' => $orderItem->id,
-            'rating_type' => $data['rating_type'],
-            'item_id' => $data['item_id']
-        ])->first();
-
-        if ($existingRating) {
-            throw new \Exception('Bạn đã đánh giá sản phẩm/dịch vụ này rồi', 403);
-        }
-
-        // Tạo rating mới với order_item_id
-        return Rating::create(array_merge($data, [
-            'user_id' => $userId,
-            'order_item_id' => $orderItem->id,
-            'status' => 'pending'
-        ]));
     }
 
     public function createRatingFromOrderItem(array $data, OrderItem $orderItem)

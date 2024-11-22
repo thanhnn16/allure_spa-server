@@ -495,9 +495,10 @@ class RatingController extends BaseController
         try {
             $rating = $this->ratingService->createRatingFromOrder(
                 array_merge($validated, ['images' => $request->file('images')]),
-                Auth::user()->id
+                Auth::id()
             );
-            return $this->respondWithJson($rating, 'Đánh giá đã được tạo thành công', 201);
+            
+            return $this->respondWithJson($rating->load(['media']), 'Đánh giá đã được tạo thành công', 201);
         } catch (\Exception $e) {
             return $this->respondWithJson(null, $e->getMessage(), 403);
         }
