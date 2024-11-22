@@ -35,9 +35,12 @@ const fetchRatings = async () => {
                 search: searchQuery.value
             }
         })
+        console.log('Rating response:', response.data)
+        console.log('First rating media:', response.data.data.data[0]?.media_urls)
         ratings.value = response.data.data.data
         lastPage.value = response.data.data.last_page
     } catch (error) {
+        console.error('Error fetching ratings:', error)
         showNotification('Không thể tải danh sách đánh giá', 'danger')
     }
     loading.value = false
@@ -104,6 +107,11 @@ const openGallery = (images, startIndex = 0) => {
 const getMediaCountText = (mediaCount) => {
     if (!mediaCount) return ''
     return `(${mediaCount} ảnh)`
+}
+
+// Thêm hàm xử lý lỗi ảnh
+const handleImageError = (event) => {
+    event.target.src = '/path/to/fallback/image.jpg' // Thay thế bằng ảnh mặc định
 }
 
 onMounted(() => {
@@ -234,7 +242,8 @@ onMounted(() => {
                                                 @click="openGallery(rating.media_urls, index)">
                                                 <img :src="media.url" class="w-12 h-12 object-cover rounded-lg border-2 border-white dark:border-slate-800
                                                             transition-all duration-200 hover:z-10 hover:scale-110"
-                                                    :style="{ zIndex: index }" :alt="`Ảnh đánh giá ${index + 1}`" />
+                                                    :style="{ zIndex: index }" :alt="`Ảnh đánh giá ${index + 1}`"
+                                                    @error="handleImageError" />
                                             </div>
                                         </div>
 

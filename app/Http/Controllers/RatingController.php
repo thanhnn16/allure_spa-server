@@ -137,14 +137,14 @@ class RatingController extends BaseController
      */
     public function index(Request $request)
     {
-        $ratings = $this->ratingService->getAllRatings($request->all());
-        Log::info('ratings', [$ratings]);
-        if ($request->wantsJson()) {
-            return $this->respondWithJson($ratings, 'Danh sách đánh giá');
-        }
-        return Inertia::render('Ratings/Index', [
-            'ratings' => $ratings
+        $params = $request->all();
+        $ratings = $this->ratingService->getAllRatings($params);
+        
+        Log::info('Ratings response:', [
+            'data' => $ratings
         ]);
+        
+        return $this->respondWithJson($ratings, 'Danh sách đánh giá');
     }
 
     /**
@@ -655,7 +655,7 @@ class RatingController extends BaseController
     /**
      * @OA\Patch(
      *     path="/api/ratings/{id}/status",
-     *     summary="Cập nhật trạng thái đánh giá",
+     *     summary="Cập nht trạng thái đánh giá",
      *     tags={"Ratings"},
      *     @OA\Parameter(
      *         name="id",

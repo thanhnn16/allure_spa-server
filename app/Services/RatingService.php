@@ -60,6 +60,14 @@ class RatingService
         } else {
             $query->latest();
         }
+
+        if (!empty($params['search'])) {
+            $query->whereHas('user', function ($q) use ($params) {
+                $q->where('name', 'like', '%' . $params['search'] . '%')
+                    ->orWhere('email', 'like', '%' . $params['search'] . '%');
+            });
+        }
+
         return $query;
     }
 
