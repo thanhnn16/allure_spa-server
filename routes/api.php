@@ -232,7 +232,7 @@ Route::middleware('throttle:api')->group(function () {
             Route::get('/', [VoucherController::class, 'index']);
             Route::get('/my-vouchers', [VoucherController::class, 'getMyVouchers']);
             Route::get('/user/{userId}', [VoucherController::class, 'getUserVouchers']);
-            Route::post('/{id}/toggle-status', [VoucherController::class, 'toggleStatus']);
+            Route::patch('/{id}/toggle-status', [VoucherController::class, 'toggleStatus']);
         });
 
         // Service Usage Routes
