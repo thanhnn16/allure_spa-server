@@ -45,14 +45,15 @@ const fetchRatings = async () => {
 
 const updateRatingStatus = async (ratingId, newStatus) => {
     try {
-        await axios.put(`/api/ratings/${ratingId}`, {
+        await axios.patch(`/api/ratings/${ratingId}/status`, {
             status: newStatus
-        })
-        showNotification('Cập nhật trạng thái thành công', 'success')
-        await fetchRatings()
+        });
+        
+        showNotification('Cập nhật trạng thái thành công', 'success');
+        await fetchRatings();
     } catch (error) {
-        console.error('Error updating rating status:', error)
-        showNotification('Không thể cập nhật trạng thái', 'danger')
+        console.error('Error updating rating status:', error);
+        showNotification('Không thể cập nhật trạng thái', 'danger');
     }
 }
 
@@ -233,8 +234,7 @@ onMounted(() => {
                                                 @click="openGallery(rating.media_urls, index)">
                                                 <img :src="media.url" class="w-12 h-12 object-cover rounded-lg border-2 border-white dark:border-slate-800
                                                             transition-all duration-200 hover:z-10 hover:scale-110"
-                                                    :style="{ zIndex: index }"
-                                                    :alt="`Ảnh đánh giá ${index + 1}`" />
+                                                    :style="{ zIndex: index }" :alt="`Ảnh đánh giá ${index + 1}`" />
                                             </div>
                                         </div>
 

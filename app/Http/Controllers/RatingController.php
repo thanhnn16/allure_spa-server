@@ -650,4 +650,97 @@ class RatingController extends BaseController
         $this->ratingService->rejectRating($rating);
         return $this->respondWithJson($rating, 'Đánh giá đã bị từ chối');
     }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/ratings/{id}/status",
+     *     summary="Cập nhật trạng thái đánh giá",
+     *     tags={"Ratings"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", enum={"approved", "rejected"}, example="approved")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cập nhật trạng thái thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Cập nhật trạng thái thành công"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 allOf={
+     *                     @OA\Schema(ref="#/components/schemas/Rating"),
+     *                     @OA\Schema(
+     *                         @OA\Property(
+     *                             property="media",
+     *                             type="array",
+     *                             @OA\Items(ref="#/components/schemas/Media")
+     *                         )
+     *                     )
+     *                 }
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Không có quyền cập nhật",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Bạn không có quyền cập nhật trạng thái đánh giá"),
+     *             @OA\Property(property="status_code", type="integer", example=403),
+     *             @OA\Property(property="success", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Không tìm thấy đánh giá",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Not Found"),
+     *             @OA\Property(property="status_code", type="integer", example=404),
+     *             @OA\Property(property="success", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Lỗi server",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Internal Server Error"),
+     *             @OA\Property(property="status_code", type="integer", example=500),
+     *             @OA\Property(property="success", type="boolean", example=false)
+     *         )
+     *     )
+     * )
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:approved,rejected'
+        ]);
+
+        $rating = Rating::findOrFail($id);
+
+        if (Auth::user()->role !== 'admin') {
+            return $this->respondWithJson(null, 'Bạn không có quyền cập nhật trạng thái đánh giá', 403);
+        }
+
+        try {
+            if ($request->status === 'approved') {
+                $this->ratingService->approveRating($rating);
+            } else {
+                $this->ratingService->rejectRating($rating);
+            }
+            
+            return $this->respondWithJson($rating->fresh(), 'Cập nhật trạng thái thành công');
+        } catch (\Exception $e) {
+            return $this->respondWithJson(null, $e->getMessage(), 500);
+        }
+    }
 }

@@ -122,6 +122,8 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/ratings/from-order', [RatingController::class, 'storeFromOrder']);
         Route::put('/ratings/{id}', [RatingController::class, 'update']);
 
+        Route::patch('/ratings/{id}/status', [RatingController::class, 'updateStatus']);
+
         // Invoice routes
         Route::get('/invoices', [InvoiceController::class, 'index']);
         Route::post('/invoices', [InvoiceController::class, 'store']);
