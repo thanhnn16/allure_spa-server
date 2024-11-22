@@ -139,12 +139,18 @@ class RatingController extends BaseController
     {
         $params = $request->all();
         $ratings = $this->ratingService->getAllRatings($params);
-        
+
         Log::info('Ratings response:', [
             'data' => $ratings
         ]);
-        
-        return $this->respondWithJson($ratings, 'Danh sách đánh giá');
+
+        if ($request->wantsJson()) {
+            return $this->respondWithJson($ratings, 'Danh sách đánh giá');
+        }
+
+        return Inertia::render('Ratings/Index', [
+            'ratings' => $ratings
+        ]);
     }
 
     /**
@@ -497,7 +503,7 @@ class RatingController extends BaseController
                 array_merge($validated, ['images' => $request->file('images')]),
                 Auth::id()
             );
-            
+
             return $this->respondWithJson($rating->load(['media']), 'Đánh giá đã được tạo thành công', 201);
         } catch (\Exception $e) {
             return $this->respondWithJson(null, $e->getMessage(), 403);
@@ -738,7 +744,7 @@ class RatingController extends BaseController
             } else {
                 $this->ratingService->rejectRating($rating);
             }
-            
+
             return $this->respondWithJson($rating->fresh(), 'Cập nhật trạng thái thành công');
         } catch (\Exception $e) {
             return $this->respondWithJson(null, $e->getMessage(), 500);
