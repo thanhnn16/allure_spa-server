@@ -98,25 +98,20 @@ class OrderItem extends Model
     // Sửa lại accessor để đảm bảo item_type luôn đúng
     protected function getItemTypeAttribute()
     {
+        // Lấy giá trị item_type từ database
+        $itemType = $this->attributes['item_type'] ?? null;
+
         // Nếu có service relationship được load và có service
-        if ($this->relationLoaded('service') && $this->service !== null) {
+        if ($this->relationLoaded('service') && $this->service !== null && $itemType === 'service') {
             return 'service';
         }
         
         // Nếu có product relationship được load và có product
-        if ($this->relationLoaded('product') && $this->product !== null) {
+        if ($this->relationLoaded('product') && $this->product !== null && $itemType === 'product') {
             return 'product';
         }
         
-        // Nếu không có relationship nào được load, kiểm tra theo item_type từ database
-        if ($this->attributes['item_type'] === 'service') {
-            return 'service';
-        }
-        
-        if ($this->attributes['item_type'] === 'product') {
-            return 'product';
-        }
-        
-        return null;
+        // Trả về giá trị từ database
+        return $itemType;
     }
 }
