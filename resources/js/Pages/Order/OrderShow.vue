@@ -391,7 +391,7 @@ export default {
     }
 
     const canUpdateStatus = computed(() => {
-      return ['pending', 'confirmed'].includes(props.order.status)
+      return ['pending', 'confirmed', 'shipping'].includes(props.order.status)
     })
 
     const canProcessPayment = computed(() => {
