@@ -47,15 +47,15 @@ class OrderItem extends Model
 
     public function getItemNameAttribute()
     {
-        if ($this->getItemTypeAttribute() === 'product' && $this->product) {
-            return $this->product->name;
-        }
-
-        if ($this->getItemTypeAttribute() === 'service' && $this->service) {
+        if ($this->item_type === 'service' && $this->service) {
             return $this->service->service_name;
         }
-
-        return null;
+        
+        if ($this->item_type === 'product' && $this->product) {
+            return $this->product->name;
+        }
+        
+        return $this->attributes['item_name'] ?? null;
     }
 
     public function getIsRatedAttribute()
@@ -73,15 +73,13 @@ class OrderItem extends Model
     // Quan hệ với Service
     public function service()
     {
-        return $this->belongsTo(Service::class, 'item_id')
-            ->where('item_type', 'service');
+        return $this->belongsTo(Service::class, 'item_id')->withTrashed();
     }
 
     // Quan hệ với Product
     public function product()
     {
-        return $this->belongsTo(Product::class, 'item_id')
-            ->where('item_type', 'product');
+        return $this->belongsTo(Product::class, 'item_id')->withTrashed();
     }
 
     // Quan hệ với Rating
@@ -98,19 +96,27 @@ class OrderItem extends Model
     }
 
     // Sửa lại accessor để đảm bảo item_type luôn đúng
-    public function getItemTypeAttribute()
+    protected function getItemTypeAttribute()
     {
-        // Nếu có service relationship được load
+        // Nếu có service relationship được load và có service
         if ($this->relationLoaded('service') && $this->service !== null) {
             return 'service';
         }
-
-        // Nếu có product relationship được load
+        
+        // Nếu có product relationship được load và có product
         if ($this->relationLoaded('product') && $this->product !== null) {
             return 'product';
         }
-
-        // Nếu không có relationship nào được load, trả về giá trị từ database
-        return $this->attributes['item_type'];
+        
+        // Nếu không có relationship nào được load, kiểm tra theo item_type từ database
+        if ($this->attributes['item_type'] === 'service') {
+            return 'service';
+        }
+        
+        if ($this->attributes['item_type'] === 'product') {
+            return 'product';
+        }
+        
+        return null;
     }
 }
