@@ -47,11 +47,14 @@ class OrderItem extends Model
 
     public function getItemNameAttribute()
     {
-        if ($this->product) {
+        if ($this->getItemTypeAttribute() === 'product' && $this->product) {
             return $this->product->name;
-        } elseif ($this->service) {
+        }
+
+        if ($this->getItemTypeAttribute() === 'service' && $this->service) {
             return $this->service->service_name;
         }
+
         return null;
     }
 
@@ -70,13 +73,15 @@ class OrderItem extends Model
     // Quan hệ với Service
     public function service()
     {
-        return $this->belongsTo(Service::class, 'item_id');
+        return $this->belongsTo(Service::class, 'item_id')
+            ->where('item_type', 'service');
     }
 
     // Quan hệ với Product
     public function product()
     {
-        return $this->belongsTo(Product::class, 'item_id');
+        return $this->belongsTo(Product::class, 'item_id')
+            ->where('item_type', 'product');
     }
 
     // Quan hệ với Rating
@@ -92,14 +97,20 @@ class OrderItem extends Model
         return $this->rating()->exists();
     }
 
-    // Thêm accessor mới để đảm bảo item_type luôn đúng
-    protected function getItemTypeAttribute()
+    // Sửa lại accessor để đảm bảo item_type luôn đúng
+    public function getItemTypeAttribute()
     {
-        if ($this->product) {
-            return 'product';
-        } elseif ($this->service) {
+        // Nếu có service relationship được load
+        if ($this->relationLoaded('service') && $this->service !== null) {
             return 'service';
         }
-        return $this->attributes['item_type'] ?? null;
+
+        // Nếu có product relationship được load
+        if ($this->relationLoaded('product') && $this->product !== null) {
+            return 'product';
+        }
+
+        // Nếu không có relationship nào được load, trả về giá trị từ database
+        return $this->attributes['item_type'];
     }
 }
