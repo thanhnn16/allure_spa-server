@@ -43,7 +43,7 @@ class OrderItem extends Model
     ];
 
     // Thêm accessor để lấy tên item
-    protected $appends = ['item_name'];
+    protected $appends = ['item_name', 'is_rated'];
 
     public function getItemNameAttribute()
     {
@@ -53,6 +53,13 @@ class OrderItem extends Model
             return $this->service?->service_name;
         }
         return null;
+    }
+
+    public function getIsRatedAttribute()
+    {
+        return $this->rating()
+            ->where('user_id', $this->order->user_id)
+            ->exists();
     }
 
     public function order()
@@ -70,18 +77,14 @@ class OrderItem extends Model
     public function service()
     {
         return $this->belongsTo(Service::class, 'item_id')
-            ->whereHas('orderItems', function ($query) {
-                $query->where('item_type', 'service');
-            });
+            ->where('item_type', 'service');
     }
 
     // Quan hệ với Product khi item_type là 'product'
     public function product()
     {
         return $this->belongsTo(Product::class, 'item_id')
-            ->whereHas('orderItems', function ($query) {
-                $query->where('item_type', 'product');
-            });
+            ->where('item_type', 'product');
     }
 
     // Quan hệ với Rating
