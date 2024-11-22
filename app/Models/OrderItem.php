@@ -67,24 +67,16 @@ class OrderItem extends Model
         return $this->belongsTo(Order::class);
     }
 
-    // Quan hệ polymorphic chung
-    public function item()
-    {
-        return $this->morphTo();
-    }
-
-    // Quan hệ với Service khi item_type là 'service'
+    // Quan hệ với Service
     public function service()
     {
-        return $this->belongsTo(Service::class, 'item_id')
-            ->where('item_type', 'service');
+        return $this->belongsTo(Service::class, 'item_id');
     }
 
-    // Quan hệ với Product khi item_type là 'product'
+    // Quan hệ với Product
     public function product()
     {
-        return $this->belongsTo(Product::class, 'item_id')
-            ->where('item_type', 'product');
+        return $this->belongsTo(Product::class, 'item_id');
     }
 
     // Quan hệ với Rating
