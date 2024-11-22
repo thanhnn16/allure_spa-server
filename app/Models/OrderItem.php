@@ -47,10 +47,10 @@ class OrderItem extends Model
 
     public function getItemNameAttribute()
     {
-        if ($this->item_type === 'product') {
-            return $this->product?->name;
-        } elseif ($this->item_type === 'service') {
-            return $this->service?->service_name;
+        if ($this->product) {
+            return $this->product->name;
+        } elseif ($this->service) {
+            return $this->service->service_name;
         }
         return null;
     }
@@ -90,5 +90,16 @@ class OrderItem extends Model
     public function isRated()
     {
         return $this->rating()->exists();
+    }
+
+    // Thêm accessor mới để đảm bảo item_type luôn đúng
+    protected function getItemTypeAttribute()
+    {
+        if ($this->product) {
+            return 'product';
+        } elseif ($this->service) {
+            return 'service';
+        }
+        return $this->attributes['item_type'] ?? null;
     }
 }
