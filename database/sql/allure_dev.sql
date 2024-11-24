@@ -366,29 +366,6 @@ CREATE INDEX idx_employee_attendances_user_id ON employee_attendances (user_id);
 
 CREATE INDEX idx_employee_attendances_date ON employee_attendances (date);
 
--- 18. Bảng service_usage_histories
-CREATE TABLE service_usage_histories (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_service_package_id INT UNSIGNED,
-    staff_user_id CHAR(36),
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP NOT NULL,
-    result TEXT,
-    notes TEXT,
-    appointment_id INT UNSIGNED,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (user_service_package_id) REFERENCES user_service_packages (id) ON DELETE
-    SET
-        NULL,
-        FOREIGN KEY (staff_user_id) REFERENCES users (id) ON DELETE
-    SET
-        NULL,
-        FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE
-    SET
-        NULL
-);
-
 -- 32. Bảng carts
 CREATE TABLE carts (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -522,6 +499,31 @@ CREATE INDEX idx_appointments_staff_user_id ON appointments (staff_user_id);
 CREATE INDEX idx_appointments_date ON appointments (appointment_date);
 
 CREATE INDEX idx_appointments_status ON appointments (status);
+
+
+-- 18. Bảng service_usage_histories
+CREATE TABLE service_usage_histories (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_service_package_id INT UNSIGNED,
+    staff_user_id CHAR(36),
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
+    result TEXT,
+    notes TEXT,
+    appointment_id INT UNSIGNED,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_service_package_id) REFERENCES user_service_packages (id) ON DELETE
+    SET
+        NULL,
+        FOREIGN KEY (staff_user_id) REFERENCES users (id) ON DELETE
+    SET
+        NULL,
+        FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE
+    SET
+        NULL
+);
+
 
 -- 39. Bảng user_vouchers
 CREATE TABLE user_vouchers (
