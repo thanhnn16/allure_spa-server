@@ -55,22 +55,22 @@ window.addEventListener('keydown', (e) => {
 
 <template>
   <OverlayLayer v-show="value" @overlay-click="cancel">
-    <CardBox v-show="value" class="shadow-lg w-11/12 md:w-3/5 lg:w-2/5 xl:w-4/12 z-50" is-modal>
-      <div class="flex flex-col h-full">
+    <CardBox v-show="value" class="shadow-lg w-11/12 md:w-3/5 lg:w-2/5 xl:w-4/12 z-50 overflow-hidden" is-modal>
+      <div class="flex flex-col h-[90vh]">
         <!-- Header -->
-        <CardBoxComponentTitle :title="title" class="sticky top-0 z-10">
+        <CardBoxComponentTitle :title="title" class="flex-none bg-white dark:bg-dark-surface">
           <BaseButton v-if="hasCancel" :icon="mdiClose" color="whiteDark" small rounded-full @click.prevent="cancel" />
         </CardBoxComponentTitle>
 
         <!-- Content -->
-        <div class="flex-grow overflow-y-auto">
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
           <div class="p-5">
             <slot />
           </div>
         </div>
 
         <!-- Footer -->
-        <footer v-if="hasButton || $slots.footer" class="p-5 border-t dark:border-dark-border">
+        <footer v-if="hasButton || $slots.footer" class="flex-none p-5 border-t dark:border-dark-border bg-white dark:bg-dark-surface">
           <BaseButtons v-if="hasButton" class="justify-end gap-3">
             <BaseButton v-if="hasCancel" label="Hủy" :color="button" outline @click="cancel" />
             <BaseButton :label="buttonLabel" :color="button" @click="confirm" />
@@ -85,31 +85,17 @@ window.addEventListener('keydown', (e) => {
 <style scoped>
 .custom-scrollbar {
   scrollbar-width: none;
-  /* Firefox */
   -ms-overflow-style: none;
-  /* IE and Edge */
 }
 
 .custom-scrollbar::-webkit-scrollbar {
   display: none;
-  /* Chrome, Safari and Opera */
 }
 
-/* Sticky header and footer */
-.sticky {
-  position: sticky;
-}
-
-/* Card styling */
+/* Đảm bảo modal không vượt quá chiều cao màn hình */
 :deep(.card) {
-  border-radius: 0.5rem;
-  overflow: hidden;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
-}
-
-/* Button spacing */
-.gap-3 {
-  gap: 0.75rem;
 }
 </style>

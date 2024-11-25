@@ -8,7 +8,6 @@ import BaseButtons from '@/Components/BaseButtons.vue'
 import BaseButton from '@/Components/BaseButton.vue'
 import FormField from '@/Components/FormField.vue'
 import FormControl from '@/Components/FormControl.vue'
-import BaseDivider from '@/Components/BaseDivider.vue'
 import { mdiPlus, mdiMinus, mdiTableSearch, mdiFileExcel, mdiFilter, mdiFilterOff } from '@mdi/js'
 import { useToast } from "vue-toastification";
 
@@ -88,15 +87,31 @@ const submitForm = async (formType) => {
         router.post(route('stock-movements.store'), formData, {
             onSuccess: () => {
                 toast.success('Tạo phiếu kho thành công');
-                currentForm.value = {
-                    product_id: '',
-                    quantity: '',
-                    type: { value: 'in', label: 'Nhập kho' },
-                    reason: '',
-                    reference_number: '',
-                    note: ''
-                };
-                router.reload();
+                // Reset form
+                if (formType === 'in') {
+                    inForm.value = {
+                        product_id: '',
+                        quantity: '',
+                        type: { value: 'in', label: 'Nhập kho' },
+                        reason: '',
+                        reference_number: '',
+                        note: ''
+                    };
+                } else {
+                    outForm.value = {
+                        product_id: '',
+                        quantity: '',
+                        type: { value: 'out', label: 'Xuất kho' },
+                        reason: '',
+                        reference_number: '',
+                        note: ''
+                    };
+                }
+                // Tải lại trang
+                router.visit(route('stock-movements.index'), {
+                    preserveScroll: true,
+                    preserveState: false
+                });
             },
             onError: (errors) => {
                 toast.error(errors.message || 'Có lỗi xảy ra');
@@ -393,29 +408,47 @@ const outForm = ref({
                     </table>
                 </div>
 
-                <!-- Sửa lại pagination -->
+                <!-- Sửa lại phần pagination -->
                 <div class="mt-4 flex items-center justify-between">
                     <div class="text-sm text-gray-600">
                         Hiển thị {{ stockMovements.from || 0 }}-{{ stockMovements.to || 0 }}
                         trên tổng số {{ stockMovements.total || 0 }} bản ghi
                     </div>
                     <nav class="flex space-x-2">
-                        <BaseButton :disabled="!stockMovements.prev_page_url"
-                            @click="router.get(stockMovements.prev_page_url)" color="white"
-                            class="hover:shadow-md transition-all">
+                        <!-- Nút Trước -->
+                        <BaseButton 
+                            :disabled="!stockMovements.prev_page_url"
+                            @click="router.get(stockMovements.prev_page_url)" 
+                            color="white"
+                            class="hover:shadow-md transition-all"
+                        >
                             Trước
                         </BaseButton>
 
-                        <BaseButton v-for="page in stockMovements.last_page" :key="page"
-                            :color="page === stockMovements.current_page ? 'info' : 'white'"
-                            @click="router.get(`${route('stock-movements.index')}?page=${page}`)"
-                            class="hover:shadow-md transition-all">
-                            {{ page }}
-                        </BaseButton>
+                        <!-- Các nút số trang -->
+                        <template v-for="n in stockMovements.last_page" :key="n">
+                            <BaseButton
+                                v-if="n === 1 || n === stockMovements.last_page || 
+                                     (n >= stockMovements.current_page - 1 && n <= stockMovements.current_page + 1)"
+                                :color="n === stockMovements.current_page ? 'info' : 'white'"
+                                @click="router.get(`${route('stock-movements.index')}?page=${n}`)"
+                                class="hover:shadow-md transition-all"
+                            >
+                                {{ n }}
+                            </BaseButton>
+                            
+                            <!-- Hiển thị dấu ... -->
+                            <span v-else-if="n === stockMovements.current_page - 2 || n === stockMovements.current_page + 2"
+                                  class="px-2 py-1">...</span>
+                        </template>
 
-                        <BaseButton :disabled="!stockMovements.next_page_url"
-                            @click="router.get(stockMovements.next_page_url)" color="white"
-                            class="hover:shadow-md transition-all">
+                        <!-- Nút Sau -->
+                        <BaseButton 
+                            :disabled="!stockMovements.next_page_url"
+                            @click="router.get(stockMovements.next_page_url)" 
+                            color="white"
+                            class="hover:shadow-md transition-all"
+                        >
                             Sau
                         </BaseButton>
                     </nav>

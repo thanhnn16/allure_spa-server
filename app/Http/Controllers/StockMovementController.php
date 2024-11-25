@@ -9,6 +9,7 @@ use App\Services\StockMovementService;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Response;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class StockMovementController extends BaseController
 {
@@ -48,40 +49,57 @@ class StockMovementController extends BaseController
     /**
      * Store a newly created stock movement
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'type' => 'required|in:' . StockMovement::TYPE_IN . ',' . StockMovement::TYPE_OUT,
-            'note' => 'nullable|string|max:1000',
-            'reason' => 'nullable|string|max:255',
-            'reference_number' => 'nullable|string|max:255'
-        ]);
-
         try {
-            $product = Product::findOrFail($validated['product_id']);
+            // Validate request
+            $validated = $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'quantity' => 'required|numeric|min:1',
+                'type' => 'required|in:in,out',
+                'reason' => 'nullable|string',
+                'reference_number' => 'nullable|string',
+                'note' => 'nullable|string'
+            ]);
 
-            $structuredNote = $this->prepareStructuredNote($validated);
+            // Process stock movement
+            $stockMovement = DB::transaction(function () use ($validated) {
+                $product = Product::findOrFail($validated['product_id']);
 
-            $movement = $this->stockMovementService->createMovement(
-                $product,
-                $validated['quantity'],
-                $validated['type'],
-                json_encode($structuredNote)
-            );
+                $structuredNote = $this->prepareStructuredNote($validated);
 
-            return $this->respondWithJson(
-                $movement,
-                'Stock movement created successfully',
-                201
-            );
+                return $this->stockMovementService->createMovement(
+                    $product,
+                    $validated['quantity'],
+                    $validated['type'],
+                    json_encode($structuredNote)
+                );
+            });
+
+            // Check if request is from web or api
+            if ($request->wantsJson()) {
+                // API Response
+                return response()->json([
+                    'message' => 'Stock movement created successfully',
+                    'status_code' => 201,
+                    'success' => true,
+                    'data' => $stockMovement
+                ], 201);
+            }
+
+            // Web Response (Inertia)
+            return redirect()->back()->with('success', 'Tạo phiếu kho thành công');
+
         } catch (\Exception $e) {
-            return $this->respondWithJson(
-                null,
-                $e->getMessage(),
-                400
-            );
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'status_code' => 400,
+                    'success' => false
+                ], 400);
+            }
+
+            return redirect()->back()->withErrors(['message' => $e->getMessage()]);
         }
     }
 
