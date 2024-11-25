@@ -26,8 +26,21 @@ class VoucherController extends BaseController
     public function index(Request $request)
     {
         try {
-            $vouchers = Voucher::where('status', 'active')
-                ->where('end_date', '>', now())
+            $vouchers = Voucher::select([
+                'id',
+                'code',
+                'description',
+                'discount_type',
+                'discount_value',
+                'min_order_value',
+                'max_discount_amount',
+                'start_date',
+                'end_date',
+                'status',
+                'is_unlimited',
+                'usage_limit',
+                'used_times'
+            ])
                 ->where(function ($query) {
                     $query->where('is_unlimited', true)
                         ->orWhere(function ($q) {
@@ -36,7 +49,22 @@ class VoucherController extends BaseController
                         });
                 })
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->get()
+                ->map(function ($voucher) {
+                    return [
+                        'id' => $voucher->id,
+                        'code' => $voucher->code,
+                        'description' => $voucher->description,
+                        'discount_type' => $voucher->discount_type,
+                        'discount_value' => $voucher->discount_value,
+                        'formatted_discount' => $voucher->formatted_discount,
+                        'min_order_value_formatted' => $voucher->min_order_value_formatted,
+                        'max_discount_amount_formatted' => $voucher->max_discount_amount_formatted,
+                        'start_date_formatted' => $voucher->start_date_formatted,
+                        'end_date_formatted' => $voucher->end_date_formatted,
+                        'status' => $voucher->status,
+                    ];
+                });
 
             Log::info('Fetched vouchers:', ['count' => $vouchers->count(), 'vouchers' => $vouchers]);
 

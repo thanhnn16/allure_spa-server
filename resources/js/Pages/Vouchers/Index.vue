@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Head } from '@inertiajs/vue3'
+import { Head, router } from '@inertiajs/vue3'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
 import { mdiPlus, mdiPencil, mdiDelete, mdiCheck, mdiClose } from '@mdi/js'
@@ -8,9 +8,11 @@ import BaseButton from '@/Components/BaseButton.vue'
 import BaseButtons from '@/Components/BaseButtons.vue'
 import CardBox from '@/Components/CardBox.vue'
 import axios from 'axios'
+import { useToast } from 'vue-toastification';
 
 const vouchers = ref([])
 const loading = ref(true)
+const toast = useToast()
 
 const fetchVouchers = async () => {
     try {
@@ -25,11 +27,15 @@ const fetchVouchers = async () => {
 
 const toggleVoucherStatus = async (voucher) => {
     try {
-        const response = await axios.patch(`/api/vouchers/${voucher.id}/toggle-status`)
-        const index = vouchers.value.findIndex(v => v.id === voucher.id)
-        vouchers.value[index] = response.data.data
+        await axios.patch(`/api/vouchers/${voucher.id}/toggle-status`)
+        toast.success('Cập nhật trạng thái voucher thành công')
+        router.visit(route('vouchers.index'), {
+            preserveScroll: true,
+            preserveState: false
+        })
     } catch (error) {
         console.error('Error toggling voucher status:', error)
+        toast.error('Có lỗi xảy ra khi cập nhật trạng thái voucher')
     }
 }
 
@@ -50,10 +56,6 @@ onMounted(() => {
     fetchVouchers()
 })
 
-const breadcrumbs = [
-    { label: 'Trang chủ', route: 'dashboard' },
-    { label: 'Quản lý Voucher' }
-]
 </script>
 
 <template>
@@ -61,7 +63,7 @@ const breadcrumbs = [
 
         <Head title="Quản lý Voucher" />
 
-        <SectionMain :breadcrumbs="breadcrumbs">
+        <SectionMain>
             <CardBox class="mb-6">
                 <div class="flex justify-between items-center">
                     <h1 class="text-2xl font-bold">Quản lý Voucher</h1>
