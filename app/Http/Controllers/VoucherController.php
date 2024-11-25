@@ -75,16 +75,16 @@ class VoucherController extends BaseController
             $validated = $request->validate([
                 'code' => 'required|string|unique:vouchers,code',
                 'description' => 'nullable|string',
-                'discount_type' => 'required|in:percentage,fixed',
+                'discount_type' => 'required|string|in:percentage,fixed',
                 'discount_value' => 'required|numeric|min:0',
                 'min_order_value' => 'required|numeric|min:0',
                 'max_discount_amount' => 'required|numeric|min:0',
-                'usage_limit' => 'required|integer|min:1',
+                'usage_limit' => 'required_if:is_unlimited,false|integer|min:1',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after:start_date',
                 'is_unlimited' => 'required|boolean',
                 'uses_per_user' => 'required|integer|min:1',
-                'status' => 'required|in:active,inactive'
+                'status' => 'required|string|in:active,inactive'
             ]);
 
             $voucher = Voucher::create([
@@ -92,14 +92,20 @@ class VoucherController extends BaseController
                 'used_times' => 0
             ]);
 
-            return response()->json([
-                'message' => 'Voucher đã được tạo thành công',
-                'data' => $voucher
-            ]);
+            if ($request->wantsJson()) {
+                return $this->respondWithJson($voucher);
+            }
+
+            return redirect()->route('vouchers.index')
+                ->with('success', 'Voucher đã được tạo thành công');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 400);
+            if ($request->wantsJson()) {
+                return $this->respondWithError($e->getMessage());
+            }
+
+            return redirect()->back()
+                ->withErrors(['error' => $e->getMessage()])
+                ->withInput();
         }
     }
 
