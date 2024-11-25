@@ -67,6 +67,11 @@ class Voucher extends Model
         return $this->hasMany(UserVoucher::class);
     }
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
     public function getIsActiveAttribute()
     {
         $now = now();

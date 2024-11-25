@@ -10,6 +10,7 @@ use App\Models\UserVoucher;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use OpenApi\Annotations as OA;
+use Inertia\Inertia;
 
 class VoucherController extends BaseController
 {
@@ -140,9 +141,59 @@ class VoucherController extends BaseController
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Voucher $voucher, Request $request)
     {
-        //
+        // Lấy danh sách người dùng đã được cấp voucher
+        $userVouchers = $voucher->userVouchers()
+            ->with('user')
+            ->get()
+            ->map(function ($userVoucher) {
+                return [
+                    'id' => $userVoucher->id,
+                    'user' => [
+                        'name' => $userVoucher->user->name,
+                        'email' => $userVoucher->user->email,
+                    ],
+                    'remaining_uses' => $userVoucher->remaining_uses,
+                    'total_uses' => $userVoucher->total_uses,
+                    'created_at_formatted' => $userVoucher->created_at->format('d/m/Y H:i:s'),
+                ];
+            });
+
+        // Lấy danh sách đơn hàng đã sử dụng voucher
+        $orders = $voucher->orders()
+            ->with('user')
+            ->latest()
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'user' => [
+                        'name' => $order->user->name,
+                        'email' => $order->user->email,
+                    ],
+                    'total_amount_formatted' => number_format($order->total_amount) . 'đ',
+                    'discount_amount_formatted' => number_format($order->discount_amount) . 'đ',
+                    'status' => $order->status,
+                    'created_at_formatted' => $order->created_at->format('d/m/Y H:i:s'),
+                ];
+            });
+
+        if ($request->wantsJson()) {
+            return $this->respondWithJson($voucher);
+        }
+
+        return Inertia::render('Vouchers/Show', [
+            'voucher' => $voucher->append([
+                'formatted_discount',
+                'min_order_value_formatted',
+                'max_discount_amount_formatted',
+                'start_date_formatted',
+                'end_date_formatted'
+            ]),
+            'userVouchers' => $userVouchers,
+            'orders' => $orders
+        ]);
     }
 
     /**

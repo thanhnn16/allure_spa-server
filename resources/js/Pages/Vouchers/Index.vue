@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
-import { mdiPlus, mdiPencil, mdiDelete, mdiCheck, mdiClose } from '@mdi/js'
+import { mdiPlus, mdiPencil, mdiDelete, mdiCheck, mdiClose, mdiEye } from '@mdi/js'
 import BaseButton from '@/Components/BaseButton.vue'
 import BaseButtons from '@/Components/BaseButtons.vue'
 import CardBox from '@/Components/CardBox.vue'
@@ -116,8 +116,8 @@ onMounted(() => {
                                     <BaseButtons>
                                         <BaseButton :icon="mdiPencil" color="info" small
                                             @click="$inertia.visit(route('vouchers.edit', voucher.id))" />
-                                        <BaseButton :icon="mdiDelete" color="danger" small
-                                            @click="deleteVoucher(voucher.id)" />
+                                        <BaseButton :icon="mdiEye" color="success" small
+                                            @click="$inertia.visit(route('vouchers.show', voucher.id))" />
                                     </BaseButtons>
                                 </td>
                             </tr>
