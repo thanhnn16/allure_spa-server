@@ -40,7 +40,11 @@ class Notification extends Model
 
     protected $casts = [
         'is_read' => 'boolean',
+        'data' => 'array',
     ];
+
+    // Thêm translations vào response mặc định
+    protected $appends = ['translations'];
 
     public function user()
     {
@@ -55,5 +59,56 @@ class Notification extends Model
     public function translations()
     {
         return $this->morphMany(Translation::class, 'translatable');
+    }
+
+    /**
+     * Get the translations for the notification.
+     *
+     * @return array
+     */
+    public function getTranslationsAttribute()
+    {
+        $translations = [
+            'title' => [],
+            'content' => []
+        ];
+
+        // Get all translations
+        $allTranslations = $this->translations()->get();
+
+        // Group translations by field and language
+        foreach ($allTranslations as $translation) {
+            $translations[$translation->field][$translation->language] = $translation->value;
+        }
+
+        // Always include original text as English translation
+        $translations['title']['en'] = $this->title;
+        $translations['content']['en'] = $this->content;
+
+        return $translations;
+    }
+
+    /**
+     * Override toArray to customize the response
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        $array = parent::toArray();
+
+        // Format created_at as "time ago"
+        $array['formatted_date'] = $this->created_at->diffForHumans();
+
+        // Add media if exists
+        if ($this->media) {
+            $array['media'] = [
+                'id' => $this->media->id,
+                'url' => $this->media->url,
+                'type' => $this->media->type
+            ];
+        }
+
+        return $array;
     }
 }
