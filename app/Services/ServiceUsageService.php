@@ -8,6 +8,13 @@ use Illuminate\Support\Facades\DB;
 
 class ServiceUsageService
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function recordUsage(
         UserServicePackage $package,
         string $staffUserId,
@@ -33,6 +40,33 @@ class ServiceUsageService
             // Update package used sessions
             $package->increment('used_sessions');
 
+            // Kiểm tra và gửi thông báo khi còn ít buổi
+            if ($package->remaining_sessions <= 2) {
+                $this->notificationService->createNotification([
+                    'user_id' => $package->user_id,
+                    'type' => NotificationService::NOTIFICATION_TYPES['service']['low_sessions'],
+                    'data' => [
+                        'service' => $package->service->name,
+                        'remaining' => $package->remaining_sessions,
+                        'package_id' => $package->id,
+                        'service_id' => $package->service_id
+                    ]
+                ]);
+            }
+
+            // Gửi thông báo khi hoàn thành buổi điều trị
+            $this->notificationService->createNotification([
+                'user_id' => $package->user_id,
+                'type' => NotificationService::NOTIFICATION_TYPES['service']['completed'],
+                'data' => [
+                    'service' => $package->service->name,
+                    'remaining' => $package->remaining_sessions,
+                    'package_id' => $package->id,
+                    'service_id' => $package->service_id,
+                    'staff_name' => $usage->staff->full_name
+                ]
+            ]);
+
             return $usage;
         });
     }
@@ -44,4 +78,4 @@ class ServiceUsageService
             ->orderBy('created_at', 'desc')
             ->get();
     }
-} 
+}

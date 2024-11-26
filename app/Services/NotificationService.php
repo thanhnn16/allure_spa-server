@@ -149,6 +149,20 @@ class NotificationService
                     'title' => 'サービスパッケージの残りが少なくなっています',
                     'content' => '{service}パッケージの残りセッションが{remaining}回となっています'
                 ]
+            ],
+            'completed' => [
+                'en' => [
+                    'title' => 'Treatment Session Completed',
+                    'content' => 'Your {service} treatment session with {staff_name} has been completed. You have {remaining} sessions remaining.'
+                ],
+                'vi' => [
+                    'title' => 'Hoàn thành buổi điều trị',
+                    'content' => 'Buổi điều trị {service} với {staff_name} đã hoàn thành. Bạn còn {remaining} buổi.'
+                ],
+                'ja' => [
+                    'title' => '施術セッション完了',
+                    'content' => '{staff_name}による{service}の施術が完了しました。残りセッションは{remaining}回です。'
+                ]
             ]
         ]
     ];
@@ -409,9 +423,21 @@ class NotificationService
     // Helper method to get translated message
     private function getNotificationMessage($type, $subType, $language, $params = [])
     {
-        $messages = self::NOTIFICATION_MESSAGES[$type][$subType][$language] ??
-            self::NOTIFICATION_MESSAGES[$type][$subType][self::DEFAULT_LANGUAGE];
+        // Kiểm tra xem type và subType có tồn tại trong NOTIFICATION_MESSAGES không
+        if (!isset(self::NOTIFICATION_MESSAGES[$type]) || 
+            !isset(self::NOTIFICATION_MESSAGES[$type][$subType])) {
+            // Trả về message mặc định nếu không tìm thấy
+            return [
+                'title' => 'Notification',
+                'content' => 'You have a new notification'
+            ];
+        }
 
+        // Lấy message theo ngôn ngữ, fallback về DEFAULT_LANGUAGE nếu không có
+        $messages = self::NOTIFICATION_MESSAGES[$type][$subType][$language] ?? 
+                   self::NOTIFICATION_MESSAGES[$type][$subType][self::DEFAULT_LANGUAGE] ?? 
+                   ['title' => 'Notification', 'content' => 'You have a new notification'];
+                   
         return [
             'title' => $this->replacePlaceholders($messages['title'], $params),
             'content' => $this->replacePlaceholders($messages['content'], $params)
@@ -421,7 +447,13 @@ class NotificationService
     // Helper method to replace placeholders
     private function replacePlaceholders($text, $params)
     {
+        if (empty($params)) {
+            return $text;
+        }
+
         foreach ($params as $key => $value) {
+            // Đảm bảo value là string
+            $value = is_string($value) || is_numeric($value) ? (string)$value : '';
             $text = str_replace("{{$key}}", $value, $text);
         }
         return $text;
