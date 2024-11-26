@@ -424,9 +424,13 @@ class NotificationService
     private function getNotificationMessage($type, $subType, $language, $params = [])
     {
         // Kiểm tra xem type và subType có tồn tại trong NOTIFICATION_MESSAGES không
-        if (!isset(self::NOTIFICATION_MESSAGES[$type]) || 
-            !isset(self::NOTIFICATION_MESSAGES[$type][$subType])) {
-            // Trả về message mặc định nếu không tìm thấy
+        if (
+            !isset(self::NOTIFICATION_MESSAGES[$type]) ||
+            !isset(self::NOTIFICATION_MESSAGES[$type][$subType]) ||
+            !isset(self::NOTIFICATION_MESSAGES[$type][$subType][$language])
+        ) {
+
+            // Trả về message mặc định với đầy đủ cả title và content
             return [
                 'title' => 'Notification',
                 'content' => 'You have a new notification'
@@ -434,13 +438,13 @@ class NotificationService
         }
 
         // Lấy message theo ngôn ngữ, fallback về DEFAULT_LANGUAGE nếu không có
-        $messages = self::NOTIFICATION_MESSAGES[$type][$subType][$language] ?? 
-                   self::NOTIFICATION_MESSAGES[$type][$subType][self::DEFAULT_LANGUAGE] ?? 
-                   ['title' => 'Notification', 'content' => 'You have a new notification'];
-                   
+        $messages = self::NOTIFICATION_MESSAGES[$type][$subType][$language] ??
+            self::NOTIFICATION_MESSAGES[$type][$subType][self::DEFAULT_LANGUAGE];
+
+        // Đảm bảo cả title và content đều tồn tại
         return [
-            'title' => $this->replacePlaceholders($messages['title'], $params),
-            'content' => $this->replacePlaceholders($messages['content'], $params)
+            'title' => $this->replacePlaceholders($messages['title'] ?? 'Notification', $params),
+            'content' => $this->replacePlaceholders($messages['content'] ?? 'You have a new notification', $params)
         ];
     }
 
