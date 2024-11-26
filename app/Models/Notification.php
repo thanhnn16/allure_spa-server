@@ -51,4 +51,9 @@ class Notification extends Model
     {
         return $this->belongsTo(Media::class);
     }
+
+    public function translations()
+    {
+        return $this->morphMany(Translation::class, 'translatable');
+    }
 }

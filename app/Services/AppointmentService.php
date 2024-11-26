@@ -174,8 +174,16 @@ class AppointmentService
                 // Gửi thông báo cho khách hàng
                 $this->notificationService->createNotification([
                     'user_id' => $appointment->user_id,
-                    'title' => 'Đặt lịch hẹn thành công',
-                    'content' => "Lịch hẹn của bạn đã được đặt vào {$appointment->appointment_date}",
+                    'title' => [
+                        'en' => 'Appointment Booked Successfully',
+                        'vi' => 'Đặt lịch hẹn thành công',
+                        'ja' => '予約が正常に作成されました'
+                    ],
+                    'content' => [
+                        'en' => "Your appointment has been booked for {$appointment->appointment_date}",
+                        'vi' => "Lịch hẹn của bạn đã được đặt vào {$appointment->appointment_date}",
+                        'ja' => "予約が{$appointment->appointment_date}に設定されました"
+                    ],
                     'type' => NotificationService::NOTIFICATION_TYPES['appointment']['new'],
                     'data' => [
                         'appointment_id' => $appointment->id
@@ -249,8 +257,16 @@ class AppointmentService
                 // Thông báo cho khách hàng
                 $this->notificationService->createNotification([
                     'user_id' => $appointment->user_id,
-                    'title' => 'Cập nhật lịch hẹn',
-                    'content' => "Lịch hẹn #{$appointment->id} " . $this->getStatusMessage($data['status']),
+                    'title' => [
+                        'en' => 'Appointment Status Updated',
+                        'vi' => 'Cập nhật trạng thái lịch hẹn',
+                        'ja' => '予約状態が更新されました'
+                    ],
+                    'content' => [
+                        'en' => "Your appointment #{$appointment->id} has been " . $this->getStatusMessageEn($data['status']),
+                        'vi' => "Lịch hẹn #{$appointment->id} " . $this->getStatusMessageVi($data['status']),
+                        'ja' => "予約 #{$appointment->id}が" . $this->getStatusMessageJa($data['status'])
+                    ],
                     'type' => NotificationService::NOTIFICATION_TYPES['appointment']['status'],
                     'data' => [
                         'appointment_id' => $appointment->id,
@@ -309,17 +325,45 @@ class AppointmentService
         }
     }
 
-    private function getStatusMessage($status)
+    private function getStatusMessageEn($status)
     {
         switch ($status) {
             case 'confirmed':
-                return 'Lịch hẹn của bạn đã được xác nhận';
+                return 'confirmed';
             case 'cancelled':
-                return 'Lịch hẹn của bạn đã bị hủy';
+                return 'cancelled';
             case 'completed':
-                return 'Lịch hẹn của bạn đã hoàn thành';
+                return 'completed';
             default:
-                return 'Trạng thái lịch hẹn đã được cập nhật';
+                return 'updated';
+        }
+    }
+
+    private function getStatusMessageVi($status)
+    {
+        switch ($status) {
+            case 'confirmed':
+                return 'đã được xác nhận';
+            case 'cancelled':
+                return 'đã bị hủy';
+            case 'completed':
+                return 'đã hoàn thành';
+            default:
+                return 'đã được cập nhật';
+        }
+    }
+
+    private function getStatusMessageJa($status)
+    {
+        switch ($status) {
+            case 'confirmed':
+                return '確認されました';
+            case 'cancelled':
+                return 'キャンセルされました';
+            case 'completed':
+                return '完了しました';
+            default:
+                return '更新されました';
         }
     }
 

@@ -106,8 +106,16 @@ class OrderService
                 // Gửi thông báo cho khách hàng
                 $this->notificationService->createNotification([
                     'user_id' => $order->user_id,
-                    'title' => 'Đặt hàng thành công',
-                    'content' => "Đơn hàng #{$order->id} đã được tạo thành công",
+                    'title' => [
+                        'en' => 'Order Created Successfully',
+                        'vi' => 'Đặt hàng thành công',
+                        'ja' => '注文が正常に作成されました'
+                    ],
+                    'content' => [
+                        'en' => "Your order #{$order->id} has been created successfully",
+                        'vi' => "Đơn hàng #{$order->id} đã được tạo thành công",
+                        'ja' => "注文 #{$order->id}が正常に作成されました"
+                    ],
                     'type' => NotificationService::NOTIFICATION_TYPES['order']['new'],
                     'data' => [
                         'order_id' => $order->id
@@ -394,8 +402,16 @@ class OrderService
                 // Gửi thông báo cho khách hàng
                 $this->notificationService->createNotification([
                     'user_id' => $order->user_id,
-                    'title' => 'Đơn hàng hoàn thành',
-                    'content' => "Đơn hàng #{$order->id} của bạn đã hoàn thành",
+                    'title' => [
+                        'en' => 'Order Completed',
+                        'vi' => 'Đơn hàng hoàn thành',
+                        'ja' => '注文完了'
+                    ],
+                    'content' => [
+                        'en' => "Your order #{$order->id} has been completed",
+                        'vi' => "Đơn hàng #{$order->id} của bạn đã hoàn thành",
+                        'ja' => "注文 #{$order->id}が完了しました"
+                    ],
                     'type' => NotificationService::NOTIFICATION_TYPES['order']['completed'],
                     'data' => [
                         'order_id' => $order->id
