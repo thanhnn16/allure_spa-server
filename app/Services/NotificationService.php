@@ -378,7 +378,9 @@ class NotificationService
 
         // Group translations by field and language
         foreach ($notification->translations as $translation) {
-            $translations[$translation->field][$translation->language] = $translation->value;
+            if ($translation instanceof \App\Models\Translation) {
+                $translations[$translation->field][$translation->language] = $translation->value;
+            }
         }
 
         // Always include original text as English translation
@@ -399,7 +401,8 @@ class NotificationService
                 'url' => $notification->media->url,
                 'type' => $notification->media->type
             ] : null,
-            'formatted_date' => $notification->created_at->diffForHumans()
+            'formatted_date' => $notification->created_at->diffForHumans(),
+            'data' => $notification->data
         ];
     }
 
