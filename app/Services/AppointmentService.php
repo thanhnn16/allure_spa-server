@@ -427,15 +427,9 @@ class AppointmentService
             // Gửi thông báo cho khách hàng
             $this->notificationService->createNotification([
                 'user_id' => $appointment->user_id,
-                'title' => 'Lịch hẹn đã bị hủy',
-                'content' => $isAutoCancel ?
-                    'Lịch hẹn của bạn đã bị hủy tự động do quá thời gian' :
-                    'Lịch hẹn của bạn đã bị hủy',
                 'type' => NotificationService::NOTIFICATION_TYPES['appointment']['cancelled'],
                 'data' => [
-                    'appointment_id' => $appointment->id,
-                    'cancelled_by' => Auth::id(),
-                    'is_auto_cancel' => $isAutoCancel
+                    'id' => $appointment->id
                 ]
             ]);
 
