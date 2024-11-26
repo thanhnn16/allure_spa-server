@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Notification;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
@@ -75,7 +76,20 @@ class NotificationService
                     'content' => '予約 #{id}が{status}になりました'
                 ]
             ],
-            // ... add other status messages
+            'cancelled' => [
+                'en' => [
+                    'title' => 'Appointment Cancelled',
+                    'content' => 'Your appointment #{id} has been cancelled'
+                ],
+                'vi' => [
+                    'title' => 'Lịch hẹn đã bị hủy',
+                    'content' => 'Lịch hẹn #{id} đã bị hủy'
+                ],
+                'ja' => [
+                    'title' => '予約がキャンセルされました',
+                    'content' => '予約 #{id}がキャンセルされました'
+                ]
+            ]
         ],
         'order' => [
             'new' => [
@@ -92,7 +106,50 @@ class NotificationService
                     'content' => '注文 #{id}が正常に作成されました'
                 ]
             ],
-            // ... add other order messages
+            'status' => [
+                'en' => [
+                    'title' => 'Order Status Updated',
+                    'content' => 'Your order #{id} has been {status}'
+                ],
+                'vi' => [
+                    'title' => 'Cập nhật trạng thái đơn hàng',
+                    'content' => 'Đơn hàng #{id} đã được {status}'
+                ],
+                'ja' => [
+                    'title' => '注文状態が更新されました',
+                    'content' => '注文 #{id}が{status}になりました'
+                ]
+            ],
+            'completed' => [
+                'en' => [
+                    'title' => 'Order Completed',
+                    'content' => 'Your order #{id} has been completed'
+                ],
+                'vi' => [
+                    'title' => 'Đơn hàng hoàn thành',
+                    'content' => 'Đơn hàng #{id} đã hoàn thành'
+                ],
+                'ja' => [
+                    'title' => '注文完了',
+                    'content' => '注文 #{id}が完了しました'
+                ]
+            ]
+        ],
+        'service' => [
+            'low_sessions' => [
+                'en' => [
+                    'title' => 'Service Package Running Low',
+                    'content' => 'Your {service} package has only {remaining} sessions remaining'
+                ],
+                'vi' => [
+                    'title' => 'Gói dịch vụ sắp hết',
+                    'content' => 'Gói dịch vụ {service} của bạn chỉ còn {remaining} buổi'
+                ],
+                'ja' => [
+                    'title' => 'サービスパッケージの残りが少なくなっています',
+                    'content' => '{service}パッケージの残りセッションが{remaining}回となっています'
+                ]
+            ]
         ]
     ];
 
@@ -107,63 +164,102 @@ class NotificationService
     // Create notification and send FCM
     public function createNotification($data)
     {
-        // Prepare multilingual content
-        $notificationData = [
-            'user_id' => $data['user_id'],
-            'type' => $data['type'],
-            'data' => $data['data'] ?? null,
-            'is_read' => false
-        ];
+        try {
+            // Get user's preferred language
+            $user = User::find($data['user_id']);
+            $userLang = $user->preferred_language ?? self::DEFAULT_LANGUAGE;
 
-        // Set default English content
-        $notificationData['title'] = is_array($data['title']) ? 
-            ($data['title']['en'] ?? array_values($data['title'])[0]) : 
-            $data['title'];
-        
-        $notificationData['content'] = is_array($data['content']) ? 
-            ($data['content']['en'] ?? array_values($data['content'])[0]) : 
-            $data['content'];
+            // Check if this is a predefined notification type
+            $type = explode('_', $data['type']);
+            if (
+                count($type) >= 2 &&
+                isset(self::NOTIFICATION_MESSAGES[$type[0]][$type[1]])
+            ) {
+                // Get translated messages for all supported languages
+                $translations = [];
+                foreach (self::SUPPORTED_LANGUAGES as $lang) {
+                    $message = $this->getNotificationMessage(
+                        $type[0],
+                        $type[1],
+                        $lang,
+                        $data['data'] ?? []
+                    );
+                    $translations['title'][$lang] = $message['title'];
+                    $translations['content'][$lang] = $message['content'];
+                }
 
-        // Create notification
-        $notification = Notification::create($notificationData);
+                // Set default content from user's preferred language
+                $defaultMessage = $this->getNotificationMessage(
+                    $type[0],
+                    $type[1],
+                    $userLang,
+                    $data['data'] ?? []
+                );
+                $data['title'] = $defaultMessage['title'];
+                $data['content'] = $defaultMessage['content'];
+            } else {
+                // Use provided translations if available
+                $translations = [
+                    'title' => is_array($data['title']) ? $data['title'] : [],
+                    'content' => is_array($data['content']) ? $data['content'] : []
+                ];
 
-        // Create translations if multilingual content provided
-        if (is_array($data['title'])) {
-            foreach (self::SUPPORTED_LANGUAGES as $lang) {
-                if ($lang === 'en' || !isset($data['title'][$lang])) continue;
-                
-                $notification->translations()->create([
-                    'language' => $lang,
-                    'field' => 'title',
-                    'value' => $data['title'][$lang]
-                ]);
+                // Set default content
+                $data['title'] = is_array($data['title']) ?
+                    ($data['title'][$userLang] ?? $data['title']['en'] ?? array_values($data['title'])[0]) :
+                    $data['title'];
+
+                $data['content'] = is_array($data['content']) ?
+                    ($data['content'][$userLang] ?? $data['content']['en'] ?? array_values($data['content'])[0]) :
+                    $data['content'];
             }
-        }
 
-        if (is_array($data['content'])) {
+            // Create notification
+            $notification = Notification::create([
+                'user_id' => $data['user_id'],
+                'type' => $data['type'],
+                'title' => $data['title'],
+                'content' => $data['content'],
+                'data' => $data['data'] ?? null,
+                'is_read' => false
+            ]);
+
+            // Create translations
             foreach (self::SUPPORTED_LANGUAGES as $lang) {
-                if ($lang === 'en' || !isset($data['content'][$lang])) continue;
-                
-                $notification->translations()->create([
-                    'language' => $lang,
-                    'field' => 'content',
-                    'value' => $data['content'][$lang]
-                ]);
+                if ($lang === $userLang) continue;
+
+                if (isset($translations['title'][$lang])) {
+                    $notification->translations()->create([
+                        'language' => $lang,
+                        'field' => 'title',
+                        'value' => $translations['title'][$lang]
+                    ]);
+                }
+
+                if (isset($translations['content'][$lang])) {
+                    $notification->translations()->create([
+                        'language' => $lang,
+                        'field' => 'content',
+                        'value' => $translations['content'][$lang]
+                    ]);
+                }
             }
+
+            // Send FCM notification
+            $this->sendFCMNotification(
+                $notification,
+                $data['title'],
+                $data['content']
+            );
+
+            return $notification;
+        } catch (\Exception $e) {
+            Log::error('Error creating notification:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
-
-        // Get user's preferred language
-        $user = User::find($data['user_id']);
-        $userLang = $user->preferred_language ?? self::DEFAULT_LANGUAGE;
-
-        // Get translated content for FCM
-        $fcmTitle = $this->getTranslatedField($notification, 'title', $userLang);
-        $fcmContent = $this->getTranslatedField($notification, 'content', $userLang);
-
-        // Send FCM with translated content
-        $this->sendFCMNotification($notification, $fcmTitle, $fcmContent);
-
-        return $notification;
     }
 
     private function isValidNotificationType($type)
@@ -230,7 +326,7 @@ class NotificationService
     public function getUserNotifications($userId, $perPage, $page = 1)
     {
         $query = Notification::where('user_id', $userId)
-            ->with('media')
+            ->with(['media', 'translations'])
             ->orderBy('created_at', 'desc');
 
         $unreadCount = $query->clone()->where('is_read', false)->count();
@@ -274,6 +370,21 @@ class NotificationService
 
     private function formatNotification($notification)
     {
+        // Get translations for all supported languages
+        $translations = [
+            'title' => [],
+            'content' => []
+        ];
+
+        // Group translations by field and language
+        foreach ($notification->translations as $translation) {
+            $translations[$translation->field][$translation->language] = $translation->value;
+        }
+
+        // Always include original text as English translation
+        $translations['title']['en'] = $notification->title;
+        $translations['content']['en'] = $notification->content;
+
         return [
             'id' => $notification->id,
             'title' => $notification->title,
@@ -282,6 +393,7 @@ class NotificationService
             'is_read' => (bool) $notification->is_read,
             'created_at' => $notification->created_at,
             'url' => $notification->url,
+            'translations' => $translations,
             'media' => $notification->media ? [
                 'id' => $notification->media->id,
                 'url' => $notification->media->url,
@@ -294,11 +406,11 @@ class NotificationService
     // Helper method to get translated message
     private function getNotificationMessage($type, $subType, $language, $params = [])
     {
-        $messages = self::NOTIFICATION_MESSAGES[$type][$subType][$language] ?? 
-                   self::NOTIFICATION_MESSAGES[$type][$subType][self::DEFAULT_LANGUAGE];
-                   
+        $messages = self::NOTIFICATION_MESSAGES[$type][$subType][$language] ??
+            self::NOTIFICATION_MESSAGES[$type][$subType][self::DEFAULT_LANGUAGE];
+
         return [
-            'title' => $messages['title'],
+            'title' => $this->replacePlaceholders($messages['title'], $params),
             'content' => $this->replacePlaceholders($messages['content'], $params)
         ];
     }

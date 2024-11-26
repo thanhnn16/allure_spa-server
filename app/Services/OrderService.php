@@ -91,6 +91,15 @@ class OrderService
             $order->recalculateTotal();
 
             try {
+                // Gửi thông báo cho khách hàng
+                $this->notificationService->createNotification([
+                    'user_id' => $order->user_id,
+                    'type' => NotificationService::NOTIFICATION_TYPES['order']['new'],
+                    'data' => [
+                        'id' => $order->id
+                    ]
+                ]);
+
                 // Gửi thông báo cho admin
                 $this->notificationService->notifyAdmins(
                     'Đơn hàng mới',
@@ -102,25 +111,6 @@ class OrderService
                         'action' => 'created'
                     ]
                 );
-
-                // Gửi thông báo cho khách hàng
-                $this->notificationService->createNotification([
-                    'user_id' => $order->user_id,
-                    'title' => [
-                        'en' => 'Order Created Successfully',
-                        'vi' => 'Đặt hàng thành công',
-                        'ja' => '注文が正常に作成されました'
-                    ],
-                    'content' => [
-                        'en' => "Your order #{$order->id} has been created successfully",
-                        'vi' => "Đơn hàng #{$order->id} đã được tạo thành công",
-                        'ja' => "注文 #{$order->id}が正常に作成されました"
-                    ],
-                    'type' => NotificationService::NOTIFICATION_TYPES['order']['new'],
-                    'data' => [
-                        'order_id' => $order->id
-                    ]
-                ]);
             } catch (\Exception $e) {
                 // Log lỗi nhưng không throw exception
                 Log::error('Failed to send notifications:', [
@@ -284,12 +274,10 @@ class OrderService
                 if ($notificationData) {
                     $this->notificationService->createNotification([
                         'user_id' => $order->user_id,
-                        'title' => $notificationData['title'],
-                        'content' => $notificationData['content'],
                         'type' => NotificationService::NOTIFICATION_TYPES['order']['status'],
                         'data' => [
-                            'order_id' => $order->id,
-                            'status' => $status
+                            'id' => $order->id,
+                            'status' => $this->getOrderStatusTranslation($status)
                         ]
                     ]);
                 }
@@ -402,19 +390,9 @@ class OrderService
                 // Gửi thông báo cho khách hàng
                 $this->notificationService->createNotification([
                     'user_id' => $order->user_id,
-                    'title' => [
-                        'en' => 'Order Completed',
-                        'vi' => 'Đơn hàng hoàn thành',
-                        'ja' => '注文完了'
-                    ],
-                    'content' => [
-                        'en' => "Your order #{$order->id} has been completed",
-                        'vi' => "Đơn hàng #{$order->id} của bạn đã hoàn thành",
-                        'ja' => "注文 #{$order->id}が完了しました"
-                    ],
                     'type' => NotificationService::NOTIFICATION_TYPES['order']['completed'],
                     'data' => [
-                        'order_id' => $order->id
+                        'id' => $order->id
                     ]
                 ]);
             } catch (\Exception $e) {
@@ -609,5 +587,33 @@ class OrderService
                 $product->increment('quantity', $item->quantity);
             }
         }
+    }
+
+    // Thêm method mới để lấy translation cho order status
+    private function getOrderStatusTranslation($status) {
+        $translations = [
+            'confirmed' => [
+                'en' => 'confirmed',
+                'vi' => 'đã xác nhận',
+                'ja' => '確認済み'
+            ],
+            'shipping' => [
+                'en' => 'being shipped',
+                'vi' => 'đang giao hàng',
+                'ja' => '配送中'
+            ],
+            'completed' => [
+                'en' => 'completed',
+                'vi' => 'đã hoàn thành',
+                'ja' => '完了'
+            ],
+            'cancelled' => [
+                'en' => 'cancelled',
+                'vi' => 'đã hủy',
+                'ja' => 'キャンセル'
+            ]
+        ];
+        
+        return $translations[$status] ?? $status;
     }
 }

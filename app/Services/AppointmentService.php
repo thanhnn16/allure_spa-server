@@ -159,6 +159,16 @@ class AppointmentService
                 // Load relationships
                 $appointment->load(['user', 'service', 'timeSlot']);
 
+                // Gửi thông báo cho khách hàng
+                $this->notificationService->createNotification([
+                    'user_id' => $appointment->user_id,
+                    'type' => NotificationService::NOTIFICATION_TYPES['appointment']['new'],
+                    'data' => [
+                        'date' => $appointment->appointment_date,
+                        'id' => $appointment->id
+                    ]
+                ]);
+
                 // Gửi thông báo cho admin
                 $this->notificationService->notifyAdmins(
                     'Lịch hẹn mới',
@@ -170,25 +180,6 @@ class AppointmentService
                         'action' => 'created'
                     ]
                 );
-
-                // Gửi thông báo cho khách hàng
-                $this->notificationService->createNotification([
-                    'user_id' => $appointment->user_id,
-                    'title' => [
-                        'en' => 'Appointment Booked Successfully',
-                        'vi' => 'Đặt lịch hẹn thành công',
-                        'ja' => '予約が正常に作成されました'
-                    ],
-                    'content' => [
-                        'en' => "Your appointment has been booked for {$appointment->appointment_date}",
-                        'vi' => "Lịch hẹn của bạn đã được đặt vào {$appointment->appointment_date}",
-                        'ja' => "予約が{$appointment->appointment_date}に設定されました"
-                    ],
-                    'type' => NotificationService::NOTIFICATION_TYPES['appointment']['new'],
-                    'data' => [
-                        'appointment_id' => $appointment->id
-                    ]
-                ]);
 
                 return [
                     'status' => 200,
@@ -252,41 +243,25 @@ class AppointmentService
             // Load relationships
             $appointment->load(['user', 'service', 'staff', 'timeSlot']);
 
-            // Gửi thông báo khi trạng thái thay đổi
-            if (isset($data['status']) && $data['status'] !== $oldStatus) {
-                // Thông báo cho khách hàng
+            // Gửi thông báo cho khách hàng
+            $this->notificationService->createNotification([
+                'user_id' => $appointment->user_id,
+                'type' => NotificationService::NOTIFICATION_TYPES['appointment']['status'],
+                'data' => [
+                    'id' => $appointment->id,
+                    'status' => $this->getStatusTranslation($data['status'])
+                ]
+            ]);
+
+            // Thông báo cho admin nếu khách hàng hủy lịch
+            if ($data['status'] === 'cancelled') {
                 $this->notificationService->createNotification([
                     'user_id' => $appointment->user_id,
-                    'title' => [
-                        'en' => 'Appointment Status Updated',
-                        'vi' => 'Cập nhật trạng thái lịch hẹn',
-                        'ja' => '予約状態が更新されました'
-                    ],
-                    'content' => [
-                        'en' => "Your appointment #{$appointment->id} has been " . $this->getStatusMessageEn($data['status']),
-                        'vi' => "Lịch hẹn #{$appointment->id} " . $this->getStatusMessageVi($data['status']),
-                        'ja' => "予約 #{$appointment->id}が" . $this->getStatusMessageJa($data['status'])
-                    ],
-                    'type' => NotificationService::NOTIFICATION_TYPES['appointment']['status'],
+                    'type' => NotificationService::NOTIFICATION_TYPES['appointment']['cancelled'],
                     'data' => [
-                        'appointment_id' => $appointment->id,
-                        'status' => $data['status']
+                        'id' => $appointment->id
                     ]
                 ]);
-
-                // Thông báo cho admin nếu khách hàng hủy lịch
-                if ($data['status'] === 'cancelled') {
-                    $this->notificationService->notifyAdmins(
-                        'Lịch hẹn bị hủy',
-                        "Khách hàng {$appointment->user->full_name} đã hủy lịch hẹn {$appointment->service->name}",
-                        'appointment_cancelled',
-                        [
-                            'type' => 'appointment',
-                            'appointment_id' => $appointment->id,
-                            'action' => 'cancelled'
-                        ]
-                    );
-                }
             }
 
             // Nếu thay đổi gói dịch vụ
@@ -325,46 +300,26 @@ class AppointmentService
         }
     }
 
-    private function getStatusMessageEn($status)
-    {
-        switch ($status) {
-            case 'confirmed':
-                return 'confirmed';
-            case 'cancelled':
-                return 'cancelled';
-            case 'completed':
-                return 'completed';
-            default:
-                return 'updated';
-        }
-    }
-
-    private function getStatusMessageVi($status)
-    {
-        switch ($status) {
-            case 'confirmed':
-                return 'đã được xác nhận';
-            case 'cancelled':
-                return 'đã bị hủy';
-            case 'completed':
-                return 'đã hoàn thành';
-            default:
-                return 'đã được cập nhật';
-        }
-    }
-
-    private function getStatusMessageJa($status)
-    {
-        switch ($status) {
-            case 'confirmed':
-                return '確認されました';
-            case 'cancelled':
-                return 'キャンセルされました';
-            case 'completed':
-                return '完了しました';
-            default:
-                return '更新されました';
-        }
+    private function getStatusTranslation($status) {
+        $translations = [
+            'confirmed' => [
+                'en' => 'confirmed',
+                'vi' => 'đã xác nhận',
+                'ja' => '確認済み'
+            ],
+            'cancelled' => [
+                'en' => 'cancelled',
+                'vi' => 'đã hủy',
+                'ja' => 'キャンセル済み'
+            ],
+            'completed' => [
+                'en' => 'completed',
+                'vi' => 'đã hoàn thành',
+                'ja' => '完了'
+            ]
+        ];
+        
+        return $translations[$status] ?? $status;
     }
 
     public function getAppointmentDetails($id)
