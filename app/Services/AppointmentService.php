@@ -160,11 +160,25 @@ class AppointmentService
                 $appointment->load(['user', 'service', 'timeSlot']);
 
                 // Gửi thông báo cho khách hàng
+                $appointmentDate = Carbon::parse($appointment->appointment_date)->format('d/m/Y');
+                $appointmentTime = $appointment->timeSlot->start_time;
+
                 $this->notificationService->createNotification([
                     'user_id' => $appointment->user_id,
-                    'type' => NotificationService::NOTIFICATION_TYPES['appointment']['new'],
+                    'type' => 'appointment_new',  // Đảm bảo khớp với NOTIFICATION_TYPES['appointment']['new']
+                    'title' => [
+                        'en' => 'New Appointment',
+                        'vi' => 'Lịch hẹn mới',
+                        'ja' => '新しい予約'
+                    ],
+                    'content' => [
+                        'en' => "Your appointment has been booked for {$appointmentDate} at {$appointmentTime}",
+                        'vi' => "Lịch hẹn của bạn đã được đặt vào {$appointmentDate} lúc {$appointmentTime}",
+                        'ja' => "予約が{$appointmentDate} {$appointmentTime}に設定されました"
+                    ],
                     'data' => [
                         'date' => $appointment->appointment_date,
+                        'time' => $appointment->timeSlot->start_time,
                         'id' => $appointment->id
                     ]
                 ]);
@@ -300,7 +314,8 @@ class AppointmentService
         }
     }
 
-    private function getStatusTranslation($status) {
+    private function getStatusTranslation($status)
+    {
         $translations = [
             'confirmed' => [
                 'en' => 'confirmed',
@@ -318,7 +333,7 @@ class AppointmentService
                 'ja' => '完了'
             ]
         ];
-        
+
         return $translations[$status] ?? $status;
     }
 

@@ -94,7 +94,17 @@ class OrderService
                 // Gửi thông báo cho khách hàng
                 $this->notificationService->createNotification([
                     'user_id' => $order->user_id,
-                    'type' => NotificationService::NOTIFICATION_TYPES['order']['new'],
+                    'type' => 'order_new',
+                    'title' => [
+                        'en' => 'New Order',
+                        'vi' => 'Đơn hàng mới',
+                        'ja' => '新規注文'
+                    ],
+                    'content' => [
+                        'en' => "Your order #{$order->id} has been placed successfully",
+                        'vi' => "Đơn hàng #{$order->id} đã được tạo thành công",
+                        'ja' => "注文 #{$order->id}が正常に作成されました"
+                    ],
                     'data' => [
                         'id' => $order->id
                     ]
@@ -274,10 +284,20 @@ class OrderService
                 if ($notificationData) {
                     $this->notificationService->createNotification([
                         'user_id' => $order->user_id,
-                        'type' => NotificationService::NOTIFICATION_TYPES['order']['status'],
+                        'type' => 'order_status',
+                        'title' => [
+                            'en' => 'Order Status Updated',
+                            'vi' => 'Cập nhật trạng thái đơn hàng',
+                            'ja' => '注文状態が更新されました'
+                        ],
+                        'content' => [
+                            'en' => "Your order #{$order->id} has been {$this->getOrderStatusTranslation($status)['en']}",
+                            'vi' => "Đơn hàng #{$order->id} đã {$this->getOrderStatusTranslation($status)['vi']}",
+                            'ja' => "注文 #{$order->id}が{$this->getOrderStatusTranslation($status)['ja']}になりました"
+                        ],
                         'data' => [
                             'id' => $order->id,
-                            'status' => $this->getOrderStatusTranslation($status)
+                            'status' => $status
                         ]
                     ]);
                 }
@@ -390,7 +410,17 @@ class OrderService
                 // Gửi thông báo cho khách hàng
                 $this->notificationService->createNotification([
                     'user_id' => $order->user_id,
-                    'type' => NotificationService::NOTIFICATION_TYPES['order']['completed'],
+                    'type' => 'order_completed',
+                    'title' => [
+                        'en' => 'Order Completed',
+                        'vi' => 'Đơn hàng hoàn thành',
+                        'ja' => '注文完了'
+                    ],
+                    'content' => [
+                        'en' => "Your order #{$order->id} has been completed",
+                        'vi' => "Đơn hàng #{$order->id} đã hoàn thành",
+                        'ja' => "注文 #{$order->id}が完了しました"
+                    ],
                     'data' => [
                         'id' => $order->id
                     ]

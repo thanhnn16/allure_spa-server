@@ -74,7 +74,17 @@ class ServiceUsageHistoryService
         if ($package->remaining_sessions === 2) {
             $this->notificationService->createNotification([
                 'user_id' => $package->user_id,
-                'type' => NotificationService::NOTIFICATION_TYPES['service']['low_sessions'],
+                'type' => 'service_low_sessions',
+                'title' => [
+                    'en' => 'Service Package Running Low',
+                    'vi' => 'Gói dịch vụ sắp hết',
+                    'ja' => 'サービスパッケージの残りが少なくなっています'
+                ],
+                'content' => [
+                    'en' => "Your {$package->service->name} package has only {$package->remaining_sessions} sessions remaining",
+                    'vi' => "Gói dịch vụ {$package->service->name} của bạn chỉ còn {$package->remaining_sessions} buổi",
+                    'ja' => "{$package->service->name}パッケージの残りセッションが{$package->remaining_sessions}回となっています"
+                ],
                 'data' => [
                     'service' => $package->service->name,
                     'remaining' => $package->remaining_sessions,
