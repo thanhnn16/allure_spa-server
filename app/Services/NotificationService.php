@@ -183,50 +183,20 @@ class NotificationService
             $user = User::find($data['user_id']);
             $userLang = $user->preferred_language ?? self::DEFAULT_LANGUAGE;
 
-            // Check if this is a predefined notification type
-            $type = explode('_', $data['type']);
-            if (
-                count($type) >= 2 &&
-                isset(self::NOTIFICATION_MESSAGES[$type[0]][$type[1]])
-            ) {
-                // Get translated messages for all supported languages
-                $translations = [];
-                foreach (self::SUPPORTED_LANGUAGES as $lang) {
-                    $message = $this->getNotificationMessage(
-                        $type[0],
-                        $type[1],
-                        $lang,
-                        $data['data'] ?? []
-                    );
-                    $translations['title'][$lang] = $message['title'];
-                    $translations['content'][$lang] = $message['content'];
-                }
+            // Prepare translations
+            $translations = [
+                'title' => is_array($data['title']) ? $data['title'] : [],
+                'content' => is_array($data['content']) ? $data['content'] : []
+            ];
 
-                // Set default content from user's preferred language
-                $defaultMessage = $this->getNotificationMessage(
-                    $type[0],
-                    $type[1],
-                    $userLang,
-                    $data['data'] ?? []
-                );
-                $data['title'] = $defaultMessage['title'];
-                $data['content'] = $defaultMessage['content'];
-            } else {
-                // Use provided translations if available
-                $translations = [
-                    'title' => is_array($data['title']) ? $data['title'] : [],
-                    'content' => is_array($data['content']) ? $data['content'] : []
-                ];
+            // Set default content from user's preferred language
+            $data['title'] = is_array($data['title']) ? 
+                ($data['title'][$userLang] ?? $data['title']['en'] ?? array_values($data['title'])[0]) : 
+                $data['title'];
 
-                // Set default content
-                $data['title'] = is_array($data['title']) ?
-                    ($data['title'][$userLang] ?? $data['title']['en'] ?? array_values($data['title'])[0]) :
-                    $data['title'];
-
-                $data['content'] = is_array($data['content']) ?
-                    ($data['content'][$userLang] ?? $data['content']['en'] ?? array_values($data['content'])[0]) :
-                    $data['content'];
-            }
+            $data['content'] = is_array($data['content']) ? 
+                ($data['content'][$userLang] ?? $data['content']['en'] ?? array_values($data['content'])[0]) : 
+                $data['content'];
 
             // Create notification
             $notification = Notification::create([
@@ -238,10 +208,12 @@ class NotificationService
                 'is_read' => false
             ]);
 
-            // Create translations
+            // Create translations for each supported language
             foreach (self::SUPPORTED_LANGUAGES as $lang) {
+                // Skip if it's the default language used for the main content
                 if ($lang === $userLang) continue;
 
+                // Create title translation
                 if (isset($translations['title'][$lang])) {
                     $notification->translations()->create([
                         'language' => $lang,
@@ -250,6 +222,7 @@ class NotificationService
                     ]);
                 }
 
+                // Create content translation
                 if (isset($translations['content'][$lang])) {
                     $notification->translations()->create([
                         'language' => $lang,
@@ -259,12 +232,14 @@ class NotificationService
                 }
             }
 
-            // Send FCM notification
-            $this->sendFCMNotification(
-                $notification,
-                $data['title'],
-                $data['content']
-            );
+            // Send FCM notification if needed
+            if (isset($data['send_fcm']) && $data['send_fcm']) {
+                $this->sendFCMNotification(
+                    $notification,
+                    $data['title'],
+                    $data['content']
+                );
+            }
 
             return $notification;
         } catch (\Exception $e) {

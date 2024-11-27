@@ -165,7 +165,7 @@ class AppointmentService
 
                 $this->notificationService->createNotification([
                     'user_id' => $appointment->user_id,
-                    'type' => 'appointment_new',  // Đảm bảo khớp với NOTIFICATION_TYPES['appointment']['new']
+                    'type' => 'appointment_new',
                     'title' => [
                         'en' => 'New Appointment',
                         'vi' => 'Lịch hẹn mới',
@@ -180,7 +180,8 @@ class AppointmentService
                         'date' => $appointment->appointment_date,
                         'time' => $appointment->timeSlot->start_time,
                         'id' => $appointment->id
-                    ]
+                    ],
+                    'send_fcm' => true
                 ]);
 
                 // Gửi thông báo cho admin
@@ -280,7 +281,7 @@ class AppointmentService
 
             // Nếu thay đổi gói dịch vụ
             if (isset($data['user_service_package_id'])) {
-                // Xóa liên kết cũ
+                // Xóa liên k���t cũ
                 $appointment->userServicePackages()->detach();
 
                 // Thêm liên kết mới
@@ -404,7 +405,7 @@ class AppointmentService
         try {
             $appointment = Appointment::with('timeSlot')->findOrFail($id);
 
-            // Nếu là hủy tự động, bỏ qua các kiểm tra về quyền và thời gian
+            // Nếu là hủy tự động, bỏ qua các kiểm tra v�� quyền và thời gian
             if (!$isAutoCancel) {
                 $currentUser = Auth::user();
 
