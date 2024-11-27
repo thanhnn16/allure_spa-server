@@ -43,9 +43,6 @@ class Notification extends Model
         'data' => 'array',
     ];
 
-    // Thêm translations vào response mặc định
-    protected $appends = ['translations'];
-
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -61,44 +58,27 @@ class Notification extends Model
         return $this->morphMany(Translation::class, 'translatable');
     }
 
-    /**
-     * Get the translations for the notification.
-     *
-     * @return array
-     */
-    public function getTranslationsAttribute()
-    {
-        $translations = [
-            'title' => [],
-            'content' => []
-        ];
-
-        // Get all translations
-        $allTranslations = $this->translations()->get();
-
-        // Group translations by field and language
-        foreach ($allTranslations as $translation) {
-            $translations[$translation->field][$translation->language] = $translation->value;
-        }
-
-        // Always include original text as English translation
-        $translations['title']['en'] = $this->title;
-        $translations['content']['en'] = $this->content;
-
-        return $translations;
-    }
-
-    /**
-     * Override toArray to customize the response
-     *
-     * @return array
-     */
     public function toArray()
     {
         $array = parent::toArray();
 
         // Format created_at as "time ago"
         $array['formatted_date'] = $this->created_at->diffForHumans();
+
+        // Xử lý translations
+        $translations = [
+            'title' => ['en' => $this->title],
+            'content' => ['en' => $this->content]
+        ];
+
+        // Đảm bảo translations đã được load
+        if ($this->relationLoaded('translations')) {
+            foreach ($this->getRelation('translations') as $translation) {
+                $translations[$translation->field][$translation->language] = $translation->value;
+            }
+        }
+
+        $array['translations'] = $translations;
 
         // Add media if exists
         if ($this->media) {

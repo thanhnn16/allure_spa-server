@@ -186,32 +186,44 @@ class NotificationService
             // Nếu type tồn tại, lấy message từ constant
             if (isset($data['type'])) {
                 list($mainType, $subType) = $this->parseNotificationType($data['type']);
+
+                // Kiểm tra và log để debug
+                Log::info('Notification type parsing:', [
+                    'type' => $data['type'],
+                    'mainType' => $mainType,
+                    'subType' => $subType
+                ]);
+
                 if ($mainType && isset(self::NOTIFICATION_MESSAGES[$mainType][$subType])) {
                     $messages = self::NOTIFICATION_MESSAGES[$mainType][$subType];
 
-                    // Replace placeholders in messages
+                    // Đảm bảo có đủ bản dịch cho tất cả ngôn ng được hỗ trợ
+                    $translations = [
+                        'title' => [],
+                        'content' => []
+                    ];
+
                     foreach (self::SUPPORTED_LANGUAGES as $lang) {
                         if (isset($messages[$lang])) {
-                            $messages[$lang]['title'] = $this->replacePlaceholders(
+                            $translations['title'][$lang] = $this->replacePlaceholders(
                                 $messages[$lang]['title'],
                                 $data['data'] ?? []
                             );
-                            $messages[$lang]['content'] = $this->replacePlaceholders(
+                            $translations['content'][$lang] = $this->replacePlaceholders(
                                 $messages[$lang]['content'],
                                 $data['data'] ?? []
                             );
                         }
                     }
 
-                    // Set translations from constant messages
-                    $data['title'] = array_combine(
-                        self::SUPPORTED_LANGUAGES,
-                        array_map(fn($lang) => $messages[$lang]['title'], self::SUPPORTED_LANGUAGES)
-                    );
-                    $data['content'] = array_combine(
-                        self::SUPPORTED_LANGUAGES,
-                        array_map(fn($lang) => $messages[$lang]['content'], self::SUPPORTED_LANGUAGES)
-                    );
+                    // Set translations
+                    $data['title'] = $translations['title'];
+                    $data['content'] = $translations['content'];
+
+                    // Log để debug
+                    Log::info('Generated translations:', [
+                        'translations' => $translations
+                    ]);
                 }
             }
 
@@ -357,7 +369,31 @@ class NotificationService
             ->take($perPage)
             ->get()
             ->map(function ($notification) {
-                return $this->formatNotification($notification);
+                $data = $notification->toArray();
+
+                // Xử lý translations
+                $translations = [
+                    'title' => ['en' => $notification->title],
+                    'content' => ['en' => $notification->content]
+                ];
+
+                // Thêm các bản dịch từ database
+                foreach ($notification->translations as $translation) {
+                    $translations[$translation->field][$translation->language] = $translation->value;
+                }
+
+                // Đảm bảo có đủ các ngôn ngữ được hỗ trợ
+                foreach (self::SUPPORTED_LANGUAGES as $lang) {
+                    if (!isset($translations['title'][$lang])) {
+                        $translations['title'][$lang] = $translations['title']['en'];
+                    }
+                    if (!isset($translations['content'][$lang])) {
+                        $translations['content'][$lang] = $translations['content']['en'];
+                    }
+                }
+
+                $data['translations'] = $translations;
+                return $data;
             });
 
         $hasMore = $query->skip($skip + $perPage)->exists();
