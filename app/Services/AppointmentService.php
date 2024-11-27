@@ -166,19 +166,8 @@ class AppointmentService
                 $this->notificationService->createNotification([
                     'user_id' => $appointment->user_id,
                     'type' => 'appointment_new',
-                    'title' => [
-                        'en' => 'New Appointment',
-                        'vi' => 'Lịch hẹn mới',
-                        'ja' => '新しい予約'
-                    ],
-                    'content' => [
-                        'en' => "Your appointment has been booked for {$appointmentDate} at {$appointmentTime}",
-                        'vi' => "Lịch hẹn của bạn đã được đặt vào {$appointmentDate} lúc {$appointmentTime}",
-                        'ja' => "予約が{$appointmentDate} {$appointmentTime}に設定されました"
-                    ],
                     'data' => [
-                        'date' => $appointment->appointment_date,
-                        'time' => $appointment->timeSlot->start_time,
+                        'date' => "{$appointmentDate} {$appointmentTime}",
                         'id' => $appointment->id
                     ],
                     'send_fcm' => true
@@ -281,7 +270,7 @@ class AppointmentService
 
             // Nếu thay đổi gói dịch vụ
             if (isset($data['user_service_package_id'])) {
-                // Xóa liên k���t cũ
+                // Xóa liên kết cũ
                 $appointment->userServicePackages()->detach();
 
                 // Thêm liên kết mới
@@ -405,7 +394,7 @@ class AppointmentService
         try {
             $appointment = Appointment::with('timeSlot')->findOrFail($id);
 
-            // Nếu là hủy tự động, bỏ qua các kiểm tra v�� quyền và thời gian
+            // Nếu là hủy tự động, bỏ qua các kiểm tra và quyền và thời gian
             if (!$isAutoCancel) {
                 $currentUser = Auth::user();
 

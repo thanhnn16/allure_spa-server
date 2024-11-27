@@ -183,6 +183,38 @@ class NotificationService
             $user = User::find($data['user_id']);
             $userLang = $user->preferred_language ?? self::DEFAULT_LANGUAGE;
 
+            // Nếu type tồn tại, lấy message từ constant
+            if (isset($data['type'])) {
+                list($mainType, $subType) = $this->parseNotificationType($data['type']);
+                if ($mainType && isset(self::NOTIFICATION_MESSAGES[$mainType][$subType])) {
+                    $messages = self::NOTIFICATION_MESSAGES[$mainType][$subType];
+
+                    // Replace placeholders in messages
+                    foreach (self::SUPPORTED_LANGUAGES as $lang) {
+                        if (isset($messages[$lang])) {
+                            $messages[$lang]['title'] = $this->replacePlaceholders(
+                                $messages[$lang]['title'],
+                                $data['data'] ?? []
+                            );
+                            $messages[$lang]['content'] = $this->replacePlaceholders(
+                                $messages[$lang]['content'],
+                                $data['data'] ?? []
+                            );
+                        }
+                    }
+
+                    // Set translations from constant messages
+                    $data['title'] = array_combine(
+                        self::SUPPORTED_LANGUAGES,
+                        array_map(fn($lang) => $messages[$lang]['title'], self::SUPPORTED_LANGUAGES)
+                    );
+                    $data['content'] = array_combine(
+                        self::SUPPORTED_LANGUAGES,
+                        array_map(fn($lang) => $messages[$lang]['content'], self::SUPPORTED_LANGUAGES)
+                    );
+                }
+            }
+
             // Prepare translations
             $translations = [
                 'title' => is_array($data['title']) ? $data['title'] : [],
@@ -190,12 +222,12 @@ class NotificationService
             ];
 
             // Set default content from user's preferred language
-            $data['title'] = is_array($data['title']) ? 
-                ($data['title'][$userLang] ?? $data['title']['en'] ?? array_values($data['title'])[0]) : 
+            $data['title'] = is_array($data['title']) ?
+                ($data['title'][$userLang] ?? $data['title']['en'] ?? array_values($data['title'])[0]) :
                 $data['title'];
 
-            $data['content'] = is_array($data['content']) ? 
-                ($data['content'][$userLang] ?? $data['content']['en'] ?? array_values($data['content'])[0]) : 
+            $data['content'] = is_array($data['content']) ?
+                ($data['content'][$userLang] ?? $data['content']['en'] ?? array_values($data['content'])[0]) :
                 $data['content'];
 
             // Create notification
@@ -436,5 +468,18 @@ class NotificationService
             $text = str_replace("{{$key}}", $value, $text);
         }
         return $text;
+    }
+
+    // Add new helper method
+    private function parseNotificationType($type)
+    {
+        // Handle types like 'appointment_new', 'order_status', etc.
+        $parts = explode('_', $type);
+        if (count($parts) >= 2) {
+            $mainType = $parts[0];
+            $subType = implode('_', array_slice($parts, 1));
+            return [$mainType, $subType];
+        }
+        return [null, null];
     }
 }

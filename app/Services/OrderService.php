@@ -95,19 +95,10 @@ class OrderService
                 $this->notificationService->createNotification([
                     'user_id' => $order->user_id,
                     'type' => 'order_new',
-                    'title' => [
-                        'en' => 'New Order',
-                        'vi' => 'Đơn hàng mới',
-                        'ja' => '新規注文'
-                    ],
-                    'content' => [
-                        'en' => "Your order #{$order->id} has been placed successfully",
-                        'vi' => "Đơn hàng #{$order->id} đã được tạo thành công",
-                        'ja' => "注文 #{$order->id}が正常に作成されました"
-                    ],
                     'data' => [
                         'id' => $order->id
-                    ]
+                    ],
+                    'send_fcm' => true
                 ]);
 
                 // Gửi thông báo cho admin
@@ -285,20 +276,11 @@ class OrderService
                     $this->notificationService->createNotification([
                         'user_id' => $order->user_id,
                         'type' => 'order_status',
-                        'title' => [
-                            'en' => 'Order Status Updated',
-                            'vi' => 'Cập nhật trạng thái đơn hàng',
-                            'ja' => '注文状態が更新されました'
-                        ],
-                        'content' => [
-                            'en' => "Your order #{$order->id} has been {$this->getOrderStatusTranslation($status)['en']}",
-                            'vi' => "Đơn hàng #{$order->id} đã {$this->getOrderStatusTranslation($status)['vi']}",
-                            'ja' => "注文 #{$order->id}が{$this->getOrderStatusTranslation($status)['ja']}になりました"
-                        ],
                         'data' => [
                             'id' => $order->id,
                             'status' => $status
-                        ]
+                        ],
+                        'send_fcm' => true
                     ]);
                 }
 
@@ -411,19 +393,10 @@ class OrderService
                 $this->notificationService->createNotification([
                     'user_id' => $order->user_id,
                     'type' => 'order_completed',
-                    'title' => [
-                        'en' => 'Order Completed',
-                        'vi' => 'Đơn hàng hoàn thành',
-                        'ja' => '注文完了'
-                    ],
-                    'content' => [
-                        'en' => "Your order #{$order->id} has been completed",
-                        'vi' => "Đơn hàng #{$order->id} đã hoàn thành",
-                        'ja' => "注文 #{$order->id}が完了しました"
-                    ],
                     'data' => [
                         'id' => $order->id
-                    ]
+                    ],
+                    'send_fcm' => true
                 ]);
             } catch (\Exception $e) {
                 Log::error('Failed to send completion notification:', [
@@ -620,7 +593,8 @@ class OrderService
     }
 
     // Thêm method mới để lấy translation cho order status
-    private function getOrderStatusTranslation($status) {
+    private function getOrderStatusTranslation($status)
+    {
         $translations = [
             'confirmed' => [
                 'en' => 'confirmed',
@@ -643,7 +617,7 @@ class OrderService
                 'ja' => 'キャンセル'
             ]
         ];
-        
+
         return $translations[$status] ?? $status;
     }
 }
