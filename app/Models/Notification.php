@@ -62,8 +62,8 @@ class Notification extends Model
     {
         $array = parent::toArray();
 
-        // Format created_at as "time ago"
-        $array['formatted_date'] = $this->created_at->diffForHumans();
+        // Trả về timestamp gốc thay vì formatted_date
+        $array['created_at_timestamp'] = $this->created_at->timestamp;
 
         // Xử lý translations
         $translations = [
