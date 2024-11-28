@@ -35,19 +35,10 @@ import UploadModal from './UploadModal.vue'
 // Thêm định nghĩa tabs trước khi sử dụng
 const tabs = [
     {
-        id: 'system',
-        label: 'Mô Tả Hệ Thống',
-        icon: mdiRobotExcited
-    },
-    {
-        id: 'vision',
-        label: 'Phân Tích Hình Ảnh',
-        icon: mdiImageSearch
-    },
-    {
-        id: 'general',
-        label: 'Cài Đặt Chung',
-        icon: mdiCog
+        id: 'general_assistant',
+        label: 'Trợ Lý Tổng Hợp',
+        icon: mdiRobotExcited,
+        description: 'AI có khả năng xử lý cả text và hình ảnh'
     }
 ];
 
@@ -111,31 +102,30 @@ const configForm = reactive({
 
 // Computed properties cho form fields
 const configFields = computed(() => [
-    // Left column fields
+    // Basic Information
     {
         key: 'ai_name',
-        label: 'Tên Cấu Hình',
+        label: 'Tên Trợ Lý',
         type: 'text',
-        column: 'left',
+        group: 'basic',
         required: true,
-        description: 'Tên định danh cho cấu hình AI'
+        description: 'Tên định danh cho trợ lý AI'
     },
     {
         key: 'type',
         label: 'Loại Cấu Hình',
         type: 'select',
-        column: 'left',
-        options: Object.entries(props.configTypes).map(([value, label]) => ({
-            value,
-            label: label.name
-        })),
+        group: 'basic',
+        options: [
+            { value: 'general_assistant', label: 'Trợ Lý Tổng Hợp' }
+        ],
         description: 'Loại cấu hình AI'
     },
     {
         key: 'language',
-        label: 'Ngôn Ngữ',
+        label: 'Ngôn Ngữ Mặc Định',
         type: 'select',
-        column: 'left',
+        group: 'basic',
         options: Object.entries(props.languages).map(([value, label]) => ({
             value,
             label
@@ -146,19 +136,19 @@ const configFields = computed(() => [
         key: 'model_type',
         label: 'Model AI',
         type: 'select',
-        column: 'left',
+        group: 'basic',
         options: Object.entries(props.modelTypes).map(([value, label]) => ({
             value,
             label
         })),
         description: 'Model AI được sử dụng'
     },
-    // Right column fields
+    // AI Behavior
     {
         key: 'temperature',
         label: 'Temperature',
-        type: 'number',
-        column: 'right',
+        type: 'slider',
+        group: 'behavior',
         min: 0,
         max: 1,
         step: 0.1,
@@ -168,7 +158,7 @@ const configFields = computed(() => [
         key: 'max_tokens',
         label: 'Max Tokens',
         type: 'number',
-        column: 'right',
+        group: 'behavior',
         min: 1,
         max: 8192,
         description: 'Số tokens tối đa cho mỗi câu trả lời'
@@ -176,8 +166,8 @@ const configFields = computed(() => [
     {
         key: 'top_p',
         label: 'Top P',
-        type: 'number',
-        column: 'right',
+        type: 'slider',
+        group: 'behavior',
         min: 0,
         max: 1,
         step: 0.1,
@@ -187,65 +177,64 @@ const configFields = computed(() => [
         key: 'top_k',
         label: 'Top K',
         type: 'number',
-        column: 'right',
+        group: 'behavior',
         min: 1,
         max: 100,
         description: 'Top K sampling'
     },
-    // Advanced fields
+    // Advanced Settings
+    {
+        key: 'context',
+        label: 'Context & Instructions',
+        type: 'markdown-editor',
+        group: 'advanced',
+        description: 'Hướng dẫn và ngữ cảnh cho AI',
+        fullWidth: true
+    },
+    {
+        key: 'function_declarations',
+        label: 'Function Declarations',
+        type: 'json-editor',
+        group: 'advanced',
+        description: 'Cấu hình các hàm có thể gọi',
+        defaultValue: JSON.stringify(props.defaultFunctionDeclarations, null, 2)
+    },
     {
         key: 'safety_settings',
         label: 'Safety Settings',
         type: 'json-editor',
+        group: 'advanced',
         description: 'Cấu hình an toàn',
-        defaultValue: JSON.stringify(props.defaultSafetySettings, null, 2),
-        group: 'advanced'
-    },
-    {
-        key: 'function_declarations',
-        label: 'Function Declarations',
-        type: 'json-editor',
-        description: 'Cấu hình các hàm có thể gọi',
-        defaultValue: JSON.stringify(props.defaultFunctionDeclarations, null, 2),
-        group: 'advanced'
+        defaultValue: JSON.stringify(props.defaultSafetySettings, null, 2)
     },
     {
         key: 'tool_config',
         label: 'Tool Configuration',
         type: 'json-editor',
-        description: 'Cấu hình cho function calling',
-        defaultValue: JSON.stringify(props.defaultToolConfig, null, 2),
-        group: 'advanced'
-    },
-    // Thêm trường context
-    {
-        key: 'context',
-        label: 'Context',
-        type: 'json-editor',
-        column: 'right',
-        description: 'Ngữ cảnh và hướng dẫn cho AI',
-        defaultValue: '',
-        schema: null
-    },
-    {
-        key: 'function_declarations',
-        label: 'Function Declarations',
-        type: 'json-editor',
-        column: 'right',
-        description: 'Cấu hình các hàm có thể gọi',
-        defaultValue: JSON.stringify(props.defaultFunctionDeclarations, null, 2),
-        schema: null
-    },
-    {
-        key: 'tool_config',
-        label: 'Tool Configuration',
-        type: 'json-editor',
-        column: 'right',
-        description: 'Cấu hình cho function calling',
-        defaultValue: JSON.stringify(props.defaultToolConfig, null, 2),
-        schema: null
+        group: 'advanced',
+        description: 'Cấu hình công cụ',
+        defaultValue: JSON.stringify(props.defaultToolConfig, null, 2)
     }
 ]);
+
+// Thêm computed cho các field groups
+const fieldGroups = computed(() => ({
+    basic: {
+        label: 'Thông Tin Cơ Bản',
+        icon: mdiCog,
+        fields: configFields.value.filter(f => f.group === 'basic')
+    },
+    behavior: {
+        label: 'Hành Vi AI',
+        icon: mdiRobot,
+        fields: configFields.value.filter(f => f.group === 'behavior')
+    },
+    advanced: {
+        label: 'Cài Đặt Nâng Cao',
+        icon: mdiCogBox,
+        fields: configFields.value.filter(f => f.group === 'advanced')
+    }
+}));
 
 // Watch for type changes to update template
 watch(() => configForm.type, (newType) => {
@@ -537,116 +526,122 @@ const updateGlobalApiKey = async () => {
 
         <Head title="Cấu Hình AI" />
         <SectionMain>
-            <!-- Header với search và filters -->
+            <!-- Header Section -->
             <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6 mb-6">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="flex items-center space-x-4">
-                        <BaseIcon :path="mdiRobot" class="w-8 h-8 text-blue-500" />
+                        <BaseIcon :path="mdiRobotExcited" class="w-12 h-12 text-blue-500 animate-pulse" />
                         <div>
-                            <h1 class="text-2xl font-bold dark:text-white">Cấu Hình AI</h1>
+                            <h1 class="text-2xl font-bold dark:text-white">
+                                Cấu Hình Trợ Lý AI
+                            </h1>
                             <p class="text-gray-600 dark:text-gray-400">
-                                {{ filteredConfigs.length }} cấu hình
+                                Quản lý và tùy chỉnh trợ lý AI thông minh
                             </p>
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-3">
-                        <BaseButton label="Tải Lên" color="success" @click="openUploadModal" :icon="mdiUpload"
-                            :loading="isLoading" />
-                        <BaseButton label="Thêm Mới" color="info" @click="openEditModal()" :icon="mdiPlus" />
-                        <BaseButton label="API Key" color="warning" @click="openApiKeyModal" :icon="mdiKey" />
+                        <BaseButton label="API Key" color="warning" @click="openApiKeyModal" :icon="mdiKey"
+                            class="hover:scale-105 transition-transform" />
+                        <BaseButton label="Thêm Mới" color="info" @click="openEditModal()" :icon="mdiPlus"
+                            class="hover:scale-105 transition-transform" />
                     </div>
                 </div>
             </div>
 
-            <!-- Tabs với animation -->
-            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-4 mb-6">
-                <div class="flex space-x-2 overflow-x-auto">
-                    <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
-                        class="px-4 py-2 rounded-md transition-all duration-200 whitespace-nowrap"
-                        :class="getTabClasses(tab.id)">
-                        <div class="flex items-center space-x-2">
-                            <BaseIcon :path="tab.icon" class="w-5 h-5" />
-                            <span>{{ tab.label }}</span>
-                            <span class="ml-2 px-2 py-0.5 text-xs rounded-full" :class="getCounterClasses(tab.id)">
-                                {{ getConfigCount(tab.id) }}
-                            </span>
-                        </div>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Grid layout cho configs -->
-            <TransitionGroup name="config-list" tag="div" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <CardBox v-for="config in filteredConfigs" :key="config.id"
-                    class="!p-6 hover:shadow-lg transition-shadow duration-200"
-                    :class="{ 'border-2 border-blue-500': config.is_active }">
-                    <!-- Config card content -->
-                    <div class="flex flex-col h-full">
+            <!-- Main Content -->
+            <div class="grid gap-6">
+                <TransitionGroup name="list" tag="div" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <CardBox v-for="config in configsList" :key="config.id"
+                        class="transform hover:scale-102 transition-all duration-300"
+                        :class="{ 'ring-2 ring-blue-500': config.is_active }">
+                        <!-- Config Card Header -->
                         <div class="flex justify-between items-start mb-4">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center space-x-2">
-                                    <h3 class="text-lg font-semibold dark:text-white truncate">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-lg font-semibold">
                                         {{ config.ai_name }}
                                     </h3>
                                     <span v-if="config.is_active"
-                                        class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 whitespace-nowrap">
+                                        class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
                                         Active
                                     </span>
                                 </div>
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    {{ config.model_type }}
+                                </p>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex gap-2">
+                                <button @click="openPreviewModal(config)"
+                                    class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                    <BaseIcon :path="mdiEye" class="w-5 h-5" />
+                                </button>
+                                <button @click="openEditModal(config)"
+                                    class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                    <BaseIcon :path="mdiPencil" class="w-5 h-5" />
+                                </button>
+                                <button @click="confirmDelete(config)"
+                                    class="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900 transition-colors">
+                                    <BaseIcon :path="mdiDelete" class="w-5 h-5 text-red-500" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Config Card Content -->
+                        <div class="space-y-4">
+                            <!-- Basic Info -->
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-500">Language</span>
+                                    <p>{{ props.languages[config.language] }}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500">Temperature</span>
+                                    <p>{{ config.temperature }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Context Preview -->
+                            <div class="mt-4">
+                                <span class="text-gray-500 text-sm">Context</span>
+                                <p class="text-sm line-clamp-3">
                                     {{ config.context }}
                                 </p>
                             </div>
-                            <div class="flex flex-shrink-0 space-x-2 ml-4">
-                                <BaseButton color="info" :icon="mdiEye" small @click="openPreviewModal(config)" />
-                                <BaseButton color="info" :icon="mdiPencil" small @click="openEditModal(config)" />
-                                <BaseButton color="danger" :icon="mdiDelete" small @click="confirmDelete(config)" />
-                            </div>
-                        </div>
 
-                        <div class="grid grid-cols-2 gap-4 text-sm mt-auto">
-                            <div class="space-y-1">
-                                <p class="text-gray-600 dark:text-gray-400">
-                                    <span class="font-medium">Model:</span>
-                                    {{ config.model_type }}
-                                </p>
-                                <p class="text-gray-600 dark:text-gray-400">
-                                    <span class="font-medium">Language:</span>
-                                    {{ config.language }}
-                                </p>
-                            </div>
-                            <div class="space-y-1">
-                                <p class="text-gray-600 dark:text-gray-400">
-                                    <span class="font-medium">Temp:</span>
-                                    {{ config.temperature }}
-                                </p>
-                                <p class="text-gray-600 dark:text-gray-400">
-                                    <span class="font-medium">Tokens:</span>
-                                    {{ config.max_tokens }}
-                                </p>
+                            <!-- Stats -->
+                            <div class="grid grid-cols-3 gap-2 pt-4 border-t dark:border-gray-700">
+                                <div class="text-center">
+                                    <span class="text-sm text-gray-500">Max Tokens</span>
+                                    <p class="font-semibold">{{ config.max_tokens }}</p>
+                                </div>
+                                <div class="text-center">
+                                    <span class="text-sm text-gray-500">Top P</span>
+                                    <p class="font-semibold">{{ config.top_p }}</p>
+                                </div>
+                                <div class="text-center">
+                                    <span class="text-sm text-gray-500">Top K</span>
+                                    <p class="font-semibold">{{ config.top_k }}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </CardBox>
-            </TransitionGroup>
+                    </CardBox>
+                </TransitionGroup>
+            </div>
 
             <!-- Modals -->
-            <EditModal v-if="showEditModal" :config="editingConfig" :fields="configFields" :config-types="configTypes"
-                :model-types="modelTypes" :languages="languages" :response-formats="responseFormats"
-                :default-safety-settings="defaultSafetySettings"
-                :default-function-declarations="defaultFunctionDeclarations" :default-tool-config="defaultToolConfig"
+            <EditModal v-if="showEditModal" :config="editingConfig" :field-groups="fieldGroups" v-bind="modalProps"
                 @close="closeEditModal" @submit="submitConfig" />
 
-            <UploadModal v-if="showUploadModal" :config-types="configTypes" @close="closeUploadModal"
-                @upload="handleFileUpload" />
-
-            <DeleteModal v-if="showDeleteModal" :config="activeConfig" :config-types="configTypes"
-                @close="showDeleteModal = false" @confirm="deleteConfig" />
+            <DeleteModal v-if="showDeleteModal" :config="activeConfig" @close="showDeleteModal = false"
+                @confirm="deleteConfig" />
 
             <PreviewModal v-if="showPreviewModal" :config="activeConfig" v-bind="modalProps"
                 @close="showPreviewModal = false" />
 
-            <!-- Thêm modal API key -->
+            <!-- API Key Modal -->
             <TransitionRoot appear :show="showApiKeyModal" as="template">
                 <Dialog as="div" @close="showApiKeyModal = false" class="relative z-50">
                     <div class="fixed inset-0 bg-black/30" />
@@ -654,13 +649,12 @@ const updateGlobalApiKey = async () => {
                         <div class="flex min-h-full items-center justify-center p-4">
                             <DialogPanel
                                 class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all dark:bg-slate-900">
-                                <DialogTitle as="h3"
-                                    class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+                                <DialogTitle as="h3" class="text-lg font-medium leading-6">
                                     Cập Nhật API Key Chung
                                 </DialogTitle>
                                 <div class="mt-4">
                                     <input v-model="globalApiKey" type="password"
-                                        class="w-full rounded-lg border px-4 py-2 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                                        class="w-full rounded-lg border px-4 py-2 dark:bg-slate-800 dark:border-slate-700"
                                         placeholder="Nhập API key..." />
                                 </div>
                                 <div class="mt-4 flex justify-end space-x-2">
@@ -677,19 +671,41 @@ const updateGlobalApiKey = async () => {
 </template>
 
 <style scoped>
-.config-list-move,
-.config-list-enter-active,
-.config-list-leave-active {
+.list-move,
+.list-enter-active,
+.list-leave-active {
     transition: all 0.5s ease;
 }
 
-.config-list-enter-from,
-.config-list-leave-to {
+.list-enter-from,
+.list-leave-to {
     opacity: 0;
     transform: translateY(30px);
 }
 
-.config-list-leave-active {
+.list-leave-active {
     position: absolute;
+}
+
+/* Thêm hiệu ứng hover cho cards */
+.hover\:scale-102:hover {
+    transform: scale(1.02);
+}
+
+/* Thêm animation cho icon */
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
 }
 </style>
