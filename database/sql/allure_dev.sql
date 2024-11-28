@@ -606,12 +606,27 @@ CREATE TABLE reward_items (
     item_type ENUM ('product', 'service') NOT NULL,
     item_id INT UNSIGNED NOT NULL,
     points_required INT UNSIGNED NOT NULL,
+    quantity_available INT UNSIGNED DEFAULT NULL COMMENT 'NULL means unlimited',
     is_active TINYINT(1) DEFAULT 1,
+    start_date TIMESTAMP NULL COMMENT 'Promotion start date',
+    end_date TIMESTAMP NULL COMMENT 'Promotion end date',
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (item_id) REFERENCES services (id) ON DELETE CASCADE,
-    FOREIGN KEY (item_id) REFERENCES products (id) ON DELETE CASCADE
+    INDEX idx_item_type_id (item_type, item_id)
 );
+
+-- Thêm ràng buộc cho từng loại item
+ALTER TABLE reward_items
+ADD CONSTRAINT fk_reward_product
+FOREIGN KEY (item_id) REFERENCES products(id)
+ON DELETE CASCADE
+WHERE item_type = 'product';
+
+ALTER TABLE reward_items
+ADD CONSTRAINT fk_reward_service
+FOREIGN KEY (item_id) REFERENCES services(id)
+ON DELETE CASCADE
+WHERE item_type = 'service';
 
 -- 45. Bảng point_redemption_histories
 CREATE TABLE point_redemption_histories (
