@@ -202,23 +202,14 @@ class AiChatConfig extends Model
     // Model types available
     const MODEL_TYPES = [
         'gemini-1.5-pro' => 'Gemini 1.5 Pro',
-        'gemini-1.0-pro' => 'Gemini 1.0 Pro',
-        'gemini-vision-pro' => 'Gemini Vision Pro'
+        'gemini-1.5-flash' => 'Gemini 1.5 Flash',
     ];
 
     // Config types with descriptions
     const TYPES = [
-        'system_prompt' => [
-            'name' => 'Mô Tả Hệ Thống',
-            'description' => 'Cấu hình vai trò và hành vi cơ bản của AI'
-        ],
-        'vision_config' => [
-            'name' => 'Phân Tích Hình Ảnh',
-            'description' => 'Cấu hình cho khả năng nhận diện và phân tích hình ảnh'
-        ],
-        'general' => [
-            'name' => 'Cài Đặt Chung',
-            'description' => 'Cấu hình chung cho model AI'
+        'general_assistant' => [
+            'name' => 'Trợ Lý Tổng Hợp',
+            'description' => 'Cấu hình AI có thể xử lý cả text và hình ảnh'
         ],
         'global_api_key' => [
             'name' => 'API Key Chung',
@@ -449,7 +440,7 @@ class AiChatConfig extends Model
                         'description' => 'Start date (YYYY-MM-DD)'
                     ],
                     'to_date' => [
-                        'type' => 'string', 
+                        'type' => 'string',
                         'description' => 'End date (YYYY-MM-DD)'
                     ]
                 ]

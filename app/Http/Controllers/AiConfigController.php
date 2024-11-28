@@ -43,41 +43,15 @@ class AiConfigController extends BaseController
                 'defaultToolConfig' => AiChatConfig::DEFAULT_TOOL_CONFIG,
                 // Thêm các template mẫu
                 'configTemplates' => [
-                    'system_prompt' => [
+                    'general_assistant' => [
                         'ai_name' => '',
-                        'type' => 'system_prompt',
-                        'context' => 'Bạn là một trợ lý AI thông minh...',
+                        'type' => 'general_assistant',
+                        'context' => 'Bạn là trợ lý AI thông minh...',
                         'language' => 'vi',
                         'model_type' => 'gemini-1.5-pro',
-                        'temperature' => 0.9,
-                        'max_tokens' => 2048,
-                        'top_p' => 1,
-                        'top_k' => 40,
-                        'priority' => 0,
-                        'is_active' => true
-                    ],
-                    'vision_config' => [
-                        'ai_name' => '',
-                        'type' => 'vision_config',
-                        'context' => 'Hãy phân tích chi tiết hình ảnh...',
-                        'language' => 'vi',
-                        'model_type' => 'gemini-vision-pro',
                         'temperature' => 0.7,
-                        'max_tokens' => 1024,
-                        'top_p' => 1,
-                        'top_k' => 40,
-                        'priority' => 0,
-                        'is_active' => true
-                    ],
-                    'general' => [
-                        'ai_name' => '',
-                        'type' => 'general',
-                        'context' => 'Cấu hình chung cho model AI',
-                        'language' => 'vi',
-                        'model_type' => 'gemini-1.5-pro',
-                        'temperature' => 0.9,
                         'max_tokens' => 2048,
-                        'top_p' => 1,
+                        'top_p' => 0.95,
                         'top_k' => 40,
                         'priority' => 0,
                         'is_active' => true
@@ -436,7 +410,7 @@ class AiConfigController extends BaseController
     {
         return $request->validate([
             'ai_name' => 'required|string|max:255',
-            'type' => 'required|string|in:system_prompt,vision_config,general',
+            'type' => 'required|string|in:general_assistant,global_api_key',
             'context' => 'required',
             'api_key' => 'nullable|string|max:255',
             'language' => 'required|string|in:vi,en,ja',
