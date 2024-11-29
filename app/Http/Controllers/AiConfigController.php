@@ -440,7 +440,22 @@ class AiConfigController extends BaseController
             'system_instructions' => 'nullable|string',
             'response_format' => 'nullable|string|in:' . implode(',', array_values(AiChatConfig::RESPONSE_FORMATS)),
             'stop_sequences' => 'nullable|array',
-            'metadata' => 'nullable|array'
+            'metadata' => ['nullable', function ($attribute, $value, $fail) {
+                if (!is_null($value)) {
+                    if (is_string($value)) {
+                        try {
+                            json_decode($value, true);
+                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                $fail('The ' . $attribute . ' must be a valid JSON string.');
+                            }
+                        } catch (\Exception $e) {
+                            $fail('The ' . $attribute . ' must be a valid JSON string.');
+                        }
+                    } else if (!is_array($value)) {
+                        $fail('The ' . $attribute . ' must be a JSON string or an array.');
+                    }
+                }
+            }],
         ]);
     }
 
@@ -449,7 +464,7 @@ class AiConfigController extends BaseController
      */
     protected function formatConfigForResponse($config)
     {
-        return [
+        $formattedConfig = [
             'id' => $config->id,
             'ai_name' => $config->ai_name,
             'type' => $config->type,
@@ -471,11 +486,15 @@ class AiConfigController extends BaseController
             'system_instructions' => $config->system_instructions,
             'response_format' => $config->response_format ?? array_key_first(AiChatConfig::RESPONSE_FORMATS),
             'stop_sequences' => $config->stop_sequences ?? [],
-            'metadata' => $config->metadata ?? [],
+            'metadata' => is_string($config->metadata)
+                ? json_decode($config->metadata, true)
+                : ($config->metadata ?? []),
             'created_at' => $config->created_at,
             'updated_at' => $config->updated_at,
             'last_used_at' => $config->last_used_at
         ];
+
+        return $formattedConfig;
     }
 
     /**

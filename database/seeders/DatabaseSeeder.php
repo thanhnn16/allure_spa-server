@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Staff;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +20,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@example.com',
             'password' => Hash::make('12345678'),
             'role' => 'admin',
-            'full_name' => 'Admin User',
+            'full_name' => 'Quản trị viên',
         ]);
 
         User::create([
@@ -30,7 +29,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'user@example.com',
             'password' => Hash::make('12345678'),
             'role' => 'user',
-            'full_name' => 'Normal User',
+            'full_name' => 'Nguyễn Thành',
         ]);
 
         User::create([
@@ -39,7 +38,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'staff@example.com',
             'password' => Hash::make('12345678'),
             'role' => 'staff',
-            'full_name' => 'Staff User',
+            'full_name' => 'Chị Nhân viên',
         ]);
     }
 }

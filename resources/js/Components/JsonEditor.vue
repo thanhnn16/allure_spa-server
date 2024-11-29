@@ -1,6 +1,6 @@
 <template>
-    <div class="json-editor-container">
-        <div ref="editorElement" class="min-h-[300px]"></div>
+    <div class="json-editor-container" :style="{ height: height || '300px' }">
+        <div ref="editorElement" class="h-full"></div>
         <div v-if="error" class="text-red-500 text-sm mt-2">
             {{ error }}
         </div>
@@ -29,6 +29,10 @@ const props = defineProps({
     schema: {
         type: Object,
         default: null
+    },
+    height: {
+        type: String,
+        default: '300px'
     }
 });
 
@@ -128,20 +132,42 @@ const updateValue = (value) => {
 <style>
 .json-editor-container {
     @apply border border-gray-300 rounded-lg overflow-hidden;
+    height: 300px;
 }
 
 .cm-editor {
-    height: 100%;
-    min-height: 300px;
+    height: calc(100% - 40px);
+    overflow: auto !important;
 }
 
 .cm-editor .cm-scroller {
     font-family: monospace;
     line-height: 1.4;
-    height: 100%;
+    overflow: auto !important;
+    min-height: 100%;
 }
 
 .cm-editor .cm-content {
     padding: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.cm-editor .cm-scroller::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.cm-editor .cm-scroller::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.cm-editor .cm-scroller::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.cm-editor .cm-scroller::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 </style>

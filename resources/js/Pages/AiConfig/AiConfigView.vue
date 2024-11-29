@@ -15,7 +15,8 @@ import {
     mdiRobot,
     mdiRobotExcited,
     mdiUpload,
-    mdiKey
+    mdiKey,
+    mdiCogBox
 } from '@mdi/js'
 import axios from 'axios'
 import { computed, reactive, ref, watch } from 'vue'
@@ -635,7 +636,7 @@ const updateGlobalApiKey = async () => {
             <EditModal v-if="showEditModal" :config="editingConfig" :field-groups="fieldGroups" v-bind="modalProps"
                 @close="closeEditModal" @submit="submitConfig" />
 
-            <DeleteModal v-if="showDeleteModal" :config="activeConfig" @close="showDeleteModal = false"
+            <DeleteModal v-if="showDeleteModal" :config="activeConfig" :config-types="configTypes" @close="showDeleteModal = false"
                 @confirm="deleteConfig" />
 
             <PreviewModal v-if="showPreviewModal" :config="activeConfig" v-bind="modalProps"

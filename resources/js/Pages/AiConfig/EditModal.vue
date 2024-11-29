@@ -74,18 +74,17 @@
                         <!-- JSON Editor Fields - Full Width -->
                         <div class="space-y-6 mt-8">
                             <div v-for="field in jsonFields" :key="field.key" class="space-y-2">
-                                <label :for="field.key"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     {{ field.label }}
                                 </label>
-                                <JsonEditor v-model="formData[field.key]" :schema="field.schema"
-                                    class="border rounded-md" @error="handleJsonError(field.key, $event)" />
-                                <p v-if="jsonErrors[field.key]" class="mt-1 text-sm text-red-600">
-                                    {{ jsonErrors[field.key] }}
-                                </p>
-                                <p v-if="field.description" class="mt-1 text-sm text-gray-500">
-                                    {{ field.description }}
-                                </p>
+                                <div :style="{ '--editor-height': field.height }">
+                                    <JsonEditor
+                                        v-model="formData[field.key]"
+                                        :schema="field.schema || {}"
+                                        :error="errors[field.key]"
+                                        :height="field.height || '300px'"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -173,10 +172,6 @@ const props = defineProps({
         type: Object,
         default: () => null
     },
-    fields: {
-        type: Array,
-        required: true
-    },
     configTypes: {
         type: Object,
         required: true
@@ -188,22 +183,6 @@ const props = defineProps({
     languages: {
         type: Object,
         required: true
-    },
-    responseFormats: {
-        type: Object,
-        required: true
-    },
-    defaultSafetySettings: {
-        type: Array,
-        required: true
-    },
-    defaultFunctionDeclarations: {
-        type: Array,
-        required: true
-    },
-    defaultToolConfig: {
-        type: Object,
-        required: true
     }
 })
 
@@ -213,22 +192,144 @@ const { validateConfig } = useConfigValidation()
 const isSubmitting = ref(false)
 const errors = ref({})
 
-// Tách fields thành 3 nhóm riêng biệt
-const basicLeftFields = computed(() =>
-    props.fields.filter(field =>
-        field.column === 'left' && field.type !== 'json-editor'
-    )
-);
+// Thêm defaultFormData
+const defaultFormData = {
+    ai_name: '',
+    type: 'system_prompt',
+    context: JSON.stringify({
+        role: "assistant",
+        description: "Mô tả về vai trò của AI",
+        instructions: "Hãy trả lời một cách chuyên nghiệp và thân thiện",
+        custom_instructions: {
+            system_instructions: "Bạn là một trợ lý AI thông minh...",
+            user_instructions: "Hãy trả lời một cách chuyên nghiệp và thân thiện"
+        }
+    }, null, 2),
+    language: 'vi',
+    model_type: 'gemini-1.5-pro',
+    temperature: 0.7,
+    max_tokens: 2048,
+    top_p: 0.9,
+    top_k: 40,
+    safety_settings: [],
+    function_declarations: [],
+    tool_config: {}
+}
 
-const basicRightFields = computed(() =>
-    props.fields.filter(field =>
-        field.column === 'right' && field.type !== 'json-editor'
-    )
-);
+// Thêm fields computed
+const fields = computed(() => [
+    // Basic fields - left column
+    {
+        key: 'ai_name',
+        label: 'Tên Trợ Lý',
+        type: 'text',
+        column: 'left',
+        required: true
+    },
+    {
+        key: 'type',
+        label: 'Loại Cấu Hình',
+        type: 'select',
+        column: 'left',
+        options: Object.entries(props.configTypes).map(([value, config]) => ({
+            value,
+            label: config.name
+        }))
+    },
+    {
+        key: 'language',
+        label: 'Ngôn Ngữ',
+        type: 'select',
+        column: 'left',
+        options: Object.entries(props.languages).map(([value, label]) => ({
+            value,
+            label
+        }))
+    },
+    {
+        key: 'model_type',
+        label: 'Model AI',
+        type: 'select',
+        column: 'left',
+        options: Object.entries(props.modelTypes).map(([value, label]) => ({
+            value,
+            label
+        }))
+    },
+    // Basic fields - right column
+    {
+        key: 'temperature',
+        label: 'Temperature',
+        type: 'number',
+        column: 'right',
+        min: 0,
+        max: 1,
+        step: 0.1
+    },
+    {
+        key: 'max_tokens',
+        label: 'Max Tokens',
+        type: 'number',
+        column: 'right',
+        min: 1,
+        max: 8192
+    },
+    {
+        key: 'top_p',
+        label: 'Top P',
+        type: 'number',
+        column: 'right',
+        min: 0,
+        max: 1,
+        step: 0.1
+    },
+    {
+        key: 'top_k',
+        label: 'Top K',
+        type: 'number',
+        column: 'right',
+        min: 1,
+        max: 100
+    },
+    // JSON fields
+    {
+        key: 'context',
+        label: 'Context',
+        type: 'json-editor',
+        height: '200px'
+    },
+    {
+        key: 'safety_settings',
+        label: 'Safety Settings',
+        type: 'json-editor',
+        height: '300px'
+    },
+    {
+        key: 'function_declarations',
+        label: 'Function Declarations',
+        type: 'json-editor',
+        height: '400px'
+    },
+    {
+        key: 'tool_config',
+        label: 'Tool Configuration',
+        type: 'json-editor',
+        height: '300px'
+    }
+])
 
-const jsonFields = computed(() =>
-    props.fields.filter(field => field.type === 'json-editor')
-);
+// Cập nhật computed properties để sử dụng fields
+const basicLeftFields = computed(() => 
+    fields.value.filter(field => field.column === 'left')
+)
+
+const basicRightFields = computed(() => 
+    fields.value.filter(field => field.column === 'right')
+)
+
+const jsonFields = computed(() => 
+    fields.value.filter(field => field.type === 'json-editor')
+)
 
 // Thêm computed để kiểm tra mode
 const isEditMode = computed(() => {
