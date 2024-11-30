@@ -22,11 +22,11 @@ const form = useForm({
     code: props.voucher?.code || '',
     description: props.voucher?.description || '',
     discount_type: props.voucher?.discount_type || 'percentage',
-    discount_value: props.voucher?.discount_value || '',
-    min_order_value: props.voucher?.min_order_value || '',
-    max_discount_amount: props.voucher?.max_discount_amount || '',
-    start_date: props.voucher?.start_date || '',
-    end_date: props.voucher?.end_date || '',
+    discount_value: props.voucher?.discount_value || 0,
+    min_order_value: props.voucher?.min_order_value || 0,
+    max_discount_amount: props.voucher?.max_discount_amount || 0,
+    start_date: props.voucher?.start_date || new Date().toISOString().split('T')[0],
+    end_date: props.voucher?.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     is_unlimited: props.voucher?.is_unlimited || false,
     usage_limit: props.voucher?.usage_limit || 1,
     uses_per_user: props.voucher?.uses_per_user || 1,
@@ -97,38 +97,11 @@ const formatCurrency = (value) => {
 
 const submit = () => {
     validateDiscountValue()
-    
-    console.log('Submitting form with data:', {
-        ...form,
-        discount_value: Number(form.discount_value),
-        min_order_value: Number(form.min_order_value || 0),
-        max_discount_amount: Number(form.max_discount_amount || 0),
-        usage_limit: form.is_unlimited ? null : Number(form.usage_limit),
-        uses_per_user: Number(form.uses_per_user)
-    })
-
-    const formData = {
-        ...form,
-        discount_value: Number(form.discount_value),
-        min_order_value: Number(form.min_order_value || 0),
-        max_discount_amount: Number(form.max_discount_amount || 0),
-        usage_limit: form.is_unlimited ? null : Number(form.usage_limit),
-        uses_per_user: Number(form.uses_per_user)
-    }
 
     if (props.voucher?.id) {
-        console.log('Updating voucher:', {
-            id: props.voucher.id,
-            route: route('vouchers.update', props.voucher.id),
-            method: 'PUT'
-        })
-        form.put(route('vouchers.update', props.voucher.id), formData)
+        form.put(route('vouchers.update', props.voucher.id))
     } else {
-        console.log('Creating new voucher:', {
-            route: route('vouchers.store'),
-            method: 'POST'
-        })
-        form.post(route('vouchers.store'), formData)
+        form.post(route('vouchers.store'))
     }
 }
 
@@ -175,6 +148,7 @@ const isValidDateRange = computed(() => {
 
 <template>
     <LayoutAuthenticated>
+
         <Head :title="voucher?.id ? 'Sửa Voucher' : 'Thêm Voucher'" />
 
         <SectionMain :breadcrumbs="breadcrumbs">
@@ -193,20 +167,17 @@ const isValidDateRange = computed(() => {
                     <!-- Thông tin cơ bản -->
                     <div class="bg-gray-50 dark:bg-slate-800/50 p-4 rounded-lg space-y-4">
                         <h3 class="font-medium text-gray-900 dark:text-white mb-4">Thông tin cơ bản</h3>
-                        
+
                         <!-- Mã voucher -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Mã voucher <span class="text-red-500">*</span>
                             </label>
                             <div class="mt-1 relative">
-                                <input v-model="form.code" type="text" required 
-                                    class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                <input v-model="form.code" type="text" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                     dark:bg-slate-800 dark:text-white focus:border-blue-500 
-                                    focus:ring-blue-500 pr-10"
-                                    :class="{ 'border-red-500': form.errors.code }">
-                                <BaseIcon :path="mdiTicket" 
-                                    class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
+                                    focus:ring-blue-500 pr-10" :class="{ 'border-red-500': form.errors.code }">
+                                <BaseIcon :path="mdiTicket" class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
                             </div>
                             <p v-if="form.errors.code" class="mt-1 text-sm text-red-500">
                                 {{ form.errors.code }}
@@ -218,11 +189,9 @@ const isValidDateRange = computed(() => {
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Mô tả
                             </label>
-                            <textarea v-model="form.description" rows="2"
-                                class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 
+                            <textarea v-model="form.description" rows="2" class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 
                                 dark:bg-slate-800 dark:text-white focus:border-blue-500 
-                                focus:ring-blue-500"
-                                placeholder="Nhập mô tả về voucher (không bắt buộc)">
+                                focus:ring-blue-500" placeholder="Nhập mô tả về voucher (không bắt buộc)">
                             </textarea>
                         </div>
                     </div>
@@ -238,14 +207,13 @@ const isValidDateRange = computed(() => {
                                     Loại giảm giá <span class="text-red-500">*</span>
                                 </label>
                                 <div class="mt-1 relative">
-                                    <select v-model="form.discount_type" required 
-                                        class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                    <select v-model="form.discount_type" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                         dark:bg-slate-800 dark:text-white focus:border-blue-500 
                                         focus:ring-blue-500 pr-10">
                                         <option value="percentage">Phần trăm</option>
                                         <option value="fixed">Số tiền cố định</option>
                                     </select>
-                                    <BaseIcon :path="form.discount_type === 'percentage' ? mdiPercent : mdiCurrencyUsd" 
+                                    <BaseIcon :path="form.discount_type === 'percentage' ? mdiPercent : mdiCurrencyUsd"
                                         class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
                                 </div>
                             </div>
@@ -256,9 +224,8 @@ const isValidDateRange = computed(() => {
                                     Giá trị giảm <span class="text-red-500">*</span>
                                 </label>
                                 <div class="mt-1 relative">
-                                    <input v-model.number="form.discount_value" type="number" required
-                                        min="0" :max="form.discount_type === 'percentage' ? 100 : null"
-                                        class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                    <input v-model.number="form.discount_value" type="number" required min="0"
+                                        :max="form.discount_type === 'percentage' ? 100 : null" class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                         dark:bg-slate-800 dark:text-white focus:border-blue-500 
                                         focus:ring-blue-500 pr-10">
                                     <span class="absolute right-3 top-2 text-gray-500 dark:text-gray-400">
@@ -278,8 +245,7 @@ const isValidDateRange = computed(() => {
                                     Giá trị đơn hàng tối thiểu
                                 </label>
                                 <div class="mt-1 relative">
-                                    <input v-model.number="form.min_order_value" type="number" min="0"
-                                        class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                    <input v-model.number="form.min_order_value" type="number" min="0" class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                         dark:bg-slate-800 dark:text-white focus:border-blue-500 
                                         focus:ring-blue-500 pr-10">
                                     <span class="absolute right-3 top-2 text-gray-500 dark:text-gray-400">đ</span>
@@ -292,8 +258,7 @@ const isValidDateRange = computed(() => {
                                     Giảm giá tối đa
                                 </label>
                                 <div class="mt-1 relative">
-                                    <input v-model.number="form.max_discount_amount" type="number" min="0"
-                                        class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                    <input v-model.number="form.max_discount_amount" type="number" min="0" class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                         dark:bg-slate-800 dark:text-white focus:border-blue-500 
                                         focus:ring-blue-500 pr-10">
                                     <span class="absolute right-3 top-2 text-gray-500 dark:text-gray-400">đ</span>
@@ -313,11 +278,10 @@ const isValidDateRange = computed(() => {
                                     Ngày bắt đầu <span class="text-red-500">*</span>
                                 </label>
                                 <div class="mt-1 relative">
-                                    <input v-model="form.start_date" type="date" required 
-                                        class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                    <input v-model="form.start_date" type="date" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                         dark:bg-slate-800 dark:text-white focus:border-blue-500 
                                         focus:ring-blue-500 pr-10">
-                                    <BaseIcon :path="mdiCalendar" 
+                                    <BaseIcon :path="mdiCalendar"
                                         class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
                                 </div>
                             </div>
@@ -327,12 +291,10 @@ const isValidDateRange = computed(() => {
                                     Ngày kết thúc <span class="text-red-500">*</span>
                                 </label>
                                 <div class="mt-1 relative">
-                                    <input v-model="form.end_date" type="date" required 
-                                        class="w-full rounded-md border-gray-300 dark:border-gray-600 
+                                    <input v-model="form.end_date" type="date" required class="w-full rounded-md border-gray-300 dark:border-gray-600 
                                         dark:bg-slate-800 dark:text-white focus:border-blue-500 
-                                        focus:ring-blue-500 pr-10"
-                                        :class="{ 'border-red-500': !isValidDateRange }">
-                                    <BaseIcon :path="mdiCalendar" 
+                                        focus:ring-blue-500 pr-10" :class="{ 'border-red-500': !isValidDateRange }">
+                                    <BaseIcon :path="mdiCalendar"
                                         class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
                                 </div>
                                 <p v-if="!isValidDateRange" class="mt-1 text-sm text-red-500">
@@ -344,11 +306,9 @@ const isValidDateRange = computed(() => {
                         <!-- Giới hạn sử dụng -->
                         <div class="space-y-4">
                             <div class="flex items-center">
-                                <input type="checkbox" v-model="isUnlimitedRef"
-                                    id="is_unlimited" class="rounded border-gray-300 dark:border-gray-600 
+                                <input type="checkbox" v-model="isUnlimitedRef" id="is_unlimited" class="rounded border-gray-300 dark:border-gray-600 
                                     text-blue-600 focus:ring-blue-500">
-                                <label for="is_unlimited"
-                                    class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                <label for="is_unlimited" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
                                     Không giới hạn số lần sử dụng
                                 </label>
                             </div>
@@ -359,8 +319,7 @@ const isValidDateRange = computed(() => {
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Tổng số lần sử dụng <span class="text-red-500">*</span>
                                     </label>
-                                    <input v-model.number="form.usage_limit" type="number" required
-                                        min="1" class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 
+                                    <input v-model.number="form.usage_limit" type="number" required min="1" class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 
                                         dark:bg-slate-800 dark:text-white focus:border-blue-500 
                                         focus:ring-blue-500">
                                 </div>
@@ -370,8 +329,7 @@ const isValidDateRange = computed(() => {
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Số lần sử dụng cho mỗi người dùng <span class="text-red-500">*</span>
                                     </label>
-                                    <input v-model.number="form.uses_per_user" type="number" required
-                                        min="1" class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 
+                                    <input v-model.number="form.uses_per_user" type="number" required min="1" class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 
                                         dark:bg-slate-800 dark:text-white focus:border-blue-500 
                                         focus:ring-blue-500">
                                 </div>
@@ -383,8 +341,8 @@ const isValidDateRange = computed(() => {
                     <div class="flex justify-end space-x-3 pt-6">
                         <BaseButton type="button" label="Quay lại" color="white"
                             @click="$inertia.visit(route('vouchers.index'))" />
-                        <BaseButton type="submit" :label="voucher?.id ? 'Cập nhật' : 'Tạo mới'"
-                            color="info" :loading="form.processing" />
+                        <BaseButton type="submit" :label="voucher?.id ? 'Cập nhật' : 'Tạo mới'" color="info"
+                            :loading="form.processing" />
                     </div>
                 </form>
             </CardBox>

@@ -19,7 +19,8 @@
                 <div v-if="showFilters" class="mb-4">
                     <div class="mb-4">
                         <label class="block mb-2 dark:text-gray-300">Danh mục</label>
-                        <select v-model="form.category" class="w-full px-4 py-2 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
+                        <select v-model="form.category"
+                            class="w-full px-4 py-2 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
                             <option value="">Tất cả danh mục</option>
                             <option v-for="category in categories" :key="category.id" :value="category.id">
                                 {{ category.category_name }}
@@ -31,7 +32,8 @@
                 <div class="my-4">
                     <input v-model="form.search" type="text" placeholder="Tìm kiếm sản phẩm..."
                         class="w-full px-4 py-2 mb-4 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300 dark:placeholder-gray-500">
-                    <select v-model="form.per_page" @change="handlePerPageChange" class="px-8 py-2 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
+                    <select v-model="form.per_page" @change="handlePerPageChange"
+                        class="px-8 py-2 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
                         <option :value="10">Xem 10 mỗi trang</option>
                         <option :value="25">Xem 25 mỗi trang</option>
                         <option :value="50">Xem 50 mỗi trang</option>
@@ -39,7 +41,8 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-gray-500 dark:text-gray-300">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-dark-surface/50 dark:text-gray-300">
+                        <thead
+                            class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-dark-surface/50 dark:text-gray-300">
                             <tr>
                                 <th scope="col" class="px-6 py-3 w-24">Ảnh</th>
                                 <th @click="sort('name')" scope="col" class="px-6 py-3 cursor-pointer">
@@ -96,14 +99,9 @@
                 <TablePagination :links="products.links" />
             </div>
 
-            <CreateProductModal 
-                v-model:show="showCreateModal"
-                :categories="categories" 
-                @close="handleModalClose"
-                @created="handleProductCreated"
-                @error="handleProductError"
-                @validationFailed="handleValidationFailed"
-            />
+            <CreateProductModal v-model:show="showCreateModal" :categories="categories" @close="handleModalClose"
+                @created="handleProductCreated" @error="handleProductError"
+                @validationFailed="handleValidationFailed" />
         </SectionMain>
     </LayoutAuthenticated>
 </template>
@@ -214,7 +212,11 @@ const handleProductCreated = (success) => {
     if (success) {
         showCreateModal.value = false
         toast.success('Tạo sản phẩm thành công!')
-        router.reload()
+        router.visit(route('products.index'), {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true
+        })
     }
 }
 
