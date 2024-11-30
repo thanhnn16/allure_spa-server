@@ -1,6 +1,6 @@
 <script setup>
-import { reactive, onMounted } from 'vue'
-import { Head } from '@inertiajs/vue3'
+import { reactive, onMounted, watch, computed } from 'vue'
+import { Head, router, useForm } from '@inertiajs/vue3'
 import { useMainStore } from '@/Stores/main'
 import {
   mdiAccount,
@@ -32,14 +32,21 @@ import { useToast } from 'vue-toastification'
 const mainStore = useMainStore()
 const toast = useToast()
 
-const profileForm = reactive({
+// Khai báo genderOptions trước khi sử dụng trong watch
+const genderOptions = [
+  { value: 'male', label: 'Nam' },
+  { value: 'female', label: 'Nữ' },
+  { value: 'other', label: 'Khác' }
+]
+
+// Khởi tạo form với giá trị mặc định
+const profileForm = useForm({
   full_name: '',
   email: '',
   phone_number: '',
   gender: '',
   date_of_birth: '',
   skin_condition: '',
-  avatar: null
 })
 
 const passwordForm = reactive({
@@ -48,36 +55,83 @@ const passwordForm = reactive({
   password_confirmation: ''
 })
 
+const avatarForm = useForm({
+  avatar: null
+})
+
+// Tách riêng hàm cập nhật form để tránh việc reset không mong muốn
 const updateFormFromStore = () => {
   const user = mainStore.user
-  profileForm.full_name = user.full_name
-  profileForm.email = user.email
-  profileForm.phone_number = user.phone_number
-  profileForm.gender = user.gender
-  profileForm.date_of_birth = user.date_of_birth
-  profileForm.skin_condition = user.skin_condition
-  profileForm.avatar = user.avatar_url
+  if (!user) return
+
+  // Cập nhật các trường cơ bản
+  profileForm.full_name = user.full_name || ''
+  profileForm.email = user.email || ''
+  profileForm.phone_number = user.phone_number || ''
+  profileForm.skin_condition = user.skin_condition || ''
+
+  // Xử lý giới tính một lần duy nhất
+  if (user.gender) {
+    const genderOption = genderOptions.find(opt => opt.value === user.gender)
+    if (genderOption && (!profileForm.gender || profileForm.gender.value !== user.gender)) {
+      profileForm.gender = genderOption
+    }
+  }
+
+  // Xử lý ngày sinh một lần duy nhất
+  if (user.date_of_birth && (!profileForm.date_of_birth || profileForm.date_of_birth !== user.date_of_birth)) {
+    const date = new Date(user.date_of_birth)
+    profileForm.date_of_birth = date.toISOString().split('T')[0]
+  }
 }
 
 const submitProfile = () => {
-  const formData = new FormData()
-  Object.keys(profileForm).forEach(key => {
-    if (profileForm[key] !== null) {
-      formData.append(key, profileForm[key])
-    }
-  })
+  const formData = {
+    full_name: profileForm.full_name,
+    email: profileForm.email,
+    phone_number: profileForm.phone_number,
+    gender: profileForm.gender?.value || profileForm.gender,
+    date_of_birth: profileForm.date_of_birth,
+    skin_condition: profileForm.skin_condition
+  }
 
-  axios.post(`/api/users/${mainStore.user.id}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+  console.log('Form data being submitted:', formData)
+
+  axios.put('/api/user/profile', formData)
     .then(response => {
-      mainStore.setUser(response.data.data)
+      console.log('API response success:', response.data)
       toast.success('Cập nhật thông tin thành công')
+      mainStore.fetchUserInfo()
+      router.reload()
     })
     .catch(error => {
-      toast.error('Có lỗi xảy ra khi cập nhật thông tin')
+      console.error('API error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        fullError: error
+      })
+
+      if (error.response?.data?.message) {
+        if (typeof error.response.data.message === 'object') {
+          Object.values(error.response.data.message).forEach(messages => {
+            if (Array.isArray(messages)) {
+              messages.forEach(message => {
+                console.log('Validation error:', message)
+                toast.error(message)
+              })
+            } else {
+              console.log('Validation error:', messages)
+              toast.error(messages)
+            }
+          })
+        } else {
+          console.log('API error message:', error.response.data.message)
+          toast.error(error.response.data.message)
+        }
+      } else {
+        console.log('Generic error occurred')
+        toast.error('Có lỗi xảy ra khi cập nhật thông tin')
+      }
     })
 }
 
@@ -98,30 +152,21 @@ const handleAvatarUpload = async (event) => {
     return
   }
 
-  const formData = new FormData()
-  formData.append('avatar', file)
+  avatarForm.avatar = file
 
-  try {
-    toast.info('Đang tải ảnh lên...')
+  toast.info('Đang tải ảnh lên...')
 
-    const response = await axios.post('/api/users/upload-avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Accept': 'application/json'
-      }
-    })
-
-    if (response.data.success) {
-      mainStore.setUser(response.data.data.user)
-      profileForm.avatar = response.data.data.avatar_url
-      event.target.value = ''
+  avatarForm.post('/profile/avatar', {
+    preserveScroll: true,
+    onSuccess: () => {
       toast.success('Tải ảnh đại diện thành công')
+      // Cập nhật lại thông tin user từ mainStore
+      mainStore.fetchUserInfo()
+    },
+    onError: (errors) => {
+      toast.error(errors.avatar || 'Không thể tải lên ảnh đại diện')
     }
-  } catch (error) {
-    console.error('Upload error:', error)
-    const errorMessage = error.response?.data?.message || 'Không thể tải lên ảnh đại diện'
-    toast.error(errorMessage)
-  }
+  })
 }
 
 const submitPass = () => {
@@ -136,10 +181,23 @@ const submitPass = () => {
     })
 }
 
-// Load user info when component mounted
+// Sử dụng onMounted để load dữ liệu ban đầu
 onMounted(async () => {
   await mainStore.fetchUserInfo()
   updateFormFromStore()
+})
+
+// Chỉ watch những thay đổi từ mainStore
+watch(() => mainStore.user, (newUser) => {
+  if (newUser) {
+    updateFormFromStore()
+  }
+}, { deep: true })
+
+// Thêm computed property để hiển thị label phù hợp
+const selectedGenderLabel = computed(() => {
+  const option = genderOptions.find(opt => opt.value === profileForm.gender)
+  return option ? option.label : ''
 })
 </script>
 
@@ -171,11 +229,8 @@ onMounted(async () => {
           </FormField>
 
           <FormField label="Giới tính">
-            <FormControl v-model="profileForm.gender" :icon="mdiGenderMaleFemale" type="select" :options="[
-              { value: 'male', label: 'Nam' },
-              { value: 'female', label: 'Nữ' },
-              { value: 'other', label: 'Khác' }
-            ]" name="gender" />
+            <FormControl v-model="profileForm.gender" :icon="mdiGenderMaleFemale" type="select" :options="genderOptions"
+              name="gender" value-field="value" label-field="label" />
           </FormField>
 
           <FormField label="Ngày sinh">
@@ -188,7 +243,7 @@ onMounted(async () => {
 
           <template #footer>
             <BaseButtons>
-              <BaseButton color="info" type="submit" label="Cập nhật" />
+              <BaseButton color="info" type="submit" label="Cập nhật" :loading="profileForm.processing" />
             </BaseButtons>
           </template>
         </CardBox>

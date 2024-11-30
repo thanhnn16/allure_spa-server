@@ -504,13 +504,6 @@ class UserController extends BaseController
             $user = $request->user();
             $avatarFile = $request->file('avatar');
 
-            // Log thông tin file để debug
-            Log::info('Avatar upload attempt:', [
-                'original_name' => $avatarFile->getClientOriginalName(),
-                'size' => $avatarFile->getSize(),
-                'mime_type' => $avatarFile->getMimeType()
-            ]);
-
             // Xóa avatar cũ nếu có
             if ($user->media) {
                 $this->mediaService->delete($user->media);
@@ -525,26 +518,30 @@ class UserController extends BaseController
 
             $user->load('media');
 
-            return $this->respondWithJson([
-                'user' => $user,
-                'avatar_url' => $media->full_url
-            ], 'Avatar uploaded successfully');
+            if ($request->wantsJson()) {
+                return $this->respondWithJson([
+                    'user' => $user,
+                    'avatar_url' => $media->full_url
+                ], 'Avatar uploaded successfully');
+            }
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Avatar validation error:', [
-                'errors' => $e->errors()
-            ]);
-            return $this->respondWithJson(null, $e->errors()['avatar'][0], 422);
+            // Redirect back với thông báo thành công
+            return redirect()->back()->with('success', 'Avatar uploaded successfully');
         } catch (\Exception $e) {
             Log::error('Upload avatar error:', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return $this->respondWithJson(
-                null,
-                'Failed to upload avatar: ' . $e->getMessage(),
-                500
-            );
+
+            if ($request->wantsJson()) {
+                return $this->respondWithJson(
+                    null,
+                    'Failed to upload avatar: ' . $e->getMessage(),
+                    500
+                );
+            }
+
+            return redirect()->back()->with('error', 'Failed to upload avatar');
         }
     }
 
@@ -587,17 +584,20 @@ class UserController extends BaseController
             $user = Auth::user();
 
             $validated = $request->validate([
-                'full_name' => 'sometimes|string|max:255',
-                'phone_number' => 'sometimes|string|max:20|unique:users,phone_number,' . $user->id,
-                'email' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
-                'gender' => 'sometimes|in:male,female,other',
-                'date_of_birth' => 'sometimes|date',
-                'skin_condition' => 'sometimes|string|max:255'
+                'full_name' => 'required|string|max:255',
+                'phone_number' => 'nullable|string|max:20|unique:users,phone_number,' . $user->id,
+                'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
+                'gender' => 'nullable|string|in:male,female,other',
+                'date_of_birth' => 'nullable|date',
+                'skin_condition' => 'nullable|string|max:255'
             ], [
-                'gender.in' => 'Giới tính phải là một trong các giá trị: male, female, other',
+                'full_name.required' => 'Họ và tên không được để trống',
+                'full_name.max' => 'Họ và tên không được vượt quá 255 ký tự',
+                'phone_number.max' => 'Số điện thoại không được vượt quá 20 ký tự',
+                'phone_number.unique' => 'Số điện thoại đã được sử dụng',
                 'email.email' => 'Email không đúng định dạng',
                 'email.unique' => 'Email đã được sử dụng',
-                'phone_number.unique' => 'Số điện thoại đã được sử dụng',
+                'gender.in' => 'Giới tính phải là một trong các giá trị: nam, nữ, khác',
                 'date_of_birth.date' => 'Ngày sinh không đúng định dạng'
             ]);
 
@@ -605,9 +605,8 @@ class UserController extends BaseController
 
             return $this->respondWithJson($user, 'Cập nhật thông tin thành công');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return $this->respondWithJson(null, $e->errors()[array_key_first($e->errors())][0], 422);
+            return $this->respondWithJson(null, $e->errors(), 422);
         } catch (\Exception $e) {
-            Log::error('Update profile error: ' . $e->getMessage());
             return $this->respondWithJson(null, 'Có lỗi xảy ra khi cập nhật thông tin', 500);
         }
     }

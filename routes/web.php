@@ -50,7 +50,9 @@ Route::middleware('auth')->group(function () {
 
     // Profile routes
     Route::get('/profile/', [UserController::class, 'profile'])->name('users.profile');
-    Route::patch('/profile/{profile}', [UserController::class, 'updateProfile'])->name('users.updateProfile');
+    // Thêm route mới cho upload avatar
+    Route::post('/profile/avatar', [UserController::class, 'uploadAvatar'])->name('profile.upload-avatar');
+    Route::patch('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 
     // Product routes
     Route::resource('products', ProductController::class);

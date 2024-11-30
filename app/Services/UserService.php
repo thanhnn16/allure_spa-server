@@ -181,8 +181,31 @@ class UserService
 
     public function updateUser(string $id, array $data): User
     {
-        $user = User::findOrFail($id);
-        $user->update($data);
-        return $user->fresh();
+        try {
+            $user = User::findOrFail($id);
+
+            // Log để debug
+            Log::info('Updating user', [
+                'user_id' => $id,
+                'data' => $data,
+                'before_update' => $user->toArray()
+            ]);
+
+            $user->fill($data);
+            $user->save();
+
+            // Log sau khi update
+            Log::info('User updated', [
+                'after_update' => $user->fresh()->toArray()
+            ]);
+
+            return $user->fresh();
+        } catch (\Exception $e) {
+            Log::error('Error updating user: ' . $e->getMessage(), [
+                'user_id' => $id,
+                'data' => $data
+            ]);
+            throw $e;
+        }
     }
 }

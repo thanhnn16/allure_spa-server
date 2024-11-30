@@ -111,6 +111,7 @@ Route::middleware('throttle:api')->group(function () {
         // Sửa lại route cập nhật user profile
 
         Route::put('/user/profile', [UserController::class, 'updateProfile']);
+
         // Rating routes
         Route::get('/ratings', [RatingController::class, 'index']);
         Route::get('/products/{productId}/ratings', [RatingController::class, 'getProductRatings']);
