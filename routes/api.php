@@ -33,11 +33,24 @@ Route::middleware('throttle:api')->group(function () {
     Route::get('/hello-world', function () {
         return 'Hello World';
     });
-
     // Auth routes
-    Route::post('/auth/register', [AuthController::class, 'register']);
-    Route::post('/auth/login', [AuthController::class, 'login']);
-    Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
+    Route::prefix('auth')->group(function () {
+        Route::post('/register', [AuthController::class, 'register']);
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/change-password', [AuthController::class, 'changePassword']);
+
+        // Phone verification routes
+        Route::prefix('phone')->group(function () {
+            Route::post('/verify', [AuthController::class, 'verifyPhone']);
+            Route::post('/verify-code', [AuthController::class, 'verifyPhoneCode']);
+        });
+
+        // Email verification routes 
+        Route::prefix('email')->group(function () {
+            Route::post('/verify/send', [AuthController::class, 'sendEmailVerification']);
+            Route::get('/verify/{token}', [AuthController::class, 'verifyEmail']);
+        });
+    });
 
     // Search routes
     Route::get('/products/search', [ProductController::class, 'searchProducts']);
@@ -110,7 +123,8 @@ Route::middleware('throttle:api')->group(function () {
 
         // Sửa lại route cập nhật user profile
 
-        Route::put('/user/profile', [UserController::class, 'updateProfile']);
+        Route::patch('/user/profile', [UserController::class, 'updateProfile']);
+        Route::patch('/users/{id}', [UserController::class, 'update']);
 
         // Rating routes
         Route::get('/ratings', [RatingController::class, 'index']);

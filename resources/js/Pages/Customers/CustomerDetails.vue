@@ -2,8 +2,8 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot } from '@headlessui/vue'
 import {
-    mdiAccount, mdiPackageVariant, mdiReceipt, mdiGift, mdiDelete,
-    mdiAlert, mdiPencil, mdiTicketPercent, mdiCamera,
+    mdiPackageVariant, mdiReceipt, mdiGift, mdiDelete,
+    mdiAlert, mdiPencil, mdiTicketPercent,
     mdiCheckCircle,
     mdiCalendarClock,
     mdiClockOutline,
@@ -36,7 +36,7 @@ const props = defineProps({
 const toast = useToast()
 
 const tabs = [
-    { id: 'personal', label: 'Thông tin cá nhân', icon: mdiAccount },
+    { id: 'personal', label: 'Thông tin cá nhân', icon: mdiPackageVariant },
     { id: 'service_combos', label: 'Combo dịch vụ', icon: mdiPackageVariant },
     { id: 'invoices', label: 'Đơn hàng', icon: mdiReceipt },
     { id: 'vouchers', label: 'Vouchers', icon: mdiGift },
@@ -254,33 +254,6 @@ const formatAddressType = (type) => {
             return type;
     }
 }
-
-
-const handleAvatarUpload = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-
-    const formData = new FormData()
-    formData.append('avatar', file)
-
-    try {
-        const response = await axios.post('/api/user/avatar', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        })
-
-        if (response.data.data.user) {
-            Object.assign(props.user, response.data.data.user)
-        }
-
-        toast.success('Avatar đã được cập nhật thành công')
-    } catch (error) {
-        console.error('Upload error:', error)
-        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tải lên avatar')
-    }
-}
-
 
 const closeAssignVoucherModal = () => {
     showAssignVoucherModal.value = false;
@@ -673,21 +646,35 @@ const cancelEdit = (item) => {
     item.editValue = props.user[item.key]
 }
 
-const saveField = async (item) => {
+// Giữ lại và sử dụng hàm updateUserInfo
+const updateUserInfo = async (key, value) => {
     try {
-        const response = await axios.put(`/api/user/profile`, {
-            [item.key]: item.editValue
-        })
+        const response = await axios.patch(`/users/${props.user.id}`, {
+            [key]: value
+        });
 
-        if (response.data.success) {
-            props.user[item.key] = item.editValue
-            editingStates[item.key] = false
-
-            toast.success('Cập nhật thành công')
+        if (response.data.data) {
+            // Cập nhật thông tin user trong props
+            Object.assign(props.user, response.data.data);
+            editingStates[key] = false;
+            toast.success('Đã cập nhật thông tin thành công');
         }
     } catch (error) {
-        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật')
-        item.editValue = props.user[item.key]
+        console.error('Update error:', error);
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+    }
+}
+
+// Sửa lại tất cả các nơi gọi saveField thành updateUserInfo
+const handleUpdate = async (info) => {
+    if (!info.editValue) return;
+
+    try {
+        await updateUserInfo(info.key, info.editValue);
+    } catch (error) {
+        console.error('Update error:', error);
+    } finally {
+        info.isEditing = false;
     }
 }
 </script>
@@ -723,13 +710,7 @@ const saveField = async (item) => {
                         <div class="flex flex-col items-center space-y-3 mb-6 md:mb-0">
                             <div class="relative">
                                 <UserAvatar :fullName="safeUser.full_name" :avatarUrl="safeUser.avatar_url"
-                                    size="2xl" />
-                                <label class="absolute bottom-0 right-0 bg-blue-500 dark:bg-blue-600 
-                                    rounded-full p-2 cursor-pointer hover:bg-blue-600 dark:hover:bg-blue-700 
-                                    transition-colors shadow-md">
-                                    <input type="file" @change="handleAvatarUpload" accept="image/*" class="hidden">
-                                    <BaseIcon :path="mdiCamera" class="w-5 h-5 text-white" />
-                                </label>
+                                    size="3xl" />
                             </div>
                             <div class="text-center">
                                 <h2 class="text-xl font-bold dark:text-white">{{ safeUser.full_name }}</h2>
@@ -816,7 +797,7 @@ const saveField = async (item) => {
                                                     dark:bg-slate-800 dark:text-white shadow-sm 
                                                     focus:border-blue-500 focus:ring-blue-500">
                                             <BaseButton color="success" :icon="mdiCheck" small
-                                                @click="saveField(item)" />
+                                                @click="handleUpdate(item)" />
                                             <BaseButton color="danger" :icon="mdiClose" small
                                                 @click="cancelEdit(item)" />
                                         </template>
