@@ -58,10 +58,14 @@ class OrderService
                 $this->updateVoucherUsage($voucher, Auth::id());
             }
 
+            // Tính toán final_amount
+            $finalAmount = $calculatedTotals['subtotal'] - $discountAmount;
+
             // Create order with calculated values
             $orderData = [
                 'user_id' => $userId,
                 'total_amount' => $calculatedTotals['subtotal'],
+                'final_amount' => $finalAmount,
                 'shipping_address_id' => $shippingAddressId,
                 'payment_method_id' => $data['payment_method_id'],
                 'status' => request()->is('api/*') ? Order::STATUS_PENDING : Order::STATUS_CONFIRMED,
@@ -440,7 +444,7 @@ class OrderService
             'user_id' => $order->user_id,
             'total_amount' => $order->total_amount,
             'discount_amount' => $order->discount_amount,
-            'final_amount' => $order->final_total,
+            'final_amount' => $order->final_amount,
             'payment_method_id' => $order->payment_method_id,
             'status' => Invoice::STATUS_PENDING,
             'created_by_user_id' => Auth::id()
