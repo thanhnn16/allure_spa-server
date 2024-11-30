@@ -15,10 +15,17 @@ use Illuminate\Support\Facades\Log;
 class AuthService
 {
     protected $fcmTokenService;
+    protected $emailVerificationService;
+    protected $firebaseAuthService;
 
-    public function __construct(FcmTokenService $fcmTokenService)
-    {
+    public function __construct(
+        FcmTokenService $fcmTokenService,
+        EmailVerificationService $emailVerificationService,
+        FirebaseAuthService $firebaseAuthService
+    ) {
         $this->fcmTokenService = $fcmTokenService;
+        $this->emailVerificationService = $emailVerificationService;
+        $this->firebaseAuthService = $firebaseAuthService;
     }
 
     public function login(array $credentials)
@@ -176,5 +183,77 @@ class AuthService
         return [
             'message' => 'Password changed successfully'
         ];
+    }
+
+    public function verifyEmail(string $token, string $lang = 'vi'): array
+    {
+        $result = $this->emailVerificationService->verifyEmail($token);
+
+        if (!$result['success']) {
+            throw new \Exception(AuthErrorCode::INVALID_TOKEN->value);
+        }
+
+        return [
+            'user' => $result['user'],
+            'message' => 'Email verified successfully'
+        ];
+    }
+
+    public function verifyPhone(string $verificationId, string $code): array
+    {
+        $result = $this->firebaseAuthService->verifyPhoneNumber(
+            $verificationId,
+            $code
+        );
+
+        if (!$result['success']) {
+            throw new \Exception(AuthErrorCode::INVALID_VERIFICATION_CODE->value);
+        }
+
+        return [
+            'message' => 'Phone number verified successfully'
+        ];
+    }
+
+    public function resendVerification(User $user, string $type, string $lang = 'vi'): array
+    {
+        if ($type === 'email') {
+            if (!$user->email) {
+                throw new \Exception(AuthErrorCode::EMAIL_NOT_FOUND->value);
+            }
+
+            if ($user->email_verified_at) {
+                throw new \Exception(AuthErrorCode::EMAIL_ALREADY_VERIFIED->value);
+            }
+
+            $token = $this->emailVerificationService->sendVerificationEmail($user, $lang);
+            return [
+                'message' => 'Verification email sent',
+                'token' => $token->token
+            ];
+        }
+
+        if ($type === 'phone') {
+            if (!$user->phone_number) {
+                throw new \Exception(AuthErrorCode::PHONE_NOT_FOUND->value);
+            }
+
+            if ($user->phone_verified_at) {
+                throw new \Exception(AuthErrorCode::PHONE_ALREADY_VERIFIED->value);
+            }
+
+            $result = $this->firebaseAuthService->sendVerificationCode($user->phone_number);
+
+            if (!$result['success']) {
+                throw new \Exception(AuthErrorCode::VERIFICATION_SEND_FAILED->value);
+            }
+
+            return [
+                'message' => 'Verification SMS sent',
+                'verification_id' => $result['verification_id']
+            ];
+        }
+
+        throw new \Exception(AuthErrorCode::INVALID_VERIFICATION_TYPE->value);
     }
 }

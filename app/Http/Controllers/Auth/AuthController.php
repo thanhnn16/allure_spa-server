@@ -295,6 +295,91 @@ class AuthController extends BaseController
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/auth/verify-email",
+     *     summary="Verify email address",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             required={"token"},
+     *             @OA\Property(property="token", type="string"),
+     *             @OA\Property(property="lang", type="string", example="vi")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Email verified successfully")
+     * )
+     */
+    public function verifyEmail(Request $request)
+    {
+        try {
+            $result = $this->authService->verifyEmail(
+                $request->token,
+                $request->input('lang', 'vi')
+            );
+            return $this->respondWithJson($result, 'Email verified successfully');
+        } catch (\Exception $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/auth/verify-phone",
+     *     summary="Verify phone number",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             required={"verification_id", "code"},
+     *             @OA\Property(property="verification_id", type="string"),
+     *             @OA\Property(property="code", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Phone number verified successfully")
+     * )
+     */
+    public function verifyPhone(Request $request)
+    {
+        try {
+            $result = $this->authService->verifyPhone(
+                $request->verification_id,
+                $request->code
+            );
+            return $this->respondWithJson($result, 'Phone number verified successfully');
+        } catch (\Exception $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/auth/resend-verification",
+     *     summary="Resend verification email/SMS",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             required={"type"},
+     *             @OA\Property(property="type", type="string", enum={"email", "phone"}),
+     *             @OA\Property(property="lang", type="string", example="vi")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Verification sent successfully")
+     * )
+     */
+    public function resendVerification(Request $request)
+    {
+        try {
+            $result = $this->authService->resendVerification(
+                $request->user(),
+                $request->type,
+                $request->input('lang', 'vi')
+            );
+            return $this->respondWithJson($result, 'Verification sent successfully');
+        } catch (\Exception $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+    }
+
+    /**
      * Get detailed error message from validation exception
      */
     private function getDetailedErrorMessage(ValidationException $e): string

@@ -31,7 +31,9 @@ CREATE TABLE media (
 CREATE TABLE users (
     id CHAR(36) PRIMARY KEY,
     phone_number VARCHAR(255) NULL UNIQUE,
+    phone_verified_at TIMESTAMP NULL DEFAULT NULL,
     email VARCHAR(255) NULL UNIQUE,
+    email_verified_at TIMESTAMP NULL DEFAULT NULL,
     password TEXT NULL,
     role ENUM ('user', 'admin', 'staff') NOT NULL DEFAULT 'user',
     remember_token VARCHAR(100),
@@ -500,7 +502,6 @@ CREATE INDEX idx_appointments_date ON appointments (appointment_date);
 
 CREATE INDEX idx_appointments_status ON appointments (status);
 
-
 -- 18. Bảng service_usage_histories
 CREATE TABLE service_usage_histories (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -523,7 +524,6 @@ CREATE TABLE service_usage_histories (
     SET
         NULL
 );
-
 
 -- 39. Bảng user_vouchers
 CREATE TABLE user_vouchers (
@@ -608,7 +608,7 @@ CREATE TABLE reward_items (
     points_required INT UNSIGNED NOT NULL,
     quantity_available INT UNSIGNED DEFAULT NULL COMMENT 'NULL means unlimited',
     is_active TINYINT(1) DEFAULT 1,
-    start_date TIMESTAMP NULL COMMENT 'Promotion start date', 
+    start_date TIMESTAMP NULL COMMENT 'Promotion start date',
     end_date TIMESTAMP NULL COMMENT 'Promotion end date',
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
@@ -813,4 +813,16 @@ CREATE TABLE appointment_service_package (
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (appointment_id) REFERENCES appointments (id),
     FOREIGN KEY (user_service_package_id) REFERENCES user_service_packages (id)
+);
+
+-- 46. Bảng verification_tokens
+CREATE TABLE verification_tokens (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    type ENUM('email', 'phone') NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
