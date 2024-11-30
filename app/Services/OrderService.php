@@ -43,6 +43,9 @@ class OrderService
             // Đảm bảo có user_id
             $userId = $data['user_id'] ?? Auth::id();
 
+            // Xử lý địa chỉ giao hàng
+            $shippingAddressId = $this->handleShippingAddress($data, $userId);
+
             // Tính toán với key order_items
             $calculatedTotals = $this->calculateOrderTotals($data['order_items']);
 
@@ -59,7 +62,7 @@ class OrderService
             $orderData = [
                 'user_id' => $userId,
                 'total_amount' => $calculatedTotals['subtotal'],
-                'shipping_address_id' => $data['shipping_address_id'] ?? null,
+                'shipping_address_id' => $shippingAddressId,
                 'payment_method_id' => $data['payment_method_id'],
                 'status' => request()->is('api/*') ? Order::STATUS_PENDING : Order::STATUS_CONFIRMED,
                 'discount_amount' => $discountAmount,
@@ -619,5 +622,41 @@ class OrderService
         ];
 
         return $translations[$status] ?? $status;
+    }
+
+    private function handleShippingAddress(array $data, string $userId) 
+    {
+        // Nếu có temporary_address
+        if (isset($data['temporary_address'])) {
+            // Tạo địa chỉ tạm thời
+            $address = Address::create([
+                'user_id' => $userId,
+                'province' => $data['temporary_address']['province'],
+                'district' => $data['temporary_address']['district'], 
+                'ward' => $data['temporary_address']['ward'],
+                'address' => $data['temporary_address']['address'],
+                'address_type' => 'shipping',
+                'is_temporary' => true,
+                'is_default' => false
+            ]);
+            
+            return $address->id;
+        }
+        
+        // Nếu có shipping_address_id
+        if (isset($data['shipping_address_id'])) {
+            // Validate địa chỉ có tồn tại và thuộc về user
+            $address = Address::where('id', $data['shipping_address_id'])
+                ->where('user_id', $userId)
+                ->first();
+                
+            if (!$address) {
+                throw new \Exception('Địa chỉ giao hàng không hợp lệ');
+            }
+                
+            return $address->id;
+        }
+        
+        throw new \Exception('Vui lòng cung cấp địa chỉ giao hàng');
     }
 }

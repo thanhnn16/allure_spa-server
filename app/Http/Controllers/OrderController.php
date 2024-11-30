@@ -31,6 +31,16 @@ class OrderController extends BaseController
      *     schema="OrderRequest",
      *     required={"payment_method_id", "order_items", "total_amount"},
      *     @OA\Property(property="payment_method_id", type="integer"),
+     *     @OA\Property(property="shipping_address_id", type="integer", nullable=true),
+     *     @OA\Property(
+     *         property="temporary_address",
+     *         type="object",
+     *         nullable=true,
+     *         @OA\Property(property="province", type="string"),
+     *         @OA\Property(property="district", type="string"), 
+     *         @OA\Property(property="ward", type="string"),
+     *         @OA\Property(property="address", type="string")
+     *     ),
      *     @OA\Property(property="voucher_id", type="integer", nullable=true),
      *     @OA\Property(property="total_amount", type="number", format="float"),
      *     @OA\Property(property="discount_amount", type="number", format="float", nullable=true),
@@ -384,9 +394,13 @@ class OrderController extends BaseController
     {
         try {
             $validatedData = $request->validate([
-                'user_id' => 'nullable|exists:users,id',
                 'payment_method_id' => 'required|exists:payment_methods,id',
                 'shipping_address_id' => 'nullable|exists:addresses,id',
+                'temporary_address' => 'nullable|required_without:shipping_address_id|array',
+                'temporary_address.province' => 'required_with:temporary_address',
+                'temporary_address.district' => 'required_with:temporary_address',
+                'temporary_address.ward' => 'required_with:temporary_address',
+                'temporary_address.address' => 'required_with:temporary_address',
                 'voucher_id' => 'nullable|exists:vouchers,id',
                 'note' => 'nullable|string|max:500',
                 'order_items' => 'required|array|min:1',
