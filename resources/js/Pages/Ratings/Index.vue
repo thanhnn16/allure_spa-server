@@ -51,7 +51,7 @@ const updateRatingStatus = async (ratingId, newStatus) => {
         await axios.patch(`/api/ratings/${ratingId}/status`, {
             status: newStatus
         });
-        
+
         showNotification('Cập nhật trạng thái thành công', 'success');
         await fetchRatings();
     } catch (error) {
@@ -163,35 +163,31 @@ onMounted(() => {
                         <thead>
                             <tr class="bg-gray-50 dark:bg-slate-800 border-b dark:border-slate-700">
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Khách hàng
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    class="px-6 py-4 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">
                                     Loại
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Sản phẩm/Dịch vụ
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    class="px-6 py-4 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
                                     Đánh giá
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Bình luận
+                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Bình luận & Hình ảnh
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Hình ảnh
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    class="px-6 py-4 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
                                     Ngày tạo
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    class="px-6 py-4 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">
                                     Trạng thái
                                 </th>
                             </tr>
@@ -199,85 +195,117 @@ onMounted(() => {
                         <tbody class="bg-white dark:bg-slate-900 divide-y dark:divide-slate-700">
                             <tr v-for="rating in ratings" :key="rating.id"
                                 class="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors duration-150">
-                                <td class="px-4 py-4 whitespace-nowrap">
+                                <!-- Customer Column -->
+                                <td class="px-6 py-4">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <img class="h-10 w-10 rounded-full"
-                                                :src="rating.user?.avatar_url || 'path/to/default/avatar.png'" alt="">
+                                            <img class="h-10 w-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+                                                :src="rating.user?.avatar_url || '/path/to/default/avatar.png'"
+                                                :alt="rating.user?.name">
                                         </div>
                                         <div class="ml-4">
                                             <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                 {{ rating.user?.name }}
                                             </div>
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                                 {{ rating.user?.email }}
                                             </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                               bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+
+                                <!-- Type Column -->
+                                <td class="px-6 py-4 text-center">
+                                    <span class="px-3 py-1 text-xs font-medium rounded-full" :class="rating.rating_type === 'product' ?
+                                        'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                                        'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'">
                                         {{ formatRatingType(rating.rating_type) }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                    {{ rating.item?.name || rating.item?.service_name }}
+
+                                <!-- Product/Service Name Column -->
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                                        {{ rating.item?.name || rating.item?.service_name }}
+                                    </div>
                                 </td>
-                                <td class="px-4 py-4">
-                                    <div class="flex space-x-1">
+
+                                <!-- Stars Column -->
+                                <td class="px-6 py-4">
+                                    <div class="flex justify-center space-x-1">
                                         <BaseIcon v-for="(star, index) in renderStars(rating.stars)" :key="index"
                                             :path="star" class="w-5 h-5"
                                             :class="index < rating.stars ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'" />
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                                    <div class="truncate">{{ rating.comment }}</div>
-                                </td>
-                                <td class="px-4 py-4">
-                                    <div v-if="rating.media_urls?.length" class="flex items-center gap-2">
-                                        <div class="flex -space-x-1">
-                                            <div v-for="(media, index) in rating.media_urls.slice(0, 3)" :key="media.id"
-                                                class="relative group cursor-pointer"
-                                                @click="openGallery(rating.media_urls, index)">
-                                                <img :src="media.url" class="w-12 h-12 object-cover rounded-lg border-2 border-white dark:border-slate-800
-                                                            transition-all duration-200 hover:z-10 hover:scale-110"
-                                                    :style="{ zIndex: index }" :alt="`Ảnh đánh giá ${index + 1}`"
-                                                    @error="handleImageError" />
-                                            </div>
-                                        </div>
 
-                                        <span v-if="rating.media_urls.length > 3"
-                                            class="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-500"
-                                            @click="openGallery(rating.media_urls, 3)">
-                                            +{{ rating.media_urls.length - 3 }} ảnh khác
-                                        </span>
-                                    </div>
-                                    <div v-else class="text-sm text-gray-400 dark:text-gray-600 italic">
-                                        Không có ảnh
+                                <!-- Comment & Images Column -->
+                                <td class="px-6 py-4">
+                                    <div class="space-y-2">
+                                        <div class="text-sm text-gray-700 dark:text-gray-300">
+                                            {{ rating.comment }}
+                                        </div>
+                                        <div v-if="rating.media_urls?.length" class="flex items-center gap-2">
+                                            <div class="flex -space-x-2">
+                                                <div v-for="(media, index) in rating.media_urls.slice(0, 3)"
+                                                    :key="media.id" class="relative cursor-pointer"
+                                                    @click="openGallery(rating.media_urls, index)">
+                                                    <img :src="media.url"
+                                                        class="w-12 h-12 object-cover rounded-lg border-2 border-white dark:border-slate-800
+                                                                hover:scale-110 hover:z-10 transition-transform duration-200"
+                                                        :alt="`Ảnh đánh giá ${index + 1}`" @error="handleImageError" />
+                                                </div>
+                                            </div>
+                                            <span v-if="rating.media_urls.length > 3"
+                                                class="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 cursor-pointer"
+                                                @click="openGallery(rating.media_urls, 3)">
+                                                +{{ rating.media_urls.length - 3 }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ formatDate(rating.created_at) }}
-                                </td>
-                                <td class="px-4 py-4">
-                                    <div v-if="rating.status === 'pending'" class="flex space-x-2">
-                                        <BaseButton color="success" :icon="mdiCheck"
-                                            @click="updateRatingStatus(rating.id, 'approved')" small
-                                            tooltip="Duyệt đánh giá"
-                                            class="hover:scale-105 transition-transform duration-200" />
-                                        <BaseButton color="danger" :icon="mdiClose"
-                                            @click="updateRatingStatus(rating.id, 'rejected')" small
-                                            tooltip="Từ chối đánh giá"
-                                            class="hover:scale-105 transition-transform duration-200" />
-                                    </div>
-                                    <span v-else class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                                        :class="{
-                                            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': rating.status === 'approved',
-                                            'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': rating.status === 'rejected'
-                                        }">
-                                        {{ getStatusText(rating.status) }}
+
+                                <!-- Date Column -->
+                                <td class="px-6 py-4 text-center">
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">
+                                        {{ formatDate(rating.created_at) }}
                                     </span>
+                                </td>
+
+                                <!-- Status Column -->
+                                <td class="px-6 py-4">
+                                    <div class="flex justify-center">
+                                        <div v-if="rating.status === 'pending'" class="flex items-center space-x-2">
+                                            <button @click="updateRatingStatus(rating.id, 'approved')"
+                                                class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded-full
+                                                           shadow-sm text-white bg-green-600 hover:bg-green-700 
+                                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500
+                                                           transition-all duration-200 ease-in-out transform hover:scale-105">
+                                                <BaseIcon :path="mdiCheck" class="w-4 h-4 mr-1" />
+                                                Duyệt
+                                            </button>
+                                            <button @click="updateRatingStatus(rating.id, 'rejected')"
+                                                class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded-full
+                                                           shadow-sm text-white bg-red-600 hover:bg-red-700
+                                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500
+                                                           transition-all duration-200 ease-in-out transform hover:scale-105">
+                                                <BaseIcon :path="mdiClose" class="w-4 h-4 mr-1" />
+                                                Từ chối
+                                            </button>
+                                        </div>
+                                        <div v-else class="flex items-center">
+                                            <span
+                                                class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium"
+                                                :class="{
+                                                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': rating.status === 'approved',
+                                                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': rating.status === 'rejected'
+                                                }">
+                                                <BaseIcon :path="rating.status === 'approved' ? mdiCheck : mdiClose"
+                                                    class="w-4 h-4 mr-1.5" />
+                                                {{ getStatusText(rating.status) }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
