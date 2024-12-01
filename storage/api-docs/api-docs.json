@@ -2019,6 +2019,115 @@
                 ]
             }
         },
+        "/api/auth/verify-email": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify email address",
+                "operationId": "40c8befcfe32536f270a6689c4a1c4a8",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    },
+                                    "lang": {
+                                        "type": "string",
+                                        "example": "vi"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email verified successfully"
+                    }
+                }
+            }
+        },
+        "/api/auth/verify-phone": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify phone number",
+                "operationId": "d52f335c36b513462878d60063f6c897",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "verification_id",
+                                    "code"
+                                ],
+                                "properties": {
+                                    "verification_id": {
+                                        "type": "string"
+                                    },
+                                    "code": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Phone number verified successfully"
+                    }
+                }
+            }
+        },
+        "/api/auth/resend-verification": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Resend verification email/SMS",
+                "operationId": "f4d47d2bcb34a1913917da9a4aa6ae3e",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "email",
+                                            "phone"
+                                        ]
+                                    },
+                                    "lang": {
+                                        "type": "string",
+                                        "example": "vi"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Verification sent successfully"
+                    }
+                }
+            }
+        },
         "/api/banners": {
             "get": {
                 "tags": [
@@ -4445,7 +4554,7 @@
                 "tags": [
                     "Ratings"
                 ],
-                "summary": "Cập nhật trạng thái đánh giá",
+                "summary": "Cập nht trạng thái đánh giá",
                 "operationId": "dc7a321cc5b029e737f3ae6d99975dee",
                 "parameters": [
                     {
@@ -4585,6 +4694,260 @@
                                         "success": {
                                             "type": "boolean",
                                             "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/reward-items": {
+            "get": {
+                "tags": [
+                    "Reward Items"
+                ],
+                "summary": "List all available rewards",
+                "operationId": "91aa23b338052b82bfb9561016dca3fe",
+                "responses": {
+                    "200": {
+                        "description": "List of available rewards"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Reward Items"
+                ],
+                "summary": "Create a new reward item",
+                "operationId": "abdf551fa3f37c692c45b34a37b929c9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "item_type",
+                                    "item_id",
+                                    "points_required"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "item_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "product",
+                                            "service"
+                                        ]
+                                    },
+                                    "item_id": {
+                                        "type": "integer"
+                                    },
+                                    "points_required": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "quantity_available": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Reward item created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/admin/reward-items/{rewardItem}/redeem": {
+            "post": {
+                "tags": [
+                    "Reward Items"
+                ],
+                "summary": "Redeem a reward item",
+                "operationId": "80c8ed04abf8072f6bcab02be8448d19",
+                "parameters": [
+                    {
+                        "name": "rewardItem",
+                        "in": "path",
+                        "description": "ID of reward item",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reward redeemed successfully"
+                    },
+                    "400": {
+                        "description": "Error redeeming reward"
+                    }
+                }
+            }
+        },
+        "/api/search": {
+            "get": {
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search for products and services",
+                "description": "Search and filter products and services with various parameters",
+                "operationId": "search",
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "Search keyword",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Type of items to search (all, products, services)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "all",
+                            "enum": [
+                                "all",
+                                "products",
+                                "services"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Sort criteria",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name_asc",
+                                "name_desc",
+                                "price_asc",
+                                "price_desc",
+                                "rating"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "description": "Minimum price filter",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "description": "Maximum price filter",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Category ID filter",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful search results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "products": {
+                                            "description": "List of products (if type is 'all' or 'products')",
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Product"
+                                            }
+                                        },
+                                        "services": {
+                                            "description": "List of services (if type is 'all' or 'services')",
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Service"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "type": [
+                                                    "The selected type is invalid."
+                                                ],
+                                                "min_price": [
+                                                    "The min price must be at least 0."
+                                                ]
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -7989,7 +8352,7 @@
                         "type": "string",
                         "format": "date"
                     },
-                    "image_id": {
+                    "media_id": {
                         "description": "ID of the user's profile image",
                         "type": "integer"
                     },
@@ -8227,6 +8590,14 @@
         {
             "name": "Ratings",
             "description": "API Endpoints để quản lý đánh giá"
+        },
+        {
+            "name": "Reward Items",
+            "description": "API Endpoints for managing reward items"
+        },
+        {
+            "name": "Search",
+            "description": "API Endpoints for searching products and services"
         },
         {
             "name": "Services",
