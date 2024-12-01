@@ -22,7 +22,7 @@ use OpenApi\Annotations as OA;
  *     @OA\Property(property="full_name", type="string", description="User's full name"),
  *     @OA\Property(property="gender", type="string", description="User's gender"),
  *     @OA\Property(property="date_of_birth", type="string", format="date", description="User's date of birth"),
- *     @OA\Property(property="image_id", type="integer", description="ID of the user's profile image"),
+ *     @OA\Property(property="media_id", type="integer", description="ID of the user's profile image"),
  *     @OA\Property(property="loyalty_points", type="integer", description="User's loyalty points"),
  *     @OA\Property(property="skin_condition", type="string", description="User's skin condition"),
  *     @OA\Property(property="note", type="string", description="Additional notes about the user"),
@@ -43,15 +43,18 @@ class User extends Authenticatable
 
     protected $fillable = [
         'phone_number',
+        'phone_verified_at',
         'email',
+        'email_verified_at', 
         'password',
         'role',
+        'remember_token',
         'full_name',
         'gender',
         'date_of_birth',
         'media_id',
         'loyalty_points',
-        'skin_condition',
+        'skin_condition', 
         'note',
         'purchase_count'
     ];
@@ -63,7 +66,11 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'date_of_birth' => 'date',
+        'phone_verified_at' => 'datetime',
+        'date_of_birth' => 'datetime',
+        'loyalty_points' => 'integer',
+        'purchase_count' => 'integer',
+        'gender' => 'string'
     ];
 
     protected $appends = ['avatar_url'];

@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use App\Services\AuthService;
 use App\Services\FcmTokenService;
+use App\Services\EmailVerificationService;
+use App\Services\FirebaseAuthService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -18,7 +20,11 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AuthService::class, function ($app) {
-            return new AuthService($app->make(FcmTokenService::class));
+            return new AuthService(
+                $app->make(FcmTokenService::class),
+                $app->make(EmailVerificationService::class),
+                $app->make(FirebaseAuthService::class)
+            );
         });
     }
 
