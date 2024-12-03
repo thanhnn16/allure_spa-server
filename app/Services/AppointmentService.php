@@ -100,9 +100,8 @@ class AppointmentService
                     ->where('status', '!=', 'cancelled')
                     ->sum('slots');
 
-                $remainingSlots = $timeSlot->max_bookings - $existingBookings;
-
-                if ($requestedSlots > $remainingSlots) {
+                // Ensure the total slots do not exceed 2
+                if ($existingBookings + $requestedSlots > 2) {
                     return [
                         'status' => 422,
                         'message' => 'Không đủ slot trống trong khung giờ này',
@@ -240,6 +239,29 @@ class AppointmentService
                 'note' => $data['note'] ?? null,
                 'appointment_type' => $data['appointment_type'] ?? null,
             ]);
+
+            // Check if time slot is available for update
+            if (isset($data['time_slot_id']) && isset($data['appointment_date'])) {
+                $timeSlot = TimeSlot::findOrFail($data['time_slot_id']);
+                $requestedSlots = $data['slots'] ?? 1;
+
+                // Count existing bookings for this date and time slot
+                $existingBookings = Appointment::where('appointment_date', $data['appointment_date'])
+                    ->where('time_slot_id', $data['time_slot_id'])
+                    ->where('status', '!=', 'cancelled')
+                    ->where('id', '!=', $id) // Exclude current appointment
+                    ->sum('slots');
+
+                // Ensure the total slots do not exceed 2
+                if ($existingBookings + $requestedSlots > 2) {
+                    return [
+                        'status' => 422,
+                        'message' => 'Không đủ slot trống trong khung giờ này',
+                        'data' => null,
+                        'success' => false
+                    ];
+                }
+            }
 
             // Cập nhật appointment
             $appointment->update($updateData);

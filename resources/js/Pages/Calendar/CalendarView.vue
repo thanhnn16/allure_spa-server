@@ -121,11 +121,65 @@ const calendarOptions = computed(() => ({
     moreLinkText: 'Xem thêm',
     noEventsText: 'Không có lịch hẹn nào',
     select: handleDateSelect,
+    eventDragStart: (info) => {
+        // Hủy tooltip của event đang được kéo
+        if (info.el._tippy) {
+            info.el._tippy.destroy();
+        }
+
+        // Hủy tất cả các tooltip đang hiển thị
+        const tooltips = document.querySelectorAll('[data-tippy-root]');
+        tooltips.forEach(tooltip => tooltip.remove());
+
+        // Xóa z-index của event đang kéo
+        info.el.style.zIndex = 'auto';
+    },
+    eventDrop: (info) => {
+        handleEventDrop(info);
+
+        // Thêm logic xử lý sau khi kéo thả vào đây
+        info.el.style.zIndex = '';
+
+        // Khởi tạo lại tooltip sau khi kéo thả xong
+        setTimeout(() => {
+            if (!info.el._tippy) {
+                initializeTooltip(info.el, info.event);
+            }
+        }, 100);
+    },
     eventDidMount: (info) => {
         const event = info.event;
         const slots = event.extendedProps.slots || 1;
         const eventEl = info.el;
         const harness = eventEl.closest('.fc-timegrid-event-harness');
+
+        // Thêm event listeners cho drag
+        eventEl.addEventListener('dragstart', () => {
+            // Hủy tooltip của event đang được kéo
+            if (eventEl._tippy) {
+                eventEl._tippy.destroy();
+            }
+
+            // Hủy tất cả các tooltip đang hiển thị
+            const tooltips = document.querySelectorAll('[data-tippy-root]');
+            tooltips.forEach(tooltip => tooltip.remove());
+
+            // Xóa z-index của event đang kéo
+            eventEl.style.zIndex = 'auto';
+        });
+
+        // Reset styles và tooltip sau khi drag
+        eventEl.addEventListener('dragend', () => {
+            // Khôi phục z-index
+            eventEl.style.zIndex = '';
+
+            // Khởi tạo lại tooltip
+            setTimeout(() => {
+                if (!eventEl._tippy) {
+                    initializeTooltip(eventEl, event);
+                }
+            }, 100);
+        });
 
         // Reset style
         eventEl.style = '';
@@ -168,49 +222,7 @@ const calendarOptions = computed(() => ({
             eventEl.classList.add('half-slot-event');
         }
 
-        // Tooltip content
-        let tooltipContent = `
-            <div class="p-2">
-                <div class="font-bold">${event.extendedProps.userName || 'Không xác định'}</div>
-                <div>Dịch vụ: ${event.extendedProps.serviceName || 'Không xác định'}</div>
-                <div>Nhân viên: ${event.extendedProps.staffName || 'Không xác định'}</div>
-                <div>Trạng thái: ${event.extendedProps.status}</div>
-                <div>Số slot: ${slots}</div>
-        `;
-
-        if (event.extendedProps.status === 'cancelled') {
-            tooltipContent += `
-                <div class="mt-2 pt-2 border-t">
-                    <div>Hủy bởi: ${event.extendedProps.cancelledByUser?.full_name || 'Không xác định'}</div>
-                    <div>Thời gian hủy: ${formatDateTime(event.extendedProps.cancelledAt)}</div>
-                    ${event.extendedProps.cancellationNote ? `<div>Lý do: ${event.extendedProps.cancellationNote}</div>` : ''}
-                </div>
-            `;
-        }
-
-        tooltipContent += '</div>';
-
-        tippy(info.el, {
-            content: tooltipContent,
-            allowHTML: true,
-            placement: 'top',
-            theme: 'light-border',
-            delay: [200, 0],
-            interactive: true,
-            zIndex: 999999,
-            appendTo: document.body,
-            popperOptions: {
-                modifiers: [
-                    {
-                        name: 'preventOverflow',
-                        options: {
-                            altAxis: true,
-                            padding: 5
-                        }
-                    }
-                ]
-            }
-        });
+        initializeTooltip(eventEl, event);
     },
     eventClick: (info) => {
         info.jsEvent.preventDefault()
@@ -304,6 +316,13 @@ function handleEventDrop(dropInfo) {
     if (selectedStart < minBookingTime) {
         toast.error('Vui lòng đặt lịch trước ít nhất 1 tiếng');
         dropInfo.revert();
+
+        // Reload lại trang
+        router.visit(route('appointments.index'), {
+            preserveScroll: true,
+            preserveState: false,
+            only: ['appointments']
+        });
         return;
     }
 
@@ -338,10 +357,10 @@ function handleEventDrop(dropInfo) {
         .then(response => {
             if (response.data.success) {
                 toast.success('Cập nhật lịch hẹn thành công');
-                // Reload trang
-                router.visit(window.location.pathname, {
+                router.visit(route('appointments.index'), {
                     preserveScroll: true,
-                    preserveState: true
+                    preserveState: false,
+                    only: ['appointments']
                 });
             } else {
                 throw new Error(response.data.message || 'Có lỗi xảy ra');
@@ -352,11 +371,13 @@ function handleEventDrop(dropInfo) {
             const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật lịch hẹn';
             toast.error(errorMessage);
             dropInfo.revert();
-            
-            // Refresh calendar để đảm bảo hiển thị đúng
-            if (calendarRef.value) {
-                calendarRef.value.getApi().refetchEvents();
-            }
+
+            // Reload lại trang khi có lỗi
+            router.visit(route('appointments.index'), {
+                preserveScroll: true,
+                preserveState: false,
+                only: ['appointments']
+            });
         });
 }
 
@@ -445,6 +466,50 @@ function formatDateTime(dateTimeStr) {
         hour: '2-digit',
         minute: '2-digit'
     }).format(date);
+}
+
+// Thêm hàm khởi tạo tooltip
+function initializeTooltip(element, event) {
+    const tooltipContent = `
+        <div class="p-2">
+            <div class="font-bold">${event.extendedProps.userName || 'Không xác định'}</div>
+            <div>Dịch vụ: ${event.extendedProps.serviceName || 'Không xác định'}</div>
+            <div>Nhân viên: ${event.extendedProps.staffName || 'Không xác định'}</div>
+            <div>Trạng thái: ${event.extendedProps.status}</div>
+            <div>Số slot: ${event.extendedProps.slots || 1}</div>
+            ${event.extendedProps.status === 'cancelled' ? `
+                <div class="mt-2 pt-2 border-t">
+                    <div>Hủy bởi: ${event.extendedProps.cancelledByUser?.full_name || 'Không xác định'}</div>
+                    <div>Thời gian hủy: ${formatDateTime(event.extendedProps.cancelledAt)}</div>
+                    ${event.extendedProps.cancellationNote ? `<div>Lý do: ${event.extendedProps.cancellationNote}</div>` : ''}
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    const tippyInstance = tippy(element, {
+        content: tooltipContent,
+        allowHTML: true,
+        placement: 'top',
+        theme: 'light-border',
+        delay: [200, 0],
+        interactive: true,
+        zIndex: 999999,
+        appendTo: document.body,
+        popperOptions: {
+            modifiers: [
+                {
+                    name: 'preventOverflow',
+                    options: {
+                        altAxis: true,
+                        padding: 5
+                    }
+                }
+            ]
+        }
+    });
+
+    element._tippy = tippyInstance;
 }
 </script>
 
@@ -590,22 +655,21 @@ function formatDateTime(dateTimeStr) {
     z-index: 999999 !important;
 }
 
-/* Đảm bảo các event calendar có z-index thấp */
-.fc .fc-view-harness {
-    z-index: 0 !important;
-}
-
-.fc-timegrid-event-harness {
-    z-index: 1 !important;
-}
-
-.calendar-event {
-    z-index: 1 !important;
-}
-
 /* Đảm bảo header calendar không che tooltip */
 .fc-header-toolbar {
     z-index: 2 !important;
     position: relative !important;
+}
+
+.fc-event.fc-dragging {
+    opacity: 0.8;
+    cursor: move !important;
+    pointer-events: none;
+    /* Tránh interference với các elements khác */
+}
+
+.fc-timegrid-event {
+    transition: transform 0.05s ease;
+    /* Thêm transition nhẹ để giảm giật */
 }
 </style>
