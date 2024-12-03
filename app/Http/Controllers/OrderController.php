@@ -396,7 +396,7 @@ class OrderController extends BaseController
             $validatedData = $request->validate([
                 'payment_method_id' => 'required|exists:payment_methods,id',
                 'shipping_address_id' => 'nullable|exists:addresses,id',
-                'temporary_address' => 'nullable|required_without:shipping_address_id|array',
+                'temporary_address' => 'nullable|array',
                 'temporary_address.province' => 'required_with:temporary_address',
                 'temporary_address.district' => 'required_with:temporary_address',
                 'temporary_address.ward' => 'required_with:temporary_address',

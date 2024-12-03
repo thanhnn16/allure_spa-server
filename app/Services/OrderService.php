@@ -661,6 +661,11 @@ class OrderService
             return $address->id;
         }
         
-        throw new \Exception('Vui lòng cung cấp địa chỉ giao hàng');
+        // Lấy địa chỉ mặc định của người dùng nếu không có địa chỉ nào được cung cấp
+        $defaultAddress = Address::where('user_id', $userId)
+            ->where('is_default', true)
+            ->first();
+        
+        return $defaultAddress ? $defaultAddress->id : null;
     }
 }
