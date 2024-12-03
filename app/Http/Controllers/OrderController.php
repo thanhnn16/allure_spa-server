@@ -394,6 +394,7 @@ class OrderController extends BaseController
     {
         try {
             $validatedData = $request->validate([
+                'user_id' => 'nullable|exists:users,id',
                 'payment_method_id' => 'required|exists:payment_methods,id',
                 'shipping_address_id' => 'nullable|exists:addresses,id',
                 'temporary_address' => 'nullable|array',
