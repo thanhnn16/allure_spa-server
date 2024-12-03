@@ -37,10 +37,12 @@
                             class="mb-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             Thêm sản phẩm/dịch vụ
                         </button>
-                        <div v-for="(item, index) in form.order_items" :key="index" class="mb-4 p-4 border rounded-md dark:border-dark-border dark:bg-dark-surface">
+                        <div v-for="(item, index) in form.order_items" :key="index"
+                            class="mb-4 p-4 border rounded-md dark:border-dark-border dark:bg-dark-surface">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Loại:</label>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Loại:</label>
                                     <select v-model="item.item_type" @change="searchItems(index)"
                                         class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
                                         <option value="product">Sản phẩm</option>
@@ -48,7 +50,8 @@
                                     </select>
                                 </div>
                                 <div v-if="item.item_type === 'service'">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Loại dịch vụ:</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Loại dịch
+                                        vụ:</label>
                                     <select v-model="item.service_type"
                                         class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
                                         <option value="single">Đơn lẻ</option>
@@ -58,7 +61,8 @@
                                 </div>
                             </div>
                             <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tìm kiếm:</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tìm
+                                    kiếm:</label>
                                 <input type="text" v-model="item.search" @input="searchItems(index)"
                                     class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300"
                                     :placeholder="item.item_type === 'product' ? 'Tìm sản phẩm' : 'Tìm liệu trình'" />
@@ -68,8 +72,10 @@
                                         @click="selectItem(index, result)"
                                         class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600/80">
                                         <div class="flex flex-col">
-                                            <span class="font-medium dark:text-gray-300">{{ result.name || result.service_name }}</span>
-                                            <span v-if="result.item_type === 'service'" class="text-sm dark:text-gray-400">
+                                            <span class="font-medium dark:text-gray-300">{{ result.name ||
+                                                result.service_name }}</span>
+                                            <span v-if="result.item_type === 'service'"
+                                                class="text-sm dark:text-gray-400">
                                                 Đơn lẻ: {{ formatCurrency(result.single_price) }}
                                                 <br>
                                                 Combo 5: {{ formatCurrency(result.combo_5_price) }}
@@ -85,20 +91,26 @@
                             </div>
                             <div class="mt-4 grid grid-cols-3 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Số lượng:</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Số
+                                        lượng:</label>
                                     <input v-model.number="item.quantity" type="number" min="1"
                                         class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Đơn giá:</label>
-                                    <input :value="formatCurrency(item.price)" type="text"
-                                        class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm dark:bg-dark-surface dark:border-dark-border dark:text-gray-300"
-                                        readonly :disabled="true" />
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Đơn
+                                        giá:</label>
+                                    <input :value="formatCurrency(item.price)" type="text" class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm sm:text-sm 
+                                        bg-disabled-light dark:bg-disabled-dark 
+                                        text-gray-700 dark:text-gray-300 
+                                        cursor-not-allowed" readonly :disabled="true" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Thành tiền:</label>
-                                    <input :value="formatCurrency(item.quantity * item.price)" readonly
-                                        class="mt-1 bg-gray-100 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300" />
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Thành
+                                        tiền:</label>
+                                    <input :value="formatCurrency(item.quantity * item.price)" readonly class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm sm:text-sm 
+                                        bg-disabled-light dark:bg-disabled-dark 
+                                        text-gray-700 dark:text-gray-300 
+                                        cursor-not-allowed" />
                                 </div>
                             </div>
                             <button type="button" @click="removeOrderItem(index)"
@@ -110,7 +122,8 @@
 
                     <!-- Voucher -->
                     <div>
-                        <label for="voucher" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Voucher:</label>
+                        <label for="voucher"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Voucher:</label>
                         <select v-model="form.voucher_id"
                             class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
                             <option value="">Không áp dụng</option>
@@ -124,7 +137,8 @@
 
                     <!-- Payment Method -->
                     <div>
-                        <label for="payment_method" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phương thức thanh
+                        <label for="payment_method"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phương thức thanh
                             toán:</label>
                         <select v-model="form.payment_method_id" required
                             class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
@@ -136,7 +150,8 @@
 
                     <!-- Note -->
                     <div>
-                        <label for="note" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ghi chú:</label>
+                        <label for="note" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ghi
+                            chú:</label>
                         <textarea v-model="form.note" rows="3"
                             class="mt-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300"></textarea>
                     </div>
@@ -153,7 +168,7 @@
                     <div v-if="form.user_id" class="bg-white dark:bg-dark-surface shadow-lg rounded-lg overflow-hidden">
                         <!-- Header -->
                         <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
-                            <h3 class="text-xl text-white font-semibold">Thông tin hóa đơn</h3>
+                            <h3 class="text-xl text-white font-semibold">Th��ng tin hóa đơn</h3>
                         </div>
 
                         <!-- Content -->
@@ -164,11 +179,13 @@
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <p class="text-sm text-gray-600 dark:text-gray-400">Họ tên:</p>
-                                        <p class="font-medium dark:text-gray-300">{{ selectedCustomer?.full_name || 'Chưa chọn' }}</p>
+                                        <p class="font-medium dark:text-gray-300">{{ selectedCustomer?.full_name ||
+                                            'Chưa chọn' }}</p>
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-600 dark:text-gray-400">Số điện thoại:</p>
-                                        <p class="font-medium dark:text-gray-300">{{ selectedCustomer?.phone_number || 'N/A' }}</p>
+                                        <p class="font-medium dark:text-gray-300">{{ selectedCustomer?.phone_number ||
+                                            'N/A' }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -178,7 +195,8 @@
                                 <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                                     <thead class="bg-gray-50 dark:bg-dark-surface/50">
                                         <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                                 Sản phẩm/Dịch vụ</th>
                                             <th
                                                 class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
@@ -191,11 +209,14 @@
                                                 Thành tiền</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="bg-white dark:bg-dark-surface divide-y divide-gray-200 dark:divide-dark-border">
+                                    <tbody
+                                        class="bg-white dark:bg-dark-surface divide-y divide-gray-200 dark:divide-dark-border">
                                         <tr v-for="item in form.order_items" :key="item.item_id">
                                             <td class="px-6 py-4">
-                                                <div class="text-sm text-gray-900 dark:text-gray-100">{{ item.search }}</div>
-                                                <div v-if="item.item_type === 'service'" class="text-xs text-gray-500 dark:text-gray-400">
+                                                <div class="text-sm text-gray-900 dark:text-gray-100">{{ item.search }}
+                                                </div>
+                                                <div v-if="item.item_type === 'service'"
+                                                    class="text-xs text-gray-500 dark:text-gray-400">
                                                     {{ item.service_type === 'single' ? 'Đơn lẻ' :
                                                         item.service_type === 'combo_5' ? 'Combo 5 lần' :
                                                             item.service_type === 'combo_10' ? 'Combo 10 lần' : '' }}
@@ -207,7 +228,8 @@
                                             <td class="px-6 py-4 text-right text-sm text-gray-500 dark:text-gray-400">
                                                 {{ item.quantity }}
                                             </td>
-                                            <td class="px-6 py-4 text-right text-sm text-gray-900 font-medium dark:text-gray-100">
+                                            <td
+                                                class="px-6 py-4 text-right text-sm text-gray-900 font-medium dark:text-gray-100">
                                                 {{ formatCurrency(item.quantity * item.price) }}
                                             </td>
                                         </tr>
@@ -219,16 +241,19 @@
                             <div class="bg-gray-50 dark:bg-dark-surface/50 rounded-lg p-4 space-y-2">
                                 <div class="flex justify-between">
                                     <span class="text-gray-600 dark:text-gray-400">Tổng tiền:</span>
-                                    <span class="font-medium dark:text-gray-300">{{ formatCurrency(calculateTotal()) }}</span>
+                                    <span class="font-medium dark:text-gray-300">{{ formatCurrency(calculateTotal())
+                                        }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600 dark:text-gray-400">Giảm giá:</span>
-                                    <span class="font-medium text-red-600 dark:text-red-400">-{{ formatCurrency(calculateDiscount())
+                                    <span class="font-medium text-red-600 dark:text-red-400">-{{
+                                        formatCurrency(calculateDiscount())
                                         }}</span>
                                 </div>
                                 <div class="flex justify-between text-lg font-bold pt-2 border-t">
                                     <span>Thành tiền:</span>
-                                    <span class="text-indigo-600 dark:text-indigo-400">{{ formatCurrency(calculateFinalTotal()) }}</span>
+                                    <span class="text-indigo-600 dark:text-indigo-400">{{
+                                        formatCurrency(calculateFinalTotal()) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -568,27 +593,27 @@ export default {
 
 <style scoped>
 .form-input[readonly] {
-    background-color: #f3f4f6;
-    cursor: not-allowed;
-}
-
-.form-group {
-    margin-bottom: 1rem;
+    @apply bg-disabled-light dark:bg-disabled-dark cursor-not-allowed;
 }
 
 input[readonly] {
-    background-color: #f9fafb;
-    cursor: not-allowed;
-    color: #374151;
+    @apply bg-input-disabled-light dark:bg-input-disabled-dark cursor-not-allowed text-gray-700 dark:text-gray-300;
 }
 
 input[readonly]:focus {
-    border-color: #d1d5db;
+    @apply border-gray-300 dark:border-dark-border;
     box-shadow: none;
 }
 
-/* Thêm style cho dropdown */
+/* Cập nhật style cho dropdown */
 .absolute {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    @apply shadow-lg;
+}
+
+/* Thêm shadow cho dark mode */
+:root.dark .absolute {
+    --tw-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -2px var(--tw-shadow-color);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 </style>

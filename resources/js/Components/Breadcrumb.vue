@@ -1,10 +1,11 @@
 <template>
-    <nav class="text-gray-500 dark:text-gray-400 mb-6">
+    <nav class="text-gray-600 dark:text-gray-300 mb-6">
         <ol class="list-none p-0 inline-flex">
             <template v-for="(item, index) in items" :key="index">
                 <li class="flex items-center">
                     <template v-if="index < items.length - 1">
-                        <Link :href="item.href" class="hover:text-primary-500">
+                        <Link :href="item.href"
+                            class="transition-colors duration-200 hover:text-primary-600 dark:hover:text-primary-400">
                         {{ item.label }}
                         </Link>
                         <svg class="h-5 w-5 mx-2" fill="currentColor" viewBox="0 0 20 20">
@@ -14,7 +15,7 @@
                         </svg>
                     </template>
                     <template v-else>
-                        <span>{{ item.label }}</span>
+                        <span class="text-gray-800 dark:text-gray-100">{{ item.label }}</span>
                     </template>
                 </li>
             </template>

@@ -129,45 +129,15 @@ class ProductController extends BaseController
     public function store(ProductRequest $request)
     {
         try {
-            Log::channel('product_debug')->info('Product creation started:', [
-                'request_data' => $request->validated(),
-                'has_files' => $request->hasFile('images'),
-                'files_count' => $request->hasFile('images') ? count($request->file('images')) : 0
-            ]);
-
             // Validate basic product data
             $productData = $request->validated();
 
             // Create product
             $product = $this->productService->createProduct($productData);
 
-            Log::channel('product_debug')->info('Product created:', [
-                'product_id' => $product->id,
-                'product_data' => $product->toArray()
-            ]);
-
             // Handle images if present
             if ($request->hasFile('images')) {
-                Log::channel('product_debug')->info('Processing images:', [
-                    'files' => collect($request->file('images'))->map(function ($file) {
-                        return [
-                            'name' => $file->getClientOriginalName(),
-                            'size' => $file->getSize(),
-                            'mime' => $file->getMimeType()
-                        ];
-                    })
-                ]);
-
                 $mediaItems = $this->mediaService->createMultiple($product, $request->file('images'), 'image');
-
-                Log::channel('product_debug')->info('Images processed:', [
-                    'media_items_count' => count($mediaItems),
-                    'media_items' => collect($mediaItems)->map(fn($item) => [
-                        'id' => $item->id,
-                        'path' => $item->file_path,
-                        'url' => $item->getFullUrlAttribute()
-                    ])
-                ]);
             }
 
             if ($request->expectsJson()) {
@@ -176,7 +146,7 @@ class ProductController extends BaseController
 
             return redirect()->route('products.index')->with('success', 'Sản phẩm đã được tạo thành công.');
         } catch (\Exception $e) {
-            Log::channel('product_debug')->error('Product creation failed:', [
+            Log::error('Product creation failed:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

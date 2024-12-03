@@ -44,21 +44,35 @@ defineProps({
 </script>
 
 <template>
-  <CardBox>
+  <CardBox class="transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-dark-hover">
     <BaseLevel v-if="trend" class="mb-3" mobile>
       <PillTagTrend :trend="trend" :trend-type="trendType" small />
-      <BaseButton :icon="mdiCog" icon-w="w-4" icon-h="h-4" color="lightDark" small />
+      <BaseButton :icon="mdiCog" icon-w="w-4" icon-h="h-4" color="lightDark"
+        class="hover:bg-gray-100 dark:hover:bg-dark-active transition-colors duration-150" small />
     </BaseLevel>
     <BaseLevel mobile>
-      <div>
-        <h3 class="text-lg leading-tight text-gray-500 dark:text-dark-muted">
+      <div class="space-y-2">
+        <h3 class="text-lg leading-tight text-gray-500 dark:text-dark-muted font-medium">
           {{ label }}
         </h3>
-        <h1 class="text-3xl leading-tight font-semibold dark:text-dark-text">
-          <NumberDynamic :value="number" :prefix="prefix" :suffix="suffix" />
+        <h1 class="text-3xl leading-tight font-semibold text-gray-900 dark:text-dark-text">
+          <NumberDynamic :value="number" :prefix="prefix" :suffix="suffix" class="tracking-tight" />
         </h1>
       </div>
-      <BaseIcon v-if="icon" :path="icon" size="48" w="" h="h-16" :class="color" />
+      <BaseIcon v-if="icon" :path="icon" size="48" w="" h="h-16" :class="[
+        color,
+        'transition-transform duration-200 transform group-hover:scale-110'
+      ]" />
     </BaseLevel>
   </CardBox>
 </template>
+
+<style scoped>
+.dark .dark\:hover\:bg-dark-hover:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark .dark\:hover\:bg-dark-active:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+</style>

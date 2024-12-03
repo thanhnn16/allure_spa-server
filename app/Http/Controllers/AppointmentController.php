@@ -120,6 +120,7 @@ class AppointmentController extends BaseController
                     'appointment_type' => $appointment->appointment_type,
                     'note' => $appointment->note,
                     'time_slot' => $timeSlot,
+                    'slots' => $appointment->slots
                 ];
             });
 
@@ -153,7 +154,7 @@ class AppointmentController extends BaseController
                 'slotMinTime' => '08:00:00',
                 'slotMaxTime' => '18:30:00',
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
                 'status' => 500
@@ -205,7 +206,7 @@ class AppointmentController extends BaseController
         try {
             // Validate request using AppointmentRequest
             $validator = new AppointmentRequest();
-            $validated = validator($request->all(), $validator->rules(), $validator->messages())->validate();
+            $validated = $request->validate($validator->rules(), $validator->messages());
 
             // Prepare appointment data from validated input
             $appointmentData = [
@@ -235,7 +236,7 @@ class AppointmentController extends BaseController
                 $result['message'] ?? 'Đặt lịch hẹn thành công',
                 $result['status'] ?? 200
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error creating appointment: ' . $e->getMessage());
             return $this->respondWithJson(
                 null,
@@ -305,7 +306,7 @@ class AppointmentController extends BaseController
                 $result['data'],
                 'Cập nhật lịch hẹn thành công'
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error updating appointment: ' . $e->getMessage());
             return $this->respondWithJson(
                 null,
@@ -497,7 +498,7 @@ class AppointmentController extends BaseController
                 $result['message'] ?? 'Hủy lịch hẹn thành công',
                 $result['status'] ?? 200
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error cancelling appointment: ' . $e->getMessage());
             return $this->respondWithJson(
                 null,
@@ -621,7 +622,7 @@ class AppointmentController extends BaseController
                 $result['message'] ?? 'Lấy danh sách lịch hẹn thành công',
                 $result['status'] ?? 200
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error getting appointments: ' . $e->getMessage());
             return $this->respondWithJson(
                 null,

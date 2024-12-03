@@ -5,12 +5,13 @@
     <SectionMain>
       <div class="container mx-auto px-4 py-8 dark:bg-dark-bg">
         <!-- Error message -->
-        <div v-if="error" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div v-if="error"
+          class="mb-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded">
           {{ error }}
         </div>
 
         <div class="flex justify-between items-center mb-6">
-          <h1 class="text-2xl font-semibold">Quản lý đơn hàng</h1>
+          <h1 class="text-2xl font-semibold text-gray-900 dark:text-dark-text">Quản lý đơn hàng</h1>
           <button @click="createNewOrder"
             class="bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors">
             Tạo đơn hàng mới
@@ -21,7 +22,7 @@
         <div class="mb-6 flex flex-wrap items-center gap-4">
           <div class="flex items-center space-x-4 flex-grow">
             <select v-model="filters.status" @change="applyFilters"
-              class="form-select rounded-md shadow-sm w-48 dark:bg-dark-surface dark:border-dark-border dark:text-dark-text">
+              class="form-select rounded-md shadow-sm w-48 dark:bg-dark-surface dark:border-dark-border dark:text-dark-text focus:border-primary-500 dark:focus:border-primary-500">
               <option value="">Tất cả trạng thái</option>
               <option value="pending">Chờ xác nhận</option>
               <option value="confirmed">Đã xác nhận</option>
@@ -31,17 +32,17 @@
             </select>
             <input v-model="filters.search" @input="debounceSearch" type="text"
               placeholder="Tìm kiếm theo ID hoặc tên khách hàng"
-              class="form-input rounded-md shadow-sm flex-grow dark:bg-dark-surface dark:border-dark-border dark:text-dark-text" />
+              class="form-input rounded-md shadow-sm flex-grow dark:bg-dark-surface dark:border-dark-border dark:text-dark-text focus:border-primary-500 dark:focus:border-primary-500 placeholder-gray-400 dark:placeholder-dark-text/50" />
           </div>
         </div>
 
         <!-- Bảng hiển thị đơn hàng -->
-        <div v-if="orders?.data?.length > 0" class="overflow-x-auto bg-white dark:bg-dark-surface shadow-md rounded-lg">
+        <div v-if="orders?.data?.length > 0" class="overflow-x-auto bg-white dark:bg-dark-surface rounded-lg shadow-md">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
             <thead>
               <tr>
                 <th
-                  class="px-6 py-4 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  class="px-6 py-4 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text/70 uppercase tracking-wider">
                   Mã đơn hàng
                 </th>
                 <th
@@ -71,17 +72,18 @@
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-dark-surface divide-y divide-gray-200 dark:divide-dark-border">
-              <tr v-for="order in orders.data" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-dark-bg/50">
+              <tr v-for="order in orders.data" :key="order.id"
+                class="hover:bg-gray-50 dark:hover:bg-dark-surface-hover">
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-dark-text">
                   #{{ order.id }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text/70">
                   {{ order.user.full_name }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text/70">
                   {{ formatCurrency(order.total_amount) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text/70">
                   {{ formatCurrency(order.discount_amount) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -134,9 +136,43 @@
           </table>
         </div>
 
+        <!-- Thông báo không có dữ liệu -->
+        <div v-else class="text-center py-8 text-gray-500 dark:text-dark-text/70">
+          Không có đơn hàng nào
+        </div>
+
         <!-- Phân trang -->
         <div v-if="orders?.links" class="mt-6">
           <Pagination :links="orders.links" class="mt-6" />
+        </div>
+      </div>
+
+      <!-- Modal hủy đơn hàng -->
+      <div v-if="showCancelModal" class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+          <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
+
+          <div class="relative bg-white dark:bg-dark-surface rounded-lg max-w-md w-full p-6 shadow-xl">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-dark-text mb-4">
+              Xác nhận hủy đơn hàng
+            </h3>
+
+            <textarea v-model="cancelReason"
+              class="w-full p-2 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-dark-text"
+              placeholder="Nhập lý do hủy đơn hàng" rows="3">
+            </textarea>
+
+            <div class="mt-4 flex justify-end space-x-3">
+              <button @click="showCancelModal = false"
+                class="px-4 py-2 text-gray-700 dark:text-dark-text bg-gray-100 dark:bg-dark-surface-hover rounded-md hover:bg-gray-200 dark:hover:bg-dark-active transition-colors">
+                Hủy bỏ
+              </button>
+              <button @click="cancelOrder"
+                class="px-4 py-2 text-white bg-red-600 dark:bg-red-700 rounded-md hover:bg-red-700 dark:hover:bg-red-800 transition-colors">
+                Xác nhận
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </SectionMain>
@@ -271,7 +307,7 @@ export default {
         await axios.put(`/api/orders/${selectedOrderId.value}/cancel`, {
           reason: cancelReason.value
         })
-        
+
         toast.success('Đơn hàng đã được hủy thành công')
         showCancelModal.value = false
         router.reload()

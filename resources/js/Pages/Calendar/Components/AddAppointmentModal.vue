@@ -165,6 +165,7 @@
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useToast } from 'vue-toastification';
+import { router } from '@inertiajs/vue3'
 
 const toast = useToast();
 // Khai báo props và emit
@@ -518,6 +519,12 @@ function submitAppointment(formData) {
                 emit('appointmentAdded', response.data.data);
                 props.closeModal();
                 toast.success(response.data.message || 'Đặt lịch hẹn thành công');
+                
+                // Thêm đoạn code này để reload trang
+                router.visit(window.location.pathname, {
+                    preserveScroll: true,
+                    preserveState: false
+                });
             } else {
                 if (response.data.errors) {
                     errors.value = response.data.errors;

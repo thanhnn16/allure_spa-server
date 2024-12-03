@@ -887,255 +887,283 @@ const handleUpdate = async (info) => {
             </div>
 
             <!-- Vouchers Tab -->
-            <div v-if="activeTab === 'vouchers'" class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-medium">Danh sách voucher</h3>
-                    <BaseButton label="Gán voucher" color="info" @click="openAssignVoucherModal"
-                        :icon="mdiTicketPercent" />
-                </div>
-
-                <!-- Vouchers list -->
-                <div v-if="!safeUser.vouchers?.length" class="text-center py-8 text-gray-500">
-                    Chưa có voucher nào được gán
-                </div>
-                <div v-else v-for="voucher in safeUser.vouchers" :key="voucher.id"
-                    class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6 mb-4 border-l-4"
-                    :class="voucher.is_active ? 'border-green-500' : 'border-gray-300 dark:border-gray-600'">
-
-                    <!-- Voucher header -->
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h4 class="font-medium text-lg">{{ voucher.code }}</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                {{ voucher.description || 'Không có mô tả' }}
-                            </p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-medium text-lg text-primary-600">
-                                {{ voucher.formatted_discount }}
-                            </p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                Còn lại: {{ voucher.remaining_uses }} lần sử dụng
-                            </p>
+            <div v-if="activeTab === 'vouchers'" class="space-y-6">
+                <!-- Header Card -->
+                <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
+                    <div class="p-4 border-b dark:border-slate-700">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-medium leading-6 dark:text-white">Danh sách voucher</h3>
+                            <BaseButton 
+                                label="Gán voucher" 
+                                color="info" 
+                                @click="openAssignVoucherModal" 
+                                :icon="mdiTicketPercent"
+                                small
+                            />
                         </div>
                     </div>
-
-                    <!-- Voucher details -->
-                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <p class="text-gray-600 dark:text-gray-400">
-                                Đơn ti thiểu:
-                                <span class="font-medium">{{ voucher.min_order_value_formatted }}</span>
-                            </p>
-                            <p class="text-gray-600 dark:text-gray-400">
-                                Giảm tối đa:
-                                <span class="font-medium">{{ voucher.max_discount_amount_formatted }}</span>
-                            </p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-gray-600 dark:text-gray-400">
-                                Bắt đầu:
-                                <span class="font-medium">{{ voucher.start_date_formatted }}</span>
-                            </p>
-                            <p class="text-gray-600 dark:text-gray-400">
-                                Kết thúc:
-                                <span class="font-medium">{{ voucher.end_date_formatted }}</span>
+                    <!-- Vouchers List -->
+                    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
+                        <!-- Empty State -->
+                        <div v-if="!safeUser.vouchers?.length" class="p-8 text-center">
+                            <BaseIcon :path="mdiTicketPercent"
+                                class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
+                            <h3 class="mt-4 text-lg font-medium dark:text-white">
+                                Chưa có voucher nào
+                            </h3>
+                            <p class="mt-2 text-gray-600 dark:text-gray-400">
+                                Khách hàng chưa được gán voucher nào.
                             </p>
                         </div>
-                    </div>
 
-                    <!-- Action buttons -->
-                    <div class="mt-4 flex justify-end space-x-2">
-                        <BaseButton label="Chi tiết" color="info" small @click="openVoucherDetailModal(voucher)" />
-                        <BaseButton v-if="voucher.remaining_uses > 0" label="Trả lại voucher" color="danger" small
-                            @click="returnVoucher(voucher.id)" />
-                    </div>
-                </div>
-
-                <!-- Voucher Detail Modal -->
-                <TransitionRoot appear :show="showVoucherDetailModal" as="template">
-                    <Dialog as="div" @close="closeVoucherDetailModal" class="relative z-50">
-                        <div class="fixed inset-0 overflow-y-auto">
-                            <div class="flex min-h-full items-center justify-center p-4">
-                                <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl 
-                                    bg-white dark:bg-slate-900 p-6 shadow-xl transition-all">
-                                    <DialogTitle as="h3" class="text-lg font-medium leading-6 
-                                        text-gray-900 dark:text-white mb-4">
-                                        Chi tiết Voucher
-                                    </DialogTitle>
-
-                                    <div v-if="selectedVoucher" class="space-y-4">
-                                        <div class="flex justify-between items-start">
-                                            <div>
-                                                <h4 class="font-medium dark:text-white">{{ selectedVoucher.code }}</h4>
-                                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                    {{ selectedVoucher.description || 'Không có mô tả' }}
-                                                </p>
-                                            </div>
-                                            <div :class="{
+                        <!-- Vouchers Grid -->
+                        <div v-else class="divide-y dark:divide-slate-700">
+                            <div v-for="voucher in safeUser.vouchers" :key="voucher.id"
+                                class="p-6 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                                <!-- Voucher Header -->
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <div class="flex items-center space-x-2">
+                                            <h4 class="font-medium text-lg dark:text-white">{{ voucher.code }}</h4>
+                                            <span :class="{
                                                 'px-2 py-1 text-xs font-medium rounded-full': true,
-                                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': selectedVoucher.status === 'active',
-                                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': selectedVoucher.status === 'inactive'
+                                                'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300': voucher.status === 'active',
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300': voucher.status === 'inactive'
                                             }">
-                                                {{ selectedVoucher.status === 'active' ? 'Đang kích hoạt' : 'Đã vô hiệu'
-                                                }}
-                                            </div>
+                                                {{ voucher.status === 'active' ? 'Đang kích hoạt' : 'Đã vô hiệu' }}
+                                            </span>
                                         </div>
-
-                                        <div class="grid grid-cols-2 gap-4 text-sm">
-                                            <div>
-                                                <p class="text-gray-600 dark:text-gray-400">Loại giảm giá</p>
-                                                <p class="font-medium dark:text-white">
-                                                    {{ selectedVoucher.discount_type === 'percentage' ? 'Phần trăm' :
-                                                        'Số tiền cố định' }}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p class="text-gray-600 dark:text-gray-400">Giá trị giảm</p>
-                                                <p class="font-medium dark:text-white">{{
-                                                    selectedVoucher.formatted_discount }}</p>
-                                            </div>
-                                            <div>
-                                                <p class="text-gray-600 dark:text-gray-400">Đơn tối thiểu</p>
-                                                <p class="font-medium dark:text-white">{{
-                                                    selectedVoucher.min_order_value_formatted }}</p>
-                                            </div>
-                                            <div>
-                                                <p class="text-gray-600 dark:text-gray-400">Giảm tối đa</p>
-                                                <p class="font-medium dark:text-white">{{
-                                                    selectedVoucher.max_discount_amount_formatted }}</p>
-                                            </div>
-                                            <div>
-                                                <p class="text-gray-600 dark:text-gray-400">Ngày bắt đầu</p>
-                                                <p class="font-medium dark:text-white">{{
-                                                    selectedVoucher.start_date_formatted }}</p>
-                                            </div>
-                                            <div>
-                                                <p class="text-gray-600 dark:text-gray-400">Ngày kết thúc</p>
-                                                <p class="font-medium dark:text-white">{{
-                                                    selectedVoucher.end_date_formatted }}</p>
-                                            </div>
-                                        </div>
-
-                                        <div class="pt-4 border-t dark:border-gray-700">
-                                            <div class="flex justify-between space-x-3">
-                                                <BaseButton type="button"
-                                                    :label="selectedVoucher.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'"
-                                                    :color="selectedVoucher.status === 'active' ? 'danger' : 'success'"
-                                                    @click="toggleVoucherStatus(selectedVoucher.id)" />
-                                                <BaseButton type="button" label="Đóng" color="white"
-                                                    @click="closeVoucherDetailModal" />
-                                            </div>
-                                        </div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                            {{ voucher.description || 'Không có mô tả' }}
+                                        </p>
                                     </div>
-                                </DialogPanel>
+                                    <p class="font-medium text-lg text-primary-600 dark:text-primary-400">
+                                        {{ voucher.formatted_discount }}
+                                    </p>
+                                </div>
+
+                                <!-- Voucher Details Grid -->
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+                                    <div>
+                                        <p class="text-gray-600 dark:text-gray-400">Đơn tối thiểu</p>
+                                        <p class="font-medium dark:text-white">{{ voucher.min_order_value_formatted }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600 dark:text-gray-400">Giảm tối đa</p>
+                                        <p class="font-medium dark:text-white">{{ voucher.max_discount_amount_formatted
+                                            }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600 dark:text-gray-400">Lần sử dụng còn lại</p>
+                                        <p class="font-medium dark:text-white">{{ voucher.remaining_uses }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600 dark:text-gray-400">Hiệu lực đến</p>
+                                        <p class="font-medium dark:text-white">{{ voucher.end_date_formatted }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Voucher Actions -->
+                                <div class="flex justify-end space-x-2">
+                                    <BaseButton label="Chi tiết" color="info" small
+                                        @click="openVoucherDetailModal(voucher)" />
+                                    <BaseButton v-if="voucher.remaining_uses > 0" label="Trả lại voucher" color="danger"
+                                        small @click="returnVoucher(voucher.id)" />
+                                </div>
                             </div>
                         </div>
-                    </Dialog>
-                </TransitionRoot>
+                    </div>
+                </div>
             </div>
+
+            <!-- Voucher Detail Modal -->
+            <TransitionRoot appear :show="showVoucherDetailModal" as="template">
+                <Dialog as="div" @close="closeVoucherDetailModal" class="relative z-50">
+                    <div class="fixed inset-0 bg-black/30 dark:bg-black/50" />
+                    <div class="fixed inset-0 overflow-y-auto">
+                        <div class="flex min-h-full items-center justify-center p-4">
+                            <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl 
+                                bg-white dark:bg-slate-900 p-6 shadow-xl transition-all">
+                                <DialogTitle as="h3" class="text-lg font-medium leading-6 
+                                    text-gray-900 dark:text-white mb-4">
+                                    Chi tiết Voucher
+                                </DialogTitle>
+
+                                <div v-if="selectedVoucher" class="space-y-4">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h4 class="font-medium dark:text-white">{{ selectedVoucher.code }}</h4>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                {{ selectedVoucher.description || 'Không có mô tả' }}
+                                            </p>
+                                        </div>
+                                        <div :class="{
+                                            'px-2 py-1 text-xs font-medium rounded-full': true,
+                                            'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300': selectedVoucher.status === 'active',
+                                            'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300': selectedVoucher.status === 'inactive'
+                                        }">
+                                            {{ selectedVoucher.status === 'active' ? 'Đang kích hoạt' : 'Đã vô hiệu'
+                                            }}
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <p class="text-gray-600 dark:text-gray-400">Loại giảm giá</p>
+                                            <p class="font-medium dark:text-white">
+                                                {{ selectedVoucher.discount_type === 'percentage' ? 'Phần trăm' :
+                                                    'Số tiền cố định' }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-600 dark:text-gray-400">Giá trị giảm</p>
+                                            <p class="font-medium dark:text-white">{{
+                                                selectedVoucher.formatted_discount }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-600 dark:text-gray-400">Đơn tối thiểu</p>
+                                            <p class="font-medium dark:text-white">{{
+                                                selectedVoucher.min_order_value_formatted }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-600 dark:text-gray-400">Giảm tối đa</p>
+                                            <p class="font-medium dark:text-white">{{
+                                                selectedVoucher.max_discount_amount_formatted }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-600 dark:text-gray-400">Ngày bắt đầu</p>
+                                            <p class="font-medium dark:text-white">{{
+                                                selectedVoucher.start_date_formatted }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-600 dark:text-gray-400">Ngày kết thúc</p>
+                                            <p class="font-medium dark:text-white">{{
+                                                selectedVoucher.end_date_formatted }}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-4 border-t dark:border-gray-700">
+                                        <div class="flex justify-between space-x-3">
+                                            <BaseButton type="button"
+                                                :label="selectedVoucher.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'"
+                                                :color="selectedVoucher.status === 'active' ? 'danger' : 'success'"
+                                                @click="toggleVoucherStatus(selectedVoucher.id)" />
+                                            <BaseButton type="button" label="Đóng" color="white"
+                                                @click="closeVoucherDetailModal" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </DialogPanel>
+                        </div>
+                    </div>
+                </Dialog>
+            </TransitionRoot>
 
             <!-- Orders Tab -->
             <div v-if="activeTab === 'invoices'" class="space-y-6">
                 <!-- Header -->
-                <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-4">
-                    <h3 class="text-lg font-medium dark:text-white">Lịch sử đơn hàng</h3>
-                </div>
-
-                <!-- Orders List -->
-                <div v-if="safeUser.orders?.length" class="space-y-4">
-                    <div v-for="order in safeUser.orders" :key="order.id"
-                        class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
-                        <!-- Order Header -->
-                        <div class="p-4 border-b dark:border-slate-700 flex justify-between items-center">
-                            <div>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    Mã đơn hàng: #{{ order.id }}
-                                </p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    {{ formattedDate(order.created_at) }}
-                                </p>
+                <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
+                    <div class="p-4 border-b dark:border-slate-700">
+                        <h3 class="text-lg font-medium leading-6 dark:text-white">Lịch sử đơn hàng</h3>
+                    </div>
+                    <!-- Orders List -->
+                    <div v-if="safeUser.orders?.length" class="space-y-4">
+                        <div v-for="order in safeUser.orders" :key="order.id"
+                            class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
+                            <!-- Order Header -->
+                            <div class="p-4 border-b dark:border-slate-700 flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        Mã đơn hàng: #{{ order.id }}
+                                    </p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        {{ formattedDate(order.created_at) }}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <span :class="{
+                                        'px-2 py-1 text-xs font-medium rounded-full': true,
+                                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': order.status === 'pending',
+                                        'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': order.status === 'processing',
+                                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': order.status === 'completed',
+                                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': order.status === 'cancelled'
+                                    }">
+                                        {{ formatOrderStatus(order.status) }}
+                                    </span>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <span :class="{
-                                    'px-2 py-1 text-xs font-medium rounded-full': true,
-                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': order.status === 'pending',
-                                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': order.status === 'processing',
-                                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': order.status === 'completed',
-                                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': order.status === 'cancelled'
-                                }">
-                                    {{ formatOrderStatus(order.status) }}
-                                </span>
-                            </div>
-                        </div>
 
-                        <!-- Order Items -->
-                        <div class="p-4 space-y-3">
-                            <div v-for="item in order.order_items" :key="item.id"
-                                class="flex justify-between items-center py-2">
-                                <div class="flex items-center space-x-3">
-                                    <div class="flex-shrink-0">
-                                        <img v-if="item.product?.image_url" :src="item.product.image_url"
-                                            :alt="item.product?.name" class="w-12 h-12 object-cover rounded-md">
-                                        <div v-else
-                                            class="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-md flex items-center justify-center">
-                                            <BaseIcon :path="mdiPackageVariant"
-                                                class="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                            <!-- Order Items -->
+                            <div class="p-4 space-y-3">
+                                <div v-for="item in order.order_items" :key="item.id"
+                                    class="flex justify-between items-center py-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="flex-shrink-0">
+                                            <img v-if="item.product?.image_url" :src="item.product.image_url"
+                                                :alt="item.product?.name" class="w-12 h-12 object-cover rounded-md">
+                                            <div v-else
+                                                class="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-md flex items-center justify-center">
+                                                <BaseIcon :path="mdiPackageVariant"
+                                                    class="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium dark:text-white">
+                                                {{ item.product?.name || item.service?.service_name || 'Sản phẩm đã xóa'
+                                                }}
+                                            </p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                {{ formatCurrency(item.price) }} x {{ item.quantity }}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div>
-                                        <p class="font-medium dark:text-white">
-                                            {{ item.product?.name || item.service?.service_name || 'Sản phẩm đã xóa' }}
-                                        </p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ formatCurrency(item.price) }} x {{ item.quantity }}
-                                        </p>
-                                    </div>
+                                    <p class="font-medium dark:text-white">
+                                        {{ formatCurrency(item.price * item.quantity) }}
+                                    </p>
                                 </div>
-                                <p class="font-medium dark:text-white">
-                                    {{ formatCurrency(item.price * item.quantity) }}
-                                </p>
                             </div>
-                        </div>
 
-                        <!-- Order Summary -->
-                        <div class="p-4 bg-gray-50 dark:bg-slate-800 space-y-2">
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400">Tạm tính</span>
-                                <span class="dark:text-white">{{ formatCurrency(order.total_amount) }}</span>
+                            <!-- Order Summary -->
+                            <div class="p-4 bg-gray-50 dark:bg-slate-800 space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600 dark:text-gray-400">Tạm tính</span>
+                                    <span class="dark:text-white">{{ formatCurrency(order.total_amount) }}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600 dark:text-gray-400">Giảm giá</span>
+                                    <span class="text-green-600 dark:text-green-400">
+                                        -{{ formatCurrency(order.discount_amount) }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between font-medium pt-2 border-t dark:border-slate-700">
+                                    <span class="dark:text-white">Tổng cộng</span>
+                                    <span class="text-lg text-primary-600 dark:text-primary-400">
+                                        {{ formatCurrency(order.total_amount - order.discount_amount) }}
+                                    </span>
+                                </div>
                             </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400">Giảm giá</span>
-                                <span class="text-green-600 dark:text-green-400">
-                                    -{{ formatCurrency(order.discount_amount) }}
-                                </span>
-                            </div>
-                            <div class="flex justify-between font-medium pt-2 border-t dark:border-slate-700">
-                                <span class="dark:text-white">Tổng cộng</span>
-                                <span class="text-lg text-primary-600 dark:text-primary-400">
-                                    {{ formatCurrency(order.total_amount - order.discount_amount) }}
-                                </span>
-                            </div>
-                        </div>
 
-                        <!-- Order Actions -->
-                        <div v-if="order.status === 'pending'"
-                            class="p-4 border-t dark:border-slate-700 flex justify-end space-x-3">
-                            <BaseButton label="Hủy đơn" color="danger" @click="cancelOrder(order.id)"
-                                :loading="order.loading" />
+                            <!-- Order Actions -->
+                            <div v-if="order.status === 'pending'"
+                                class="p-4 border-t dark:border-slate-700 flex justify-end space-x-3">
+                                <BaseButton label="Hủy đơn" color="danger" @click="cancelOrder(order.id)"
+                                    :loading="order.loading" />
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Empty State -->
-                <div v-else class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-8 text-center">
-                    <BaseIcon :path="mdiReceipt" class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
-                    <h3 class="mt-4 text-lg font-medium dark:text-white">
-                        Chưa có đơn hàng nào
-                    </h3>
-                    <p class="mt-2 text-gray-600 dark:text-gray-400">
-                        Khách hàng chưa thc hiện đơn hàng nào.
-                    </p>
+                    <!-- Empty State -->
+                    <div v-else class="bg-white dark:bg-slate-900 rounded-lg shadow-md p-8 text-center">
+                        <BaseIcon :path="mdiReceipt" class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500" />
+                        <h3 class="mt-4 text-lg font-medium dark:text-white">
+                            Chưa có đơn hàng nào
+                        </h3>
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">
+                            Khách hàng chưa thc hiện đơn hàng nào.
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -1428,7 +1456,7 @@ const handleUpdate = async (info) => {
                 <!-- Active Treatments -->
                 <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden">
                     <div class="p-4 border-b dark:border-slate-700">
-                        <h3 class="text-lg font-medium dark:text-white">Liệu trình đang thực hiện</h3>
+                        <h3 class="text-lg font-medium leading-6 dark:text-white">Liệu trình đang thực hiện</h3>
                     </div>
 
                     <div v-if="userServicePackages?.length" class="divide-y dark:divide-slate-700 p-4 ">

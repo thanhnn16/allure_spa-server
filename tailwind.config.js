@@ -19,10 +19,24 @@ module.exports = {
                 '78': '19.5rem',
             },
             colors: {
-                'dark-bg': '#0f172a',
-                'dark-surface': '#1e293b',
-                'dark-border': '#334155',
-                'dark-text': '#e5e5e5',
+                'dark-bg': {
+                    DEFAULT: '#0f172a',
+                    secondary: '#1e293b'
+                },
+                'dark-surface': {
+                    DEFAULT: '#1e293b',
+                    hover: '#2d3748',
+                    active: '#4a5568'
+                },
+                'dark-border': {
+                    DEFAULT: '#334155',
+                    hover: '#475569'
+                },
+                'dark-text': {
+                    DEFAULT: '#f1f5f9',
+                    secondary: '#e2e8f0',
+                    muted: '#94a3b8'
+                },
                 'dark-muted': '#6b7280',
                 'dark-modal': '#374151',
                 'dark-hover': '#2d3748',
@@ -38,6 +52,10 @@ module.exports = {
                     700: '#1d4ed8',
                     800: '#1e40af',
                     900: '#1e3a8a',
+                },
+                'input-disabled': {
+                    light: '#f9fafb',
+                    dark: '#1e293b'
                 }
             },
             zIndex: {
@@ -85,6 +103,12 @@ module.exports = {
                 '-ms-overflow-style': 'none',
                 'scrollbar-width': 'none',
             },
+            backgroundColor: {
+                'disabled': {
+                    light: '#f3f4f6',
+                    dark: '#1e293b'
+                }
+            }
         },
     },
     plugins: [

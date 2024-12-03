@@ -5,104 +5,108 @@
       <!-- Basic Information -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700">Tên sản phẩm *</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Tên sản phẩm *</label>
           <input v-model="form.name" :class="[
-            'mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500',
-            validationErrors.name ? 'border-red-500' : 'border-gray-300'
+            'mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-dark-surface dark:text-dark-text dark:border-dark-border',
+            validationErrors.name ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'
           ]" @blur="validateField('name', form.name)" type="text" required>
-          <span v-if="validationErrors.name" class="text-red-500 text-sm">{{ validationErrors.name }}</span>
+          <span v-if="validationErrors.name" class="text-red-500 dark:text-red-400 text-sm">{{ validationErrors.name
+            }}</span>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700">Danh mục *</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Danh mục *</label>
           <select v-model="form.category_id" :class="[
-            'mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500',
-            validationErrors.category_id ? 'border-red-500' : 'border-gray-300'
+            'mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-dark-surface dark:text-dark-text dark:border-dark-border',
+            validationErrors.category_id ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'
           ]" required>
             <option value="">Chọn danh mục</option>
             <option v-for="category in categories" :key="category.id" :value="category.id">
               {{ category.category_name }}
             </option>
           </select>
-          <span v-if="validationErrors.category_id" class="text-red-500 text-sm">{{ validationErrors.category_id
+          <span v-if="validationErrors.category_id" class="text-red-500 dark:text-red-400 text-sm">{{
+            validationErrors.category_id
             }}</span>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700">Giá *</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Giá *</label>
           <input v-model="displayPrice" @input="handlePriceInput" @blur="formatDisplayPrice" type="text" :class="[
-            'mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500',
-            validationErrors.price ? 'border-red-500' : 'border-gray-300'
+            'mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-dark-surface dark:text-dark-text dark:border-dark-border',
+            validationErrors.price ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'
           ]" required>
-          <span v-if="validationErrors.price" class="text-red-500 text-sm">{{ validationErrors.price }}</span>
+          <span v-if="validationErrors.price" class="text-red-500 dark:text-red-400 text-sm">{{ validationErrors.price
+            }}</span>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700">Số lượng *</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Số lượng *</label>
           <input v-model="form.quantity" type="number" min="0" :class="[
-            'mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500',
-            validationErrors.quantity ? 'border-red-500' : 'border-gray-300'
+            'mt-1 block w-full rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-dark-surface dark:text-dark-text dark:border-dark-border',
+            validationErrors.quantity ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'
           ]" required>
-          <span v-if="validationErrors.quantity" class="text-red-500 text-sm">{{ validationErrors.quantity }}</span>
+          <span v-if="validationErrors.quantity" class="text-red-500 dark:text-red-400 text-sm">{{
+            validationErrors.quantity }}</span>
         </div>
       </div>
 
       <!-- Product Details -->
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700">Mô tả thương hiệu</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Mô tả thương hiệu</label>
           <textarea v-model="form.brand_description" rows="3"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-dark-surface dark:text-dark-text"></textarea>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700">Cách sử dụng</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Cách sử dụng</label>
           <textarea v-model="form.usage" rows="3"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-dark-surface dark:text-dark-text"></textarea>
         </div>
 
         <!-- ... Các trường khác tương tự ... -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Lợi ích</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Lợi ích</label>
           <textarea v-model="form.benefits" rows="3"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-dark-surface dark:text-dark-text"></textarea>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700">Thành phần chính</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Thành phần chính</label>
           <textarea v-model="form.key_ingredients" rows="3"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-dark-surface dark:text-dark-text"></textarea>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700">Thành phần đầy đủ</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Thành phần đầy đủ</label>
           <textarea v-model="form.ingredients" rows="3"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-dark-surface dark:text-dark-text"></textarea>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700">Hướng dẫn sử dụng</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Hướng dẫn sử dụng</label>
           <textarea v-model="form.directions" rows="3"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-dark-surface dark:text-dark-text"></textarea>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700">Hướng dẫn bảo quản</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Hướng dẫn bảo quản</label>
           <textarea v-model="form.storage_instructions" rows="3"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-dark-surface dark:text-dark-text"></textarea>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700">Ghi chú sản phẩm</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-dark-text">Ghi chú sản phẩm</label>
           <textarea v-model="form.product_notes" rows="3"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-dark-surface dark:text-dark-text"></textarea>
         </div>
       </div>
 
       <!-- Validation Errors Summary -->
-      <div v-if="Object.keys(validationErrors).length > 0" class="bg-red-50 p-4 rounded-md">
-        <p class="text-red-700 font-medium">Vui lòng sửa các lỗi sau:</p>
-        <ul class="mt-2 text-sm text-red-600">
+      <div v-if="Object.keys(validationErrors).length > 0" class="bg-red-50 dark:bg-red-900/20 p-4 rounded-md">
+        <p class="text-red-700 dark:text-red-400 font-medium">Vui lòng sửa các lỗi sau:</p>
+        <ul class="mt-2 text-sm text-red-600 dark:text-red-400">
           <li v-for="(error, field) in validationErrors" :key="field">
             {{ error }}
           </li>

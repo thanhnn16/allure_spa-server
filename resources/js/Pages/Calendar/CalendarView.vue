@@ -57,10 +57,11 @@ watch(() => props.appointments, (newAppointments) => {
 const events = computed(() => {
     return appointments.value.map(appointment => ({
         id: appointment.id,
-        title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.service?.name || 'Không xác định'}`,
+        title: `${appointment.user?.full_name || 'Không xác định'} - ${appointment.service?.service_name || 'Không xác định'}`,
         start: appointment.start,
         end: appointment.end,
         className: `status-${appointment.status.toLowerCase()}`,
+        slots: appointment.slots || 1,
         extendedProps: {
             userId: appointment.user_id,
             serviceId: appointment.service_id,
@@ -69,12 +70,13 @@ const events = computed(() => {
             status: appointment.status,
             timeSlotId: appointment.time_slot_id,
             userName: appointment.user?.full_name,
-            serviceName: appointment.service?.name,
+            serviceName: appointment.service?.service_name,
             staffName: appointment.staff?.full_name,
             cancelledBy: appointment.cancelled_by,
             cancelledAt: appointment.cancelled_at,
             cancellationNote: appointment.cancellation_note,
             cancelledByUser: appointment.cancelled_by_user,
+            slots: appointment.slots || 1
         }
     }))
 })
@@ -121,22 +123,67 @@ const calendarOptions = computed(() => ({
     select: handleDateSelect,
     eventDidMount: (info) => {
         const event = info.event;
-        const props = event.extendedProps;
+        const slots = event.extendedProps.slots || 1;
+        const eventEl = info.el;
+        const harness = eventEl.closest('.fc-timegrid-event-harness');
 
+        // Reset style
+        eventEl.style = '';
+        eventEl.classList.remove('full-slot-event', 'half-slot-event');
+
+        if (slots === 2) {
+            // Event 2 slots
+            harness.style.cssText = `
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+            `;
+            eventEl.style.cssText = `
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+            `;
+            eventEl.classList.add('full-slot-event');
+        } else {
+            // Event 1 slot
+            const timeCol = harness.closest('.fc-timegrid-col');
+            const allHarnesses = Array.from(timeCol.querySelectorAll('.fc-timegrid-event-harness'));
+            const currentIndex = allHarnesses.indexOf(harness);
+
+            harness.style.cssText = `
+                position: absolute !important;
+                top: 0 !important;
+                bottom: 0 !important;
+                width: 50% !important;
+                left: ${currentIndex === 0 ? '0' : '50%'} !important;
+            `;
+
+            eventEl.style.cssText = `
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+            `;
+            eventEl.classList.add('half-slot-event');
+        }
+
+        // Tooltip content
         let tooltipContent = `
             <div class="p-2">
-                <div class="font-bold">${props.userName || 'Không xác định'}</div>
-                <div>Dịch vụ: ${props.serviceName || 'Không xác định'}</div>
-                <div>Nhân viên: ${props.staffName || 'Không xác định'}</div>
-                <div>Trạng thái: ${props.status}</div>
+                <div class="font-bold">${event.extendedProps.userName || 'Không xác định'}</div>
+                <div>Dịch vụ: ${event.extendedProps.serviceName || 'Không xác định'}</div>
+                <div>Nhân viên: ${event.extendedProps.staffName || 'Không xác định'}</div>
+                <div>Trạng thái: ${event.extendedProps.status}</div>
+                <div>Số slot: ${slots}</div>
         `;
 
-        if (props.status === 'cancelled') {
+        if (event.extendedProps.status === 'cancelled') {
             tooltipContent += `
                 <div class="mt-2 pt-2 border-t">
-                    <div>Hủy bởi: ${props.cancelledByUser?.full_name || 'Không xác định'}</div>
-                    <div>Thời gian hủy: ${formatDateTime(props.cancelledAt)}</div>
-                    ${props.cancellationNote ? `<div>Lý do: ${props.cancellationNote}</div>` : ''}
+                    <div>Hủy bởi: ${event.extendedProps.cancelledByUser?.full_name || 'Không xác định'}</div>
+                    <div>Thời gian hủy: ${formatDateTime(event.extendedProps.cancelledAt)}</div>
+                    ${event.extendedProps.cancellationNote ? `<div>Lý do: ${event.extendedProps.cancellationNote}</div>` : ''}
                 </div>
             `;
         }
@@ -149,7 +196,20 @@ const calendarOptions = computed(() => ({
             placement: 'top',
             theme: 'light-border',
             delay: [200, 0],
-            interactive: true
+            interactive: true,
+            zIndex: 999999,
+            appendTo: document.body,
+            popperOptions: {
+                modifiers: [
+                    {
+                        name: 'preventOverflow',
+                        options: {
+                            altAxis: true,
+                            padding: 5
+                        }
+                    }
+                ]
+            }
         });
     },
     eventClick: (info) => {
@@ -159,22 +219,50 @@ const calendarOptions = computed(() => ({
     eventDrop: handleEventDrop,
     eventMaxStack: 2, // Cho phép hiển thị tối đa 2 events cùng 1 khung giờ
     eventClassNames: (arg) => {
-        return [`${arg.event.extendedProps.status.toLowerCase()}-event`, 'calendar-event']
+        const slots = arg.event.slots || 1;
+        return [
+            `${arg.event.extendedProps.status.toLowerCase()}-event`,
+            'calendar-event',
+            slots === 2 ? 'full-slot-event' : 'half-slot-event'
+        ];
     },
     themeSystem: 'standard',
     views: {
         timeGrid: {
             dayMaxEvents: 2,
+            eventMaxStack: 2,
             nowIndicator: true,
-            eventMinHeight: 30
+            eventMinHeight: 29
         }
-    }
+    },
+    selectConstraint: {
+        start: new Date().toISOString(),
+    },
+    selectOverlap: function (event) {
+        // Chỉ cho phép chọn nếu không có event hoặc event hiện tại chiếm 1 slot
+        if (!event) return true;
+        return event.extendedProps.slots === 1;
+    },
+    eventConstraint: {
+        start: new Date().toISOString(),
+    },
 }))
 
 const selectedTimeSlot = ref(null)
 
 function handleDateSelect(selectInfo) {
     const selectedStart = new Date(selectInfo.start)
+    const now = new Date()
+
+    // Thêm 1 giờ vào thời gian hiện tại
+    const minBookingTime = new Date(now.getTime() + 60 * 60 * 1000)
+
+    // Kiểm tra nếu thời gian chọn nhỏ hơn thời gian tối thiểu cho phép
+    if (selectedStart < minBookingTime) {
+        toast.error('Vui lòng đặt lịch trước ít nhất 1 tiếng')
+        return
+    }
+
     const selectedHour = selectedStart.getHours().toString().padStart(2, '0')
     const selectedMinute = selectedStart.getMinutes().toString().padStart(2, '0')
 
@@ -207,20 +295,16 @@ function handleDateSelect(selectInfo) {
 
 
 function handleEventDrop(dropInfo) {
-    const event = dropInfo.event;
-    const selectedStart = new Date(event.start);
-    const selectedHour = selectedStart.getHours().toString().padStart(2, '0');
-    const selectedMinute = selectedStart.getMinutes().toString().padStart(2, '0');
-    const selectedTimeString = `${selectedHour}:${selectedMinute}:00`;
+    const event = dropInfo.event
+    const selectedStart = new Date(event.start)
+    const now = new Date()
+    const minBookingTime = new Date(now.getTime() + 60 * 60 * 1000)
 
-    const matchingTimeSlot = props.timeSlots.find(slot => {
-        return slot.start_time === selectedTimeString;
-    });
-
-    if (!matchingTimeSlot) {
-        toast.error('Vui lòng chọn khung giờ hợp lệ');
-        dropInfo.revert();
-        return;
+    // Kiểm tra nếu thời gian kéo thả nhỏ hơn thời gian tối thiểu cho phép
+    if (selectedStart < minBookingTime) {
+        toast.error('Vui lòng đặt lịch trước ít nhất 1 tiếng')
+        dropInfo.revert()
+        return
     }
 
     const updatedAppointment = {
@@ -277,7 +361,7 @@ function handleAppointmentAdded(newAppointment) {
     const formattedAppointment = {
         ...newAppointment,
         id: newAppointment.id,
-        title: `${newAppointment.user?.full_name || 'N/A'} - ${newAppointment.service?.name || 'N/A'}`,
+        title: `${newAppointment.user?.full_name || 'N/A'} - ${newAppointment.service?.service_name || 'N/A'}`,
         start: `${newAppointment.appointment_date} ${newAppointment.time_slot.start_time}`,
         end: `${newAppointment.appointment_date} ${newAppointment.time_slot.end_time}`,
         extendedProps: {
@@ -288,7 +372,7 @@ function handleAppointmentAdded(newAppointment) {
             status: newAppointment.status,
             timeSlotId: newAppointment.time_slot_id,
             userName: newAppointment.user?.full_name,
-            serviceName: newAppointment.service?.name,
+            serviceName: newAppointment.service?.service_name,
             staffName: newAppointment.staff?.full_name
         }
     };
@@ -362,7 +446,7 @@ function formatDateTime(dateTimeStr) {
 </template>
 
 <style>
-/* Base calendar styles */
+/* Base styles */
 .calendar-container {
     min-height: calc(100vh - 200px);
 }
@@ -371,155 +455,127 @@ function formatDateTime(dateTimeStr) {
     height: 100%;
 }
 
-/* Dark mode styles */
-.dark .fc {
-    --fc-border-color: rgb(51, 65, 85);
-    --fc-page-bg-color: rgb(30, 41, 59);
-    --fc-neutral-bg-color: rgb(51, 65, 85);
-    --fc-list-event-hover-bg-color: rgb(51, 65, 85);
-    --fc-today-bg-color: rgba(59, 130, 246, 0.1);
+/* Slot styling */
+.fc-timegrid-slot {
+    height: 60px !important;
 }
 
-.dark .fc-theme-standard td,
-.dark .fc-theme-standard th {
-    border-color: var(--fc-border-color);
-}
-
-.dark .fc-theme-standard .fc-scrollgrid {
-    border-color: var(--fc-border-color);
-}
-
-.dark .fc-timegrid-slot-label {
-    color: rgb(203, 213, 225);
-}
-
-.dark .fc-day-today {
-    background: var(--fc-today-bg-color) !important;
-}
-
-/* Event styles with dark mode support */
+/* Calendar event styles */
 .calendar-event {
-    margin: 1px 0;
-    border-radius: 4px;
-    padding: 2px 4px;
+    position: absolute !important;
+    margin: 0 !important;
+    border-radius: 0.25rem !important;
+    padding: 0.25rem !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
 }
 
-/* Status colors - Light mode */
+/* Event container styles */
+.fc-timegrid-event-harness {
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure exact height calculation */
+.fc-timegrid-event {
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    border-width: 1px !important;
+}
+
+/* Full slot event (2 slots) */
+.full-slot-event {
+    width: 100% !important;
+    height: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+}
+
+/* Half slot event (1 slot) */
+.half-slot-event {
+    width: 50% !important;
+    height: 100% !important;
+}
+
+/* First half slot event */
+.half-slot-event:first-child {
+    left: 0 !important;
+    right: 50% !important;
+}
+
+/* Second half slot event */
+.half-slot-event:not(:first-child) {
+    left: 50% !important;
+    right: 0 !important;
+}
+
+/* Status colors */
 .status-pending {
-    background-color: #fbbf24 !important;
-    border-color: #f59e0b !important;
-    color: #000 !important;
+    @apply bg-amber-400 border-amber-500 text-black !important;
 }
 
 .status-confirmed {
-    background-color: #34d399 !important;
-    border-color: #10b981 !important;
-    color: #000 !important;
+    @apply bg-emerald-400 border-emerald-500 text-black !important;
 }
 
 .status-cancelled {
-    background-color: #ef4444 !important;
-    border-color: #dc2626 !important;
-    color: #fff !important;
-    text-decoration: line-through;
-    opacity: 0.8;
-}
-
-.dark .status-cancelled {
-    opacity: 0.7;
+    @apply bg-red-500 border-red-600 text-white line-through opacity-80 !important;
 }
 
 .status-completed {
-    background-color: #3b82f6 !important;
-    border-color: #2563eb !important;
-    color: #fff !important;
+    @apply bg-primary-500 border-primary-600 text-white !important;
 }
 
-/* Dark mode specific event styles */
-.dark .calendar-event {
-    opacity: 0.9;
-}
-
-/* Tooltip styles with dark mode */
-.tippy-box[data-theme~='light-border'] {
-    background-color: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    max-width: 300px !important;
-}
-
-.dark .tippy-box[data-theme~='light-border'] {
-    background-color: rgb(30, 41, 59);
-    border-color: rgb(51, 65, 85);
-    color: rgb(203, 213, 225);
-}
-
-.dark .tippy-box[data-theme~='light-border'] .border-t {
-    border-color: rgb(71, 85, 105);
-}
-
-/* Calendar header and controls */
-.dark .fc-button-primary {
-    background-color: rgb(51, 65, 85) !important;
-    border-color: rgb(71, 85, 105) !important;
-    color: rgb(203, 213, 225) !important;
-}
-
-.dark .fc-button-primary:hover {
-    background-color: rgb(71, 85, 105) !important;
-}
-
-.dark .fc-button-primary:disabled {
-    background-color: rgb(51, 65, 85) !important;
-    opacity: 0.65;
-}
-
-/* Time grid specific styles */
-.fc-timegrid-slot {
-    height: 50px !important;
-}
-
-.fc-timegrid-axis-cushion {
-    max-width: none;
-    white-space: nowrap;
-    padding: 8px;
-}
-
-.dark .fc-timegrid-axis-cushion {
-    color: rgb(203, 213, 225);
-}
-
-/* Event title styles */
+/* Event title */
 .fc-event-title {
-    font-size: 0.85em !important;
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
-    padding: 2px !important;
 }
 
-/* Now indicator */
-.dark .fc-timegrid-now-indicator-line {
-    border-color: #ef4444;
+/* Hover effect */
+.calendar-event:hover {
+    filter: brightness(0.95);
 }
 
-.dark .fc-timegrid-now-indicator-arrow {
-    border-color: #ef4444;
+/* Dark mode support */
+.dark .fc {
+    @apply bg-dark-surface text-dark-text;
+    --fc-border-color: theme('colors.dark-border.DEFAULT');
+    --fc-page-bg-color: theme('colors.dark-surface.DEFAULT');
+    --fc-neutral-bg-color: theme('colors.dark-surface.hover');
+    --fc-list-event-hover-bg-color: theme('colors.dark-surface.hover');
+    --fc-today-bg-color: theme('colors.primary.900/10');
 }
 
-/* Thêm style cho cancelled event tooltip */
-.tippy-box[data-theme~='light-border'] .mt-2 {
-    margin-top: 0.5rem;
+/* Thêm styles mới cho tippy */
+.tippy-box {
+    z-index: 999999 !important;
+    position: relative !important;
 }
 
-.tippy-box[data-theme~='light-border'] .pt-2 {
-    padding-top: 0.5rem;
+.tippy-box[data-placement^='top']>.tippy-arrow::before {
+    z-index: 999999 !important;
 }
 
-.tippy-box[data-theme~='light-border'] .border-t {
-    border-top-width: 1px;
-    border-top-style: solid;
-    border-top-color: #e2e8f0;
+/* Đảm bảo các event calendar có z-index thấp */
+.fc .fc-view-harness {
+    z-index: 0 !important;
+}
+
+.fc-timegrid-event-harness {
+    z-index: 1 !important;
+}
+
+.calendar-event {
+    z-index: 1 !important;
+}
+
+/* Đảm bảo header calendar không che tooltip */
+.fc-header-toolbar {
+    z-index: 2 !important;
+    position: relative !important;
 }
 </style>

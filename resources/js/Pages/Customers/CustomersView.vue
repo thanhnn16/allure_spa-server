@@ -143,9 +143,11 @@ onMounted(() => {
         <SectionMain>
             <SectionTitleLineWithButton :icon="mdiTableAccount" title="Danh sách khách hàng" main>
                 <BaseButton :icon="mdiAccountPlus" label="Thêm khách hàng mới" rounded-full small
-                    @click="showAddCustomerModal = true" />
+                    @click="showAddCustomerModal = true"
+                    class="dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 mr-2" />
                 <BaseButton :icon="mdiTableBorder" label="Nhập từ Excel" rounded-full small
-                    @click="showImportCustomersModal = true" />
+                    @click="showImportCustomersModal = true"
+                    class="dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200" />
             </SectionTitleLineWithButton>
             <NotificationBar v-if="props.upcomingBirthdays > 0" color="info" :icon="mdiCalendarAccount">
                 {{ birthdayNotification }}
@@ -156,8 +158,10 @@ onMounted(() => {
             <CardBox class="mb-6 px-4 py-4 dark:bg-slate-900" has-table>
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center space-x-4">
-                        <BaseButton :icon="mdiFilter" label="Bộ lọc" @click="toggleFilters" />
-                        <BaseButton v-if="showFilters" label="Đặt lại bộ lọc" @click="resetFilters" />
+                        <BaseButton :icon="mdiFilter" label="Bộ lọc" @click="toggleFilters"
+                            class="dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200" />
+                        <BaseButton v-if="showFilters" label="Đặt lại bộ lọc" @click="resetFilters"
+                            class="dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200" />
                     </div>
                 </div>
 
@@ -237,8 +241,8 @@ onMounted(() => {
                         dark:border-slate-700 dark:text-slate-300 
                         placeholder:dark:text-slate-500">
 
-                    <select v-model="form.per_page" @change="handlePerPageChange" class="px-10 py-2 border rounded-md dark:bg-slate-800 
-                        dark:border-slate-700 dark:text-slate-300">
+                    <select v-model="form.per_page" @change="handlePerPageChange" class="px-10 py-2 border rounded-md dark:bg-slate-800 dark:border-slate-600 
+                        dark:text-slate-200 dark:focus:border-slate-500 dark:focus:ring-slate-500">
                         <option :value="10">Xem 10 mỗi trang</option>
                         <option :value="25">Xem 25 mỗi trang</option>
                         <option :value="50">Xem 50 mỗi trang</option>
@@ -260,15 +264,16 @@ onMounted(() => {
             <ImportCustomersModal v-model="showImportCustomersModal" @imported="handleCustomersImported" />
 
             <NotificationBar v-if="showImportSuccess" color="success" :icon="mdiCheckCircle">
-                <div class="dark:text-slate-300">
-                    Nhập từ Excel thành công
+                <div class="dark:text-slate-200">
+                    Nh���p từ Excel thành công
                     <div v-if="importStats">
                         Tổng số: {{ importStats.total }},
                         Thành công: {{ importStats.successful }},
                         Thất bại: {{ importStats.failed }}
                     </div>
                 </div>
-                <BaseButton label="Đóng" small @click="showImportSuccess = false" />
+                <BaseButton label="Đóng" small @click="showImportSuccess = false"
+                    class="dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200" />
             </NotificationBar>
 
             <NotificationBar v-if="showImportErrors" color="danger" :icon="mdiAlertCircle">

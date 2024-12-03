@@ -195,9 +195,11 @@ class DashboardController extends Controller
                 ->values();
 
             // Dịch vụ phổ biến
-            $popularServices = Service::withCount(['appointments' => function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('created_at', [$startDate, $endDate]);
-            }])
+            $popularServices = Service::withCount([
+                'appointments' => function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                }
+            ])
                 ->orderByDesc('appointments_count')
                 ->take(5)
                 ->get()
@@ -211,9 +213,11 @@ class DashboardController extends Controller
 
             // Khách hàng thân thiết
             $topCustomers = User::where('role', 'user')
-                ->withCount(['appointments' => function ($query) use ($startDate, $endDate) {
-                    $query->whereBetween('created_at', [$startDate, $endDate]);
-                }])
+                ->withCount([
+                    'appointments' => function ($query) use ($startDate, $endDate) {
+                        $query->whereBetween('created_at', [$startDate, $endDate]);
+                    }
+                ])
                 ->orderByDesc('appointments_count')
                 ->take(5)
                 ->get()
@@ -227,9 +231,11 @@ class DashboardController extends Controller
                 });
 
             // Sản phẩm bán chạy
-            $bestSellingProducts = Product::withSum(['orderItems' => function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('created_at', [$startDate, $endDate]);
-            }], 'quantity')
+            $bestSellingProducts = Product::withSum([
+                'orderItems' => function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                }
+            ], 'quantity')
                 ->orderByDesc('order_items_sum_quantity')
                 ->take(5)
                 ->get()
@@ -237,31 +243,30 @@ class DashboardController extends Controller
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
-                        'sold' => (int)$product->order_items_sum_quantity ?? 0
+                        'sold' => (int) $product->order_items_sum_quantity ?? 0
                     ];
                 });
 
             // Sản phẩm sắp hết hàng
-            $lowStockProducts = Product::withSum(['stockMovements as stock' => function ($query) {
-                $query->selectRaw('COALESCE(SUM(CASE WHEN type = ? THEN quantity ELSE -quantity END), 0)', [StockMovement::TYPE_IN]);
-            }], 'quantity')
-                ->havingRaw('stock <= ?', [10])
-                ->orderBy('stock')
+            $lowStockProducts = Product::where('quantity', '<=', 10)
+                ->orderBy('quantity')
                 ->take(5)
                 ->get()
                 ->map(function ($product) {
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
-                        'stock' => (int)$product->stock
+                        'stock' => (int) $product->quantity
                     ];
                 });
 
             // Dịch vụ bị hủy nhiều
-            $cancelledServices = Service::withCount(['appointments' => function ($query) use ($startDate, $endDate) {
-                $query->where('status', 'cancelled')
-                    ->whereBetween('created_at', [$startDate, $endDate]);
-            }])
+            $cancelledServices = Service::withCount([
+                'appointments' => function ($query) use ($startDate, $endDate) {
+                    $query->where('status', 'cancelled')
+                        ->whereBetween('created_at', [$startDate, $endDate]);
+                }
+            ])
                 ->orderByDesc('appointments_count')
                 ->take(5)
                 ->get()

@@ -19,6 +19,7 @@ yarn-error.log
 /.idea
 /.vscode
 
+/database/sql/.idea
 
 # Created by https://www.toptal.com/developers/gitignore/api/jetbrains,phpstorm,visualstudiocode,windows,macos,laravel,vue,vuejs
 # Edit at https://www.toptal.com/developers/gitignore?templates=jetbrains,phpstorm,visualstudiocode,windows,macos,laravel,vue,vuejs

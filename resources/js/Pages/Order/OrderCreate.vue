@@ -4,24 +4,25 @@
         <Head title="Tạo đơn hàng mới" />
         <SectionMain>
             <div class="container mx-auto px-4 py-8">
-                <h1 class="text-3xl font-bold mb-6 dark:text-gray-100">Tạo đơn hàng mới</h1>
+                <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-dark-text">Tạo đơn hàng mới</h1>
                 <form @submit.prevent="submitForm" class="space-y-6">
                     <!-- User Selection -->
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                             Khách hàng
                         </label>
                         <div class="relative">
                             <input v-model="userSearch" @input="searchUsers" type="text"
                                 placeholder="Nhập tên hoặc số điện thoại khách hàng..."
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-dark-surface dark:border-dark-border dark:text-gray-300" />
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" />
                             <!-- Dropdown kết quả tìm kiếm -->
                             <div v-if="userResults.length > 0"
-                                class="absolute z-50 w-full mt-1 bg-white dark:bg-dark-surface rounded-md shadow-lg border border-gray-200 dark:border-dark-border max-h-60 overflow-y-auto">
+                                class="absolute z-50 w-full mt-1 bg-white dark:bg-dark-surface rounded-md shadow-lg border border-gray-200 dark:border-dark-border">
                                 <div v-for="user in userResults" :key="user.id" @click="selectUser(user)"
-                                    class="p-3 hover:bg-gray-50 dark:hover:bg-dark-surface/70 cursor-pointer border-b border-gray-100 dark:border-dark-border last:border-0">
-                                    <div class="font-medium dark:text-gray-300">{{ user.full_name }}</div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                    class="p-3 hover:bg-gray-50 dark:hover:bg-dark-surface-hover cursor-pointer border-b border-gray-100 dark:border-dark-border last:border-0">
+                                    <div class="font-medium text-gray-900 dark:text-dark-text">{{ user.full_name }}
+                                    </div>
+                                    <div class="text-sm text-gray-500 dark:text-dark-text-muted">
                                         SĐT: {{ user.phone_number }}
                                         <span v-if="user.email" class="ml-2">Email: {{ user.email }}</span>
                                     </div>
@@ -32,13 +33,13 @@
 
                     <!-- Order Items -->
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Sản phẩm/Dịch vụ</h3>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-dark-text mb-2">Sản phẩm/Dịch vụ</h3>
                         <button type="button" @click="addOrderItem"
-                            class="mb-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            class="mb-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-dark-bg">
                             Thêm sản phẩm/dịch vụ
                         </button>
                         <div v-for="(item, index) in form.order_items" :key="index"
-                            class="mb-4 p-4 border rounded-md dark:border-dark-border dark:bg-dark-surface">
+                            class="mb-4 p-4 border rounded-md border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface">
                             <!-- Item Type Selection -->
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -70,20 +71,23 @@
                                     class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300"
                                     :placeholder="item.item_type === 'product' ? 'Tìm sản phẩm' : 'Tìm liệu trình'" />
                                 <ul v-if="item.searchResults.length > 0"
-                                    class="mt-1 bg-white dark:bg-dark-surface shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 dark:ring-gray-700 overflow-auto focus:outline-none sm:text-sm">
+                                    class="mt-1 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm">
                                     <li v-for="result in item.searchResults" :key="result.id"
                                         @click="selectItem(index, result)"
-                                        class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600/80">
+                                        class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-primary-50 dark:hover:bg-dark-surface-hover">
                                         <div class="flex flex-col">
-                                            <span class="font-medium">{{ result.name || result.service_name }}</span>
-                                            <span v-if="result.item_type === 'service'" class="text-sm">
+                                            <span class="font-medium text-gray-900 dark:text-dark-text">
+                                                {{ result.name || result.service_name }}
+                                            </span>
+                                            <span v-if="result.item_type === 'service'"
+                                                class="text-sm text-gray-600 dark:text-dark-text-muted">
                                                 Đơn lẻ: {{ formatCurrency(result.single_price) }}
                                                 <br>
                                                 Combo 5: {{ formatCurrency(result.combo_5_price) }}
                                                 <br>
                                                 Combo 10: {{ formatCurrency(result.combo_10_price) }}
                                             </span>
-                                            <span v-else class="text-sm">
+                                            <span v-else class="text-sm text-gray-600 dark:text-dark-text-muted">
                                                 {{ formatCurrency(result.price) }}
                                             </span>
                                         </div>
@@ -94,23 +98,33 @@
                             <!-- Quantity and Price -->
                             <div class="mt-4 grid grid-cols-3 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Số
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Số
                                         lượng:</label>
                                     <input v-model.number="item.quantity" type="number" min="1"
-                                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300" />
+                                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-dark-border rounded-md dark:bg-dark-surface dark:text-dark-text" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Đơn
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Đơn
                                         giá:</label>
-                                    <input :value="formatCurrency(item.price)" type="text"
-                                        class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm dark:bg-dark-surface dark:border-dark-border dark:text-gray-300"
-                                        readonly />
+                                    <input :value="formatCurrency(item.price)" type="text" class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm sm:text-sm 
+                                        bg-white dark:bg-dark-surface
+                                        disabled:bg-gray-50 dark:disabled:bg-dark-surface 
+                                        disabled:text-gray-700 dark:disabled:text-dark-text
+                                        disabled:border-gray-300 dark:disabled:border-dark-border
+                                        disabled:cursor-not-allowed" readonly />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Thành
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Thành
                                         tiền:</label>
-                                    <input :value="formatCurrency(item.quantity * item.price)" readonly
-                                        class="mt-1 bg-gray-100 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300" />
+                                    <input :value="formatCurrency(item.quantity * item.price)" class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm sm:text-sm 
+                                        bg-white dark:bg-dark-surface
+                                        disabled:bg-gray-50 dark:disabled:bg-dark-surface 
+                                        disabled:text-gray-700 dark:disabled:text-dark-text
+                                        disabled:border-gray-300 dark:disabled:border-dark-border
+                                        disabled:cursor-not-allowed" readonly />
                                 </div>
                             </div>
 
@@ -345,7 +359,7 @@ export default {
                     }
                 }
 
-                // Cập nhật tổng tiền trước khi gửi
+                // Cp nhật tổng tiền trước khi gửi
                 form.value.total_amount = calculateTotal();
                 form.value.discount_amount = calculateDiscount();
 
@@ -442,13 +456,13 @@ export default {
 }
 
 input[readonly] {
-    background-color: #f9fafb;
+    @apply bg-gray-50 dark:bg-dark-surface;
     cursor: not-allowed;
-    color: #374151;
+    @apply text-gray-700 dark:text-dark-text;
 }
 
 input[readonly]:focus {
-    border-color: #d1d5db;
+    @apply border-gray-300 dark:border-dark-border;
     box-shadow: none;
 }
 

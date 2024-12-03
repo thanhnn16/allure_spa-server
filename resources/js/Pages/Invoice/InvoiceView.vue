@@ -4,12 +4,12 @@
     <SectionMain>
       <div class="container mx-auto px-4 py-8">
         <!-- Error message -->
-        <div v-if="error" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div v-if="error" class="mb-4 bg-red-100 dark:bg-red-200 border border-red-400 text-red-700 dark:text-red-800 px-4 py-3 rounded">
           {{ error }}
         </div>
 
         <div class="flex justify-between items-center mb-6">
-          <h1 class="text-2xl font-semibold">Quản lý hóa đơn</h1>
+          <h1 class="text-2xl font-semibold text-gray-900 dark:text-dark-text">Quản lý hóa đơn</h1>
           <div class="space-x-4">
             <button @click="testPayOS" 
                     class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
@@ -28,7 +28,7 @@
             <select 
               v-model="filters.status" 
               @change="applyFilters"
-              class="form-select rounded-md shadow-sm w-48"
+              class="form-select rounded-md shadow-sm w-48 bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
             >
               <option value="">Tất cả trạng thái</option>
               <option value="pending">Chờ thanh toán</option>
@@ -41,56 +41,56 @@
               @input="debounceSearch"
               type="text" 
               placeholder="Tìm kiếm theo ID hoặc tên khách hàng"
-              class="form-input rounded-md shadow-sm flex-grow" 
+              class="form-input rounded-md shadow-sm flex-grow bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text" 
             />
           </div>
         </div>
 
         <!-- Bảng hiển thị hóa đơn -->
-        <div v-if="invoices?.data?.length > 0" class="overflow-x-auto bg-white shadow-md rounded-lg">
-          <table class="min-w-full divide-y divide-gray-200">
+        <div v-if="invoices?.data?.length > 0" class="overflow-x-auto bg-white dark:bg-dark-surface shadow-md rounded-lg">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
             <thead>
               <tr>
-                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                   ID Hóa đơn
                 </th>
-                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                   Khách hàng
                 </th>
-                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                   Tổng tiền
                 </th>
-                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                   Đã thanh toán
                 </th>
-                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                   Còn lại
                 </th>
-                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th class="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-6 py-4 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                   Hành động
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="invoice in invoices.data" :key="invoice.id" class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            <tbody class="bg-white dark:bg-dark-surface divide-y divide-gray-200 dark:divide-dark-border">
+              <tr v-for="invoice in invoices.data" :key="invoice.id" class="hover:bg-gray-50 dark:hover:bg-dark-surface-hover">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-dark-text">
                   <span title="#{{ invoice.id }}" class="cursor-help">
                     #{{ truncateId(invoice.id) }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text-muted">
                   {{ invoice.user.full_name }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text-muted">
                   {{ formatCurrency(invoice.total_amount) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text-muted">
                   {{ formatCurrency(invoice.paid_amount) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text-muted">
                   {{ formatCurrency(calculateRemainingAmount(invoice)) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -102,7 +102,7 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                   <button 
                     @click="viewInvoiceDetails(invoice.id)" 
-                    class="text-indigo-600 hover:text-indigo-900 font-medium hover:underline">
+                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-500 font-medium hover:underline">
                     Xem chi tiết
                   </button>
                 </td>
@@ -110,8 +110,8 @@
             </tbody>
           </table>
         </div>
-        <div v-else class="bg-white shadow-md rounded-lg p-8 text-center">
-          <p class="text-gray-600 text-lg">Chưa có dữ liệu hóa đơn.</p>
+        <div v-else class="bg-white dark:bg-dark-surface shadow-md rounded-lg p-8 text-center">
+          <p class="text-gray-600 dark:text-dark-text-muted text-lg">Chưa có dữ liệu hóa đơn.</p>
           <button @click="createNewInvoice"
             class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
             Tạo hóa đơn đầu tiên
