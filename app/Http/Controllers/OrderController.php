@@ -416,7 +416,7 @@ class OrderController extends BaseController
 
             return $this->respondWithJson(
                 $order,
-                'Đơn hàng đã được tạo thành công',
+                'Đơn hàng và hóa đơn đã được tạo thành công',
                 201
             );
         } catch (\Exception $e) {

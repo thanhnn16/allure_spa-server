@@ -365,7 +365,7 @@ export default {
 
                 const response = await axios.post('/orders', form.value);
 
-                toast.success('Đơn hàng đã được tạo thành công!');
+                toast.success('Đơn hàng và hóa đơn đã được tạo thành công!');
                 router.visit(`/orders/${response.data.data.id}`);
             } catch (error) {
                 console.error('Error creating order:', error);

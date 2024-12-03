@@ -57,20 +57,9 @@ export default [
         ]
     },
     {
-        label: 'Quản lý hoá đơn',
+        label: 'Danh sách hoá đơn',
         icon: mdiBallot,
-        menu: [
-            {
-                label: 'Tạo hoá đơn mới',
-                route: 'invoices.create',
-                icon: mdiFileDocumentPlus
-            },
-            {
-                label: 'Danh sách hoá đơn',
-                route: 'invoices.index',
-                icon: mdiFileDocument
-            },
-        ]
+        route: 'invoices.index',
     },
     {
         label: 'Quản lý mỹ phẩm',

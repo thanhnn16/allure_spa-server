@@ -4,20 +4,16 @@
     <SectionMain>
       <div class="container mx-auto px-4 py-8">
         <!-- Error message -->
-        <div v-if="error" class="mb-4 bg-red-100 dark:bg-red-200 border border-red-400 text-red-700 dark:text-red-800 px-4 py-3 rounded">
+        <div v-if="error" class="mb-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded">
           {{ error }}
         </div>
 
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-2xl font-semibold text-gray-900 dark:text-dark-text">Quản lý hóa đơn</h1>
           <div class="space-x-4">
-            <button @click="testPayOS" 
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-              Test PayOS (2,000 VNĐ)
-            </button>
-            <button @click="createNewInvoice"
+            <button @click="createNewOrder"
                     class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
-              Tạo hóa đơn mới
+              Tạo đơn hàng mới
             </button>
           </div>
         </div>
@@ -28,7 +24,7 @@
             <select 
               v-model="filters.status" 
               @change="applyFilters"
-              class="form-select rounded-md shadow-sm w-48 bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
+              class="form-select rounded-md shadow-sm w-48 bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text border-gray-300 dark:border-dark-border focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-500"
             >
               <option value="">Tất cả trạng thái</option>
               <option value="pending">Chờ thanh toán</option>
@@ -41,7 +37,7 @@
               @input="debounceSearch"
               type="text" 
               placeholder="Tìm kiếm theo ID hoặc tên khách hàng"
-              class="form-input rounded-md shadow-sm flex-grow bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text" 
+              class="form-input rounded-md shadow-sm flex-grow bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text border-gray-300 dark:border-dark-border focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500 dark:focus:ring-blue-500" 
             />
           </div>
         </div>
@@ -102,7 +98,7 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                   <button 
                     @click="viewInvoiceDetails(invoice.id)" 
-                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-500 font-medium hover:underline">
+                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium hover:underline">
                     Xem chi tiết
                   </button>
                 </td>
@@ -112,7 +108,7 @@
         </div>
         <div v-else class="bg-white dark:bg-dark-surface shadow-md rounded-lg p-8 text-center">
           <p class="text-gray-600 dark:text-dark-text-muted text-lg">Chưa có dữ liệu hóa đơn.</p>
-          <button @click="createNewInvoice"
+          <button @click="createNewOrder"
             class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
             Tạo hóa đơn đầu tiên
           </button>
@@ -236,8 +232,8 @@ export default {
       })
     }
 
-    const createNewInvoice = () => {
-      router.visit('/invoices/create');
+    const createNewOrder = () => {
+      router.visit('/orders/create');
     }
 
     const calculateRemainingAmount = (invoice) => {
@@ -298,7 +294,7 @@ export default {
       getStatusText,
       viewInvoiceDetails,
       applyFilters,
-      createNewInvoice,
+      createNewOrder,
       calculateRemainingAmount,
       testPayOS,
       debounceSearch,

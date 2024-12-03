@@ -9,7 +9,7 @@
                 <div class="container mx-auto px-4 py-8">
                     <!-- Header -->
                     <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-2xl font-semibold">Chi tiết hóa đơn #{{ invoice.id }}</h1>
+                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-dark-text">Chi tiết hóa đơn #{{ invoice.id }}</h1>
                         <div class="flex space-x-4">
                             <button @click="printInvoice"
                                 class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center">
@@ -26,8 +26,8 @@
                     <!-- Status and Payment Info -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <!-- Status Card -->
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <h2 class="text-lg font-semibold mb-4">Trạng thái hóa đơn</h2>
+                        <div class="bg-white dark:bg-dark-surface p-6 rounded-lg shadow">
+                            <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text">Trạng thái hóa đơn</h2>
                             <div class="flex items-center space-x-2">
                                 <span :class="getStatusClass(invoice.status)" class="px-3 py-1 rounded-full text-sm">
                                     {{ getStatusText(invoice.status) }}
@@ -36,12 +36,12 @@
                         </div>
 
                         <!-- Payment Summary -->
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <h2 class="text-lg font-semibold mb-4">Thông tin thanh toán</h2>
+                        <div class="bg-white dark:bg-dark-surface p-6 rounded-lg shadow">
+                            <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text">Thông tin thanh toán</h2>
                             <div class="space-y-2">
                                 <div class="flex justify-between">
-                                    <span>Tổng tiền hàng:</span>
-                                    <span class="font-medium">{{ formatCurrency(subtotalAmount) }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Tổng tiền hàng:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">{{ formatCurrency(subtotalAmount) }}</span>
                                 </div>
                                 <!-- Update Voucher section -->
                                 <div v-if="invoice.order?.voucher_id" class="flex flex-col space-y-1">
@@ -54,135 +54,131 @@
                                     </div>
                                     <div class="flex justify-between text-green-600">
                                         <span>Giảm giá:</span>
-                                        <span class="font-medium">-{{ formatCurrency(invoice.order.discount_amount)
-                                            }}</span>
+                                        <span class="font-medium">-{{ formatCurrency(invoice.order.discount_amount) }}</span>
                                     </div>
                                 </div>
-                                <div class="flex justify-between font-bold border-t border-gray-200 pt-2">
-                                    <span>Tổng tiền sau giảm giá:</span>
-                                    <span>{{ formatCurrency(invoice.total_amount) }}</span>
+                                <div class="flex justify-between font-bold border-t border-gray-200 dark:border-dark-border pt-2">
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Tổng tiền sau giảm giá:</span>
+                                    <span class="text-gray-900 dark:text-dark-text">{{ formatCurrency(invoice.total_amount) }}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span>Đã thanh toán:</span>
-                                    <span class="text-green-600 font-medium">{{ formatCurrency(invoice.paid_amount)
-                                        }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Đã thanh toán:</span>
+                                    <span class="text-green-600 font-medium">{{ formatCurrency(invoice.paid_amount) }}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span>Còn lại:</span>
-                                    <span class="text-red-600 font-medium">{{ formatCurrency(invoice.remaining_amount)
-                                        }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Còn lại:</span>
+                                    <span class="text-red-600 font-medium">{{ formatCurrency(invoice.remaining_amount) }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Thêm phần Invoice Details sau Status and Payment Info -->
-                    <div class="bg-white p-6 rounded-lg shadow mb-8">
-                        <h2 class="text-lg font-semibold mb-4">Thông tin chi tiết</h2>
+                    <div class="bg-white dark:bg-dark-surface p-6 rounded-lg shadow mb-8">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text">Thông tin chi tiết</h2>
                         <div class="grid grid-cols-2 gap-6">
                             <!-- Thông tin hóa đơn -->
                             <div class="space-y-3">
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Mã hóa đơn:</span>
-                                    <span class="font-medium">#{{ invoice.id }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Mã hóa đơn:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">#{{ invoice.id }}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Ngày tạo:</span>
-                                    <span class="font-medium">{{ formatDateTime(invoice.created_at) }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Ngày tạo:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">{{ formatDateTime(invoice.created_at) }}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Người tạo:</span>
-                                    <span class="font-medium">{{ invoice.created_by?.full_name || 'N/A' }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Người tạo:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">{{ invoice.created_by?.full_name || 'N/A' }}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Ghi chú:</span>
-                                    <span class="font-medium">{{ invoice.note || '-' }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Ghi chú:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">{{ invoice.note || '-' }}</span>
                                 </div>
                             </div>
 
                             <!-- Thông tin khách hàng -->
                             <div class="space-y-3">
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Khách hàng:</span>
-                                    <span class="font-medium">{{ invoice.user?.full_name }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Khách hàng:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">{{ invoice.user?.full_name }}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Số điện thoại:</span>
-                                    <span class="font-medium">{{ invoice.user?.phone_number }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Số điện thoại:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">{{ invoice.user?.phone_number }}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Email:</span>
-                                    <span class="font-medium">{{ invoice.user?.email || '-' }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Email:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">{{ invoice.user?.email || '-' }}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Địa chỉ:</span>
-                                    <span class="font-medium">{{ invoice.user?.address || '-' }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Địa chỉ:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">{{ invoice.user?.address || '-' }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Thêm phần Order Items -->
-                    <div class="bg-white p-6 rounded-lg shadow mb-8">
-                        <h2 class="text-lg font-semibold mb-4">Chi tiết đơn hàng</h2>
+                    <div class="bg-white dark:bg-dark-surface p-6 rounded-lg shadow mb-8">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text">Chi tiết đơn hàng</h2>
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                                 <thead>
                                     <tr>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             STT
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Sản phẩm/Dịch vụ
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-right text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Đơn giá
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-center text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Số lượng
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-right text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Thành tiền
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Ghi chú
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-white dark:bg-dark-surface divide-y divide-gray-200 dark:divide-dark-border">
                                     <tr v-for="(item, index) in invoice.order?.order_items" :key="item.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text-muted">
                                             {{ index + 1 }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-dark-text">
                                                 {{ item.item_name }}
                                             </div>
-                                            <div class="text-xs text-gray-500">
+                                            <div class="text-xs text-gray-500 dark:text-dark-text-muted">
                                                 Mã: {{ item.service?.code || item.product?.code || '-' }}
                                             </div>
-                                            <div v-if="item.description" class="text-sm text-gray-500">
+                                            <div v-if="item.description" class="text-sm text-gray-500 dark:text-dark-text-muted">
                                                 {{ item.description }}
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-dark-text-muted">
                                             {{ formatCurrency(Number(item.price) || 0) }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-dark-text-muted">
                                             {{ Number(item.quantity) || 0 }}
                                         </td>
                                         <td
-                                            class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                                            {{ formatCurrency((Number(item.price) || 0) * (Number(item.quantity) || 0))
-                                            }}
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900 dark:text-dark-text">
+                                            {{ formatCurrency((Number(item.price) || 0) * (Number(item.quantity) || 0)) }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text-muted">
                                             <span v-if="item.service_type"
                                                 :class="getServiceTypeClass(item.service_type)">
                                                 {{ formatServiceType(item.service_type) }}
@@ -191,31 +187,31 @@
                                     </tr>
 
                                     <!-- Thêm dòng tổng cộng -->
-                                    <tr class="bg-gray-50">
-                                        <td colspan="4" class="px-6 py-4 text-right font-medium">
+                                    <tr class="bg-gray-50 dark:bg-dark-surface">
+                                        <td colspan="4" class="px-6 py-4 text-right font-medium text-gray-900 dark:text-dark-text">
                                             Tổng tiền hàng:
                                         </td>
-                                        <td class="px-6 py-4 text-right font-medium">
+                                        <td class="px-6 py-4 text-right font-medium text-gray-900 dark:text-dark-text">
                                             {{ formatCurrency(subtotalAmount) }}
                                         </td>
                                         <td></td>
                                     </tr>
                                     <!-- Hiển thị voucher nếu có -->
-                                    <tr v-if="invoice.order?.discount_amount" class="bg-gray-50 text-green-600">
-                                        <td colspan="4" class="px-6 py-4 text-right font-medium">
+                                    <tr v-if="invoice.order?.discount_amount" class="bg-gray-50 dark:bg-dark-surface text-green-600">
+                                        <td colspan="4" class="px-6 py-4 text-right font-medium text-gray-900 dark:text-dark-text">
                                             Giảm giá:
                                         </td>
-                                        <td class="px-6 py-4 text-right font-medium">
+                                        <td class="px-6 py-4 text-right font-medium text-gray-900 dark:text-dark-text">
                                             -{{ formatCurrency(invoice.order.discount_amount) }}
                                         </td>
                                         <td></td>
                                     </tr>
                                     <!-- Tổng tiền sau giảm giá -->
-                                    <tr class="bg-gray-100 font-bold">
-                                        <td colspan="4" class="px-6 py-4 text-right">
+                                    <tr class="bg-gray-100 dark:bg-dark-surface font-bold">
+                                        <td colspan="4" class="px-6 py-4 text-right text-gray-900 dark:text-dark-text">
                                             Tổng tiền thanh toán:
                                         </td>
-                                        <td class="px-6 py-4 text-right">
+                                        <td class="px-6 py-4 text-right text-gray-900 dark:text-dark-text">
                                             {{ formatCurrency(invoice.total_amount) }}
                                         </td>
                                         <td></td>
@@ -226,18 +222,18 @@
                     </div>
 
                     <!-- Payment Form -->
-                    <div v-if="showPaymentForm" class="bg-white p-6 rounded-lg shadow mb-8">
-                        <h2 class="text-lg font-semibold mb-4">Thanh toán</h2>
+                    <div v-if="showPaymentForm" class="bg-white dark:bg-dark-surface p-6 rounded-lg shadow mb-8">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text">Thanh toán</h2>
                         <form @submit.prevent="processPayment" class="space-y-4">
                             <!-- Payment Type Selection -->
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Hình thức thanh toán</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted mb-2">Hình thức thanh toán</label>
                                 <div class="flex space-x-4">
                                     <button type="button" @click="selectPaymentType('full')" :class="[
                                         'px-4 py-2 rounded-md',
                                         paymentType === 'full'
                                             ? 'bg-blue-500 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-dark-text-muted hover:bg-gray-200 dark:hover:bg-dark-hover'
                                     ]">
                                         Thanh toán tất cả ({{ formatCurrency(invoice.remaining_amount) }})
                                     </button>
@@ -245,7 +241,7 @@
                                         'px-4 py-2 rounded-md',
                                         paymentType === 'partial'
                                             ? 'bg-blue-500 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-dark-text-muted hover:bg-gray-200 dark:hover:bg-dark-hover'
                                     ]">
                                         Thanh toán một phần
                                     </button>
@@ -254,19 +250,19 @@
 
                             <!-- Amount Input -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Số tiền thanh toán</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">Số tiền thanh toán</label>
                                 <input type="number" v-model="paymentAmount" :max="invoice.remaining_amount"
                                     :readonly="paymentType === 'full'"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     required />
-                                <p class="mt-1 text-sm text-gray-500">
-                                    Số tiền cn lại cần thanh toán: {{ formatCurrency(invoice.remaining_amount) }}
+                                <p class="mt-1 text-sm text-gray-500 dark:text-dark-text-muted">
+                                    Số tiền còn lại cần thanh toán: {{ formatCurrency(invoice.remaining_amount) }}
                                 </p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Phương thức thanh toán</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">Phương thức thanh toán</label>
                                 <select v-model="paymentMethod"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     required>
                                     <option value="cash">Tiền mặt</option>
                                     <option value="bank_transfer">Chuyển khoản</option>
@@ -274,9 +270,9 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Ghi chú</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">Ghi chú</label>
                                 <textarea v-model="paymentNote"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     rows="2"></textarea>
                             </div>
                             <button type="submit"
@@ -288,51 +284,51 @@
                     </div>
 
                     <!-- Payment History -->
-                    <div v-if="invoice.payment_histories?.length > 0" class="bg-white p-6 rounded-lg shadow mb-8">
-                        <h2 class="text-lg font-semibold mb-4">Lịch sử thanh toán</h2>
+                    <div v-if="invoice.payment_histories?.length > 0" class="bg-white dark:bg-dark-surface p-6 rounded-lg shadow mb-8">
+                        <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text">Lịch sử thanh toán</h2>
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                                 <thead>
                                     <tr>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Thời gian
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Số tiền
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Phương thức
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Trạng thái cũ
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Trạng thái mới
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Người thực hiện
                                         </th>
                                         <th
-                                            class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            class="px-6 py-3 bg-gray-50 dark:bg-dark-surface text-left text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                                             Ghi chú
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-white dark:bg-dark-surface divide-y divide-gray-200 dark:divide-dark-border">
                                     <tr v-for="history in invoice.payment_histories" :key="history.id">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text-muted">
                                             {{ formatDateTime(history.created_at) }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-dark-text">
                                             {{ formatCurrency(history.payment_amount) }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text-muted">
                                             {{ getPaymentMethodText(history.payment_method) }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -345,10 +341,10 @@
                                                 {{ getStatusText(history.new_payment_status) }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-dark-text-muted">
                                             {{ history.created_by?.full_name || 'N/A' }}
                                         </td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">
+                                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-dark-text-muted">
                                             {{ history.note || '-' }}
                                         </td>
                                     </tr>
@@ -358,12 +354,12 @@
                     </div>
 
                     <!-- Thêm section thông tin đơn hàng -->
-                    <div class="bg-white p-6 rounded-lg shadow mb-8">
+                    <div class="bg-white dark:bg-dark-surface p-6 rounded-lg shadow mb-8">
                         <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-semibold">Thông tin đơn hàng</h2>
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-dark-text">Thông tin đơn hàng</h2>
                             <!-- Thêm nút liên kết đến đơn hàng -->
                             <Link v-if="invoice.order" :href="route('orders.show', invoice.order.id)"
-                                class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-lg flex items-center transition-colors">
+                                class="bg-blue-100 dark:bg-dark-surface text-blue-700 dark:text-dark-text hover:bg-blue-200 dark:hover:bg-dark-hover px-4 py-2 rounded-lg flex items-center transition-colors">
                             <i class="mdi mdi-shopping-outline mr-2"></i>
                             Xem đơn hàng #{{ invoice.order.id }}
                             </Link>
@@ -373,32 +369,31 @@
                         <div v-if="invoice.order" class="grid grid-cols-2 gap-6">
                             <div class="space-y-3">
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Trạng thái đơn hàng:</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Trạng thái đơn hàng:</span>
                                     <span :class="getOrderStatusClass(invoice.order.status)">
                                         {{ getOrderStatusText(invoice.order.status) }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Ngày tạo đơn:</span>
-                                    <span class="font-medium">{{ formatDateTime(invoice.order.created_at) }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Ngày tạo đơn:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">{{ formatDateTime(invoice.order.created_at) }}</span>
                                 </div>
                             </div>
                             <div class="space-y-3">
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Tổng tiền hàng:</span>
-                                    <span class="font-medium">{{ formatCurrency(invoice.order.total_amount) }}</span>
+                                    <span class="text-gray-600 dark:text-dark-text-muted">Tổng tiền hàng:</span>
+                                    <span class="font-medium text-gray-900 dark:text-dark-text">{{ formatCurrency(invoice.order.total_amount) }}</span>
                                 </div>
                                 <div v-if="invoice.order.discount_amount > 0"
                                     class="flex justify-between text-green-600">
                                     <span>Giảm giá:</span>
-                                    <span class="font-medium">-{{ formatCurrency(invoice.order.discount_amount)
-                                        }}</span>
+                                    <span class="font-medium">-{{ formatCurrency(invoice.order.discount_amount) }}</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Hiển thị thông báo nếu không có đơn hàng liên kết -->
-                        <div v-else class="text-center py-4 text-gray-500">
+                        <div v-else class="text-center py-4 text-gray-500 dark:text-dark-text-muted">
                             Hóa đơn này không liên kết với đơn hàng nào
                         </div>
                     </div>
@@ -412,11 +407,11 @@
 
         <!-- Thêm modal xác nhận hủy hóa đơn -->
         <div v-if="showCancelModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-                <h3 class="text-lg font-semibold mb-4">Xác nhận hủy hóa đơn</h3>
-                <p class="mb-4">Bạn có chắc chắn muốn hủy hóa đơn này? Hành động này không thể hoàn tác.</p>
+            <div class="bg-white dark:bg-dark-surface p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text">Xác nhận hủy hóa đơn</h3>
+                <p class="mb-4 text-gray-600 dark:text-dark-text-muted">Bạn có chắc chắn muốn hủy hóa đơn này? Hành động này không thể hoàn tác.</p>
                 <div class="flex justify-end space-x-4">
-                    <button @click="showCancelModal = false" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">
+                    <button @click="showCancelModal = false" class="px-4 py-2 bg-gray-300 dark:bg-dark-surface hover:bg-gray-400 dark:hover:bg-dark-hover rounded">
                         Đóng
                     </button>
                     <button @click="cancelInvoice" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded">

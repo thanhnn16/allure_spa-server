@@ -128,6 +128,10 @@ class OrderService
             }
 
             DB::commit();
+
+            // Tạo hóa đơn sau khi tạo đơn hàng thành công
+            $this->createInvoice($order);
+
             return $order->load(['orderItems', 'user', 'shippingAddress', 'paymentMethod']);
         } catch (\Exception $e) {
             DB::rollBack();
