@@ -422,13 +422,16 @@ class OrderService
 
     private function createServicePackage(Order $order, OrderItem $item)
     {
-        $totalSessions = $this->getSessionsFromServiceType($item->service_type);
+        // Tính tổng số buổi dựa trên loại combo và số lượng đặt
+        $sessionsPerCombo = $this->getSessionsFromServiceType($item->service_type);
+        $totalSessions = $sessionsPerCombo * $item->quantity;
+        
         $service = Service::find($item->item_id);
 
         UserServicePackage::create([
             'user_id' => $order->user_id,
             'service_id' => $item->item_id,
-            'total_sessions' => $totalSessions,
+            'total_sessions' => $totalSessions, // Số buổi đã được nhân với quantity
             'used_sessions' => 0,
             'expiry_date' => now()->addDays($service->validity_period ?? 365),
             'is_combo' => true,
