@@ -14,6 +14,7 @@ import {
     mdiMapMarker,
     mdiClose,
     mdiCheck,
+    mdiAccount // Thêm dòng này để nhập mdiAccount
 } from '@mdi/js'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
@@ -506,6 +507,9 @@ const treatmentForm = reactive({
     result: '',
     notes: ''
 })
+
+// Thêm định nghĩa cho selectedPackage
+const selectedPackage = ref(null);
 
 const openAddTreatmentModal = async (servicePackage) => {
     selectedPackage.value = servicePackage
