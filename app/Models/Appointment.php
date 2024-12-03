@@ -135,7 +135,7 @@ class Appointment extends Model
 
         return [
             'id' => $this->id,
-            'title' => $this->service->service_name ?? 'Appointment',
+            'title' => $this->user?->full_name . ' - ' . ($this->service?->service_name ?? 'Không xác định'),
             'status' => strtolower($this->status),
             'service' => [
                 'id' => $this->service->id,

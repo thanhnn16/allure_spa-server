@@ -295,38 +295,68 @@ function handleDateSelect(selectInfo) {
 
 
 function handleEventDrop(dropInfo) {
-    const event = dropInfo.event
-    const selectedStart = new Date(event.start)
-    const now = new Date()
-    const minBookingTime = new Date(now.getTime() + 60 * 60 * 1000)
+    const event = dropInfo.event;
+    const selectedStart = new Date(event.start);
+    const now = new Date();
+    const minBookingTime = new Date(now.getTime() + 60 * 60 * 1000);
 
     // Kiểm tra nếu thời gian kéo thả nhỏ hơn thời gian tối thiểu cho phép
     if (selectedStart < minBookingTime) {
-        toast.error('Vui lòng đặt lịch trước ít nhất 1 tiếng')
-        dropInfo.revert()
-        return
+        toast.error('Vui lòng đặt lịch trước ít nhất 1 tiếng');
+        dropInfo.revert();
+        return;
     }
 
+    const selectedHour = selectedStart.getHours().toString().padStart(2, '0');
+    const selectedMinute = selectedStart.getMinutes().toString().padStart(2, '0');
+
+    // Tìm time slot phù hợp với thời gian được chọn
+    const matchingTimeSlot = props.timeSlots.find(slot => {
+        const slotTime = slot.start_time.substring(0, 5);  // "HH:mm"
+        const selectedTime = `${selectedHour}:${selectedMinute}`;  // "HH:mm"
+        return slotTime === selectedTime;
+    });
+
+    if (!matchingTimeSlot) {
+        toast.error('Vui lòng kéo thả vào đúng khung giờ');
+        dropInfo.revert();
+        return;
+    }
+
+    // Chuẩn bị dữ liệu cập nhật
     const updatedAppointment = {
+        staff_id: event.extendedProps.staffId,
         appointment_date: event.start.toISOString().split('T')[0],
         time_slot_id: matchingTimeSlot.id,
+        status: event.extendedProps.status,
+        appointment_type: event.extendedProps.appointmentType,
+        slots: event.extendedProps.slots || 1
     };
 
+    // Gọi API cập nhật lịch hẹn
     axios.put(`/api/appointments/${event.id}`, updatedAppointment)
         .then(response => {
-            if (response.status === 200) {
-                toast.success(response.data.message);
+            if (response.data.success) {
+                toast.success('Cập nhật lịch hẹn thành công');
+                // Reload trang
+                router.visit(window.location.pathname, {
+                    preserveScroll: true,
+                    preserveState: true
+                });
             } else {
-                throw new Error(response.data.message || "Có lỗi xảy ra");
+                throw new Error(response.data.message || 'Có lỗi xảy ra');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            toast.error(error.response?.data?.message || "Có lỗi xảy ra khi cập nhật lịch hẹn!");
+            const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật lịch hẹn';
+            toast.error(errorMessage);
+            dropInfo.revert();
+            
+            // Refresh calendar để đảm bảo hiển thị đúng
             if (calendarRef.value) {
                 calendarRef.value.getApi().refetchEvents();
             }
-            dropInfo.revert();
         });
 }
 
