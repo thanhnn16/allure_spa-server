@@ -162,7 +162,7 @@
                                                 {{ item.item_name }}
                                             </div>
                                             <div class="text-xs text-gray-500 dark:text-dark-text-muted">
-                                                Mã: {{ item.service?.code || item.product?.code || '-' }}
+                                                Mã sản phẩm/dịch vụ: {{ item.service?.id || item.product?.id || '-' }}
                                             </div>
                                             <div v-if="item.description" class="text-sm text-gray-500 dark:text-dark-text-muted">
                                                 {{ item.description }}
@@ -251,9 +251,9 @@
                             <!-- Amount Input -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">Số tiền thanh toán</label>
-                                <input type="number" v-model="paymentAmount" :max="invoice.remaining_amount"
-                                    :readonly="paymentType === 'full'"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                <input type="text" v-model="formattedPaymentAmount"
+                                    @input="updatePaymentAmount"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
                                     required />
                                 <p class="mt-1 text-sm text-gray-500 dark:text-dark-text-muted">
                                     Số tiền còn lại cần thanh toán: {{ formatCurrency(invoice.remaining_amount) }}
@@ -262,7 +262,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">Phương thức thanh toán</label>
                                 <select v-model="paymentMethod"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
                                     required>
                                     <option value="cash">Tiền mặt</option>
                                     <option value="bank_transfer">Chuyển khoản</option>
@@ -272,11 +272,11 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">Ghi chú</label>
                                 <textarea v-model="paymentNote"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
                                     rows="2"></textarea>
                             </div>
                             <button type="submit"
-                                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+                                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors dark:bg-green-600 dark:hover:bg-green-700"
                                 :disabled="processing">
                                 {{ processing ? 'Đang xử lý...' : 'Xác nhận thanh toán' }}
                             </button>
@@ -359,13 +359,13 @@
                             <h2 class="text-lg font-semibold text-gray-900 dark:text-dark-text">Thông tin đơn hàng</h2>
                             <!-- Thêm nút liên kết đến đơn hàng -->
                             <Link v-if="invoice.order" :href="route('orders.show', invoice.order.id)"
-                                class="bg-blue-100 dark:bg-dark-surface text-blue-700 dark:text-dark-text hover:bg-blue-200 dark:hover:bg-dark-hover px-4 py-2 rounded-lg flex items-center transition-colors">
-                            <i class="mdi mdi-shopping-outline mr-2"></i>
-                            Xem đơn hàng #{{ invoice.order.id }}
+                                class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg flex items-center transition-colors dark:bg-blue-900 dark:hover:bg-blue-800 dark:text-blue-100">
+                                <i class="mdi mdi-shopping-outline mr-2"></i>
+                                Xem đơn hàng #{{ invoice.order.id }}
                             </Link>
                         </div>
 
-                        <!-- Thêm thông tin tổng quan về đơn hàng -->
+                        <!-- Thêm thông tin tổng quan về đơn h��ng -->
                         <div v-if="invoice.order" class="grid grid-cols-2 gap-6">
                             <div class="space-y-3">
                                 <div class="flex justify-between">
@@ -621,13 +621,13 @@ export default {
         });
 
         const formatCurrency = (amount) => {
-            // Đảm bảo amount là số
             const numAmount = Number(amount);
             if (isNaN(numAmount)) return '0 ₫';
 
             return new Intl.NumberFormat('vi-VN', {
                 style: 'currency',
-                currency: 'VND'
+                currency: 'VND',
+                minimumFractionDigits: 0
             }).format(numAmount);
         }
 
@@ -801,8 +801,9 @@ export default {
 
         const getOrderStatusText = (status) => {
             const statusTexts = {
-                'pending': 'Chờ xử l',
-                'processing': 'Đang xử lý',
+                'pending': 'Chờ xử lý',
+                'confirmed': 'Đã xác nhận',
+                'shipping': 'Đang giao hàng',
                 'completed': 'Hoàn thành',
                 'cancelled': 'Đã hủy'
             };
@@ -816,6 +817,20 @@ export default {
                 return item.product?.code || '-';
             }
             return '-';
+        };
+
+        const formattedPaymentAmount = computed({
+            get() {
+                return formatCurrency(paymentAmount.value);
+            },
+            set(value) {
+                const numericValue = Number(value.replace(/[^0-9.-]+/g, ""));
+                paymentAmount.value = isNaN(numericValue) ? 0 : numericValue;
+            }
+        });
+
+        const updatePaymentAmount = (event) => {
+            formattedPaymentAmount.value = event.target.value;
         };
 
         return {
@@ -849,6 +864,8 @@ export default {
             getOrderStatusText,
             getItemCode,
             printTemplateRef,
+            formattedPaymentAmount,
+            updatePaymentAmount,
         }
     }
 }
