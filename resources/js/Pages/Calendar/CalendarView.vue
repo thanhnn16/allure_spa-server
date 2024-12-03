@@ -153,73 +153,76 @@ const calendarOptions = computed(() => ({
         const eventEl = info.el;
         const harness = eventEl.closest('.fc-timegrid-event-harness');
 
-        // Thêm event listeners cho drag
-        eventEl.addEventListener('dragstart', () => {
-            // Hủy tooltip của event đang được kéo
-            if (eventEl._tippy) {
-                eventEl._tippy.destroy();
-            }
-
-            // Hủy tất cả các tooltip đang hiển thị
-            const tooltips = document.querySelectorAll('[data-tippy-root]');
-            tooltips.forEach(tooltip => tooltip.remove());
-
-            // Xóa z-index của event đang kéo
-            eventEl.style.zIndex = 'auto';
-        });
-
-        // Reset styles và tooltip sau khi drag
-        eventEl.addEventListener('dragend', () => {
-            // Khôi phục z-index
-            eventEl.style.zIndex = '';
-
-            // Khởi tạo lại tooltip
-            setTimeout(() => {
-                if (!eventEl._tippy) {
-                    initializeTooltip(eventEl, event);
+        // Kiểm tra nếu harness tồn tại
+        if (harness) {
+            // Thêm event listeners cho drag
+            eventEl.addEventListener('dragstart', () => {
+                // Hủy tooltip của event đang được kéo
+                if (eventEl._tippy) {
+                    eventEl._tippy.destroy();
                 }
-            }, 100);
-        });
 
-        // Reset style
-        eventEl.style = '';
-        eventEl.classList.remove('full-slot-event', 'half-slot-event');
+                // Hủy tất cả các tooltip đang hiển thị
+                const tooltips = document.querySelectorAll('[data-tippy-root]');
+                tooltips.forEach(tooltip => tooltip.remove());
 
-        if (slots === 2) {
-            // Event 2 slots
-            harness.style.cssText = `
-                position: absolute !important;
-                inset: 0 !important;
-                width: 100% !important;
-            `;
-            eventEl.style.cssText = `
-                position: absolute !important;
-                inset: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-            `;
-            eventEl.classList.add('full-slot-event');
-        } else {
-            // Event 1 slot
-            const timeCol = harness.closest('.fc-timegrid-col');
-            const allHarnesses = Array.from(timeCol.querySelectorAll('.fc-timegrid-event-harness'));
-            const currentIndex = allHarnesses.indexOf(harness);
+                // Xóa z-index của event đang kéo
+                eventEl.style.zIndex = 'auto';
+            });
 
-            harness.style.cssText = `
-                position: absolute !important;
-                top: 0 !important;
-                bottom: 0 !important;
-                width: 50% !important;
-                left: ${currentIndex === 0 ? '0' : '50%'} !important;
-            `;
+            // Reset styles và tooltip sau khi drag
+            eventEl.addEventListener('dragend', () => {
+                // Khôi phục z-index
+                eventEl.style.zIndex = '';
 
-            eventEl.style.cssText = `
-                position: absolute !important;
-                inset: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-            `;
-            eventEl.classList.add('half-slot-event');
+                // Khởi tạo lại tooltip
+                setTimeout(() => {
+                    if (!eventEl._tippy) {
+                        initializeTooltip(eventEl, event);
+                    }
+                }, 100);
+            });
+
+            // Reset style
+            eventEl.style = '';
+            eventEl.classList.remove('full-slot-event', 'half-slot-event');
+
+            if (slots === 2) {
+                // Event 2 slots
+                harness.style.cssText = `
+                    position: absolute !important;
+                    inset: 0 !important;
+                    width: 100% !important;
+                `;
+                eventEl.style.cssText = `
+                    position: absolute !important;
+                    inset: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                `;
+                eventEl.classList.add('full-slot-event');
+            } else {
+                // Event 1 slot
+                const timeCol = harness.closest('.fc-timegrid-col');
+                const allHarnesses = Array.from(timeCol.querySelectorAll('.fc-timegrid-event-harness'));
+                const currentIndex = allHarnesses.indexOf(harness);
+
+                harness.style.cssText = `
+                    position: absolute !important;
+                    top: 0 !important;
+                    bottom: 0 !important;
+                    width: 50% !important;
+                    left: ${currentIndex === 0 ? '0' : '50%'} !important;
+                `;
+
+                eventEl.style.cssText = `
+                    position: absolute !important;
+                    inset: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                `;
+                eventEl.classList.add('half-slot-event');
+            }
         }
 
         initializeTooltip(eventEl, event);
@@ -578,28 +581,31 @@ function initializeTooltip(element, event) {
     border-width: 1px !important;
 }
 
-/* Full slot event (2 slots) */
-.full-slot-event {
+/* Styles specific to timeGrid view */
+.fc-view-timeGridWeek .full-slot-event,
+.fc-view-timeGridDay .full-slot-event {
     width: 100% !important;
     height: 100% !important;
     left: 0 !important;
     right: 0 !important;
 }
 
-/* Half slot event (1 slot) */
-.half-slot-event {
+.fc-view-timeGridWeek .half-slot-event,
+.fc-view-timeGridDay .half-slot-event {
     width: 50% !important;
     height: 100% !important;
 }
 
 /* First half slot event */
-.half-slot-event:first-child {
+.fc-view-timeGridWeek .half-slot-event:first-child,
+.fc-view-timeGridDay .half-slot-event:first-child {
     left: 0 !important;
     right: 50% !important;
 }
 
 /* Second half slot event */
-.half-slot-event:not(:first-child) {
+.fc-view-timeGridWeek .half-slot-event:not(:first-child),
+.fc-view-timeGridDay .half-slot-event:not(:first-child) {
     left: 50% !important;
     right: 0 !important;
 }
@@ -671,5 +677,42 @@ function initializeTooltip(element, event) {
 .fc-timegrid-event {
     transition: transform 0.05s ease;
     /* Thêm transition nhẹ để giảm giật */
+}
+
+/* Reset styles cho chế độ xem danh sách và tháng */
+.fc-dayGridMonth-view .calendar-event,
+.fc-listWeek-view .calendar-event {
+    position: relative !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* Chỉ áp dụng custom styles cho timeGrid views */
+.fc-timegrid-view .calendar-event {
+    position: absolute !important;
+    margin: 0 !important;
+    border-radius: 0.25rem !important;
+    padding: 0.25rem !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* Đảm bảo styles cho full-slot và half-slot chỉ áp dụng cho timeGrid */
+.fc-timegrid-view .full-slot-event {
+    width: 100% !important;
+    height: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+}
+
+.fc-timegrid-view .half-slot-event {
+    width: 50% !important;
+    height: 100% !important;
+}
+
+/* Reset styles cho event harness trong các chế độ xem khác */
+.fc-dayGridMonth-view .fc-event-harness,
+.fc-listWeek-view .fc-event-harness {
+    margin: inherit;
 }
 </style>
