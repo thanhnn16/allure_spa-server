@@ -45,6 +45,16 @@ const emit = defineEmits(['viewDetails'])
 const viewDetails = (itemId) => {
   emit('viewDetails', itemId)
 }
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'Chưa cập nhật'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
 </script>
 
 <template>
@@ -84,7 +94,7 @@ const viewDetails = (itemId) => {
           {{ item.phone_number }}
         </td>
         <td data-label="Ngày sinh">
-          {{ item.date_of_birth || 'Chưa cập nhật' }}
+          {{ formatDate(item.date_of_birth) }}
         </td>
         <td data-label="Ghi chú" class="lg:w-32">
           {{ item.note || 'Không có ghi chú' }}
