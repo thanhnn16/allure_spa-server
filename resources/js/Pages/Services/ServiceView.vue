@@ -8,7 +8,7 @@
                 <BaseButton :icon="mdiTableBorder" label="Nhập từ Excel" color="success" rounded-full small />
             </SectionTitleLineWithButton>
 
-            <CardBox class="mb-6 px-4 py-4" has-table>
+            <CardBox class="mb-6 px-4 py-4 dark:bg-dark-surface" has-table>
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center space-x-4">
                         <BaseButton :icon="mdiFilter" label="Bộ lọc" @click="toggleFilters" />
@@ -18,10 +18,12 @@
                 <div v-if="showFilters" class="mb-4">
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block mb-2">Danh mục</label>
-                            <select v-model="form.category" class="w-full px-4 py-2 border rounded-md">
-                                <option value="">Tất cả danh mục</option>
-                                <option v-for="category in categories" :key="category.id" :value="category.id">
+                            <label class="block mb-2 text-gray-700 dark:text-gray-300">Danh mục</label>
+                            <select v-model="form.category" 
+                                class="w-full px-4 py-2 border rounded-md bg-white dark:bg-dark-surface dark:border-dark-border dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-500">
+                                <option value="" class="dark:bg-dark-surface">Tất cả danh mục</option>
+                                <option v-for="category in categories" :key="category.id" :value="category.id"
+                                    class="dark:bg-dark-surface">
                                     {{ category.service_category_name }}
                                 </option>
                             </select>
@@ -30,27 +32,29 @@
                     <BaseButton :icon="mdiFilter" label="Áp dụng bộ lọc" @click="applyFilters" />
                 </div>
                 <div class="my-4">
-                    <input v-model="form.search" type="text" placeholder="Tìm kiếm sản phẩm..."
-                        class="w-full px-4 py-2 mb-4 border rounded-md">
-                    <select v-model="form.per_page" @change="handlePerPageChange" class="px-8 py-2 border rounded-md">
-                        <option :value="10">Xem 10 mỗi trang</option>
-                        <option :value="25">Xem 25 mỗi trang</option>
-                        <option :value="50">Xem 50 mỗi trang</option>
+                    <input v-model="form.search" type="text" placeholder="Tìm kiếm liệu trình..."
+                        class="w-full px-4 py-2 mb-4 border rounded-md bg-white dark:bg-dark-surface dark:border-dark-border dark:text-gray-300 dark:placeholder-gray-500 focus:border-primary-500 dark:focus:border-primary-500">
+                    <select v-model="form.per_page" @change="handlePerPageChange"
+                        class="px-8 py-2 border rounded-md bg-white dark:bg-dark-surface dark:border-dark-border dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-500">
+                        <option :value="10" class="dark:bg-dark-surface">Xem 10 mỗi trang</option>
+                        <option :value="25" class="dark:bg-dark-surface">Xem 25 mỗi trang</option>
+                        <option :value="50" class="dark:bg-dark-surface">Xem 50 mỗi trang</option>
                     </select>
                 </div>
-                <div v-if="!services.data || services.data.length === 0" class="text-center py-4">
+                <div v-if="!services.data || services.data.length === 0" 
+                    class="text-center py-4 text-gray-500 dark:text-gray-400">
                     Không có dữ liệu liệu trình
                 </div>
                 <div v-else class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <table class="w-full text-sm text-gray-500 dark:text-gray-300">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-dark-surface/50 dark:text-gray-300">
                             <tr>
                                 <th scope="col" class="px-6 py-3 w-24">Ảnh</th>
                                 <th @click="sort('service_name')" scope="col" class="px-6 py-3 cursor-pointer">
                                     <div class="flex items-center justify-between h-full">
                                         <span class="mr-2">Tên liệu trình</span>
                                         <BaseIcon :path="sortIcon('service_name')" size="18" class="flex-shrink-0"
-                                            :class="{ 'text-gray-900': form.sort === 'service_name', 'text-gray-400': form.sort !== 'service_name' }" />
+                                            :class="{ 'text-primary-600 dark:text-primary-400': form.sort === 'service_name', 'text-gray-400 dark:text-gray-600': form.sort !== 'service_name' }" />
                                     </div>
                                 </th>
                                 <th @click="sort('category_id')" scope="col" class="px-6 py-3 cursor-pointer">
@@ -79,12 +83,12 @@
                         </thead>
                         <tbody>
                             <tr v-for="service in services.data" :key="service.id"
-                                class="bg-white border-b hover:bg-gray-50">
+                                class="bg-white border-b hover:bg-gray-50 dark:bg-dark-surface dark:border-dark-border dark:hover:bg-dark-surface/70">
                                 <td class="px-6 py-4">
-                                    <img :src="service.image?.url || 'https://via.placeholder.com/150'" alt="service.name"
+                                    <img :src="service.image?.url || 'https://via.placeholder.com/150'" :alt="service.service_name"
                                         class="w-16 h-16 object-cover rounded-md">
                                 </td>
-                                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
                                     {{ service.service_name }}
                                 </td>
                                 <td class="px-6 py-4">
@@ -98,10 +102,10 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <BaseButton 
-                                      label="Xem chi tiết" 
-                                      color="info" 
-                                      small 
-                                      @click="viewServiceDetails(service.id)"
+                                        label="Xem chi tiết" 
+                                        color="info" 
+                                        small 
+                                        @click="viewServiceDetails(service.id)"
                                     />
                                 </td>
                             </tr>
