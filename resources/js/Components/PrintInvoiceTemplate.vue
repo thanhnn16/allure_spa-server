@@ -166,6 +166,9 @@ export default {
       };
       return types[type] || type;
     }
+  },
+  mounted() {
+    this.$emit('rendered')
   }
 }
 </script>

@@ -365,7 +365,7 @@
                             </Link>
                         </div>
 
-                        <!-- Thêm thông tin tổng quan về đơn h��ng -->
+                        <!-- Thêm thông tin tổng quan về đơn hàng -->
                         <div v-if="invoice.order" class="grid grid-cols-2 gap-6">
                             <div class="space-y-3">
                                 <div class="flex justify-between">
@@ -398,10 +398,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="print-container" style="display: none;">
-                    <PrintInvoiceTemplate ref="printTemplateRef" :invoice="invoice"
-                        style="visibility: visible !important;" />
-                </div>
+                <Teleport to="body" v-if="isPrinting">
+                    <div class="print-container" style="display: none;">
+                        <PrintInvoiceTemplate ref="printTemplateRef" :invoice="invoice" @rendered="handlePrintAfterRender" />
+                    </div>
+                </Teleport>
             </SectionMain>
         </LayoutAuthenticated>
 
@@ -428,7 +429,7 @@ import { Head, Link, router } from '@inertiajs/vue3'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
 import SectionMain from '@/Components/SectionMain.vue'
 import PrintInvoiceTemplate from '@/Components/PrintInvoiceTemplate.vue'
-import { ref, watch, computed, nextTick } from 'vue'
+import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useToast } from "vue-toastification"
 import html2pdf from 'html2pdf.js'
@@ -491,25 +492,16 @@ export default {
             return methods[method] || method
         }
 
+        const isPrinting = ref(false)
         const printTemplateRef = ref(null)
 
-        const printInvoice = async () => {
+        const handlePrintAfterRender = async () => {
             try {
-                await nextTick();
+                const printTemplate = printTemplateRef.value.$el
+                const tempContainer = document.createElement('div')
+                tempContainer.appendChild(printTemplate.cloneNode(true))
+                document.body.appendChild(tempContainer)
 
-                if (!printTemplateRef.value) {
-                    toast.error('Không tìm thấy template hóa đơn!');
-                    return;
-                }
-
-                const printTemplate = printTemplateRef.value.$el;
-
-                // Tạo container tạm thời
-                const tempContainer = document.createElement('div');
-                tempContainer.appendChild(printTemplate.cloneNode(true));
-                document.body.appendChild(tempContainer);
-
-                // Cấu hình PDF
                 const opt = {
                     margin: 5,
                     image: { type: 'jpeg', quality: 0.98 },
@@ -517,55 +509,69 @@ export default {
                         scale: 2,
                         useCORS: true,
                         letterRendering: true,
-                        width: 302, // 80mm in pixels
+                        width: 302,
                     },
                     jsPDF: {
                         unit: 'mm',
                         format: [80, 297],
                         orientation: 'portrait'
                     }
-                };
+                }
 
-                // Tạo PDF và mở trong cửa sổ mới
-                html2pdf().set(opt)
+                const pdfBlob = await html2pdf().set(opt)
                     .from(tempContainer.firstChild)
                     .outputPdf('blob')
-                    .then((pdfBlob) => {
-                        // Tạo URL từ blob
-                        const blobUrl = URL.createObjectURL(pdfBlob);
 
-                        // Mở cửa sổ mới với kích thước phù hợp
-                        const printWindow = window.open(blobUrl, '_blank', 'width=800,height=600');
+                const blobUrl = URL.createObjectURL(pdfBlob)
+                const printWindow = window.open(blobUrl, '_blank', 'width=800,height=600')
 
-                        if (printWindow) {
-                            // Tự động mở hộp thoại in sau khi PDF đã load
-                            printWindow.onload = () => {
-                                printWindow.print();
-                            };
+                if (printWindow) {
+                    printWindow.onload = () => {
+                        printWindow.print()
+                    }
 
-                            // Cleanup khi cửa sổ đóng
-                            printWindow.onbeforeunload = () => {
-                                URL.revokeObjectURL(blobUrl);
-                                document.body.removeChild(tempContainer);
-                            };
-                        } else {
-                            // Nếu popup bị chặn
-                            toast.error('Vui lòng cho phép popup để in hóa đơn!');
-                            URL.revokeObjectURL(blobUrl);
-                            document.body.removeChild(tempContainer);
+                    // Thêm xử lý khi người dùng hủy in
+                    const checkPrintDialogClosed = setInterval(() => {
+                        if (printWindow.closed) {
+                            clearInterval(checkPrintDialogClosed)
+                            cleanup()
                         }
-                    })
-                    .catch((error) => {
-                        console.error('PDF generation error:', error);
-                        toast.error('Có lỗi khi tạo PDF. Vui lòng thử lại!');
-                        document.body.removeChild(tempContainer);
-                    });
+                    }, 1000)
+
+                    printWindow.onafterprint = () => {
+                        clearInterval(checkPrintDialogClosed)
+                        cleanup()
+                    }
+
+                    printWindow.onbeforeunload = () => {
+                        clearInterval(checkPrintDialogClosed)
+                        cleanup()
+                    }
+                } else {
+                    toast.error('Vui lòng cho phép popup để in hóa đơn!')
+                    cleanup()
+                }
+
+                function cleanup() {
+                    URL.revokeObjectURL(blobUrl)
+                    if (document.body.contains(tempContainer)) {
+                        document.body.removeChild(tempContainer)
+                    }
+                    isPrinting.value = false
+                }
 
             } catch (error) {
-                console.error('Print process error:', error);
-                toast.error('Có lỗi xảy ra. Vui lòng thử lại!');
+                console.error('Print error:', error)
+                toast.error('Có lỗi xảy ra khi in. Vui lòng thử lại!')
+                isPrinting.value = false
             }
-        };
+        }
+
+        const printInvoice = async () => {
+            isPrinting.value = true
+            // Template sẽ tự động render và gọi handlePrintAfterRender
+            // thông qua event @rendered
+        }
 
         const processPayment = async () => {
             processing.value = true
@@ -833,6 +839,21 @@ export default {
             formattedPaymentAmount.value = event.target.value;
         };
 
+        // Thêm event listener cho ESC key
+        onMounted(() => {
+            const handleEscKey = (event) => {
+                if (event.key === 'Escape' && isPrinting.value) {
+                    isPrinting.value = false
+                }
+            }
+            window.addEventListener('keydown', handleEscKey)
+            
+            // Cleanup event listener
+            onUnmounted(() => {
+                window.removeEventListener('keydown', handleEscKey)
+            })
+        })
+
         return {
             paymentAmount,
             paymentMethod,
@@ -866,6 +887,8 @@ export default {
             printTemplateRef,
             formattedPaymentAmount,
             updatePaymentAmount,
+            isPrinting,
+            handlePrintAfterRender
         }
     }
 }
@@ -914,5 +937,12 @@ export default {
     .no-print {
         display: none !important;
     }
+}
+
+/* Thêm style cho print container */
+.print-container {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
 }
 </style>

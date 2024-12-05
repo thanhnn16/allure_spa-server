@@ -297,12 +297,10 @@ const hasStatsData = computed(() => {
       </div>
 
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
-        <CardBoxWidget trend="12%" trend-type="up" color="text-emerald-500" :icon="mdiAccountMultiple"
-          :number="userCount" label="Khách hàng" />
-        <CardBoxWidget trend="12%" trend-type="down" color="text-blue-500" :icon="mdiCartOutline"
-          :number="Number(salesAmount)" prefix="₫" label="Doanh số" />
-        <CardBoxWidget trend="New" trend-type="alert" color="text-red-500" :icon="mdiChartTimelineVariant"
-          :number="orderCount" label="Đơn hàng" />
+        <CardBoxWidget color="text-emerald-500" :icon="mdiAccountMultiple" :number="userCount" label="Khách hàng" />
+        <CardBoxWidget color="text-blue-500" :icon="mdiCartOutline" :number="Number(salesAmount)" prefix="₫"
+          label="Doanh số" />
+        <CardBoxWidget color="text-red-500" :icon="mdiChartTimelineVariant" :number="orderCount" label="Đơn hàng" />
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
