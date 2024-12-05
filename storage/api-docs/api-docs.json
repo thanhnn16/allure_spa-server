@@ -2019,13 +2019,13 @@
                 ]
             }
         },
-        "/api/auth/verify-email": {
+        "/api/email/verify-email": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Verify email address",
-                "operationId": "40c8befcfe32536f270a6689c4a1c4a8",
+                "operationId": "47df7cfc87263e6453a8f8bbccce2efa",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2204,6 +2204,40 @@
                         "description": "Đặt lại mật khẩu thành công"
                     }
                 }
+            }
+        },
+        "/api/email/verify/send": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Gửi email xác thực",
+                "operationId": "5b72cae4f81793cee9a1b5d411fc3465",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "lang": {
+                                        "type": "string",
+                                        "example": "vi"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email xác thực đã được gửi"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/banners": {
