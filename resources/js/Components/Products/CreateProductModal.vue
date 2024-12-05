@@ -1,7 +1,7 @@
 <template>
     <CardBoxModal :modelValue="show" @update:modelValue="$emit('update:show')" title="Tạo sản phẩm mới"
-        @submit="handleSubmit" @cancel="$emit('close')" :isLoading="isSubmitting" :hasButton="false">
-        <form @submit.prevent="handleSubmit" class="space-y-6">
+        @submit.prevent="handleSubmit" @cancel="closeModal" :isLoading="isSubmitting" :hasButton="false">
+        <form @submit.prevent="handleSubmit" class="space-y-6" :class="{ 'pointer-events-none': isSubmitting }">
             <!-- Basic Information -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -146,16 +146,16 @@
             </div>
 
             <div class="flex justify-end space-x-2">
-                <BaseButton type="button" label="Hủy" @click="$emit('close')" />
-                <BaseButton type="submit" color="info" label="Tạo" :loading="isSubmitting" :disabled="isSubmitting"
-                    @click="handleSubmit" />
+                <BaseButton type="button" label="Hủy" @click="closeModal" :disabled="isSubmitting" />
+                <BaseButton type="submit" color="info" label="Tạo" :loading="isSubmitting" :disabled="isSubmitting || Object.keys(validationErrors).length > 0"
+                    @click.prevent="handleSubmit" />
             </div>
         </form>
     </CardBoxModal>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { useToast } from 'vue-toastification'
 import CardBoxModal from '@/Components/CardBoxModal.vue'
@@ -282,56 +282,90 @@ const removeImage = (index) => {
     form.images = imageFiles.value
 }
 
-const handleSubmit = async () => {
-    if (isSubmitting.value) return
+const handleSubmit = async (event) => {
+    // Ngăn chặn form submission mặc định
+    event?.preventDefault();
+    
+    // Double check để tránh multiple submissions
+    if (isSubmitting.value) {
+        console.log('Submission already in progress');
+        return;
+    }
 
     if (!validateForm()) {
-        return false
+        console.log('Form validation failed');
+        return;
     }
 
-    isSubmitting.value = true
+    isSubmitting.value = true;
+    console.log('Starting submission...');
 
     try {
-        // Tạo FormData object
-        const formData = new FormData()
+        // Disable nút submit
+        const submitButton = event?.target?.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
 
-        // Thêm các trường cơ bản
-        Object.keys(form).forEach(key => {
-            if (key !== 'images' && key !== '_validate') {
-                formData.append(key, form[key])
-            }
-        })
-
-        // Thêm từng file ảnh riêng biệt
-        imageFiles.value.forEach((file, index) => {
-            formData.append(`images[]`, file)  // Thay đổi key thành images[]
-        })
-
-        // Gửi request sử dụng Inertia với FormData
         await form.post(route('products.store'), {
-            data: formData,
-            forceFormData: true,
             preserveScroll: true,
+            preserveState: false, // Thêm option này để tránh state preservation
             onSuccess: () => {
-                toast.success('Tạo sản phẩm thành công!')
-                emit('created', true)
-                resetForm()
-                closeModal()
+                console.log('Submission successful');
+                emit('created', true);
+                resetForm();
+                emit('close');
+                router.reload(); // Reload để đảm bảo state mới
             },
             onError: (errors) => {
-                validationErrors.value = errors
-                emit('error', errors)
-                toast.error('Có lỗi xảy ra khi tạo sản phẩm')
+                console.log('Submission failed with errors:', errors);
+                validationErrors.value = errors;
+                emit('validationFailed', errors);
+            },
+            onFinish: () => {
+                console.log('Submission finished');
+                isSubmitting.value = false;
+                // Re-enable submit button
+                if (submitButton) {
+                    submitButton.disabled = false;
+                }
             }
-        })
+        });
     } catch (error) {
-        console.error('Error creating product:', error)
-        toast.error('Có lỗi xảy ra khi tạo sản phẩm')
-        emit('error', error)
-    } finally {
-        isSubmitting.value = false
+        console.error('Error during submission:', error);
+        emit('error', error);
+        isSubmitting.value = false;
     }
-}
+};
+
+// Thêm method reset form riêng
+const resetForm = () => {
+    form.reset();
+    imageFiles.value = [];
+    previews.value = [];
+    validationErrors.value = {};
+    isSubmitting.value = false;
+};
+
+// Thêm cleanup khi component unmount
+onBeforeUnmount(() => {
+    isSubmitting.value = false;
+});
+
+// Đảm bảo modal đóng sẽ reset form
+const closeModal = () => {
+    if (!isSubmitting.value) {
+        resetForm();
+        emit('close');
+    }
+};
+
+// Thêm watcher cho modelValue
+watch(() => props.show, (newVal) => {
+    if (!newVal) {
+        resetForm();
+    }
+});
 
 // Validate single field
 const validateField = (fieldName, value) => {
@@ -380,25 +414,6 @@ watch(() => form.name, (value) => validateField('name', value))
 watch(() => form.category_id, (value) => validateField('category_id', value))
 watch(() => form.price, (value) => validateField('price', value))
 watch(() => form.quantity, (value) => validateField('quantity', value))
-
-const resetForm = () => {
-    form.reset()
-    imageFiles.value = []
-    previews.value = []
-    validationErrors.value = {}
-}
-
-const closeModal = () => {
-    isModalActive.value = false
-    form.reset()
-    previews.value = []
-    imageFiles.value = []
-    emit('close')
-}
-
-watch(() => props.show, (newVal) => {
-    isModalActive.value = newVal
-})
 </script>
 <style scoped>
 .error-input {

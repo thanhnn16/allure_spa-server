@@ -18,11 +18,12 @@
                 </div>
                 <div v-if="showFilters" class="mb-4">
                     <div class="mb-4">
-                        <label class="block mb-2 dark:text-gray-300">Danh mục</label>
+                        <label class="block mb-2 text-gray-700 dark:text-gray-300">Danh mục</label>
                         <select v-model="form.category"
-                            class="w-full px-4 py-2 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
-                            <option value="">Tất cả danh mục</option>
-                            <option v-for="category in categories" :key="category.id" :value="category.id">
+                            class="w-full px-4 py-2 border rounded-md bg-white dark:bg-dark-surface dark:border-dark-border dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-500">
+                            <option value="" class="dark:bg-dark-surface">Tất cả danh mục</option>
+                            <option v-for="category in categories" :key="category.id" :value="category.id" 
+                                class="dark:bg-dark-surface">
                                 {{ category.category_name }}
                             </option>
                         </select>
@@ -31,12 +32,12 @@
                 </div>
                 <div class="my-4">
                     <input v-model="form.search" type="text" placeholder="Tìm kiếm sản phẩm..."
-                        class="w-full px-4 py-2 mb-4 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300 dark:placeholder-gray-500">
+                        class="w-full px-4 py-2 mb-4 border rounded-md bg-white dark:bg-dark-surface dark:border-dark-border dark:text-gray-300 dark:placeholder-gray-500 focus:border-primary-500 dark:focus:border-primary-500">
                     <select v-model="form.per_page" @change="handlePerPageChange"
-                        class="px-8 py-2 border rounded-md dark:bg-dark-surface dark:border-dark-border dark:text-gray-300">
-                        <option :value="10">Xem 10 mỗi trang</option>
-                        <option :value="25">Xem 25 mỗi trang</option>
-                        <option :value="50">Xem 50 mỗi trang</option>
+                        class="px-8 py-2 border rounded-md bg-white dark:bg-dark-surface dark:border-dark-border dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-500">
+                        <option :value="10" class="dark:bg-dark-surface">Xem 10 mỗi trang</option>
+                        <option :value="25" class="dark:bg-dark-surface">Xem 25 mỗi trang</option>
+                        <option :value="50" class="dark:bg-dark-surface">Xem 50 mỗi trang</option>
                     </select>
                 </div>
                 <div class="overflow-x-auto">

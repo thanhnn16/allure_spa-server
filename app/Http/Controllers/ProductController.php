@@ -129,6 +129,8 @@ class ProductController extends BaseController
     public function store(ProductRequest $request)
     {
         try {
+            DB::beginTransaction();
+
             // Validate basic product data
             $productData = $request->validated();
 
@@ -140,12 +142,17 @@ class ProductController extends BaseController
                 $mediaItems = $this->mediaService->createMultiple($product, $request->file('images'), 'image');
             }
 
+            DB::commit();
+
             if ($request->expectsJson()) {
                 return $this->respondWithJson($product, 'Product created successfully', 201);
             }
 
-            return redirect()->route('products.index')->with('success', 'Sản phẩm đã được tạo thành công.');
+            return redirect()->route('products.index')
+                ->with('success', 'Sản phẩm đã được tạo thành công.');
+
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Product creation failed:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
