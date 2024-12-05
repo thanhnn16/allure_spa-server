@@ -314,7 +314,7 @@ class AuthController extends BaseController
 
     /**
      * @OA\Post(
-     *     path="/api/auth/verify-email",
+     *     path="/api/email/verify-email",
      *     summary="Verify email address",
      *     tags={"Authentication"},
      *     @OA\RequestBody(
