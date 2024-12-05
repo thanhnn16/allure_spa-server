@@ -194,13 +194,13 @@ class InvoiceController extends BaseController
                 'status' => Invoice::STATUS_CANCELLED
             ]);
 
-            // Tạo lịch sử
+            // Tạo lịch sử với payment_method là 'system'
             PaymentHistory::create([
                 'invoice_id' => $invoice->id,
                 'old_payment_status' => $oldStatus,
                 'new_payment_status' => Invoice::STATUS_CANCELLED,
                 'payment_amount' => 0,
-                'payment_method' => null,
+                'payment_method' => 'system',
                 'created_by_user_id' => Auth::id(),
                 'note' => 'Hóa đơn đã bị hủy'
             ]);

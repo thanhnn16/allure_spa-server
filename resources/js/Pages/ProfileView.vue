@@ -97,7 +97,7 @@ const submitProfile = () => {
 
   console.log('Form data being submitted:', formData)
 
-  axios.put('/api/user/profile', formData)
+  axios.patch('/api/user/profile', formData)
     .then(response => {
       console.log('API response success:', response.data)
       toast.success('Cập nhật thông tin thành công')

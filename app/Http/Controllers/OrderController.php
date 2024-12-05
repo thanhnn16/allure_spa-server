@@ -675,22 +675,12 @@ class OrderController extends BaseController
                 'cancel_reason' => 'nullable|string|max:500'
             ]);
 
-            // Kiểm tra điều kiện hủy đơn
-            if (!in_array($order->status, ['pending', 'confirmed'])) {
-                return $this->respondWithJson(
-                    null,
-                    'Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý hoặc đã xác nhận',
-                    400
-                );
-            }
-
-            // Cập nhật trạng thái thành cancelled
-            $order->update([
-                'status' => 'cancelled',
-                'cancel_reason' => $validated['cancel_reason'] ?? null,
-                'cancelled_by_user_id' => Auth::id(),
-                'cancelled_at' => now()
-            ]);
+            // Gọi service để xử lý hủy đơn hàng
+            $order = $this->orderService->updateOrderStatus(
+                $order, 
+                Order::STATUS_CANCELLED, 
+                $validated['cancel_reason'] ?? null
+            );
 
             return $this->respondWithJson(
                 $order->load(['cancelledBy']),

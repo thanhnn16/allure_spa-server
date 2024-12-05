@@ -238,87 +238,74 @@ class OrderService
     public function updateOrderStatus($order, $status, $note = null)
     {
         try {
-            // Kiểm tra flow trạng thái hợp lệ
-            if (!$this->isValidStatusTransition($order->status, $status)) {
-                throw new \Exception('Không thể cập nhật sang trạng thái này');
-            }
-
-            // Kiểm tra ràng buộc với invoice
-            if ($status === Order::STATUS_COMPLETED) {
-                if (!$order->invoice) {
-                    throw new \Exception('Không thể hoàn thành đơn hàng chưa có hóa đơn');
-                }
-
-                if ($order->invoice->status !== Invoice::STATUS_PAID) {
-                    throw new \Exception('Không thể hoàn thành đơn hàng chưa thanh toán đủ');
-                }
-            }
-
             DB::beginTransaction();
 
-            $updateData = [
-                'status' => $status,
-                'note' => $note
-            ];
-
-            // Thêm thông tin hủy đơn nếu status là cancelled
+            // Kiểm tra điều kiện hủy đơn
             if ($status === Order::STATUS_CANCELLED) {
-                // Kiểm tra nếu đã thanh toán thì không được hủy
-                if ($order->invoice && $order->invoice->status === Invoice::STATUS_PAID) {
-                    throw new \Exception('Không thể hủy đơn hàng đã thanh toán');
+                if (!in_array($order->status, ['pending', 'confirmed'])) {
+                    throw new \Exception('Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý hoặc đã xác nhận');
                 }
 
-                $updateData = array_merge($updateData, [
+                // Cập nhật thông tin hủy đơn
+                $updateData = [
+                    'status' => $status,
+                    'cancel_reason' => $note,
                     'cancelled_by_user_id' => Auth::id(),
-                    'cancelled_at' => now(),
-                    'cancel_reason' => $note
-                ]);
+                    'cancelled_at' => now()
+                ];
+
+                // Nếu có hóa đơn, hủy hóa đơn
+                if ($order->invoice) {
+                    $order->invoice->update([
+                        'status' => Invoice::STATUS_CANCELLED,
+                        'cancelled_at' => now(),
+                        'cancelled_by_user_id' => Auth::id()
+                    ]);
+
+                    // Tạo payment history cho hóa đơn
+                    $order->invoice->paymentHistories()->create([
+                        'old_payment_status' => $order->invoice->status,
+                        'new_payment_status' => Invoice::STATUS_CANCELLED,
+                        'payment_amount' => 0,
+                        'payment_method' => 'system',
+                        'created_by_user_id' => Auth::id(),
+                        'note' => 'Hóa đơn đã bị hủy do đơn hàng bị hủy'
+                    ]);
+                }
+
+                // Hoàn lại số lượng sản phẩm nếu có
+                $this->rollbackProductStock($order);
+            } else {
+                $updateData = [
+                    'status' => $status,
+                    'note' => $note
+                ];
             }
 
             // Cập nhật đơn hàng
             $order->update($updateData);
 
-            // Chuẩn bị thông báo dựa trên trạng thái
-            $notificationData = $this->prepareStatusNotification($order, $status);
-
+            // Gửi thông báo
             try {
-                // Gửi thông báo cho khách hàng
-                if ($notificationData) {
-                    $this->notificationService->createNotification([
-                        'user_id' => $order->user_id,
-                        'type' => 'order_status',
-                        'data' => [
-                            'id' => $order->id,
-                            'status' => $status
-                        ],
-                        'send_fcm' => true
-                    ]);
-                }
-
-                // Gửi thông báo cho admin khi đơn hàng bị hủy
-                if ($status === 'cancelled') {
-                    $this->notificationService->notifyAdmins(
-                        'Đơn hàng bị hủy',
-                        "Đơn hàng #{$order->id} đã bị hủy bởi " .
-                            (Auth::user()->role === 'admin' ? 'Admin' : 'khách hàng'),
-                        'order_cancelled',
-                        [
-                            'type' => 'order',
-                            'order_id' => $order->id,
-                            'action' => 'cancelled'
-                        ]
-                    );
-                }
+                $this->notificationService->createNotification([
+                    'user_id' => $order->user_id,
+                    'type' => 'order_status_changed',
+                    'data' => [
+                        'order_id' => $order->id,
+                        'old_status' => $order->getOriginal('status'),
+                        'new_status' => $status
+                    ],
+                    'send_fcm' => true
+                ]);
             } catch (\Exception $e) {
-                // Log lỗi nhưng không throw exception
-                Log::error('Failed to send notifications:', [
+                Log::error('Failed to send notification:', [
                     'error' => $e->getMessage(),
                     'order_id' => $order->id
                 ]);
             }
 
             DB::commit();
-            return $order;
+            return $order->fresh(['invoice', 'cancelledBy']);
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -429,7 +416,7 @@ class OrderService
         // Tính tổng số buổi dựa trên loại combo và số lượng đặt
         $sessionsPerCombo = $this->getSessionsFromServiceType($item->service_type);
         $totalSessions = $sessionsPerCombo * $item->quantity;
-        
+
         $service = Service::find($item->item_id);
 
         UserServicePackage::create([
@@ -635,7 +622,7 @@ class OrderService
         return $translations[$status] ?? $status;
     }
 
-    private function handleShippingAddress(array $data, string $userId) 
+    private function handleShippingAddress(array $data, string $userId)
     {
         // Nếu có temporary_address
         if (isset($data['temporary_address'])) {
@@ -643,36 +630,36 @@ class OrderService
             $address = Address::create([
                 'user_id' => $userId,
                 'province' => $data['temporary_address']['province'],
-                'district' => $data['temporary_address']['district'], 
+                'district' => $data['temporary_address']['district'],
                 'ward' => $data['temporary_address']['ward'],
                 'address' => $data['temporary_address']['address'],
                 'address_type' => 'shipping',
                 'is_temporary' => true,
                 'is_default' => false
             ]);
-            
+
             return $address->id;
         }
-        
+
         // Nếu có shipping_address_id
         if (isset($data['shipping_address_id'])) {
             // Validate địa chỉ có tồn tại và thuộc về user
             $address = Address::where('id', $data['shipping_address_id'])
                 ->where('user_id', $userId)
                 ->first();
-                
+
             if (!$address) {
                 throw new \Exception('Địa chỉ giao hàng không hợp lệ');
             }
-                
+
             return $address->id;
         }
-        
+
         // Lấy địa chỉ mặc định của người dùng nếu không có địa chỉ nào được cung cấp
         $defaultAddress = Address::where('user_id', $userId)
             ->where('is_default', true)
             ->first();
-        
+
         return $defaultAddress ? $defaultAddress->id : null;
     }
 }
