@@ -3,7 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useForm, Head } from '@inertiajs/vue3'
 import SectionMain from '@/Components/SectionMain.vue'
 import LayoutAuthenticated from '@/Layouts/LayoutAuthenticated.vue'
-import { mdiSend, mdiDelete, mdiPlus } from '@mdi/js'
+import { mdiSend, mdiDelete, mdiPlus, mdiBullhorn, mdiHistory, mdiAccountGroup, mdiClose } from '@mdi/js'
 import BaseButton from '@/Components/BaseButton.vue'
 import BaseButtons from '@/Components/BaseButtons.vue'
 import CardBox from '@/Components/CardBox.vue'
@@ -47,18 +47,51 @@ const targetOptions = [
 
 const users = ref([])
 const selectedUsers = ref([])
+const searchQuery = ref('')
+const filteredUsers = ref([])
 const loading = ref(false)
 const showSuccessMessage = ref(false)
 const errorMessage = ref('')
 const groups = ref([])
 const selectedGroup = ref(null)
+const activeTab = ref('campaign')
+const showForm = ref(false)
+
+const computeFilteredUsers = () => {
+    if (!searchQuery.value) {
+        filteredUsers.value = users.value
+        return
+    }
+    
+    const query = searchQuery.value.toLowerCase()
+    filteredUsers.value = users.value.filter(user => 
+        user.full_name.toLowerCase().includes(query) ||
+        user.phone_number.includes(query)
+    )
+}
+
+watch(searchQuery, () => {
+    computeFilteredUsers()
+})
 
 const fetchUsers = async () => {
+    loading.value = true
     try {
         const response = await axios.get('/api/users')
-        users.value = response.data.data
+        console.log('Users fetched:', response.data)
+        if (response.data && Array.isArray(response.data.data)) {
+            users.value = response.data.data
+            filteredUsers.value = [...users.value]
+            console.log('Users array:', users.value)
+            console.log('FilteredUsers array:', filteredUsers.value)
+        } else {
+            console.error('Invalid response format:', response.data)
+        }
     } catch (error) {
         console.error('Lỗi khi tải danh sách người dùng:', error)
+        errorMessage.value = 'Không thể tải danh sách người dùng'
+    } finally {
+        loading.value = false
     }
 }
 
@@ -72,16 +105,21 @@ const fetchGroups = async () => {
 }
 
 const handleTargetChange = () => {
-    // Reset các giá trị khi đổi đối tượng nhận
+    console.log('handleTargetChange called, new target:', form.target_users)
+    
+    // Reset các giá trị
     form.user_ids = []
     form.group_id = null
     selectedUsers.value = []
     selectedGroup.value = null
+    searchQuery.value = ''
     
-    // Tải dữ liệu cần thiết dựa trên lựa chọn
+    // Fetch data based on target
     if (form.target_users === 'specific') {
+        console.log('Fetching users...')
         fetchUsers()
     } else if (form.target_users === 'group') {
+        console.log('Fetching groups...')
         fetchGroups()
     }
 }
@@ -121,6 +159,12 @@ const submit = async () => {
 
         // Gửi request tạo thông báo
         await axios.post('/api/notifications/send', formData)
+
+        // Thực hiện hành đng bổ sung khi gửi ti người dùng cụ thể
+        if (form.target_users === 'specific') {
+            console.log('Đã gửi thông báo tới người dùng cụ thể:', formData.user_ids)
+            // Thêm các xử lý khác tại đây nếu cần
+        }
         
         // Reset form và hiển thị thông báo thành công
         form.reset()
@@ -141,134 +185,115 @@ onMounted(() => {
     fetchUsers()
     fetchGroups()
 })
+
+// Thêm watch cho form.target_users
+watch(() => form.target_users, (newValue) => {
+    console.log('Target users changed:', newValue)
+}, { immediate: true })
+
+// Thêm watch cho users
+watch(users, (newValue) => {
+    console.log('Users updated:', newValue)
+    console.log('Current filteredUsers:', filteredUsers.value)
+}, { deep: true })
+
+// Thêm watch cho filteredUsers
+watch(filteredUsers, (newValue) => {
+    console.log('FilteredUsers updated:', newValue)
+}, { deep: true })
+
+const toggleForm = () => {
+    showForm.value = !showForm.value
+    if (!showForm.value) {
+        form.reset()
+        selectedUsers.value = []
+        selectedGroup.value = null
+    }
+}
 </script>
 
 <template>
     <LayoutAuthenticated>
         <Head title="Quản lý thông báo" />
         <SectionMain>
-            <CardBox class="mb-6" has-table>
-                <div class="flex flex-col lg:flex-row gap-6">
-                    <!-- Form gửi thông báo -->
-                    <div class="lg:w-1/2">
-                        <h2 class="text-2xl font-bold mb-6">Gửi thông báo mới</h2>
-                        
-                        <form @submit.prevent="submit" class="space-y-6">
-                            <!-- Loại thông báo -->
-                            <FormField label="Loại thông báo" help="Chọn loại thông báo phù hợp">
-                                <FormControl v-model="form.type" :options="types" type="select" />
-                            </FormField>
+            <!-- Tab Navigation -->
+            <div class="mb-6">
+                <BaseButtons>
+                    <BaseButton
+                        :color="activeTab === 'campaign' ? 'info' : 'light'"
+                        @click="activeTab = 'campaign'"
+                        label="Chiến dịch thông báo"
+                        :icon="mdiBullhorn"
+                        class="transition-colors duration-300"
+                    />
+                    <BaseButton
+                        :color="activeTab === 'history' ? 'info' : 'light'"
+                        @click="activeTab = 'history'"
+                        label="Lịch sử thông báo"
+                        :icon="mdiHistory"
+                        class="transition-colors duration-300"
+                    />
+                    <BaseButton
+                        :color="activeTab === 'groups' ? 'info' : 'light'"
+                        @click="activeTab = 'groups'"
+                        label="Quản lý nhóm"
+                        :icon="mdiAccountGroup"
+                        class="transition-colors duration-300"
+                    />
+                </BaseButtons>
+            </div>
 
-                            <!-- Đối tượng nhận -->
-                            <FormField label="Đối tượng nhận" help="Chọn người nhận thông báo">
-                                <FormControl 
-                                    v-model="form.target_users" 
-                                    :options="targetOptions" 
-                                    type="select"
-                                    @update:modelValue="handleTargetChange"
-                                />
-                            </FormField>
+            <!-- Campaign Tab -->
+            <div v-if="activeTab === 'campaign'" class="transition-opacity duration-500">
+                <CardBox class="mb-6">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold">Tạo chiến dịch thông báo mới</h2>
+                            <BaseButton
+                                v-if="showForm"
+                                color="danger"
+                                :icon="mdiClose"
+                                @click="toggleForm"
+                                small
+                            />
+                            <BaseButton
+                                v-else
+                                color="info"
+                                :icon="mdiPlus"
+                                label="Tạo mới"
+                                @click="toggleForm"
+                            />
+                        </div>
 
-                            <!-- Chọn người dùng cụ thể -->
-                            <div v-if="form.target_users === 'specific'" class="border p-4 rounded-lg">
-                                <FormField label="Chọn người dùng" help="Có thể chọn nhiều người dùng">
-                                    <FormControl
-                                        v-model="selectedUsers"
-                                        :options="users.map(u => ({ value: u.id, label: `${u.full_name} (${u.phone_number})` }))"
-                                        type="multiselect"
-                                        placeholder="Chọn người dùng..."
-                                        required
-                                    />
-                                </FormField>
-                                <div v-if="selectedUsers.length > 0" class="mt-2 text-sm text-gray-600">
-                                    Đã chọn {{ selectedUsers.length }} người dùng
-                                </div>
-                            </div>
-
-                            <!-- Chọn nhóm -->
-                            <div v-if="form.target_users === 'group'" class="border p-4 rounded-lg">
-                                <FormField label="Chọn nhóm" help="Chọn nhóm người dùng để gửi thông báo">
-                                    <FormControl
-                                        v-model="selectedGroup"
-                                        :options="groups.map(g => ({ 
-                                            value: g.id, 
-                                            label: `${g.name} (${g.user_count || 0} thành viên)` 
-                                        }))"
-                                        type="select"
-                                        placeholder="Chọn nhóm..."
-                                        required
-                                    />
-                                </FormField>
-                                <div v-if="selectedGroup" class="mt-2 text-sm text-gray-600">
-                                    {{ groups.find(g => g.id === selectedGroup)?.description }}
-                                </div>
-                            </div>
-
-                            <!-- Tiếng Anh -->
-                            <div class="border p-4 rounded-lg space-y-4">
-                                <h3 class="font-semibold">Tiếng Anh</h3>
-                                <FormField label="Tiêu đề">
-                                    <FormControl v-model="form.title" type="text" required />
-                                </FormField>
-                                <FormField label="Nội dung">
-                                    <FormControl v-model="form.content" type="textarea" required />
-                                </FormField>
-                            </div>
-
-                            <!-- Tiếng Việt -->
-                            <div class="border p-4 rounded-lg space-y-4">
-                                <h3 class="font-semibold">Tiếng Việt</h3>
-                                <FormField label="Tiêu đề">
-                                    <FormControl v-model="form.translations.vi.title" type="text" required />
-                                </FormField>
-                                <FormField label="Nội dung">
-                                    <FormControl v-model="form.translations.vi.content" type="textarea" required />
-                                </FormField>
-                            </div>
-
-                            <!-- Tiếng Nhật -->
-                            <div class="border p-4 rounded-lg space-y-4">
-                                <h3 class="font-semibold">Tiếng Nhật</h3>
-                                <FormField label="Tiêu đề">
-                                    <FormControl v-model="form.translations.ja.title" type="text" required />
-                                </FormField>
-                                <FormField label="Nội dung">
-                                    <FormControl v-model="form.translations.ja.content" type="textarea" required />
-                                </FormField>
-                            </div>
-
-                            <!-- Thông báo -->
-                            <div v-if="showSuccessMessage" class="bg-green-100 text-green-700 p-4 rounded-lg">
-                                Gửi thông báo thành công!
-                            </div>
-                            <div v-if="errorMessage" class="bg-red-100 text-red-700 p-4 rounded-lg">
-                                {{ errorMessage }}
-                            </div>
-
-                            <!-- Nút gửi -->
-                            <BaseButtons>
-                                <BaseButton
-                                    type="submit"
-                                    color="info"
-                                    :icon="mdiSend"
-                                    :loading="loading"
-                                    label="Gửi thông báo"
-                                />
-                            </BaseButtons>
-                        </form>
+                        <!-- Form content -->
+                        <div v-if="showForm" class="space-y-6">
+                            <!-- Sắp xếp lại các phần tử form cho hợp lý -->
+                            <!-- ... -->
+                        </div>
                     </div>
+                </CardBox>
 
-                    <!-- Danh sách thông báo đã gửi -->
-                    <div class="lg:w-1/2">
-                        <NotificationList />
+                <!-- Campaign List -->
+                <CardBox class="mb-6">
+                    <div class="overflow-x-auto">
+                        <!-- Campaign table/list here -->
                     </div>
-                </div>
-            </CardBox>
+                </CardBox>
+            </div>
 
-            <!-- Thêm component UserGroups -->
-            <CardBox class="mb-6">
-                <UserGroups />
-            </CardBox>
+            <!-- History Tab -->
+            <div v-if="activeTab === 'history'" class="transition-opacity duration-500">
+                <CardBox>
+                    <NotificationList />
+                </CardBox>
+            </div>
+
+            <!-- Groups Tab -->
+            <div v-if="activeTab === 'groups'" class="transition-opacity duration-500">
+                <CardBox>
+                    <UserGroups />
+                </CardBox>
+            </div>
         </SectionMain>
     </LayoutAuthenticated>
 </template>

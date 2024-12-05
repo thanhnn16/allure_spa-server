@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Models\NotificationGroup;
 use App\Models\User;
+use App\Models\UserGroup;
 
 /**
  * @OA\Tag(
@@ -136,90 +137,11 @@ class NotificationController extends BaseController
     {
         return $this->respondWithInertia('MobileApp/NotificationManager', [
             'initialNotifications' => $this->notificationService->getUserNotifications(
-                Auth::user()->id, 
-                10, 
+                Auth::user()->id,
+                10,
                 1
             )
         ]);
-    }
-
-    public function getGroups()
-    {
-        try {
-            $groups = NotificationGroup::with(['conditions'])
-                ->get()
-                ->map(function ($group) {
-                    return [
-                        'id' => $group->id,
-                        'name' => $group->name,
-                        'description' => $group->description,
-                        'conditions' => $group->conditions,
-                        'user_count' => $group->users_count
-                    ];
-                });
-
-            return $this->respondWithJson($groups);
-        } catch (\Exception $e) {
-            \Log::error('Error in getGroups: ' . $e->getMessage());
-            return $this->respondWithError('Lỗi khi lấy danh sách nhóm', 500);
-        }
-    }
-
-    public function createGroup(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'conditions' => 'required|array|min:1',
-            'conditions.*.field' => 'required|string',
-            'conditions.*.operator' => 'required|string',
-            'conditions.*.value' => 'required'
-        ]);
-
-        $group = NotificationGroup::create([
-            'name' => $validated['name'],
-            'description' => $validated['description']
-        ]);
-
-        foreach ($validated['conditions'] as $condition) {
-            $group->conditions()->create($condition);
-        }
-
-        return $this->respondWithJson($group->load('conditions'));
-    }
-
-    public function updateGroup(Request $request, $id)
-    {
-        $group = NotificationGroup::findOrFail($id);
-        
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'conditions' => 'required|array|min:1',
-            'conditions.*.field' => 'required|string',
-            'conditions.*.operator' => 'required|string',
-            'conditions.*.value' => 'required'
-        ]);
-
-        $group->update([
-            'name' => $validated['name'],
-            'description' => $validated['description']
-        ]);
-
-        // Xóa điều kiện cũ và tạo mới
-        $group->conditions()->delete();
-        foreach ($validated['conditions'] as $condition) {
-            $group->conditions()->create($condition);
-        }
-
-        return $this->respondWithJson($group->load('conditions'));
-    }
-
-    public function deleteGroup($id)
-    {
-        $group = NotificationGroup::findOrFail($id);
-        $group->delete();
-        return $this->respondWithJson(null, 'Group deleted successfully');
     }
 
     public function sendNotification(Request $request)
@@ -230,19 +152,19 @@ class NotificationController extends BaseController
             'type' => 'required|string',
             'target_users' => 'required|string|in:all,specific,group',
             'user_ids' => 'required_if:target_users,specific|array',
-            'group_id' => 'required_if:target_users,group|exists:notification_groups,id',
+            'group_id' => 'required_if:target_users,group|exists:user_groups,id',
             'translations' => 'nullable|array'
         ]);
 
         try {
             $userIds = [];
-            
+
             if ($validated['target_users'] === 'all') {
                 $userIds = User::pluck('id')->toArray();
             } elseif ($validated['target_users'] === 'specific') {
                 $userIds = $validated['user_ids'];
             } elseif ($validated['target_users'] === 'group') {
-                $group = NotificationGroup::with('conditions')->findOrFail($validated['group_id']);
+                $group = UserGroup::with('conditions')->findOrFail($validated['group_id']);
                 $userIds = $this->notificationService->getUsersByGroupConditions($group->conditions);
             }
 
@@ -267,8 +189,9 @@ class NotificationController extends BaseController
     {
         $perPage = 10;
         $page = $request->input('page', 1);
-        
-        $notifications = Notification::orderBy('created_at', 'desc')
+
+        $notifications = Notification::with('user')
+            ->orderBy('created_at', 'desc')
             ->paginate($perPage, ['*'], 'page', $page);
 
         return $this->respondWithJson([
