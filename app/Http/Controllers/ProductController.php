@@ -133,13 +133,18 @@ class ProductController extends BaseController
 
             // Validate basic product data
             $productData = $request->validated();
+            
+            // Loại bỏ images khỏi productData nếu có
+            if (isset($productData['images'])) {
+                unset($productData['images']);
+            }
 
             // Create product
             $product = $this->productService->createProduct($productData);
 
             // Handle images if present
             if ($request->hasFile('images')) {
-                $mediaItems = $this->mediaService->createMultiple($product, $request->file('images'), 'image');
+                $this->mediaService->createMultiple($product, $request->file('images'), 'image');
             }
 
             DB::commit();

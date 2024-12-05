@@ -211,28 +211,28 @@ const viewProductDetails = (productId) => {
 
 const handleProductCreated = (success) => {
     if (success) {
-        showCreateModal.value = false
-        toast.success('Tạo sản phẩm thành công!')
+        showCreateModal.value = false;
+        toast.success('Tạo sản phẩm thành công!');
         router.visit(route('products.index'), {
             preserveScroll: true,
             preserveState: true,
             replace: true
-        })
+        });
     }
 }
 
 const handleProductError = (error) => {
-    toast.error('Có lỗi xảy ra khi tạo sản phẩm')
+    toast.error('Có lỗi xảy ra khi tạo sản phẩm');
 }
 
 const handleModalClose = () => {
     if (!form.processing) {
-        showCreateModal.value = false
+        showCreateModal.value = false;
     }
 }
 
 const handleValidationFailed = (errors) => {
-    toast.error('Vui lòng kiểm tra lại thông tin nhập vào')
+    toast.error('Vui lòng kiểm tra lại thông tin nhập vào');
 }
 </script>
 

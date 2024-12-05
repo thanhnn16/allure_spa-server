@@ -147,7 +147,8 @@
 
             <div class="flex justify-end space-x-2">
                 <BaseButton type="button" label="Hủy" @click="closeModal" :disabled="isSubmitting" />
-                <BaseButton type="submit" color="info" label="Tạo" :loading="isSubmitting" :disabled="isSubmitting || Object.keys(validationErrors).length > 0"
+                <BaseButton type="submit" color="info" label="Tạo" :loading="isSubmitting"
+                    :disabled="isSubmitting || Object.keys(validationErrors).length > 0"
                     @click.prevent="handleSubmit" />
             </div>
         </form>
@@ -252,28 +253,30 @@ const triggerFileInput = () => {
 }
 
 const handleImageUpload = (event) => {
-    const files = Array.from(event.target.files)
-    const existingCount = imageFiles.value.length
-    const totalCount = existingCount + files.length
+    const files = Array.from(event.target.files);
+    const existingCount = imageFiles.value.length;
+    const totalCount = existingCount + files.length;
 
     if (totalCount > 10) {
-        toast.error('Không được upload quá 10 ảnh')
-        return
+        toast.error('Không được upload quá 10 ảnh');
+        return;
     }
 
     files.forEach(file => {
         if (file.size > 2 * 1024 * 1024) {
-            toast.error(`File ${file.name} vượt quá 2MB`)
-            return
+            toast.error(`File ${file.name} vượt quá 2MB`);
+            return;
         }
 
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onload = (e) => {
-            previews.value.push(e.target.result)
+            previews.value.push(e.target.result);
         }
-        reader.readAsDataURL(file)
-        imageFiles.value.push(file)
-    })
+        reader.readAsDataURL(file);
+        imageFiles.value.push(file);
+    });
+
+    form.images = imageFiles.value;
 }
 
 const removeImage = (index) => {
@@ -283,10 +286,8 @@ const removeImage = (index) => {
 }
 
 const handleSubmit = async (event) => {
-    // Ngăn chặn form submission mặc định
     event?.preventDefault();
-    
-    // Double check để tránh multiple submissions
+
     if (isSubmitting.value) {
         console.log('Submission already in progress');
         return;
@@ -301,44 +302,47 @@ const handleSubmit = async (event) => {
     console.log('Starting submission...');
 
     try {
-        // Disable nút submit
-        const submitButton = event?.target?.querySelector('button[type="submit"]');
-        if (submitButton) {
-            submitButton.disabled = true;
-        }
+        const formData = new FormData();
 
-        await form.post(route('products.store'), {
+        Object.keys(form).forEach(key => {
+            if (key !== 'images' && key !== '_validate') {
+                formData.append(key, form[key]);
+            }
+        });
+
+        imageFiles.value.forEach((file, index) => {
+            formData.append(`images[${index}]`, file);
+        });
+
+        const response = form.post(route('products.store'), {
+            data: formData,
             preserveScroll: true,
-            preserveState: false, // Thêm option này để tránh state preservation
-            onSuccess: () => {
-                console.log('Submission successful');
+            preserveState: false,
+            forceFormData: true,
+            onSuccess: (page) => {
+                toast.success('Tạo sản phẩm thành công!');
                 emit('created', true);
                 resetForm();
                 emit('close');
-                router.reload(); // Reload để đảm bảo state mới
             },
             onError: (errors) => {
-                console.log('Submission failed with errors:', errors);
+                toast.error('Có lỗi xảy ra khi tạo sản phẩm');
                 validationErrors.value = errors;
                 emit('validationFailed', errors);
             },
             onFinish: () => {
-                console.log('Submission finished');
                 isSubmitting.value = false;
-                // Re-enable submit button
-                if (submitButton) {
-                    submitButton.disabled = false;
-                }
             }
         });
+
     } catch (error) {
         console.error('Error during submission:', error);
+        toast.error('Có lỗi xảy ra khi tạo sản phẩm');
         emit('error', error);
         isSubmitting.value = false;
     }
 };
 
-// Thêm method reset form riêng
 const resetForm = () => {
     form.reset();
     imageFiles.value = [];
@@ -347,12 +351,10 @@ const resetForm = () => {
     isSubmitting.value = false;
 };
 
-// Thêm cleanup khi component unmount
 onBeforeUnmount(() => {
     isSubmitting.value = false;
 });
 
-// Đảm bảo modal đóng sẽ reset form
 const closeModal = () => {
     if (!isSubmitting.value) {
         resetForm();
@@ -360,14 +362,12 @@ const closeModal = () => {
     }
 };
 
-// Thêm watcher cho modelValue
 watch(() => props.show, (newVal) => {
     if (!newVal) {
         resetForm();
     }
 });
 
-// Validate single field
 const validateField = (fieldName, value) => {
     const validation = {
         name: (val) => {
@@ -409,7 +409,6 @@ const validateField = (fieldName, value) => {
     return true
 }
 
-// Add watchers for real-time validation
 watch(() => form.name, (value) => validateField('name', value))
 watch(() => form.category_id, (value) => validateField('category_id', value))
 watch(() => form.price, (value) => validateField('price', value))
