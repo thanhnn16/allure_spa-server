@@ -26,6 +26,7 @@ use App\Http\Controllers\AiConfigController;
 use App\Http\Controllers\BannerController;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
+use App\Http\Controllers\UserGroupController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -103,6 +104,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('stock-movements', StockMovementController::class);
 
     // Notification routes
+    Route::get('/notifications/manager', [NotificationController::class, 'manager'])
+        ->name('notifications.manager');
     Route::resource('notifications', NotificationController::class);
     Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
@@ -183,6 +186,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [AiConfigController::class, 'destroy'])->name('ai-config.destroy');
         Route::post('/upload', [AiConfigController::class, 'upload'])->name('ai-config.upload');
     });
+
+    // Thêm route mới
+    Route::get('/user-groups', [UserGroupController::class, 'index'])
+        ->name('user-groups.index');
 });
 
 Route::get('/firebase-messaging-sw.js', function () {

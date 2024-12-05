@@ -91,8 +91,8 @@ export default [
         icon: mdiCellphone,
         menu: [
             {
-                label: 'Thông báo',
-                route: 'notifications.index',
+                label: 'Quản lý thông báo',
+                route: 'notifications.manager',
                 icon: mdiBell
             },
             {
@@ -109,6 +109,11 @@ export default [
                 label: 'Cấu hình AI',
                 route: 'ai-config.index',
                 icon: mdiRobot
+            },
+            {
+                label: 'Quản lý nhóm người dùng',
+                route: 'user-groups.index',
+                icon: mdiAccountGroup
             },
         ]
     },

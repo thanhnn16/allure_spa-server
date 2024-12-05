@@ -276,11 +276,14 @@ Route::middleware('throttle:api')->group(function () {
         // User Group routes
         Route::prefix('user-groups')->middleware('auth:sanctum')->group(function () {
             Route::get('/', [UserGroupController::class, 'getGroups']);
-            Route::post('/', [UserGroupController::class, 'createGroup']);
-            Route::put('/{id}', [UserGroupController::class, 'updateGroup']);
-            Route::delete('/{id}', [UserGroupController::class, 'deleteGroup']);
+            Route::post('/', [UserGroupController::class, 'store']);
+            Route::put('/{id}', [UserGroupController::class, 'update']);
+            Route::delete('/{id}', [UserGroupController::class, 'destroy']);
+            Route::get('/{id}/users', [UserGroupController::class, 'getGroupUsers']);
+            Route::post('/{id}/sync', [UserGroupController::class, 'syncGroupUsers']);
+            Route::post('/sync-all', [UserGroupController::class, 'syncAllGroups']);
+            Route::get('/{id}/stats', [UserGroupController::class, 'getGroupStats']);
         });
-        // Route gửi thông báo
 
         // Thêm routes cho notification
         Route::prefix('notifications')->group(function () {

@@ -518,4 +518,43 @@ class NotificationService
         }
         return [null, null];
     }
+
+    public function getUsersByGroupConditions($conditions)
+    {
+        $query = User::query();
+
+        foreach ($conditions as $condition) {
+            $field = $condition['field'];
+            $operator = $condition['operator'];
+            $value = $condition['value'];
+
+            switch ($field) {
+                case 'loyalty_points':
+                case 'purchase_count':
+                case 'age':
+                    if ($operator === 'between') {
+                        $values = explode(',', $value);
+                        $query->whereBetween($field, $values);
+                    } else {
+                        $query->where($field, $operator, $value);
+                    }
+                    break;
+
+                case 'last_visit':
+                    $days = (int) $value;
+                    if ($operator === 'within') {
+                        $query->where('last_visit_at', '>=', now()->subDays($days));
+                    } else {
+                        $query->where('last_visit_at', '<', now()->subDays($days));
+                    }
+                    break;
+
+                case 'gender':
+                    $query->where('gender', $value);
+                    break;
+            }
+        }
+
+        return $query->pluck('id')->toArray();
+    }
 }
