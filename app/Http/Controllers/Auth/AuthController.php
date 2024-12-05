@@ -11,18 +11,23 @@ use Illuminate\Support\Facades\Log;
 use OpenApi\Annotations as OA;
 use Illuminate\Validation\ValidationException;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\PasswordResetService;
+use Illuminate\Support\Facades\Password;
 
 class AuthController extends BaseController
 {
     protected $authService;
     protected $fcmTokenService;
+    protected $passwordResetService;
 
     public function __construct(
         AuthService $authService,
-        FcmTokenService $fcmTokenService
+        FcmTokenService $fcmTokenService,
+        PasswordResetService $passwordResetService
     ) {
         $this->authService = $authService;
         $this->fcmTokenService = $fcmTokenService;
+        $this->passwordResetService = $passwordResetService;
     }
 
     /**
@@ -396,5 +401,86 @@ class AuthController extends BaseController
     {
         $errors = $e->errors();
         return isset($errors['phone_number']) ? $errors['phone_number'][0] : 'Đăng nhập không thành công';
+    }
+
+
+
+    /**
+     * @OA\Post(
+     *     path="/api/auth/forgot-password",
+     *     summary="Gửi email khôi phục mật khẩu",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email"},
+     *             @OA\Property(property="email", type="string", format="email")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Đã gửi email khôi phục mật khẩu"
+     *     )
+     * )
+     */
+    public function forgotPassword(Request $request)
+    {
+        try {
+            $request->validate([
+                'email' => 'required|email'
+            ]);
+
+            $result = $this->passwordResetService->sendResetLink($request->email);
+            return $this->respondWithJson($result, 'Đã gửi email khôi phục mật khẩu');
+        } catch (\Exception $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/auth/reset-password",
+     *     summary="Đặt lại mật khẩu",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email", "token", "password", "password_confirmation"},
+     *             @OA\Property(property="email", type="string", format="email"),
+     *             @OA\Property(property="token", type="string"),
+     *             @OA\Property(property="password", type="string"),
+     *             @OA\Property(property="password_confirmation", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Đặt lại mật khẩu thành công"
+     *     )
+     * )
+     */
+    public function resetPassword(Request $request)
+    {
+        try {
+            $request->validate([
+                'token' => 'required',
+                'email' => 'required|email',
+                'password' => 'required|min:8|confirmed'
+            ]);
+
+            $status = $this->passwordResetService->reset($request->only(
+                'email',
+                'password',
+                'password_confirmation',
+                'token'
+            ));
+
+            if ($status === Password::PASSWORD_RESET) {
+                return $this->respondWithJson(null, 'Đặt lại mật khẩu thành công');
+            }
+
+            throw new \Exception(__($status));
+        } catch (\Exception $e) {
+            return $this->respondWithError($e->getMessage());
+        }
     }
 }

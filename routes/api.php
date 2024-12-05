@@ -51,6 +51,9 @@ Route::middleware('throttle:api')->group(function () {
             Route::post('/verify/send', [AuthController::class, 'sendEmailVerification']);
             Route::get('/verify/{token}', [AuthController::class, 'verifyEmail']);
         });
+
+        Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
     });
 
     // Search routes
