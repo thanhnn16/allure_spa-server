@@ -232,8 +232,7 @@ Route::middleware('throttle:api')->group(function () {
 
             // Order status management
             Route::put('/{order}/update-status', [OrderController::class, 'updateOrderStatus']);
-            Route::delete('/{order}/cancel', [OrderController::class, 'cancelOrder']);
-
+            Route::patch('/{order}/cancel', [OrderController::class, 'cancelOrder']);
             // User specific
             Route::get('/my-orders', [OrderController::class, 'getMyOrders']);
         });

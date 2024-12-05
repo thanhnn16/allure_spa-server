@@ -236,9 +236,12 @@
                 </div>
               </div>
 
-              <Link :href="route('invoices.show', order.invoice.id)" class="btn-primary w-full text-center">
-              <i class="mdi mdi-file-document-outline mr-2"></i>
-              Xem chi tiết hóa đơn
+              <Link 
+                :href="route('invoices.show', order.invoice.id)" 
+                class="flex items-center justify-center px-4 py-2.5 font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-surface"
+              >
+                <i class="mdi mdi-file-document-outline text-xl mr-2"></i>
+                Xem chi tiết hóa đơn
               </Link>
             </div>
 
@@ -267,7 +270,8 @@
       <CompleteOrderModal v-model="showCompleteModal" :order="order" :has-service-combo="hasServiceCombo"
         @completed="handleOrderCompleted" />
 
-      <CancelOrderModal v-model="showCancelModal" :order="order" @cancelled="handleOrderCancelled" />
+      <CancelOrderModal v-model="showCancelModal" :order="order" :title="`Hủy đơn hàng #${order.id}`"
+        @cancelled="handleOrderCancelled" />
     </SectionMain>
   </LayoutAuthenticated>
 </template>

@@ -1,15 +1,7 @@
 <template>
-    <CardBoxModal
-        :model-value="modelValue"
-        @update:model-value="$emit('update:modelValue', $event)"
-        title="Hủy đơn hàng #{{ order.id }}"
-        :has-button="false"
-    >
+    <CardBoxModal :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" :title="title"
+        :has-button="false">
         <div class="p-6">
-            <h3 class="text-lg font-medium mb-4">
-                Hủy đơn hàng #{{ order.id }}
-            </h3>
-
             <div class="space-y-4">
                 <!-- Cảnh báo -->
                 <div class="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg">
@@ -30,24 +22,24 @@
                 <div class="bg-gray-50 dark:bg-dark-bg/50 p-4 rounded-lg">
                     <div class="flex justify-between mb-2">
                         <span class="text-gray-500">Tổng tiền:</span>
-                        <span class="font-medium">{{ formatCurrency(order.total_amount) }}</span>
+                        <span class="font-medium">{{ formatPrice(order.total_amount) }}</span>
                     </div>
                     <div v-if="order.invoice" class="flex justify-between text-red-600">
                         <span>Đã thanh toán:</span>
-                        <span>{{ formatCurrency(order.invoice.paid_amount) }}</span>
+                        <span>{{ formatPrice(order.invoice.paid_amount) }}</span>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-2">
-                        Lý do hủy đơn <span class="text-red-500">*</span>
+                    <label for="cancel-reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Lý do hủy đơn
                     </label>
-                    <textarea v-model="reason" rows="3" class="form-textarea w-full"
-                        :class="{ 'border-red-500': showError }"
-                        placeholder="Vui lòng nhập lý do hủy đơn hàng"></textarea>
-                    <p v-if="showError" class="mt-1 text-sm text-red-500">
-                        Vui lòng nhập lý do hủy đơn hàng
-                    </p>
+                    <textarea id="cancel-reason" v-model="note" rows="3" class="w-full rounded-lg border-gray-300 dark:border-gray-600 
+                               bg-white dark:bg-dark-surface 
+                               text-gray-900 dark:text-gray-100
+                               focus:border-primary-500 focus:ring-primary-500
+                               dark:focus:border-primary-400 dark:focus:ring-primary-400
+                               shadow-sm" placeholder="Nhập lý do hủy đơn hàng..."></textarea>
                 </div>
             </div>
 
@@ -55,7 +47,7 @@
                 <button @click="$emit('update:modelValue', false)" class="btn-secondary">
                     Đóng
                 </button>
-                <button @click="handleSubmit" :disabled="loading || !canCancel" class="btn-danger">
+                <button @click="handleSubmit" :disabled="loading" class="btn-danger">
                     <i v-if="loading" class="mdi mdi-loading mdi-spin mr-2"></i>
                     Xác nhận hủy
                 </button>
@@ -65,27 +57,28 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import CardBoxModal from './CardBoxModal.vue'
+import axios from 'axios'
+import { useToast } from "vue-toastification"
 
 const props = defineProps({
     modelValue: Boolean,
-    order: Object
+    order: {
+        type: Object,
+        required: true
+    },
+    title: String
 })
 
 const emit = defineEmits(['update:modelValue', 'cancelled'])
 
-const reason = ref('')
+const note = ref('')
 const loading = ref(false)
-const showError = ref(false)
+const toast = useToast()
 
-const canCancel = computed(() => {
-    // Chỉ cho phép hủy đơn khi chưa thanh toán hoặc ở trạng thái cho phép
-    return ['pending', 'confirmed'].includes(props.order.status) &&
-        (!props.order.invoice || props.order.invoice.status !== 'paid')
-})
-
-const formatCurrency = (amount) => {
+// Format price helper function
+const formatPrice = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND'
@@ -93,24 +86,35 @@ const formatCurrency = (amount) => {
 }
 
 const handleSubmit = async () => {
-    if (!canCancel.value) return
-    if (!reason.value.trim()) {
-        showError.value = true
+    if (!note.value.trim()) {
+        toast.error('Vui lòng nhập lý do hủy đơn hàng')
         return
     }
 
     loading.value = true
     try {
-        emit('cancelled', { reason: reason.value })
+        const response = await axios.patch(`/api/orders/${props.order.id}/cancel`, {
+            note: note.value
+        })
+
+        if (response.data.success) {
+            toast.success('Hủy đơn hàng thành công')
+            emit('cancelled', { reason: note.value })
+            emit('update:modelValue', false)
+        }
+    } catch (error) {
+        console.error('Error canceling order:', error)
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy đơn hàng')
     } finally {
         loading.value = false
     }
 }
 
-// Reset error khi người dùng nhập
-watch(reason, () => {
-    if (reason.value.trim()) {
-        showError.value = false
+// Watch để reset form khi đóng modal
+watch(() => props.modelValue, (val) => {
+    if (!val) {
+        note.value = ''
+        loading.value = false
     }
 })
 </script>
