@@ -130,6 +130,7 @@ Route::middleware('throttle:api')->group(function () {
 
         Route::patch('/user/profile', [UserController::class, 'updateProfile']);
         Route::patch('/users/{id}', [UserController::class, 'update']);
+        Route::delete('users/{id}', [UserController::class, 'destroy']);
 
         // Rating routes
         Route::get('/ratings', [RatingController::class, 'index']);

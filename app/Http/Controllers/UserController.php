@@ -79,7 +79,7 @@ class UserController extends BaseController
         $user = $this->userService->createUser($validated);
 
         if ($request->expectsJson()) {
-            return $this->respondWithJson($user, 'Đã thêm khách hàng thành công', 201);
+            return $this->respondWithJson($user, 'Đã thêm kh��ch hàng thành công', 201);
         }
 
         return redirect()->route('users.index')->with('success', 'Đã thêm khách hàng thành công');
@@ -199,10 +199,90 @@ class UserController extends BaseController
 
     /**
      * Remove the specified resource from storage.
+     * 
+     * @OA\Delete(
+     *     path="/api/users/{id}",
+     *     summary="Xóa tài khoản người dùng",
+     *     description="Thực hiện soft delete tài khoản người dùng",
+     *     operationId="deleteUser",
+     *     tags={"User"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID của người dùng cần xóa",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Xóa tài khoản thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Tài khoản đã được xóa thành công"),
+     *             @OA\Property(property="status_code", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Không tìm thấy người dùng",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Không tìm thấy người dùng"),
+     *             @OA\Property(property="status_code", type="integer", example=404),
+     *             @OA\Property(property="success", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Không có quyền xóa",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Bạn không có quyền xóa tài khoản này"),
+     *             @OA\Property(property="status_code", type="integer", example=403),
+     *             @OA\Property(property="success", type="boolean", example=false)
+     *         )
+     *     )
+     * )
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $user = User::findOrFail($id);
+
+            // Kiểm tra quyền xóa (chỉ admin hoặc chính người dùng đó mới được xóa)
+            if (!Auth::user()->role === 'admin' && Auth::user()->id !== $user->id) {
+                return $this->respondWithJson(
+                    null,
+                    'Bạn không có quyền xóa tài khoản này',
+                    403
+                );
+            }
+
+            // Thực hiện soft delete
+            $user->delete();
+
+            if (request()->expectsJson()) {
+                return $this->respondWithJson(
+                    null,
+                    'Tài khoản đã được xóa thành công'
+                );
+            }
+
+            return redirect()->route('users.index')
+                ->with('success', 'Tài khoản đã được xóa thành công');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->respondWithJson(
+                null,
+                'Không tìm thấy người dùng',
+                404
+            );
+        } catch (\Exception $e) {
+            Log::error('Error deleting user: ' . $e->getMessage());
+            return $this->respondWithJson(
+                null,
+                'Có lỗi xảy ra khi xóa tài khoản',
+                500
+            );
+        }
     }
 
     public function searchUsers(Request $request)
