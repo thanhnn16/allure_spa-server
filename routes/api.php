@@ -46,12 +46,6 @@ Route::middleware('throttle:api')->group(function () {
             Route::post('/verify-code', [AuthController::class, 'verifyPhoneCode']);
         });
 
-        // Email verification routes 
-        Route::prefix('email')->group(function () {
-            Route::post('/verify/send', [AuthController::class, 'sendEmailVerification']);
-            Route::get('/verify/{token}', [AuthController::class, 'verifyEmail']);
-        });
-
         Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
         Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
     });
@@ -124,6 +118,14 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/user/addresses/{address}', [AddressController::class, 'update']);
         Route::delete('/user/addresses/{address}', [AddressController::class, 'destroy']);
         Route::get('/user/my-addresses', [AddressController::class, 'getAddressByUser']);
+
+        // Email verification routes 
+        Route::prefix('email')->group(function () {
+            Route::post('/verify/send', [AuthController::class, 'sendVerificationEmail']);
+            Route::get('/verify/{token}', [AuthController::class, 'verifyEmail']);
+            Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
+            Route::post('/resend-verification', [AuthController::class, 'resendVerification']);
+        });
 
         Route::get('/address/provinces', [AddressController::class, 'getProvinces']);
         Route::get('/address/districts/{provinceCode}', [AddressController::class, 'getDistricts']);

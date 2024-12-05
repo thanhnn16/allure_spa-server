@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class VerificationToken extends Model
 {
-    use HasUuids;
-
     protected $table = 'verification_tokens';
 
     protected $fillable = [
@@ -19,7 +17,8 @@ class VerificationToken extends Model
     ];
 
     protected $casts = [
-        'expires_at' => 'datetime'
+        'expires_at' => 'datetime',
+        'user_id' => 'string'
     ];
 
     public function user()

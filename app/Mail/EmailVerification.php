@@ -20,7 +20,13 @@ class EmailVerification extends Mailable
 
     public function build()
     {
+        $verificationUrl = config('app.url') . '/api/email/verify/' . $this->token->token;
+
         return $this->view('emails.verify-email')
+            ->with([
+                'verificationUrl' => $verificationUrl,
+                'token' => $this->token->token
+            ])
             ->subject(__('Email Verification'));
     }
 }

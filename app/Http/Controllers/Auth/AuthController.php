@@ -12,6 +12,7 @@ use OpenApi\Annotations as OA;
 use Illuminate\Validation\ValidationException;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Services\PasswordResetService;
+use App\Services\EmailVerificationService;
 use Illuminate\Support\Facades\Password;
 
 class AuthController extends BaseController
@@ -19,15 +20,17 @@ class AuthController extends BaseController
     protected $authService;
     protected $fcmTokenService;
     protected $passwordResetService;
-
+    protected $emailVerificationService;
     public function __construct(
         AuthService $authService,
         FcmTokenService $fcmTokenService,
-        PasswordResetService $passwordResetService
+        PasswordResetService $passwordResetService,
+        EmailVerificationService $emailVerificationService
     ) {
         $this->authService = $authService;
         $this->fcmTokenService = $fcmTokenService;
         $this->passwordResetService = $passwordResetService;
+        $this->emailVerificationService = $emailVerificationService;
     }
 
     /**
@@ -479,6 +482,54 @@ class AuthController extends BaseController
             }
 
             throw new \Exception(__($status));
+        } catch (\Exception $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/email/verify/send",
+     *     summary="Gửi email xác thực",
+     *     tags={"Authentication"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="lang", type="string", example="vi")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Email xác thực đã được gửi")
+     * )
+     */
+    public function sendVerificationEmail(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            if (!$user) {
+                return $this->respondWithError('Unauthorized', 401);
+            }
+
+            if (!$user->email) {
+                return $this->respondWithError('EMAIL_NOT_FOUND');
+            }
+
+            if ($user->email_verified_at) {
+                return $this->respondWithError('EMAIL_ALREADY_VERIFIED');
+            }
+
+            // Lấy ngôn ngữ từ yêu cầu
+            $lang = $request->input('lang', 'vi');
+
+            $token = $this->emailVerificationService->sendVerificationEmail(
+                $user,
+                $lang // Truyền ngôn ngữ vào đây
+            );
+
+            return $this->respondWithJson([
+                'message' => 'Verification email sent',
+                'token' => $token->token
+            ]);
         } catch (\Exception $e) {
             return $this->respondWithError($e->getMessage());
         }
