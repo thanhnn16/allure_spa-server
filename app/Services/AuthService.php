@@ -11,6 +11,8 @@ use Illuminate\Validation\Rules;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Log;
+use App\Models\LoginHistory;
+use Torann\GeoIP\Facades\GeoIP;
 
 class AuthService
 {
@@ -49,14 +51,32 @@ class AuthService
         $user = User::where('phone_number', $credentials['phone_number'])->first();
 
         if (!$user) {
+            // Ghi lại lịch sử đăng nhập thất bại
+            $this->logLoginAttempt([
+                'phone_number' => $credentials['phone_number'],
+                'status' => 'failed',
+                'reason' => AuthErrorCode::USER_NOT_FOUND->value
+            ]);
             throw new \Exception(AuthErrorCode::USER_NOT_FOUND->value);
         }
 
         if (!Auth::attempt($credentials)) {
+            // Ghi lại lịch sử đăng nhập thất bại
+            $this->logLoginAttempt([
+                'user_id' => $user->id,
+                'status' => 'failed',
+                'reason' => AuthErrorCode::WRONG_PASSWORD->value
+            ]);
             throw new \Exception(AuthErrorCode::WRONG_PASSWORD->value);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Ghi lại lịch sử đăng nhập thành công
+        $this->logLoginAttempt([
+            'user_id' => $user->id,
+            'status' => 'success'
+        ]);
 
         return [
             'user' => $user,
@@ -255,5 +275,72 @@ class AuthService
         }
 
         throw new \Exception(AuthErrorCode::INVALID_VERIFICATION_TYPE->value);
+    }
+
+    /**
+     * Ghi lại lịch sử đăng nhập
+     */
+    private function logLoginAttempt(array $data)
+    {
+        try {
+            $deviceType = $this->detectDeviceType(request()->userAgent());
+
+            // Tạo bản ghi mới trực tiếp không qua cache
+            $loginHistory = new LoginHistory([
+                'user_id' => $data['user_id'] ?? null,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'login_at' => now(),
+                'status' => $data['status'],
+                'device_type' => $deviceType,
+                'location' => $this->getLocationFromIp(request()->ip())
+            ]);
+
+            // Lưu trực tiếp vào database
+            $loginHistory->save();
+        } catch (\Exception $e) {
+            Log::error('Error logging login attempt: ' . $e->getMessage(), [
+                'data' => $data,
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    /**
+     * Phát hiện loại thiết bị từ User Agent
+     */
+    private function detectDeviceType($userAgent)
+    {
+        if (preg_match('/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i', $userAgent)) {
+            return 'mobile';
+        }
+        if (preg_match('/tablet|ipad|playbook|silk/i', $userAgent)) {
+            return 'tablet';
+        }
+        return 'desktop';
+    }
+
+    /**
+     * Lấy thông tin vị trí từ IP (có thể tích hợp với service bên thứ 3)
+     */
+    private function getLocationFromIp($ip)
+    {
+        try {
+            if ($ip === '127.0.0.1' || $ip === 'localhost') {
+                return 'Local';
+            }
+
+            // Sử dụng try-catch để xử lý lỗi GeoIP
+            try {
+                $location = geoip()->getLocation($ip);
+                return $location->city . ', ' . $location->country;
+            } catch (\Exception $e) {
+                Log::warning('GeoIP lookup failed: ' . $e->getMessage());
+                return 'Unknown';
+            }
+        } catch (\Exception $e) {
+            Log::error('Error getting location from IP: ' . $e->getMessage());
+            return 'Unknown';
+        }
     }
 }

@@ -212,4 +212,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Appointment::class, 'cancelled_by');
     }
+
+    public function loginHistories()
+    {
+        return $this->hasMany(LoginHistory::class);
+    }
 }

@@ -284,8 +284,18 @@ class AuthController extends BaseController
     public function changePassword(Request $request)
     {
         try {
+            $user = Auth::user();
+            Log::info('User changing password', [
+                'user' => $user,
+                'request' => $request->all()
+            ]);
+
+            if (!$user) {
+                return $this->respondWithError('Unauthorized', 401);
+            }
+
             $result = $this->authService->changePassword(
-                $request->user(),
+                $user,
                 $request->all()
             );
             return $this->respondWithJson($result, 'Đổi mật khẩu thành công');

@@ -25,7 +25,9 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\ServiceUsageController;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\LoginHistoryController;
 use App\Http\Controllers\ServiceUsageHistoryController;
+use App\Http\Controllers\UserGroupController;
 
 
 Route::middleware('throttle:api')->group(function () {
@@ -37,7 +39,6 @@ Route::middleware('throttle:api')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
-        Route::post('/change-password', [AuthController::class, 'changePassword']);
 
         // Phone verification routes
         Route::prefix('phone')->group(function () {
@@ -84,6 +85,10 @@ Route::middleware('throttle:api')->group(function () {
 
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/fcm/token', [AuthController::class, 'storeFcmToken']);
+
+        // Change password route
+        Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
+        Route::get('/auth/login-histories', [LoginHistoryController::class, 'index']);
 
         // Appointment routes
         Route::get('/appointments', [AppointmentController::class, 'index']);
@@ -265,6 +270,24 @@ Route::middleware('throttle:api')->group(function () {
 
         Route::get('services/{service}/translations', [ServiceController::class, 'getTranslations']);
         Route::post('services/{service}/translations', [ServiceController::class, 'updateTranslations']);
+
+        // Thêm route để lấy danh sách users
+        Route::get('/users', [UserController::class, 'index']);
+        // User Group routes
+        Route::prefix('user-groups')->middleware('auth:sanctum')->group(function () {
+            Route::get('/', [UserGroupController::class, 'getGroups']);
+            Route::post('/', [UserGroupController::class, 'createGroup']);
+            Route::put('/{id}', [UserGroupController::class, 'updateGroup']);
+            Route::delete('/{id}', [UserGroupController::class, 'deleteGroup']);
+        });
+        // Route gửi thông báo
+
+        // Thêm routes cho notification
+        Route::prefix('notifications')->group(function () {
+            Route::get('/all', [NotificationController::class, 'getAllNotifications']);
+            Route::delete('/{id}', [NotificationController::class, 'deleteNotification']);
+            Route::post('/send', [NotificationController::class, 'sendNotification']);
+        });
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

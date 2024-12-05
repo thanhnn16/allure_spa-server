@@ -826,3 +826,53 @@ CREATE TABLE verification_tokens (
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE user_groups (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255),
+    description TEXT,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL
+);
+
+CREATE TABLE user_group_conditions (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_group_id INT UNSIGNED NOT NULL,
+    field VARCHAR(255),
+    operator VARCHAR(255),
+    value VARCHAR(255),
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_group_id) REFERENCES user_groups (id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_user_group (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    user_group_id INT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_group_id) REFERENCES user_groups (id) ON DELETE CASCADE
+);
+
+-- Bảng login_histories
+CREATE TABLE login_histories (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id CHAR(36) NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('success', 'failed') NOT NULL DEFAULT 'success',
+    device_type VARCHAR(50),
+    location VARCHAR(255),
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+-- Tạo index để tối ưu truy vấn
+CREATE INDEX idx_login_histories_user_id ON login_histories (user_id);
+CREATE INDEX idx_login_histories_login_at ON login_histories (login_at);

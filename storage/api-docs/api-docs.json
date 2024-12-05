@@ -2541,6 +2541,179 @@
                 ]
             }
         },
+        "/api/auth/login-histories": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Lấy lịch sử đăng nhập của người dùng",
+                "description": "Trả về danh sách lịch sử đăng nhập được phân trang của người dùng hiện tại",
+                "operationId": "getLoginHistories",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số lượng bản ghi trên mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy lịch sử đăng nhập thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lấy lịch sử đăng nhập thành công"
+                                        },
+                                        "status_code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "user_id": {
+                                                                "type": "string",
+                                                                "example": "c1a04658-eb98-472c-908c-3b1c41a3e982"
+                                                            },
+                                                            "ip_address": {
+                                                                "type": "string",
+                                                                "example": "127.0.0.1"
+                                                            },
+                                                            "user_agent": {
+                                                                "type": "string",
+                                                                "example": "PostmanRuntime/7.43.0"
+                                                            },
+                                                            "login_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "success"
+                                                            },
+                                                            "device_type": {
+                                                                "type": "string",
+                                                                "example": "desktop"
+                                                            },
+                                                            "location": {
+                                                                "type": "string",
+                                                                "example": "Local"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "updated_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "first_page_url": {
+                                                    "type": "string",
+                                                    "example": "http://127.0.0.1:8000/api/auth/login-histories?page=1"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page_url": {
+                                                    "type": "string",
+                                                    "example": "http://127.0.0.1:8000/api/auth/login-histories?page=1"
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "1"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "next_page_url": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "path": {
+                                                    "type": "string",
+                                                    "example": "http://127.0.0.1:8000/api/auth/login-histories"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "prev_page_url": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa xác thực"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/notifications": {
             "get": {
                 "tags": [
@@ -7259,6 +7432,46 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "LoginHistory": {
+                "title": "Lịch sử đăng nhập",
+                "description": "Model lưu trữ lịch sử đăng nhập của người dùng",
+                "properties": {
+                    "id": {
+                        "description": "ID của bản ghi lịch sử đăng nhập",
+                        "type": "integer"
+                    },
+                    "user_id": {
+                        "description": "ID của người dùng",
+                        "type": "integer"
+                    },
+                    "ip_address": {
+                        "description": "Địa chỉ IP đăng nhập",
+                        "type": "string"
+                    },
+                    "user_agent": {
+                        "description": "Thông tin trình duyệt/thiết bị",
+                        "type": "string"
+                    },
+                    "login_at": {
+                        "description": "Thời gian đăng nhập",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "description": "Trạng thái đăng nhập",
+                        "type": "string"
+                    },
+                    "device_type": {
+                        "description": "Loại thiết bị đăng nhập",
+                        "type": "string"
+                    },
+                    "location": {
+                        "description": "Vị trí đăng nhập",
+                        "type": "string"
                     }
                 },
                 "type": "object"
