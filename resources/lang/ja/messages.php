@@ -33,4 +33,6 @@ return [
     'reset_password_error_title' => 'パスワードリセットに失敗しました',
     'reset_password_error_message' => 'パスワードリセット中にエラーが発生しました。もう一度お試しください。',
     'back_to_app' => 'アプリに戻る',
+    'reset_password_subject' => 'パスワードリセット',
+    'or_click_link' => 'または、以下のリンクをクリックしてください：',
 ];

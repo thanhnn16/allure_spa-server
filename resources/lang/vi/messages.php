@@ -33,4 +33,6 @@ return [
     'reset_password_error_title' => 'Đặt lại mật khẩu thất bại',
     'reset_password_error_message' => 'Đã có lỗi xảy ra khi đặt lại mật khẩu. Vui lòng thử lại.',
     'back_to_app' => 'Quay lại ứng dụng',
+    'reset_password_subject' => 'Đặt lại mật khẩu',
+    'or_click_link' => 'Hoặc click vào link bên dưới:',
 ];

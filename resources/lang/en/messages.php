@@ -33,4 +33,6 @@ return [
     'reset_password_error_title' => 'Reset Password Failed',
     'reset_password_error_message' => 'An error occurred while resetting the password. Please try again.',
     'back_to_app' => 'Back to App',
+    'reset_password_subject' => 'Reset Password',
+    'or_click_link' => 'Or click the link below:',
 ];
