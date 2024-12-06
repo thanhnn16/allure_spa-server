@@ -12,21 +12,22 @@ class EmailVerification extends Mailable
     use Queueable, SerializesModels;
 
     public $token;
-
-    public function __construct(VerificationToken $token)
+    public $lang;
+    public function __construct(VerificationToken $token, string $lang = 'vi')
     {
         $this->token = $token;
+        $this->lang = $lang;
     }
 
     public function build()
     {
-        $verificationUrl = config('app.url') . '/api/email/verify/' . $this->token->token;
+        $verificationUrl = config('app.url') . '/email/verify/' . $this->token->token . '?lang=' . $this->lang;
 
         return $this->view('emails.verify-email')
             ->with([
                 'verificationUrl' => $verificationUrl,
                 'token' => $this->token->token
             ])
-            ->subject(__('Email Verification'));
+            ->subject(__('messages.email_verification'));
     }
 }

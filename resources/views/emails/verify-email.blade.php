@@ -64,7 +64,7 @@
             margin: 10px 0;
             position: relative;
         ">
-            <code style="display: block; word-break: break-all;">{{ $token }}</code>
+            <code style="display: block; word-break: break-all;">{{ $token['token'] }}</code>
             <button onclick="copyToken()" style="
                 position: absolute;
                 right: 10px;
@@ -94,11 +94,16 @@
 </body>
 
 <script>
-function copyToken() {
-    const token = '{{ $token }}';
-    navigator.clipboard.writeText(token);
-    alert('{{ __("messages.token_copied") }}');
-}
+    function copyToken() {
+        const tokenValue = '{{ $token["token"] }}';
+        navigator.clipboard.writeText(tokenValue)
+            .then(() => {
+                alert('{{ __("messages.token_copied") }}');
+            })
+            .catch((err) => {
+                console.error('Failed to copy token:', err);
+            });
+    }
 </script>
 
 </html>

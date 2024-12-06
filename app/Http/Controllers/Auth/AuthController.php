@@ -327,9 +327,16 @@ class AuthController extends BaseController
      *     @OA\Response(response=200, description="Email verified successfully")
      * )
      */
-    public function verifyEmail($token)
+    public function verifyEmail(Request $request)
     {
-        $result = app(EmailVerificationService::class)->verifyEmail($token);
+        // Lấy token tùy theo loại request
+        $token = $request->expectsJson()
+            ? $request->token // Nếu là API, lấy từ body request
+            : $request->route('token'); // N���u là web, lấy từ route parameter
+
+        $lang = $request->input('lang', 'vi');
+
+        $result = app(EmailVerificationService::class)->verifyEmail($token, $lang);
 
         // Nếu là request API
         if (request()->expectsJson()) {

@@ -37,7 +37,7 @@ class EmailVerificationService
         return $token;
     }
 
-    public function verifyEmail(string $token)
+    public function verifyEmail(string $token, string $lang = 'vi')
     {
         $verificationToken = VerificationToken::where('token', $token)
             ->where('type', 'email')
@@ -55,10 +55,10 @@ class EmailVerificationService
         $user->email_verified_at = now();
         $user->save();
 
-        // Gửi email xác thực thành công
+        // Sử dụng ngôn ngữ được truyền vào thay vì lấy từ user
         Mail::to($user->email)
-            ->locale($user->locale ?? 'vi')
-            ->send(new EmailVerificationSuccess($user->locale ?? 'vi'));
+            ->locale($lang)
+            ->send(new EmailVerificationSuccess($lang));
 
         $verificationToken->delete();
 
