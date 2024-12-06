@@ -331,13 +331,16 @@ class AuthController extends BaseController
     {
         // Lấy token tùy theo loại request
         $token = $request->expectsJson()
-            ? $request->token // Nếu là API, lấy từ body request
-            : $request->route('token'); // N���u là web, lấy từ route parameter
-
-        $lang = $request->input('lang', 'vi');
+            ? $request->token 
+            : $request->route('token');
+        
+        // Validate locale
+        $lang = in_array($request->input('lang'), ['vi', 'en']) 
+            ? $request->input('lang') 
+            : 'vi';
 
         $result = app(EmailVerificationService::class)->verifyEmail($token, $lang);
-
+        
         // Nếu là request API
         if (request()->expectsJson()) {
             if ($result['success']) {

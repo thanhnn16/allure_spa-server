@@ -16,7 +16,7 @@ class EmailVerification extends Mailable
     public function __construct(VerificationToken $token, string $lang = 'vi')
     {
         $this->token = $token;
-        $this->lang = $lang;
+        $this->lang = in_array($lang, ['vi', 'en', 'ja']) ? $lang : 'vi';
     }
 
     public function build()

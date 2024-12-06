@@ -39,6 +39,9 @@ class EmailVerificationService
 
     public function verifyEmail(string $token, string $lang = 'vi')
     {
+        // Validate và làm sạch locale
+        $validLocale = in_array($lang, ['vi', 'en', 'ja']) ? $lang : 'vi';
+
         $verificationToken = VerificationToken::where('token', $token)
             ->where('type', 'email')
             ->where('expires_at', '>', now())
@@ -55,10 +58,10 @@ class EmailVerificationService
         $user->email_verified_at = now();
         $user->save();
 
-        // Sử dụng ngôn ngữ được truyền vào thay vì lấy từ user
+        // Sử dụng locale đã được validate
         Mail::to($user->email)
-            ->locale($lang)
-            ->send(new EmailVerificationSuccess($lang));
+            ->locale($validLocale)
+            ->send(new EmailVerificationSuccess($validLocale));
 
         $verificationToken->delete();
 
