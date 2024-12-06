@@ -35,7 +35,7 @@
             background-color: #ffffff;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .footer {
@@ -63,9 +63,9 @@
 
     <div class="content">
         <h2>{{ __('messages.reset_password_greeting') }}</h2>
-        
+
         <p>{{ __('messages.reset_password_reason') }}</p>
-        
+
         <p>{{ __('messages.reset_password_action') }}</p>
 
         <div style="text-align: center;">
@@ -78,7 +78,21 @@
 
         <p>{{ __('messages.trouble_clicking') }}</p>
         <div class="link-container">
-            {{ $resetUrl }}
+            <code style="display: block; word-break: break-all;">{{ $resetUrl }}</code>
+            <button onclick="copyResetLink()" style="
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: #4CAF50;
+                border: none;
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+            ">
+                {{ __('messages.copy') }}
+            </button>
         </div>
 
         <p>{{ __('messages.reset_password_ignore') }}</p>
@@ -88,5 +102,18 @@
         <p>{{ __('messages.email_sent_from') }}</p>
     </div>
 </body>
+
+<script>
+    function copyResetLink() {
+        const resetLink = '{{ $resetUrl }}';
+        navigator.clipboard.writeText(resetLink)
+            .then(() => {
+                alert('{{ __("messages.link_copied") }}');
+            })
+            .catch((err) => {
+                console.error('Failed to copy link:', err);
+            });
+    }
+</script>
 
 </html>
