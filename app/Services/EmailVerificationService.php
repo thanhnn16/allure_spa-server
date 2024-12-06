@@ -7,6 +7,7 @@ use App\Models\VerificationToken;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailVerification;
+use App\Mail\EmailVerificationSuccess;
 
 class EmailVerificationService
 {
@@ -50,6 +51,11 @@ class EmailVerificationService
         $user = User::find($verificationToken->user_id);
         $user->email_verified_at = now();
         $user->save();
+
+        // Gửi email xác thực thành công
+        Mail::to($user->email)
+            ->locale($user->locale ?? 'vi')
+            ->send(new EmailVerificationSuccess($user->locale ?? 'vi'));
 
         $verificationToken->delete();
 

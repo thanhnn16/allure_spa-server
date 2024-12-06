@@ -54,6 +54,34 @@
         </a>
     </div>
 
+    <div style="margin: 20px 0; text-align: center;">
+        <p>{{ __('messages.or_use_token') }}</p>
+        <div style="
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            position: relative;
+        ">
+            <code style="display: block; word-break: break-all;">{{ $token }}</code>
+            <button onclick="copyToken()" style="
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: #4CAF50;
+                border: none;
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+            ">
+                {{ __('messages.copy') }}
+            </button>
+        </div>
+    </div>
+
     <p>{{ __('messages.no_action_required') }}</p>
 
     <p>{{ __('messages.trouble_clicking') }}</p>
@@ -64,5 +92,13 @@
         <p>{{ __('messages.ignore_email') }}</p>
     </div>
 </body>
+
+<script>
+function copyToken() {
+    const token = '{{ $token }}';
+    navigator.clipboard.writeText(token);
+    alert('{{ __("messages.token_copied") }}');
+}
+</script>
 
 </html>
