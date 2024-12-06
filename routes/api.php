@@ -46,8 +46,8 @@ Route::middleware('throttle:api')->group(function () {
             Route::post('/verify-code', [AuthController::class, 'verifyPhoneCode']);
         });
 
-        Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
-        Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     });
 
     // Search routes

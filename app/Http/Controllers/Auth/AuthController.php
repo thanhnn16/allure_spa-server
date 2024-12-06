@@ -483,28 +483,41 @@ class AuthController extends BaseController
      */
     public function resetPassword(Request $request)
     {
-        try {
-            $request->validate([
-                'token' => 'required',
-                'email' => 'required|email',
-                'password' => 'required|min:8|confirmed'
-            ]);
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
+        ]);
 
-            $status = $this->passwordResetService->reset($request->only(
-                'email',
-                'password',
-                'password_confirmation',
-                'token'
-            ));
+        $status = $this->passwordResetService->reset($request->only(
+            'email',
+            'password',
+            'password_confirmation',
+            'token'
+        ));
 
-            if ($status === Password::PASSWORD_RESET) {
-                return $this->respondWithJson(null, 'Đặt lại mật khẩu thành công');
+        if ($status === Password::PASSWORD_RESET) {
+            // Nếu request muốn JSON response (từ mobile app)
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => __('passwords.reset')
+                ]);
             }
 
-            throw new \Exception(__($status));
-        } catch (\Exception $e) {
-            return $this->respondWithError($e->getMessage());
+            // Nếu là web request
+            return redirect()->route('login')->with('status', __('passwords.reset'));
         }
+
+        // Xử lý lỗi
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => __($status)
+            ], 422);
+        }
+
+        return back()->withErrors(['email' => [__($status)]]);
     }
 
     /**
@@ -553,5 +566,13 @@ class AuthController extends BaseController
         } catch (\Exception $e) {
             return $this->respondWithError($e->getMessage());
         }
+    }
+
+    public function showResetForm(Request $request, $token)
+    {
+        return view('emails.reset-password-web', [
+            'token' => $token,
+            'email' => $request->email
+        ]);
     }
 }

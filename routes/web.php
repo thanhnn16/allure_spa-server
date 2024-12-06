@@ -202,6 +202,9 @@ Route::middleware('auth')->group(function () {
     // Route fallback cho web (nếu không mở được app)
     Route::get('/reset-password/web/{token}', [AuthController::class, 'showResetForm'])
         ->name('password.reset.web');
+
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+        ->name('password.update');
 });
 
 Route::get('/firebase-messaging-sw.js', function () {
