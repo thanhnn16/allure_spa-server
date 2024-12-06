@@ -51,7 +51,7 @@ Route::get('/email/verify/{token}', [AuthController::class, 'verifyEmail'])
 
 // Route cho trang redirect (sẽ thử mở app trước)
 Route::get('/reset-password/redirect/{token}', [AuthController::class, 'redirectReset'])
-    ->name('password.reset');
+    ->name('password.redirect');
 
 // Route fallback cho web (nếu không mở được app)
 Route::get('/reset-password/web/{token}', [AuthController::class, 'showResetForm'])
