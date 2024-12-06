@@ -11,21 +11,19 @@ class ResetPasswordEmail extends Mailable
     use Queueable, SerializesModels;
 
     public $resetUrl;
+    public $token;
     public $lang;
 
-    public function __construct($resetUrl, $lang = 'vi')
+    public function __construct($resetUrl, $token, $lang = 'vi')
     {
         $this->resetUrl = $resetUrl;
+        $this->token = $token;
         $this->lang = $lang;
     }
 
     public function build()
     {
-        return $this->subject(__('messages.reset_password'))
-                    ->locale($this->lang)
-                    ->view('emails.reset-password')
-                    ->with([
-                        'resetUrl' => $this->resetUrl
-                    ]);
+        return $this->view('emails.reset-password')
+            ->subject(__('messages.reset_password_subject'));
     }
 }

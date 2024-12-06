@@ -20,29 +20,50 @@ class PasswordResetService
             throw new \Exception('Email chưa được xác thực hoặc không tồn tại.');
         }
 
-        // Tạo token reset password
-        $token = Password::createToken($user);
-
-        // Tạo URL reset password
-        $resetUrl = url(route('password.reset', [
-            'token' => $token,
-            'email' => $email,
-            'lang' => $lang
-        ], false));
-
         try {
-            // Gửi email
+            // Tạo token reset password
+            $token = Password::createToken($user);
+
+            // Tạo URL reset password cho mobile app
+            $appUrl = "allurespa://reset-password?token={$token}&email={$email}&lang={$lang}";
+
+            // Tạo URL fallback cho web
+            $webUrl = url(route('password.reset', [
+                'token' => $token,
+                'email' => $email,
+                'lang' => $lang
+            ], false));
+
+            // URL redirect sẽ thử mở app trước, nếu không được sẽ chuyển sang web
+            $resetUrl = url(route('password.redirect', [
+                'token' => $token,
+                'email' => $email,
+                'lang' => $lang
+            ], false));
+
+            // Gửi email với cả 2 URL
             Mail::to($user->email)
                 ->locale($lang)
-                ->send(new ResetPasswordEmail($resetUrl, $lang));
+                ->send(new ResetPasswordEmail($resetUrl, $token, $lang));
 
             return [
-                'message' => 'PASSWORD_RESET_LINK_SENT',
-                'email' => $user->email
+                'success' => true,
+                'data' => [
+                    'message' => 'PASSWORD_RESET_LINK_SENT',
+                    'email' => $user->email
+                ]
             ];
         } catch (\Exception $e) {
-            Log::error('Error sending password reset email: ' . $e->getMessage());
-            throw new \Exception('FAILED_TO_SEND_RESET_EMAIL');
+            Log::error('Error sending password reset email: ' . $e->getMessage(), [
+                'email' => $email,
+                'error' => $e
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'FAILED_TO_SEND_RESET_EMAIL',
+                'status_code' => 400
+            ];
         }
     }
 
