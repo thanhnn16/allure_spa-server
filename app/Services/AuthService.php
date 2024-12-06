@@ -70,12 +70,14 @@ class AuthService
             throw new \Exception(AuthErrorCode::WRONG_PASSWORD->value);
         }
 
+        // Tạo token cho API login
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Ghi lại lịch sử đăng nhập thành công
         $this->logLoginAttempt([
             'user_id' => $user->id,
-            'status' => 'success'
+            'status' => 'success',
+            'is_api' => true // Thêm flag để đánh dấu đây là API login
         ]);
 
         return [
@@ -285,7 +287,15 @@ class AuthService
         try {
             $deviceType = $this->detectDeviceType(request()->userAgent());
 
-            // Tạo bản ghi mới trực tiếp không qua cache
+            // Xác định loại thiết bị dựa trên User-Agent
+            if (isset($data['is_api']) && $data['is_api']) {
+                // Kiểm tra User-Agent để phân biệt mobile/desktop cho API
+                if (preg_match('/(android|iphone|ipad)/i', strtolower(request()->userAgent()))) {
+                    $deviceType = 'mobile';
+                }
+            }
+
+            // Tạo bản ghi mới
             $loginHistory = new LoginHistory([
                 'user_id' => $data['user_id'] ?? null,
                 'ip_address' => request()->ip(),
