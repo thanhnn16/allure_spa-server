@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ $lang ?? 'vi' }}">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,7 +23,7 @@
             padding: 40px;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
 
@@ -61,6 +62,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="logo">
@@ -72,9 +74,9 @@
         </div>
 
         <h2>{{ __('messages.verification_failed') }}</h2>
-        
+
         <div class="message">
-            <p>{{ $message }}</p>
+            <p>{{ __('messages.invalid_or_expired_token') }}</p>
         </div>
 
         <a href="allurespa://email-verify/error" class="button">
@@ -89,4 +91,5 @@
         }, 3000);
     </script>
 </body>
-</html> 
+
+</html>

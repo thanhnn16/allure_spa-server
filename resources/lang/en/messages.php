@@ -26,4 +26,6 @@ return [
     'redirecting' => 'Redirecting...',
     'new_password' => 'New Password',
     'confirm_password' => 'Confirm Password',
+    'return_to_app' => 'Return to App',
+    'invalid_or_expired_token' => 'Invalid or expired token',
 ];

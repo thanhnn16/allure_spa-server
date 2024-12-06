@@ -26,4 +26,6 @@ return [
     'redirecting' => 'リダイレクト中...',
     'new_password' => '新しいパスワード',
     'confirm_password' => 'パスワードを確認',
+    'return_to_app' => 'アプリに戻る',
+    'invalid_or_expired_token' => '無効または期限切れのトークン',
 ];

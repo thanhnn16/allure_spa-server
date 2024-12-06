@@ -26,4 +26,6 @@ return [
     'redirecting' => 'Đang chuyển hướng...',
     'new_password' => 'Mật khẩu mới',
     'confirm_password' => 'Xác nhận mật khẩu',
+    'return_to_app' => 'Trở về ứng dụng',
+    'invalid_or_expired_token' => 'Mã xác thực không hợp lệ hoặc đã hết hạn',
 ];
