@@ -15,4 +15,5 @@ return [
     'or_use_token' => 'または、アプリ内でこの検証コードを使用してください：',
     'copy' => 'コピー',
     'token_copied' => '検証コードをコピーしました！',
+    'verification_failed' => 'メール確認に失敗しました',
 ];

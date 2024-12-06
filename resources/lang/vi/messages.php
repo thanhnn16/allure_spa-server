@@ -15,4 +15,5 @@ return [
     'or_use_token' => 'Hoặc sử dụng mã xác thực này trong ứng dụng:',
     'copy' => 'Sao chép',
     'token_copied' => 'Đã sao chép mã xác thực!',
+    'verification_failed' => 'Xác thực email thất bại',
 ];

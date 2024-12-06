@@ -327,17 +327,33 @@ class AuthController extends BaseController
      *     @OA\Response(response=200, description="Email verified successfully")
      * )
      */
-    public function verifyEmail(Request $request)
+    public function verifyEmail($token)
     {
-        try {
-            $result = $this->authService->verifyEmail(
-                $request->token,
-                $request->input('lang', 'vi')
-            );
-            return $this->respondWithJson($result, 'Email verified successfully');
-        } catch (\Exception $e) {
-            return $this->respondWithError($e->getMessage());
+        $result = app(EmailVerificationService::class)->verifyEmail($token);
+
+        // Nếu là request API
+        if (request()->expectsJson()) {
+            if ($result['success']) {
+                return response()->json([
+                    'message' => __('messages.verification_successful'),
+                    'user' => $result['user']
+                ]);
+            }
+            return response()->json([
+                'message' => $result['message']
+            ], 400);
         }
+
+        // Nếu là request web
+        if ($result['success']) {
+            return view('auth.verify-email-success', [
+                'lang' => $result['user']->locale ?? 'vi'
+            ]);
+        }
+
+        return response()->view('auth.verify-email-error', [
+            'message' => $result['message']
+        ], 400);
     }
 
     /**

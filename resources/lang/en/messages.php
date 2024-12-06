@@ -15,4 +15,5 @@ return [
     'or_use_token' => 'Or use this verification code in the app:',
     'copy' => 'Copy',
     'token_copied' => 'Verification code copied!',
+    'verification_failed' => 'Email Verification Failed',
 ];

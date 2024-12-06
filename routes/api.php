@@ -122,7 +122,6 @@ Route::middleware('throttle:api')->group(function () {
         // Email verification routes 
         Route::prefix('email')->group(function () {
             Route::post('/verify/send', [AuthController::class, 'sendVerificationEmail']);
-            Route::get('/verify/{token}', [AuthController::class, 'verifyEmail']);
             Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
             Route::post('/resend-verification', [AuthController::class, 'resendVerification']);
         });

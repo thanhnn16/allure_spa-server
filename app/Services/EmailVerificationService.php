@@ -26,10 +26,13 @@ class EmailVerificationService
             'expires_at' => now()->addHours(24)
         ]);
 
+        // Tạo verification URL sử dụng route web
+        $verificationUrl = route('verification.verify', ['token' => $token->token]);
+
         // Send verification email with language
         Mail::to($user->email)
             ->locale($lang)
-            ->send(new EmailVerification($token));
+            ->send(new EmailVerification($token, $verificationUrl));
 
         return $token;
     }

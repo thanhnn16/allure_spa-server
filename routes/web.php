@@ -27,6 +27,7 @@ use App\Http\Controllers\BannerController;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\UserGroupController;
+use App\Http\Controllers\Auth\AuthController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -43,6 +44,9 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/zalo-login-progress', [ZaloAuthController::class, 'index'])->name('zalo.login.progress');
+
+Route::get('/email/verify/{token}', [AuthController::class, 'verifyEmail'])
+    ->name('verification.verify');
 
 Route::middleware('auth')->group(function () {
     // User routes
