@@ -77,7 +77,28 @@
         <p>{{ __('messages.reset_password_expire') }}</p>
 
         <p>{{ __('messages.trouble_clicking') }}</p>
-        <div class="link-container">
+
+        <p>{{ __('messages.or_use_token') }}</p>
+        <div class="link-container" style="position: relative;">
+            <code style="display: block; word-break: break-all;">{{ $token }}</code>
+            <button onclick="copyToken()" style="
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: #4CAF50;
+                border: none;
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+            ">
+                {{ __('messages.copy') }}
+            </button>
+        </div>
+
+        <p>{{ __('messages.or_click_link') }}</p>
+        <div class="link-container" style="position: relative;">
             <code style="display: block; word-break: break-all;">{{ $resetUrl }}</code>
             <button onclick="copyResetLink()" style="
                 position: absolute;
@@ -104,6 +125,17 @@
 </body>
 
 <script>
+    function copyToken() {
+        const tokenValue = '{{ $token }}';
+        navigator.clipboard.writeText(tokenValue)
+            .then(() => {
+                alert('{{ __("messages.token_copied") }}');
+            })
+            .catch((err) => {
+                console.error('Failed to copy token:', err);
+            });
+    }
+
     function copyResetLink() {
         const resetLink = '{{ $resetUrl }}';
         navigator.clipboard.writeText(resetLink)
