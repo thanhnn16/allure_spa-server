@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ $lang ?? 'vi' }}">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,7 +23,7 @@
             padding: 40px;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
 
@@ -60,6 +61,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="logo">
@@ -71,22 +73,23 @@
         </div>
 
         <h2>{{ __('messages.verification_successful') }}</h2>
-        
+
         <div class="message">
             <p>{{ __('messages.thank_you_for_verifying') }}</p>
             <p>{{ __('messages.account_ready') }}</p>
         </div>
 
-        <a href="allurespa://email-verify/success" class="button">
+        <a href="allurespa:email-verify/success" class="button">
             {{ __('messages.return_to_app') }}
         </a>
     </div>
 
     <script>
-        // Tự động chuyển hướng sau 3 giây
+        // Sửa lại URL trong setTimeout
         setTimeout(function() {
-            window.location.href = 'allurespa://email-verify/success';
+            window.location.href = 'allurespa:email-verify/success';
         }, 3000);
     </script>
 </body>
-</html> 
+
+</html>
