@@ -2147,6 +2147,10 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email"
+                                    },
+                                    "lang": {
+                                        "type": "string",
+                                        "example": "vi"
                                     }
                                 },
                                 "type": "object"

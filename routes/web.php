@@ -194,6 +194,14 @@ Route::middleware('auth')->group(function () {
     // Thêm route mới
     Route::get('/user-groups', [UserGroupController::class, 'index'])
         ->name('user-groups.index');
+
+    // Route cho trang redirect (sẽ thử mở app trước)
+    Route::get('/reset-password/redirect/{token}', [AuthController::class, 'redirectReset'])
+        ->name('password.reset');
+
+    // Route fallback cho web (nếu không mở được app)
+    Route::get('/reset-password/web/{token}', [AuthController::class, 'showResetForm'])
+        ->name('password.reset.web');
 });
 
 Route::get('/firebase-messaging-sw.js', function () {

@@ -1,13 +1,20 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Khôi phục mật khẩu - Allure SPA</title>
+    <title>{{ __('messages.reset_password') }}</title>
 </head>
+
 <body>
-    <h2>Xin chào!</h2>
-    <p>Bạn nhận được email này vì chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
-    <p>Mã khôi phục mật khẩu của bạn là: {{ $token }}</p>
-    <p>Mã này sẽ hết hạn sau 60 phút.</p>
-    <p>Nếu bạn không yêu cầu đặt lại mật khẩu, bạn có thể bỏ qua email này.</p>
+    <h2>{{ __('messages.reset_password_greeting') }}</h2>
+    <p>{{ __('messages.reset_password_reason') }}</p>
+    <p>{{ __('messages.reset_password_action') }}</p>
+    <a href="{{ $resetUrl }}" style="background-color: #4CAF50; color: white; padding: 14px 20px; text-decoration: none; border-radius: 4px;">
+        {{ __('messages.reset_password_button') }}
+    </a>
+    <p>{{ __('messages.reset_password_expire') }}</p>
+    <p>{{ __('messages.reset_password_ignore') }}</p>
+    <p>{{ __('messages.email_sent_from') }}</p>
 </body>
+
 </html>

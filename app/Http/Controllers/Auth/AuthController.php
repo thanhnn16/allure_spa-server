@@ -423,7 +423,6 @@ class AuthController extends BaseController
     }
 
 
-
     /**
      * @OA\Post(
      *     path="/api/auth/forgot-password",
@@ -433,7 +432,8 @@ class AuthController extends BaseController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"email"},
-     *             @OA\Property(property="email", type="string", format="email")
+     *             @OA\Property(property="email", type="string", format="email"),
+     *             @OA\Property(property="lang", type="string", example="vi")
      *         )
      *     ),
      *     @OA\Response(
@@ -449,7 +449,11 @@ class AuthController extends BaseController
                 'email' => 'required|email'
             ]);
 
-            $result = $this->passwordResetService->sendResetLink($request->email);
+            $result = $this->passwordResetService->sendResetLink(
+                $request->email,
+                $request->input('lang', 'vi')
+            );
+
             return $this->respondWithJson($result, 'Đã gửi email khôi phục mật khẩu');
         } catch (\Exception $e) {
             return $this->respondWithError($e->getMessage());
