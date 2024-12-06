@@ -589,7 +589,12 @@ class AppointmentService
                 'staff',
                 'timeSlot',
                 'cancelledBy'
-            ])->where('user_id', $userId);
+            ])
+                ->where('user_id', $userId)
+                // Sắp xếp theo ngày lịch hẹn từ mới đến cũ
+                ->orderBy('appointment_date', 'desc')
+                // Với cùng một ngày, sắp xếp theo khung giờ từ muộn đến sớm
+                ->orderBy('time_slot_id', 'desc');
 
             // Add filters
             if (!empty($filters['status'])) {
