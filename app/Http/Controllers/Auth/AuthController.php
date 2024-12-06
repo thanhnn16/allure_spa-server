@@ -331,16 +331,16 @@ class AuthController extends BaseController
     {
         // Lấy token tùy theo loại request
         $token = $request->expectsJson()
-            ? $request->token 
+            ? $request->token
             : $request->route('token');
-        
+
         // Validate locale
-        $lang = in_array($request->input('lang'), ['vi', 'en']) 
-            ? $request->input('lang') 
+        $lang = in_array($request->input('lang'), ['vi', 'en'])
+            ? $request->input('lang')
             : 'vi';
 
         $result = app(EmailVerificationService::class)->verifyEmail($token, $lang);
-        
+
         // Nếu là request API
         if (request()->expectsJson()) {
             if ($result['success']) {
@@ -582,6 +582,17 @@ class AuthController extends BaseController
     {
         return view('emails.reset-password-web', [
             'token' => $token,
+            'email' => $request->email
+        ]);
+    }
+
+    /**
+     * Chuyển hướng người dùng đến trang reset password
+     */
+    public function redirectReset(Request $request)
+    {
+        return redirect()->route('password.reset', [
+            'token' => $request->token,
             'email' => $request->email
         ]);
     }
