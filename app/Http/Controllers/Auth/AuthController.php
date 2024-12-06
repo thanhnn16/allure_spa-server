@@ -544,7 +544,9 @@ class AuthController extends BaseController
             }
 
             // Nếu là web request
-            return redirect()->route('login')->with('status', __('passwords.reset'));
+            return view('auth.reset-password-success', [
+                'lang' => $request->input('lang', 'vi')
+            ]);
         }
 
         // Xử lý lỗi
@@ -555,7 +557,10 @@ class AuthController extends BaseController
             ], 422);
         }
 
-        return back()->withErrors(['email' => [__($status)]]);
+        return view('auth.reset-password-error', [
+            'message' => __($status),
+            'lang' => $request->input('lang', 'vi')
+        ]);
     }
 
     /**

@@ -28,4 +28,9 @@ return [
     'confirm_password' => 'Confirm Password',
     'return_to_app' => 'Return to App',
     'invalid_or_expired_token' => 'Invalid or expired token',
+    'reset_password_success_title' => 'Reset Password Success',
+    'reset_password_success_message' => 'Your password has been updated successfully. You can login with the new password.',
+    'reset_password_error_title' => 'Reset Password Failed',
+    'reset_password_error_message' => 'An error occurred while resetting the password. Please try again.',
+    'back_to_app' => 'Back to App',
 ];

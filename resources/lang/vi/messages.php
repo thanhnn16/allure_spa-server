@@ -28,4 +28,9 @@ return [
     'confirm_password' => 'Xác nhận mật khẩu',
     'return_to_app' => 'Trở về ứng dụng',
     'invalid_or_expired_token' => 'Mã xác thực không hợp lệ hoặc đã hết hạn',
+    'reset_password_success_title' => 'Đặt lại mật khẩu thành công',
+    'reset_password_success_message' => 'Mật khẩu của bạn đã được cập nhật thành công. Bạn có thể đăng nhập bằng mật khẩu mới.',
+    'reset_password_error_title' => 'Đặt lại mật khẩu thất bại',
+    'reset_password_error_message' => 'Đã có lỗi xảy ra khi đặt lại mật khẩu. Vui lòng thử lại.',
+    'back_to_app' => 'Quay lại ứng dụng',
 ];

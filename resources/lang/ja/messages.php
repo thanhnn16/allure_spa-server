@@ -28,4 +28,9 @@ return [
     'confirm_password' => 'パスワードを確認',
     'return_to_app' => 'アプリに戻る',
     'invalid_or_expired_token' => '無効または期限切れのトークン',
+    'reset_password_success_title' => 'パスワードリセットが成功しました',
+    'reset_password_success_message' => 'パスワードが更新されました。新しいパスワードでログインできます。',
+    'reset_password_error_title' => 'パスワードリセットに失敗しました',
+    'reset_password_error_message' => 'パスワードリセット中にエラーが発生しました。もう一度お試しください。',
+    'back_to_app' => 'アプリに戻る',
 ];
