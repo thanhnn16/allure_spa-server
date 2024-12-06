@@ -14,6 +14,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Services\PasswordResetService;
 use App\Services\EmailVerificationService;
 use Illuminate\Support\Facades\Password;
+use App\Services\NotificationService;
 
 class AuthController extends BaseController
 {
@@ -341,6 +342,33 @@ class AuthController extends BaseController
 
         $result = app(EmailVerificationService::class)->verifyEmail($token, $lang);
 
+        // Thêm logic gửi thông báo sau khi xác thực thành công
+        if ($result['success']) {
+            try {
+                // Tạo thông báo cho user
+                app(NotificationService::class)->createNotification([
+                    'user_id' => $result['user']->id,
+                    'type' => 'system',
+                    'title' => [
+                        'en' => 'Account Verified',
+                        'vi' => 'Xác thực tài khoản thành công',
+                        'ja' => 'アカウント認証完了'
+                    ],
+                    'content' => [
+                        'en' => 'Your account has been successfully verified. Welcome to Allure Spa!',
+                        'vi' => 'Tài khoản của bạn đã được xác thực thành công. Chào mừng bạn đến với Allure Spa!',
+                        'ja' => 'アカウントの認証が完了しました。Allure Spaへようこそ！'
+                    ],
+                    'data' => [
+                        'type' => 'account_verification'
+                    ],
+                    'send_fcm' => true
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error sending verification notification: ' . $e->getMessage());
+            }
+        }
+
         // Nếu là request API
         if (request()->expectsJson()) {
             if ($result['success']) {
@@ -604,7 +632,7 @@ class AuthController extends BaseController
             $request->session()->invalidate();
             $request->session()->regenerateToken();
         }
-        
+
         return redirect()->route('password.reset.web', [
             'token' => $request->token,
             'email' => $request->email
