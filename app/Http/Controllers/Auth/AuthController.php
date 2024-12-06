@@ -580,6 +580,13 @@ class AuthController extends BaseController
 
     public function showResetForm(Request $request, $token)
     {
+        // Đảm bảo người dùng được logout trước khi xem form reset password
+        if (Auth::check()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
         return view('emails.reset-password-web', [
             'token' => $token,
             'email' => $request->email
@@ -591,6 +598,13 @@ class AuthController extends BaseController
      */
     public function redirectReset(Request $request)
     {
+        // Đảm bảo người dùng được logout trước khi vào trang reset password
+        if (Auth::check()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+        
         return redirect()->route('password.reset', [
             'token' => $request->token,
             'email' => $request->email
