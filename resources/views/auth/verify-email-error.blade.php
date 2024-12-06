@@ -79,7 +79,7 @@
             <p>{{ __('messages.invalid_or_expired_token') }}</p>
         </div>
 
-        <a href="allurespa://email-verify/error" class="button">
+        <a href="allurespa:email-verify/failed" class="button">
             {{ __('messages.return_to_app') }}
         </a>
     </div>
@@ -87,7 +87,7 @@
     <script>
         // Tự động chuyển hướng sau 3 giây
         setTimeout(function() {
-            window.location.href = 'allurespa://email-verify/error';
+            window.location.href = 'allurespa:email-verify/failed';
         }, 3000);
     </script>
 </body>
