@@ -492,9 +492,26 @@ class AuthController extends BaseController
                 $request->input('lang', 'vi')
             );
 
-            return $this->respondWithJson($result, 'Đã gửi email khôi phục mật khẩu');
+            if (!$result['success']) {
+                return $this->respondWithError(
+                    $result['message'] ?? 'FAILED_TO_SEND_RESET_EMAIL',
+                    $result['status_code'] ?? 400
+                );
+            }
+
+            return $this->respondWithJson(
+                $result['data'] ?? null,
+                'Đã gửi email khôi phục mật khẩu'
+            );
         } catch (\Exception $e) {
-            return $this->respondWithError($e->getMessage());
+            Log::error('Failed to send password reset email: ' . $e->getMessage(), [
+                'email' => $request->email,
+                'error' => $e
+            ]);
+            return $this->respondWithError(
+                'FAILED_TO_SEND_RESET_EMAIL',
+                400
+            );
         }
     }
 
