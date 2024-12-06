@@ -48,6 +48,18 @@ Route::get('/zalo-login-progress', [ZaloAuthController::class, 'index'])->name('
 Route::get('/email/verify/{token}', [AuthController::class, 'verifyEmail'])
     ->name('verification.verify');
 
+
+// Route cho trang redirect (sẽ thử mở app trước)
+Route::get('/reset-password/redirect/{token}', [AuthController::class, 'redirectReset'])
+    ->name('password.reset');
+
+// Route fallback cho web (nếu không mở được app)
+Route::get('/reset-password/web/{token}', [AuthController::class, 'showResetForm'])
+    ->name('password.reset.web');
+
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+    ->name('password.update');
+
 Route::middleware('auth')->group(function () {
     // User routes
     Route::resource('users', UserController::class);
@@ -194,17 +206,6 @@ Route::middleware('auth')->group(function () {
     // Thêm route mới
     Route::get('/user-groups', [UserGroupController::class, 'index'])
         ->name('user-groups.index');
-
-    // Route cho trang redirect (sẽ thử mở app trước)
-    Route::get('/reset-password/redirect/{token}', [AuthController::class, 'redirectReset'])
-        ->name('password.reset');
-
-    // Route fallback cho web (nếu không mở được app)
-    Route::get('/reset-password/web/{token}', [AuthController::class, 'showResetForm'])
-        ->name('password.reset.web');
-
-    Route::post('/reset-password', [AuthController::class, 'resetPassword'])
-        ->name('password.update');
 });
 
 Route::get('/firebase-messaging-sw.js', function () {
