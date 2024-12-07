@@ -194,7 +194,13 @@
                   Hủy đơn hàng
                 </button>
 
-                <button v-if="needsServicePackageCreation" @click="openCompleteModal"
+                <Link v-if="hasCreatedServicePackages" :href="route('users.show', order.user_id)"
+                  class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
+                  <i class="mdi mdi-package-variant mr-2"></i>
+                  Xem gói dịch vụ người dùng
+                </Link>
+
+                <button v-if="needsServicePackageCreation && !hasCreatedServicePackages" @click="openCompleteModal"
                   class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
                   <i class="mdi mdi-check-circle-outline mr-2"></i>
                   {{ order.status === 'completed' ? 'Tạo gói dịch vụ' : 'Hoàn thành đơn hàng' }}
@@ -236,12 +242,10 @@
                 </div>
               </div>
 
-              <Link 
-                :href="route('invoices.show', order.invoice.id)" 
-                class="flex items-center justify-center px-4 py-2.5 font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-surface"
-              >
-                <i class="mdi mdi-file-document-outline text-xl mr-2"></i>
-                Xem chi tiết hóa đơn
+              <Link :href="route('invoices.show', order.invoice.id)"
+                class="flex items-center justify-center px-4 py-2.5 font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-surface">
+              <i class="mdi mdi-file-document-outline text-xl mr-2"></i>
+              Xem chi tiết hóa đơn
               </Link>
             </div>
 
@@ -764,6 +768,24 @@ export default {
         hasServiceCombo.value;
     });
 
+    const hasCreatedServicePackages = computed(() => {
+
+      // Kiểm tra từng điều kiện và log kết quả
+      const isCompleted = props.order.status === 'completed';
+
+      const hasCombo = hasServiceCombo.value;
+
+      // Kiểm tra gói dịch vụ thông qua user
+      const userPackages = props.order.user?.user_service_packages || [];
+      const hasPackages = userPackages.some(userPackage => userPackage.order_id === props.order.id);
+
+
+      // Log kết quả cuối cùng
+      const result = isCompleted && hasCombo && hasPackages;
+
+      return result;
+    });
+
     return {
       showStatusModal,
       showPaymentModal,
@@ -813,6 +835,7 @@ export default {
       canCancel,
       formatAddress,
       needsServicePackageCreation,
+      hasCreatedServicePackages,
     }
   }
 }

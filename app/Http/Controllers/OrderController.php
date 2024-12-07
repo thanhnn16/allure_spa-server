@@ -186,7 +186,8 @@ class OrderController extends BaseController
             'shippingAddress',
             'paymentMethod',
             'voucher',
-            'cancelledBy'
+            'cancelledBy',
+            'user.userServicePackages'
         ]);
 
         if ($request->expectsJson()) {
