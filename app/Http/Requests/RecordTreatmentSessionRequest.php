@@ -30,7 +30,15 @@ class RecordTreatmentSessionRequest extends FormRequest
                 },
             ],
             'start_time' => 'required|date',
-            'end_time' => 'nullable|date|after:start_time',
+            'end_time' => [
+                'required',
+                'date',
+                function ($attribute, $value, $fail) {
+                    if (strtotime($value) <= strtotime($this->start_time)) {
+                        $fail('Thời gian kết thúc phải sau thời gian bắt đầu');
+                    }
+                }
+            ],
             'staff_user_id' => [
                 'required',
                 'exists:users,id',
@@ -43,6 +51,27 @@ class RecordTreatmentSessionRequest extends FormRequest
             ],
             'result' => 'nullable|string|max:1000',
             'notes' => 'nullable|string|max:1000'
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'user_service_package_id.required' => 'Vui lòng chọn gói dịch vụ',
+            'user_service_package_id.exists' => 'Gói dịch vụ không tồn tại',
+            'start_time.required' => 'Vui lòng chọn thời gian bắt đầu',
+            'start_time.date' => 'Thời gian bắt đầu không hợp lệ',
+            'end_time.required' => 'Vui lòng chọn thời gian kết thúc',
+            'end_time.date' => 'Thời gian kết thúc không hợp lệ',
+            'staff_user_id.required' => 'Vui lòng chọn nhân viên thực hiện',
+            'staff_user_id.exists' => 'Nhân viên không tồn tại',
+            'result.max' => 'Kết quả không được vượt quá 1000 ký tự',
+            'notes.max' => 'Ghi chú không được vượt quá 1000 ký tự',
         ];
     }
 }
