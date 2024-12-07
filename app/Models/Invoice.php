@@ -54,6 +54,8 @@ class Invoice extends Model
         'created_by_user_id'
     ];
 
+    protected $appends = ['remaining_amount', 'original_amount'];
+
     protected $casts = [
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
@@ -112,6 +114,18 @@ class Invoice extends Model
     }
 
     public function calculateRemainingAmount()
+    {
+        return $this->total_amount - $this->paid_amount;
+    }
+
+    // Lấy giá gốc từ Order nếu cần
+    public function getOriginalAmountAttribute()
+    {
+        return $this->order ? $this->order->total_amount : $this->total_amount;
+    }
+
+    // Tính số tiền còn phải thanh toán
+    public function getRemainingAmountAttribute()
     {
         return $this->total_amount - $this->paid_amount;
     }

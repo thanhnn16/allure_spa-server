@@ -48,28 +48,32 @@ class OrderService
 
             // Tính toán với key order_items
             $calculatedTotals = $this->calculateOrderTotals($data['order_items']);
+            $subtotal = $calculatedTotals['subtotal'];
 
-            // Validate and process voucher if provided
+            // Xử lý voucher và tính discount amount
             $discountAmount = 0;
-            if (isset($data['voucher_id'])) {
+            if (!empty($data['voucher_id'])) {
                 $voucher = Voucher::findOrFail($data['voucher_id']);
-                $this->validateVoucher($voucher, $calculatedTotals['subtotal'], Auth::id());
-                $discountAmount = $this->calculateVoucherDiscount($voucher, $calculatedTotals['subtotal']);
-                $this->updateVoucherUsage($voucher, Auth::id());
+
+                // Validate voucher
+                $this->validateVoucher($voucher, $subtotal, $userId);
+
+                // Tính discount amount
+                $discountAmount = $this->calculateVoucherDiscount($voucher, $subtotal);
+
+                // Cập nhật sử dụng voucher
+                $this->updateVoucherUsage($voucher, $userId);
             }
 
-            // Tính toán final_amount
-            $finalAmount = $calculatedTotals['subtotal'] - $discountAmount;
-
-            // Create order with calculated values
+            // Tạo order data với discount amount đã tính
             $orderData = [
                 'user_id' => $userId,
-                'total_amount' => $calculatedTotals['subtotal'],
-                'final_amount' => $finalAmount,
                 'shipping_address_id' => $shippingAddressId,
                 'payment_method_id' => $data['payment_method_id'],
                 'status' => request()->is('api/*') ? Order::STATUS_PENDING : Order::STATUS_CONFIRMED,
+                'total_amount' => $subtotal,
                 'discount_amount' => $discountAmount,
+                'final_amount' => $subtotal - $discountAmount,
                 'voucher_id' => $data['voucher_id'] ?? null,
                 'note' => $data['note'] ?? null
             ];
@@ -132,7 +136,7 @@ class OrderService
             // Tạo hóa đơn sau khi tạo đơn hàng thành công
             $this->createInvoice($order);
 
-            return $order->load(['orderItems', 'user', 'shippingAddress', 'paymentMethod']);
+            return $order->load(['orderItems', 'user', 'shippingAddress', 'paymentMethod', 'voucher']);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Order creation failed:', [
@@ -197,23 +201,28 @@ class OrderService
 
     private function validateVoucher(Voucher $voucher, float $subtotal, string $userId)
     {
-        // Check if voucher is active
+        // Kiểm tra voucher có active không
         if (!$voucher->is_active) {
             throw new \Exception('Voucher không còn hiệu lực');
         }
 
-        // Check minimum order value
+        // Kiểm tra giá trị đơn hàng tối thiểu
         if ($subtotal < $voucher->min_order_value) {
-            throw new \Exception('Giá trị đơn hàng chưa đạt giá trị tối thiểu để sử dụng voucher');
+            throw new \Exception("Giá trị đơn hàng tối thiểu phải từ {$voucher->min_order_value_formatted} để sử dụng voucher này");
         }
 
-        // Check user usage limit
+        // Kiểm tra số lần sử dụng của user
         $userVoucher = UserVoucher::where('user_id', $userId)
             ->where('voucher_id', $voucher->id)
             ->first();
 
         if ($userVoucher && $userVoucher->remaining_uses <= 0) {
             throw new \Exception('Bạn đã hết lượt sử dụng voucher này');
+        }
+
+        // Kiểm tra số lượng voucher còn lại
+        if (!$voucher->is_unlimited && $voucher->remaining_uses <= 0) {
+            throw new \Exception('Voucher đã hết lượt sử dụng');
         }
     }
 
@@ -433,13 +442,24 @@ class OrderService
 
     public function createInvoice(Order $order)
     {
+        // Thêm logging để debug
+        Log::info('Creating invoice with data:', [
+            'order_id' => $order->id,
+            'user_id' => $order->user_id,
+            'total_amount' => $order->final_amount,
+            'subtotal' => $order->total_amount,
+            'discount' => $order->discount_amount,
+            'payment_method_id' => $order->payment_method_id
+        ]);
+
+        // Tính toán final_amount một cách rõ ràng
+        $finalAmount = $order->total_amount - ($order->discount_amount ?? 0);
+
         return Invoice::create([
             'order_id' => $order->id,
             'user_id' => $order->user_id,
-            'total_amount' => $order->total_amount,
-            'discount_amount' => $order->discount_amount,
-            'final_amount' => $order->final_amount,
-            'payment_method_id' => $order->payment_method_id,
+            'total_amount' => $finalAmount, // Sử dụng giá trị đã tính toán
+            'paid_amount' => 0,
             'status' => Invoice::STATUS_PENDING,
             'created_by_user_id' => Auth::id()
         ]);
