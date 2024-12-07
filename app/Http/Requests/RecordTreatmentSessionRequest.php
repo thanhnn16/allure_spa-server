@@ -29,12 +29,15 @@ class RecordTreatmentSessionRequest extends FormRequest
                     }
                 },
             ],
-            'start_time' => 'required|date',
+            'start_time' => 'required|date_format:Y-m-d H:i',
             'end_time' => [
                 'required',
-                'date',
+                'date_format:Y-m-d H:i',
                 function ($attribute, $value, $fail) {
-                    if (strtotime($value) <= strtotime($this->start_time)) {
+                    $start = \Carbon\Carbon::parse($this->start_time);
+                    $end = \Carbon\Carbon::parse($value);
+                    
+                    if ($end->lessThanOrEqualTo($start)) {
                         $fail('Thời gian kết thúc phải sau thời gian bắt đầu');
                     }
                 }
