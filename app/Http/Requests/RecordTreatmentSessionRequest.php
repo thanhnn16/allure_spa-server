@@ -29,13 +29,13 @@ class RecordTreatmentSessionRequest extends FormRequest
                     }
                 },
             ],
-            'start_time' => 'required|date_format:Y-m-d H:i',
+            'start_time' => 'required|date_format:Y-m-d\TH:i',
             'end_time' => [
                 'required',
-                'date_format:Y-m-d H:i',
+                'date_format:Y-m-d\TH:i',
                 function ($attribute, $value, $fail) {
-                    $start = \Carbon\Carbon::parse($this->start_time);
-                    $end = \Carbon\Carbon::parse($value);
+                    $start = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $this->start_time);
+                    $end = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $value);
                     
                     if ($end->lessThanOrEqualTo($start)) {
                         $fail('Thời gian kết thúc phải sau thời gian bắt đầu');
@@ -68,9 +68,9 @@ class RecordTreatmentSessionRequest extends FormRequest
             'user_service_package_id.required' => 'Vui lòng chọn gói dịch vụ',
             'user_service_package_id.exists' => 'Gói dịch vụ không tồn tại',
             'start_time.required' => 'Vui lòng chọn thời gian bắt đầu',
-            'start_time.date' => 'Thời gian bắt đầu không hợp lệ',
+            'start_time.date_format' => 'Định dạng thời gian bắt đầu không hợp lệ',
             'end_time.required' => 'Vui lòng chọn thời gian kết thúc',
-            'end_time.date' => 'Thời gian kết thúc không hợp lệ',
+            'end_time.date_format' => 'Định dạng thời gian kết thúc không hợp lệ',
             'staff_user_id.required' => 'Vui lòng chọn nhân viên thực hiện',
             'staff_user_id.exists' => 'Nhân viên không tồn tại',
             'result.max' => 'Kết quả không được vượt quá 1000 ký tự',

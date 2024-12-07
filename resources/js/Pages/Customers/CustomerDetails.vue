@@ -544,6 +544,8 @@ const submitTreatmentSession = async () => {
         closeAddTreatmentModal()
         toast.success('Thêm lịch sử dịch vụ thành công')
     } catch (error) {
+        console.error('Treatment form:', treatmentForm)
+        console.error('Error submitting treatment session:', error.response?.data)
         toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi thêm lịch sử dịch vụ')
     }
 }
@@ -897,13 +899,8 @@ const handleUpdate = async (info) => {
                     <div class="p-4 border-b dark:border-slate-700">
                         <div class="flex justify-between items-center">
                             <h3 class="text-lg font-medium leading-6 dark:text-white">Danh sách voucher</h3>
-                            <BaseButton 
-                                label="Gán voucher" 
-                                color="info" 
-                                @click="openAssignVoucherModal" 
-                                :icon="mdiTicketPercent"
-                                small
-                            />
+                            <BaseButton label="Gán voucher" color="info" @click="openAssignVoucherModal"
+                                :icon="mdiTicketPercent" small />
                         </div>
                     </div>
                     <!-- Vouchers List -->
