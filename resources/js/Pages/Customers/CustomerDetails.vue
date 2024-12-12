@@ -138,6 +138,7 @@ const basicInfo = computed(() => [
         editValue: props.user?.phone_number,
         get isEditing() { return editingStates.phone_number },
         type: 'tel',
+        verified: props.user?.phone_verified,
     },
     {
         label: 'Email',
@@ -146,6 +147,7 @@ const basicInfo = computed(() => [
         editValue: props.user?.email,
         get isEditing() { return editingStates.email },
         type: 'email',
+        verified: props.user?.email_verified,
     },
     {
         label: 'Giới tính',
@@ -671,7 +673,7 @@ const updateUserInfo = async (key, value) => {
     }
 }
 
-// Sửa lại tất cả các nơi gọi saveField thành updateUserInfo
+// S��a lại tất cả các nơi gọi saveField thành updateUserInfo
 const handleUpdate = async (info) => {
     if (!info.editValue) return;
 
@@ -808,7 +810,20 @@ const handleUpdate = async (info) => {
                                                 @click="cancelEdit(item)" />
                                         </template>
                                         <template v-else>
-                                            <p class="font-medium dark:text-white flex-1">{{ item.value }}</p>
+                                            <div class="flex-1">
+                                                <p class="font-medium dark:text-white">{{ item.value }}</p>
+                                                <!-- Chỉ hiển thị trạng thái xác thực cho email và số điện thoại -->
+                                                <div v-if="['email', 'phone_number'].includes(item.key)" 
+                                                     class="flex items-center mt-1">
+                                                    <BaseIcon :path="item.verified ? mdiCheckCircle : mdiAlert" 
+                                                            :class="item.verified ? 'text-green-500' : 'text-red-500'" 
+                                                            class="w-4 h-4" />
+                                                    <span :class="item.verified ? 'text-green-500' : 'text-red-500'" 
+                                                          class="text-sm ml-1">
+                                                        {{ item.verified ? 'Đã xác thực' : 'Chưa xác thực' }}
+                                                    </span>
+                                                </div>
+                                            </div>
                                             <BaseButton color="info" :icon="mdiPencil" small @click="startEdit(item)" />
                                         </template>
                                     </div>

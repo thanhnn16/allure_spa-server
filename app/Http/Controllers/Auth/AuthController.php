@@ -95,19 +95,16 @@ class AuthController extends BaseController
             }
 
             $request->session()->regenerate();
-
-            Log::info('User session regenerated', [
-                'user_id' => $user->id,
-                'session_id' => session()->getId()
-            ]);
-
-            // Tạo lại token CSRF và gán vào session và cookie
-            $newCsrfToken = csrf_token();
-            $request->session()->put('_token', $newCsrfToken);
-
-            $response = redirect()->intended(route('dashboard'))->with('auth_check', true);
-            $response->withCookie(cookie()->forever(config('session.cookie'), session()->getId()));
-            $response->withCookie(cookie('XSRF-TOKEN', $newCsrfToken));
+            
+            // Tạo CSRF token mới và lưu vào session
+            $token = csrf_token();
+            $request->session()->put('_token', $token);
+            
+            $response = redirect()
+                ->intended(route('dashboard'))
+                ->with('auth_check', true)
+                ->withCookie(cookie()->forever(config('session.cookie'), session()->getId()))
+                ->withCookie(cookie('XSRF-TOKEN', $token, null, null, null, null, false));
 
             return $response;
         } catch (ValidationException $e) {
@@ -185,9 +182,16 @@ class AuthController extends BaseController
             }
 
             Auth::guard('web')->logout();
+            
+            // Tạo CSRF token mới và lưu vào session trước khi invalidate
+            $token = csrf_token();
+            $request->session()->put('_token', $token);
+            
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-            return redirect('/');
+
+            return redirect('/')
+                ->withCookie(cookie('XSRF-TOKEN', $token, null, null, null, null, false));
         } catch (\Exception $e) {
             Log::error('Logout error: ' . $e->getMessage());
             if ($request->expectsJson()) {
