@@ -182,7 +182,45 @@
 
               <!-- Phần actions -->
               <div class="space-y-3 pt-3 border-t dark:border-dark-border">
-                <button v-if="canUpdateStatus" @click="openUpdateStatusModal"
+                <!-- Nút xác nhận nhanh cho đơn hàng đang chờ -->
+                <button v-if="canQuickConfirm" @click="handleQuickConfirm"
+                  class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
+                  <i class="mdi mdi-check-circle-outline mr-2"></i>
+                  Xác nhận đơn hàng
+                </button>
+
+                <!-- Nút giao hàng nhanh và hoàn thành cho đơn đã xác nhận -->
+                <template v-if="order.status === 'confirmed'">
+                  <button @click="handleQuickShipping"
+                    class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
+                    <i class="mdi mdi-truck-delivery-outline mr-2"></i>
+                    Giao hàng
+                  </button>
+                  
+                  <button v-if="canQuickComplete" @click="handleQuickComplete"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
+                    <i class="mdi mdi-check-circle-outline mr-2"></i>
+                    Hoàn thành đơn hàng
+                  </button>
+                </template>
+
+                <!-- Nút hoàn thành nhanh cho đơn đang giao -->
+                <template v-if="order.status === 'shipping'">
+                  <button v-if="canQuickComplete" @click="handleQuickComplete"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
+                    <i class="mdi mdi-check-circle-outline mr-2"></i>
+                    Hoàn thành đơn hàng
+                  </button>
+
+                  <button @click="openUpdateStatusModal"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
+                    <i class="mdi mdi-pencil-outline mr-2"></i>
+                    Cập nhật trạng thái
+                  </button>
+                </template>
+
+                <!-- Các nút khác cho các trạng thái khác -->
+                <button v-if="canUpdateStatus && order.status !== 'shipping'" @click="openUpdateStatusModal"
                   class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center transition-colors duration-200">
                   <i class="mdi mdi-pencil-outline mr-2"></i>
                   Cập nhật trạng thái
@@ -542,7 +580,7 @@ export default {
         if (response.data.success) {
           toast.success('Đơn hàng đã được hoàn thành thành công')
           if (hasServiceCombo.value) {
-            toast.info('Các gói liệu trình đã được tạo cho khách hàng')
+            toast.info('Các gói li���u trình đã được tạo cho khách hàng')
           }
           router.reload()
         }
@@ -786,6 +824,80 @@ export default {
       return result;
     });
 
+    // Thêm computed property cho nút xác nhận nhanh
+    const canQuickConfirm = computed(() => {
+      return props.order.status === 'pending'
+    })
+
+    // Thêm hàm xử lý xác nhận nhanh
+    const handleQuickConfirm = async () => {
+      loading.value = true
+      try {
+        const response = await axios.put(route('orders.update', props.order.id), {
+          status: 'confirmed',
+          note: 'Xác nhận đơn hàng'
+        })
+
+        if (response.data.success) {
+          toast.success('Đơn hàng đã được xác nhận thành công')
+          router.reload()
+        }
+      } catch (error) {
+        console.error('Error confirming order:', error)
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xác nhận đơn hàng')
+      } finally {
+        loading.value = false
+      }
+    }
+
+    // Thêm computed properties cho các nút xử lý nhanh
+    const canQuickComplete = computed(() => {
+      return props.order.invoice?.status === 'paid'
+    })
+
+    // Các hàm xử lý cho từng action
+    const handleQuickShipping = async () => {
+      loading.value = true
+      try {
+        const response = await axios.put(route('orders.update', props.order.id), {
+          status: 'shipping',
+          note: 'Chuyển sang trạng thái giao hàng'
+        })
+
+        if (response.data.success) {
+          toast.success('Đơn hàng đã chuyển sang trạng thái giao hàng')
+          router.reload()
+        }
+      } catch (error) {
+        console.error('Error updating order to shipping:', error)
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái')
+      } finally {
+        loading.value = false
+      }
+    }
+
+    const handleQuickComplete = async () => {
+      loading.value = true
+      try {
+        const response = await axios.post(`/api/orders/${props.order.id}/complete`, {
+          note: 'Hoàn thành đơn hàng'
+        })
+
+        if (response.data.success) {
+          toast.success('Đơn hàng đã được hoàn thành thành công')
+          if (hasServiceCombo.value) {
+            toast.info('Các gói liệu trình đã được tạo cho khách hàng')
+          }
+          router.reload()
+        }
+      } catch (error) {
+        console.error('Error completing order:', error)
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hoàn thành đơn hàng')
+      } finally {
+        loading.value = false
+      }
+    }
+
     return {
       showStatusModal,
       showPaymentModal,
@@ -836,6 +948,11 @@ export default {
       formatAddress,
       needsServicePackageCreation,
       hasCreatedServicePackages,
+      canQuickConfirm,
+      handleQuickConfirm,
+      canQuickComplete,
+      handleQuickShipping,
+      handleQuickComplete,
     }
   }
 }

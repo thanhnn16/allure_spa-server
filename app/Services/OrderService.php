@@ -376,7 +376,7 @@ class OrderService
 
             // Kiểm tra và tạo service packages cho các service combo
             foreach ($order->orderItems as $item) {
-                if ($item->item_type === 'service' && $item->service_type) {
+                if ($item->item_type === 'service' && $item->service_type == 'combo_5' || $item->service_type == 'combo_10') {
                     // Kiểm tra xem đã có service package chưa
                     $existingPackage = UserServicePackage::where([
                         'order_id' => $order->id,
