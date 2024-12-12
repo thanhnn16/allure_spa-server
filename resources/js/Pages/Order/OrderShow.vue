@@ -580,7 +580,7 @@ export default {
         if (response.data.success) {
           toast.success('Đơn hàng đã được hoàn thành thành công')
           if (hasServiceCombo.value) {
-            toast.info('Các gói li���u trình đã được tạo cho khách hàng')
+            toast.info('Các gói liệu trình đã được tạo cho khách hàng')
           }
           router.reload()
         }
@@ -852,51 +852,65 @@ export default {
 
     // Thêm computed properties cho các nút xử lý nhanh
     const canQuickComplete = computed(() => {
-      return props.order.invoice?.status === 'paid'
-    })
+      return props.order.invoice?.status === 'paid';
+    });
 
-    // Các hàm xử lý cho từng action
+    // Thêm hàm kiểm tra trạng thái thanh toán
+    const checkPaymentStatus = () => {
+      if (props.order.invoice?.status !== 'paid') {
+        toast.warning('Vui lòng thanh toán đơn hàng trước khi thực hiện thao tác này');
+        return false;
+      }
+      return true;
+    };
+
+    // Cập nhật hàm handleQuickShipping
     const handleQuickShipping = async () => {
-      loading.value = true
+      if (!checkPaymentStatus()) return;
+      
+      loading.value = true;
       try {
         const response = await axios.put(route('orders.update', props.order.id), {
           status: 'shipping',
           note: 'Chuyển sang trạng thái giao hàng'
-        })
+        });
 
         if (response.data.success) {
-          toast.success('Đơn hàng đã chuyển sang trạng thái giao hàng')
-          router.reload()
+          toast.success('Đơn hàng đã chuyển sang trạng thái giao hàng');
+          router.reload();
         }
       } catch (error) {
-        console.error('Error updating order to shipping:', error)
-        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái')
+        console.error('Error updating order to shipping:', error);
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
       } finally {
-        loading.value = false
+        loading.value = false;
       }
-    }
+    };
 
+    // Cập nhật hàm handleQuickComplete 
     const handleQuickComplete = async () => {
-      loading.value = true
+      if (!checkPaymentStatus()) return;
+      
+      loading.value = true;
       try {
         const response = await axios.post(`/api/orders/${props.order.id}/complete`, {
           note: 'Hoàn thành đơn hàng'
-        })
+        });
 
         if (response.data.success) {
-          toast.success('Đơn hàng đã được hoàn thành thành công')
+          toast.success('Đơn hàng đã được hoàn thành thành công');
           if (hasServiceCombo.value) {
-            toast.info('Các gói liệu trình đã được tạo cho khách hàng')
+            toast.info('Các gói liệu trình đã được tạo cho khách hàng');
           }
-          router.reload()
+          router.reload();
         }
       } catch (error) {
-        console.error('Error completing order:', error)
-        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hoàn thành đơn hàng')
+        console.error('Error completing order:', error);
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hoàn thành đơn hàng');
       } finally {
-        loading.value = false
+        loading.value = false;
       }
-    }
+    };
 
     return {
       showStatusModal,

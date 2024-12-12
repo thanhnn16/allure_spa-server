@@ -249,6 +249,13 @@ class OrderController extends BaseController
                 'note' => 'nullable|string'
             ]);
 
+            // Kiểm tra điều kiện thanh toán cho các trạng thái completed
+            if (in_array($validated['status'], ['completed'])) {
+                if (!$order->invoice || $order->invoice->status !== 'paid') {
+                    return $this->respondWithError('Vui lòng thanh toán đơn hàng trước khi thực hiện thao tác này');
+                }
+            }
+
             $updatedOrder = $this->orderService->updateOrderStatus(
                 $order,
                 $validated['status'],
@@ -715,6 +722,11 @@ class OrderController extends BaseController
         try {
             if (Auth::user()->role !== 'admin') {
                 return $this->respondWithError('Bạn không có quyền thực hiện hành động này', 403);
+            }
+
+            // Kiểm tra thanh toán
+            if (!$order->invoice || $order->invoice->status !== 'paid') {
+                return $this->respondWithError('Vui lòng thanh toán đơn hàng trước khi hoàn thành');
             }
 
             // Add validation check

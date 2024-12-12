@@ -244,20 +244,27 @@ class OrderService
         return $discountAmount;
     }
 
-    public function updateOrderStatus($order, $status, $note = null)
+    public function updateOrderStatus(Order $order, string $newStatus, ?string $note = null)
     {
+        // Kiểm tra điều kiện thanh toán trước khi cho phép chuyển trạng thái
+        if (in_array($newStatus, ['completed'])) {
+            if (!$order->invoice || $order->invoice->status !== 'paid') {
+                throw new \Exception('Vui lòng thanh toán đơn hàng trước khi thực hiện thao tác này');
+            }
+        }
+
         try {
             DB::beginTransaction();
 
             // Kiểm tra điều kiện hủy đơn
-            if ($status === Order::STATUS_CANCELLED) {
+            if ($newStatus === Order::STATUS_CANCELLED) {
                 if (!in_array($order->status, ['pending', 'confirmed'])) {
                     throw new \Exception('Chỉ có thể hủy đơn hàng ở trạng thái chờ xử lý hoặc đã xác nhận');
                 }
 
                 // Cập nhật thông tin hủy đơn
                 $updateData = [
-                    'status' => $status,
+                    'status' => $newStatus,
                     'cancel_reason' => $note,
                     'cancelled_by_user_id' => Auth::id(),
                     'cancelled_at' => now()
@@ -286,7 +293,7 @@ class OrderService
                 $this->rollbackProductStock($order);
             } else {
                 $updateData = [
-                    'status' => $status,
+                    'status' => $newStatus,
                     'note' => $note
                 ];
             }
@@ -302,7 +309,7 @@ class OrderService
                     'data' => [
                         'order_id' => $order->id,
                         'old_status' => $order->getOriginal('status'),
-                        'new_status' => $status
+                        'new_status' => $newStatus
                     ],
                     'send_fcm' => true
                 ]);
