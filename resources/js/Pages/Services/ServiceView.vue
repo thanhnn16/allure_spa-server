@@ -4,7 +4,7 @@
         <Head title="Quản lý liệu trình" />
         <SectionMain>
             <SectionTitleLineWithButton :icon="mdiPackageVariantClosed" title="Danh sách liệu trình" main>
-                <BaseButton :icon="mdiPlus" label="Tạo liệu trình" color="info" rounded-full small />
+                <BaseButton :icon="mdiPlus" label="Tạo liệu trình" color="info" rounded-full small @click="openCreateModal" />
                 <BaseButton :icon="mdiTableBorder" label="Nhập từ Excel" color="success" rounded-full small />
             </SectionTitleLineWithButton>
 
@@ -118,6 +118,13 @@
                 <TablePagination :links="services.links" />
             </div>
         </SectionMain>
+
+        <ServiceFormModal
+            v-model="showServiceModal"
+            :service="selectedService"
+            @close="closeServiceModal"
+            @service-saved="handleServiceSaved"
+        />
     </LayoutAuthenticated>
 </template>
 
@@ -133,6 +140,8 @@ import { Head } from "@inertiajs/vue3"
 import { ref, watch } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import TablePagination from '@/Components/TablePagination.vue'
+import ServiceFormModal from './Components/ServiceFormModal.vue'
+import { useToast } from 'vue-toastification'
 
 const props = defineProps({
     services: Object,
@@ -215,6 +224,29 @@ const formatDuration = (duration) => {
 
 const viewServiceDetails = (serviceId) => {
     router.visit(route('services.show', serviceId))
+}
+
+const toast = useToast()
+const showServiceModal = ref(false)
+const selectedService = ref(null)
+
+const openCreateModal = () => {
+    selectedService.value = null
+    showServiceModal.value = true
+}
+
+const closeServiceModal = () => {
+    showServiceModal.value = false
+    selectedService.value = null
+}
+
+const handleServiceSaved = () => {
+    router.reload()
+}
+
+const openEditModal = (service) => {
+    selectedService.value = service
+    showServiceModal.value = true
 }
 </script>
 

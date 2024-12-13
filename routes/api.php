@@ -273,8 +273,14 @@ Route::middleware('throttle:api')->group(function () {
 
         Route::post('treatment-sessions', [ServiceUsageHistoryController::class, 'store']);
 
+        // Service translation routes
         Route::get('services/{service}/translations', [ServiceController::class, 'getTranslations']);
         Route::post('services/{service}/translations', [ServiceController::class, 'updateTranslations']);
+
+        // Service routes
+        Route::post('/services', [ServiceController::class, 'store']);
+        Route::put('/services/{service}', [ServiceController::class, 'update']);
+
 
         // Thêm route để lấy danh sách users
         Route::get('/users', [UserController::class, 'index']);

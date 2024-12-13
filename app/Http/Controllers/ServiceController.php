@@ -453,4 +453,78 @@ class ServiceController extends BaseController
             return $this->respondWithError('Error updating translations: ' . $e->getMessage());
         }
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/services",
+     *     summary="Tạo dịch vụ mới",
+     *     tags={"Services"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"service_name","category_id","single_price","duration"},
+     *             @OA\Property(property="service_name", type="string", example="Massage chân"),
+     *             @OA\Property(property="category_id", type="integer", example=1),
+     *             @OA\Property(property="single_price", type="number", example=500000),
+     *             @OA\Property(property="combo_5_price", type="number", example=2000000),
+     *             @OA\Property(property="combo_10_price", type="number", example=3500000),
+     *             @OA\Property(property="duration", type="integer", example=60),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="validity_period", type="integer", example=365)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Tạo dịch vụ thành công"
+     *     )
+     * )
+     */
+    public function store(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Validate request data
+            $validatedData = $request->validate([
+                'service_name' => 'required|string|max:255',
+                'category_id' => 'required|exists:service_categories,id',
+                'single_price' => 'required|numeric|min:0',
+                'combo_5_price' => 'nullable|numeric|min:0',
+                'combo_10_price' => 'nullable|numeric|min:0',
+                'duration' => 'required|integer|min:0',
+                'description' => 'nullable|string',
+                'validity_period' => 'nullable|integer|min:0'
+            ]);
+
+            // Create service
+            $service = $this->serviceService->createService($validatedData);
+
+            // Handle images if present
+            if ($request->hasFile('images')) {
+                $this->mediaService->createMultiple($service, $request->file('images'), 'image');
+            }
+
+            DB::commit();
+
+            if ($request->expectsJson()) {
+                return $this->respondWithJson($service, 'Tạo dịch vụ thành công', 201);
+            }
+
+            return redirect()->route('services.index')
+                ->with('success', 'Dịch vụ đã được tạo thành công.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Service creation failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            if ($request->expectsJson()) {
+                return $this->respondWithError('Không thể tạo dịch vụ: ' . $e->getMessage(), 500);
+            }
+
+            return back()->withErrors(['error' => 'Không thể tạo dịch vụ'])->withInput();
+        }
+    }
 }

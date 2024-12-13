@@ -2,9 +2,9 @@
   <CardBoxModal
     :model-value="modelValue"
     @update:model-value="updateModal"
-    title="Chỉnh sửa dịch vụ"
+    :title="isEditing ? 'Chỉnh sửa dịch vụ' : 'Thêm dịch vụ mới'"
     button="primary"
-    button-label="Cập nhật"
+    :button-label="isEditing ? 'Cập nhật' : 'Thêm mới'"
     has-cancel
     @confirm="handleSubmit"
     @cancel="closeModal"
@@ -80,6 +80,37 @@
         </div>
       </div>
 
+      <!-- Product Images -->
+      <div class="py-2">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Hình ảnh dịch vụ</label>
+        <div class="flex flex-wrap gap-4 mb-4">
+          <div v-for="(preview, index) in previews" :key="index"
+            class="relative w-24 h-24 border rounded-lg overflow-hidden">
+            <img :src="preview" class="w-full h-full object-cover">
+            <button @click.prevent="removeImage(index)"
+              class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+              <BaseIcon :path="mdiClose" size="16" />
+            </button>
+          </div>
+          <div 
+            class="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-500"
+            @click="triggerFileInput"
+          >
+            <BaseIcon :path="mdiPlus" size="24" class="text-gray-400" />
+            <input 
+              type="file" 
+              ref="fileInput" 
+              class="hidden" 
+              multiple 
+              @change="handleImageUpload"
+              accept="image/*"
+            >
+          </div>
+        </div>
+        <p class="text-xs text-gray-500">PNG, JPG, GIF tối đa 2MB</p>
+        <span v-if="form.errors.images" class="text-red-500 text-sm">{{ form.errors.images }}</span>
+      </div>
+
       <!-- Mô tả -->
       <div>
         <label class="form-label">Mô tả</label>
@@ -93,17 +124,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import CardBoxModal from '@/Components/CardBoxModal.vue'
-import BaseButton from '@/Components/BaseButton.vue'
+import BaseIcon from '@/Components/BaseIcon.vue'
+import { useToast } from 'vue-toastification'
+import { mdiClose, mdiPlus } from '@mdi/js'
+
+const toast = useToast()
+const fileInput = ref(null)
+const previews = ref([])
+const imageFiles = ref([])
 
 const props = defineProps({
   modelValue: Boolean,
-  service: Object,
+  service: {
+    type: Object,
+    default: null
+  },
 })
 
-const emit = defineEmits(['update:modelValue', 'close', 'service-updated'])
+const emit = defineEmits(['update:modelValue', 'close', 'service-saved'])
+
+const isEditing = computed(() => !!props.service)
 
 const categories = ref([])
 
@@ -116,19 +159,56 @@ const form = useForm({
   combo_5_price: 0,
   combo_10_price: 0,
   validity_period: 0,
+  images: [],
 })
 
+// Thêm các methods xử lý ảnh
+const triggerFileInput = () => {
+  fileInput.value.click()
+}
+
+const handleImageUpload = (event) => {
+  const files = Array.from(event.target.files)
+  const existingCount = imageFiles.value.length
+  const totalCount = existingCount + files.length
+
+  if (totalCount > 10) {
+    toast.error('Không được upload quá 10 ảnh')
+    return
+  }
+
+  files.forEach(file => {
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error(`File ${file.name} vượt quá 2MB`)
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      previews.value.push(e.target.result)
+    }
+    reader.readAsDataURL(file)
+    imageFiles.value.push(file)
+  })
+
+  form.images = imageFiles.value
+}
+
+const removeImage = (index) => {
+  previews.value.splice(index, 1)
+  imageFiles.value.splice(index, 1)
+  form.images = imageFiles.value
+}
+
 onMounted(async () => {
-  // Fetch categories
   try {
     const response = await fetch('/api/services/categories')
     const data = await response.json()
     categories.value = data.data
   } catch (error) {
-    console.error('Error fetching categories:', error)
+    toast.error('Lỗi khi tải danh mục dịch vụ')
   }
 
-  // Initialize form with service data
   if (props.service) {
     form.service_name = props.service.service_name
     form.description = props.service.description
@@ -138,6 +218,13 @@ onMounted(async () => {
     form.combo_5_price = props.service.combo_5_price
     form.combo_10_price = props.service.combo_10_price
     form.validity_period = props.service.validity_period
+
+    // Load existing images if any
+    if (props.service.media) {
+      props.service.media.forEach(media => {
+        previews.value.push(media.url)
+      })
+    }
   }
 })
 
@@ -147,14 +234,44 @@ const updateModal = (value) => {
 
 const closeModal = () => {
   form.reset()
+  previews.value = []
+  imageFiles.value = []
   emit('close')
 }
 
 const handleSubmit = () => {
-  form.put(route('services.update', props.service.id), {
+  const formData = new FormData()
+  
+  // Append all form fields
+  Object.keys(form).forEach(key => {
+    if (key !== 'images') {
+      formData.append(key, form[key])
+    }
+  })
+
+  // Append images
+  imageFiles.value.forEach((file, index) => {
+    formData.append(`images[${index}]`, file)
+  })
+
+  const url = isEditing.value 
+    ? route('services.update', props.service.id)
+    : route('services.store')
+    
+  const method = isEditing.value ? 'put' : 'post'
+
+  form[method](url, {
+    data: formData,
+    forceFormData: true,
     onSuccess: () => {
-      emit('service-updated')
+      toast.success(isEditing.value ? 'Cập nhật dịch vụ thành công' : 'Thêm dịch vụ mới thành công')
+      emit('service-saved')
+      closeModal()
     },
+    onError: (errors) => {
+      console.log(errors)
+      toast.error('Có lỗi xảy ra, vui lòng thử lại')
+    }
   })
 }
 </script>

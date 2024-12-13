@@ -4,14 +4,20 @@ namespace App\Services;
 
 use App\Models\Service;
 use App\Models\ServiceCategory;
-use App\Models\ServiceCombo;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\UploadedFile;
 
 class ServiceService
 {
+
+    public function __construct(private MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
+
     public function getAllCategories(): Collection
     {
         return ServiceCategory::with('children', 'services')->whereNull('parent_id')->get();
@@ -59,17 +65,17 @@ class ServiceService
                     ->where('rating_type', 'service');
             }
         ])
-        ->withCount(['ratings as total_ratings' => function ($query) {
-            $query->where('status', 'approved')
-                ->where('rating_type', 'service');
-        }])
-        ->withAvg(['ratings as average_rating' => function ($query) {
-            $query->where('status', 'approved')
-                ->where('rating_type', 'service');
-        }], 'stars');
+            ->withCount(['ratings as total_ratings' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'service');
+            }])
+            ->withAvg(['ratings as average_rating' => function ($query) {
+                $query->where('status', 'approved')
+                    ->where('rating_type', 'service');
+            }], 'stars');
 
         $service = $query->findOrFail($id);
-        
+
         // Set user_id vào service instance để dùng trong getIsFavoriteAttribute
         $service->current_user_id = $userId;
 
@@ -95,5 +101,28 @@ class ServiceService
         }
 
         return $service->delete();
+    }
+
+    public function createService(array $data)
+    {
+        try {
+            $service = Service::create($data);
+
+            if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+                $this->mediaService->create($service, $data['image'], 'image');
+            }
+
+            if (isset($data['images']) && is_array($data['images'])) {
+                $this->mediaService->createMultiple($service, $data['images'], 'image');
+            }
+
+            return $service;
+        } catch (\Exception $e) {
+            Log::error('Error creating service:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 }

@@ -122,7 +122,7 @@ import Carousel from '@/Components/Carousel.vue'
 import { mdiPackageVariantClosed, mdiPencil, mdiDelete, mdiImage, mdiTranslate } from '@mdi/js'
 
 // Thêm các import cho modal components
-import EditServiceModal from './Components/EditServiceModal.vue'
+import EditServiceModal from './Components/ServiceFormModal.vue'
 import DeleteConfirmModal from './Components/DeleteConfirmModal.vue'
 import ManageImagesModal from './Components/ManageImagesModal.vue'
 import TranslationsModal from './Components/TranslationsModal.vue'
