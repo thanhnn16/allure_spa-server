@@ -266,8 +266,9 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('service-packages/{package}/history', [ServiceUsageController::class, 'getUsageHistory']);
 
         // Banner API routes
-        Route::post('banners', [BannerController::class, 'store'])->name('banners.store');
-        Route::delete('banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
+        Route::post('banners', [BannerController::class, 'store']);
+        Route::put('banners/{banner}', [BannerController::class, 'update']);
+        Route::delete('banners/{banner}', [BannerController::class, 'destroy']);
 
 
         Route::post('treatment-sessions', [ServiceUsageHistoryController::class, 'store']);

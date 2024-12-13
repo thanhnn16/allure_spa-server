@@ -161,6 +161,7 @@ const handleStatusChange = async (newStatus) => {
             }, 1000)
         }
     } catch (error) {
+        console.log(error?.response?.data)
         notification.value = {
             type: 'danger',
             message: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái'

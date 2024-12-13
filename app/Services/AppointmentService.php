@@ -219,12 +219,27 @@ class AppointmentService
                 // Tìm gói dịch vụ liên quan
                 $package = $appointment->userServicePackage;
                 if ($package) {
+                    // Kiểm tra số lần còn lại
+                    if ($package->remaining_sessions < 1) {
+                        throw new \Exception('Không đủ số lần trong gói combo');
+                    }
+
+                    // Cập nhật số lần sử dụng
+                    $package->increment('used_sessions');
+
+                    // Tính thời gian bắt đầu và kết thúc dựa trên appointment
+                    $startTime = Carbon::parse($appointment->appointment_date)
+                        ->setTimeFromTimeString($appointment->timeSlot->start_time);
+                    $endTime = Carbon::parse($appointment->appointment_date)
+                        ->setTimeFromTimeString($appointment->timeSlot->end_time);
+
                     // Tạo service usage history
                     ServiceUsageHistory::create([
                         'user_service_package_id' => $package->id,
-                        'used_date' => now(),
                         'staff_user_id' => $appointment->staff_user_id,
-                        'note' => $data['note'] ?? "Hoàn thành lịch hẹn #{$appointment->id}",
+                        'start_time' => $startTime,
+                        'end_time' => $endTime,
+                        'notes' => $data['note'] ?? "Hoàn thành lịch hẹn #{$appointment->id}",
                         'appointment_id' => $appointment->id
                     ]);
                 }
@@ -319,7 +334,7 @@ class AppointmentService
 
             return [
                 'status' => 500,
-                'message' => 'Đã xảy ra lỗi khi cập nhật lịch hẹn',
+                'message' => 'Đã xảy ra lỗi khi cập nhật lịch hẹn ' . $e->getMessage(),
                 'data' => null,
                 'success' => false
             ];

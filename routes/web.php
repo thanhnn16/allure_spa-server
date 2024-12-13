@@ -127,9 +127,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
 
     // Mobile App routes - Web Interface
+    Route::resource('banners', BannerController::class);
     Route::get('banners', [BannerController::class, 'index'])->name('banners.web');
     Route::post('banners/reorder', [BannerController::class, 'reorder'])->name('banners.reorder');
-    Route::put('banners/{banner}', [BannerController::class, 'update'])->name('banners.update');
     Route::post('banners/{banner}/toggle', [BannerController::class, 'toggle'])->name('banners.toggle');
 
     // Report routes
