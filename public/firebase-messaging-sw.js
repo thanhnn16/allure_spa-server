@@ -1,46 +1,67 @@
 importScripts('https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.1/firebase-messaging-compat.js');
 
-const firebaseConfig = {
-    apiKey: "your-api-key",
-    authDomain: "your-auth-domain",
-    projectId: "your-project-id",
-    storageBucket: "your-storage-bucket",
-    messagingSenderId: "your-messaging-sender-id",
-    appId: "your-app-id"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-
-// Get messaging instance
-const messaging = firebase.messaging();
-
-// Handle background messages
-messaging.onBackgroundMessage((payload) => {
-    const { title, body } = payload.notification;
-
-    self.registration.showNotification(title, {
-        body,
-        icon: '/images/logo.png',
-        badge: '/images/badge.png',
-        data: payload.data,
-        vibrate: [200, 100, 200],
-        actions: [{
-            action: 'open',
-            title: 'Xem chi tiết'
-        }]
-    });
+// Lấy config từ environment variables
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'FIREBASE_CONFIG') {
+        initializeFirebase(event.data.config);
+    }
 });
 
-// Handle notification click
-self.addEventListener('notificationclick', function (event) {
+function initializeFirebase(config) {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(config);
+        initializeMessaging();
+    }
+}
+
+function initializeMessaging() {
+    const messaging = firebase.messaging();
+
+    messaging.onBackgroundMessage((payload) => {
+        const notificationOptions = {
+            body: payload.notification.body,
+            icon: '/images/logo.png',
+            badge: '/images/badge.png',
+            data: payload.data,
+            vibrate: [200, 100, 200],
+            actions: [{
+                action: 'open',
+                title: 'Xem chi tiết'
+            }],
+            tag: payload.data?.notificationId || 'default' // Tránh trùng lặp thông báo
+        };
+
+        return self.registration.showNotification(
+            payload.notification.title,
+            notificationOptions
+        );
+    });
+}
+
+self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
-    if (event.action === 'open') {
+    if (event.action === 'open' || !event.action) {
         const urlToOpen = event.notification.data?.url || '/notifications';
+        
         event.waitUntil(
-            clients.openWindow(urlToOpen)
+            clients.matchAll({ type: 'window', includeUncontrolled: true })
+                .then(windowClients => {
+                    // Kiểm tra xem có tab nào đang mở không
+                    const hadWindowToFocus = windowClients.some(windowClient => {
+                        if (windowClient.url === urlToOpen) {
+                            windowClient.focus();
+                            return true;
+                        }
+                        return false;
+                    });
+
+                    // Nếu không có tab nào đang mở, mở tab mới
+                    if (!hadWindowToFocus) {
+                        return clients.openWindow(urlToOpen);
+                    }
+                })
         );
     }
 }); 

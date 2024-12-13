@@ -29,7 +29,7 @@ axios.interceptors.request.use(config => {
     const token = document.cookie
         .split('; ')
         .find(row => row.startsWith('XSRF-TOKEN='));
-        
+
     if (token) {
         config.headers['X-XSRF-TOKEN'] = decodeURIComponent(token.split('=')[1]);
     }
@@ -64,52 +64,120 @@ const firebaseConfig = {
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
 const messaging = getMessaging(firebaseApp);
-// Register service worker and get FCM token
-const registerServiceWorker = async () => {
+
+// Hàm kiểm tra và yêu cầu quyền thông báo
+const requestNotificationPermission = async () => {
     try {
-        if ('serviceWorker' in navigator) {
-            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-                scope: '/'
-            });
-
-            // Kiểm tra trạng thái quyền thông báo
-            if (Notification.permission === 'denied') {
-                // Sử dụng vue-toastification để hiển thị hướng dẫn
-                const toast = useToast();
-                toast.warning(
-                    'Thông báo đã bị tắt. Để bật lại: \n' +
-                    '1. Nhấp vào biểu tượng 🔒 bên cạnh URL\n' +
-                    '2. Tìm mục "Thông báo"\n' +
-                    '3. Thay đổi từ "Chặn" sang "Cho phép"',
-                    {
-                        timeout: 10000,
-                        closeButton: true,
-                        position: "bottom-right",
-                        icon: "🔔"
-                    }
-                );
-                return registration;
-            }
-
-            return registration;
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            console.warn('Notification permission not granted');
+            return false;
         }
+        return true;
     } catch (error) {
-        console.error('Service worker registration failed:', error);
+        console.error('Error requesting notification permission:', error);
+        return false;
     }
 };
 
-// Register Service Worker
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-                console.log('SW registered:', registration);
-            })
-            .catch(error => {
-                console.log('SW registration failed:', error);
-            });
-    });
-}
+// Hàm đăng ký service worker
+const registerServiceWorker = async () => {
+    if (!('serviceWorker' in navigator)) {
+        console.warn('Service Worker is not supported');
+        return null;
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+            scope: '/'
+        });
+        console.log('Service Worker registered successfully', registration);
+        return registration;
+    } catch (error) {
+        console.error('Service Worker registration failed:', error);
+        return null;
+    }
+};
+
+// Hàm lấy FCM token
+const getFCMToken = async (registration) => {
+    try {
+        const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+        if (!vapidKey) {
+            throw new Error('VAPID key is missing');
+        }
+
+        const token = await getToken(messaging, {
+            vapidKey,
+            serviceWorkerRegistration: registration
+        });
+
+        if (!token) {
+            throw new Error('Failed to get FCM token');
+        }
+
+        return token;
+    } catch (error) {
+        console.error('Error getting FCM token:', error);
+        return null;
+    }
+};
+
+// Hàm gửi token lên server
+const sendTokenToServer = async (token) => {
+    try {
+        await axios.post('/api/fcm/token', {
+            token,
+            device_type: 'web'
+        });
+        console.log('FCM token sent to server successfully');
+    } catch (error) {
+        console.error('Error sending FCM token to server:', error);
+        if (error.response?.status === 401) {
+            console.warn('Unauthorized. Please log in again.');
+        }
+    }
+};
+
+// Hàm chính để khởi tạo notification system
+const initializeNotificationSystem = async () => {
+    // Kiểm tra quyền thông báo
+    const hasPermission = await requestNotificationPermission();
+    if (!hasPermission) {
+        const toast = useToast();
+        toast.warning(
+            'Thông báo đã bị tắt. Để bật lại: \n' +
+            '1. Nhấp vào biểu tượng 🔒 bên cạnh URL\n' +
+            '2. Tìm mục "Thông báo"\n' +
+            '3. Thay đổi từ "Chặn" sang "Cho phép"',
+            {
+                timeout: 10000,
+                closeButton: true,
+                position: "bottom-right",
+                icon: "🔔"
+            }
+        );
+        return;
+    }
+
+    // Đăng ký service worker
+    const registration = await registerServiceWorker();
+    if (!registration) return;
+
+    // Sau khi đăng ký service worker thành công
+    if (registration) {
+        registration.active.postMessage({
+            type: 'FIREBASE_CONFIG',
+            config: firebaseConfig
+        });
+    }
+
+    // Lấy và gửi token
+    const token = await getFCMToken(registration);
+    if (token) {
+        await sendTokenToServer(token);
+    }
+};
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -126,46 +194,8 @@ createInertiaApp({
         const layoutStore = useLayoutStore()
         layoutStore.initDarkMode()
 
-        // Thay đổi cách xử lý service worker và quyền thông báo
-        registerServiceWorker().then(async (registration) => {
-            if (!registration) return;
-            // Kiểm tra và yêu cầu quyền thông báo
-            if (Notification.permission === 'default') {
-                const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    console.warn('Notification permission not granted');
-                    return;
-                }
-            }
-
-            // Nếu đã có quyền, tiếp tục xử lý token FCM
-            if (Notification.permission === 'granted') {
-                const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-                if (!vapidKey) {
-                    throw new Error('VAPID key is missing');
-                }
-
-                const token = await getToken(messaging, {
-                    vapidKey: vapidKey,
-                    serviceWorkerRegistration: registration
-                });
-
-                if (token) {
-                    try {
-                        await axios.post('/api/fcm/token', {
-                            token,
-                            device_type: 'web'
-                        });
-                    } catch (error) {
-                        if (error.response && error.response.status === 401) {
-                            console.warn('Unauthorized. Please log in again.');
-                        } else {
-                            throw error;
-                        }
-                    }
-                }
-            }
-        });
+        // Khởi tạo notification system
+        initializeNotificationSystem();
 
         // Initialize FCM after app creation
         const notificationStore = useNotificationStore()

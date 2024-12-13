@@ -16,19 +16,22 @@ export const useNotificationStore = defineStore('notification', {
         handleFCMMessage(payload) {
             const toast = useToast()
             
-            // Kiểm tra và lấy nội dung thông báo
-            const title = payload.notification?.title || 'Thông báo mới'
-            const body = payload.notification?.body || payload.data?.message || ''
-            const type = payload.data?.type || 'info'
+            // Kiểm tra và lấy nội dung thông báo từ cả notification và data
+            const notification = payload.notification || {};
+            const data = payload.data || {};
+            
+            const title = notification.title || data.title || 'Thông báo mới';
+            const body = notification.body || data.content || data.message || '';
+            const type = data.type || 'info';
 
             // Thêm notification vào state
-            if (payload.data?.notification_id) {
+            if (data.notification_id) {
                 this.notifications.unshift({
-                    id: payload.data.notification_id,
+                    id: data.notification_id,
                     title: title,
-                    body: body,
+                    body: body, 
                     type: type,
-                    data: payload.data,
+                    data: data,
                     timestamp: new Date(),
                     read: false
                 })
@@ -36,16 +39,14 @@ export const useNotificationStore = defineStore('notification', {
             }
 
             // Hiển thị toast với nội dung đầy đủ
-            toast({
-                type: type,
+            toast.info({
                 title: title,
-                message: body,
-                timeout: 5000,
+                description: body, // Sử dụng description thay vì message
+                duration: 5000,
                 onClick: () => {
-                    if (payload.data?.chat_id) {
-                        // Refresh chat messages if needed
+                    if (data.chat_id) {
                         window.dispatchEvent(new CustomEvent('refresh-chat-messages', {
-                            detail: { chatId: payload.data.chat_id }
+                            detail: { chatId: data.chat_id }
                         }))
                     }
                 }
