@@ -292,6 +292,7 @@ Route::middleware('throttle:api')->group(function () {
         // Thêm routes cho notification
         Route::prefix('notifications')->group(function () {
             Route::get('/all', [NotificationController::class, 'getAllNotifications']);
+            Route::get('/{id}', [NotificationController::class, 'getNotification']);
             Route::delete('/{id}', [NotificationController::class, 'deleteNotification']);
             Route::post('/send', [NotificationController::class, 'sendNotification']);
         });

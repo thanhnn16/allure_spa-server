@@ -206,4 +206,47 @@ class NotificationController extends BaseController
         $notification->delete();
         return $this->respondWithJson(null, 'Notification deleted successfully');
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/notifications/{id}",
+     *     summary="Lấy chi tiết thông báo",
+     *     tags={"Notifications"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Success",
+     *         @OA\JsonContent(ref="#/components/schemas/Notification")
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Không có quyền truy cập thông báo này"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Không tìm thấy thông báo"
+     *     )
+     * )
+     */
+    public function getNotification($id)
+    {
+        $notification = Notification::with(['media', 'translations'])
+            ->find($id);
+
+        if (!$notification) {
+            return $this->respondWithError('Không tìm thấy thông báo', 404);
+        }
+
+        // Kiểm tra xem thông báo có thuộc về người dùng hiện tại không
+        if ($notification->user_id !== Auth::id()) {
+            return $this->respondWithError('Bạn không có quyền xem thông báo này', 403);
+        }
+
+        return $this->respondWithJson($notification);
+    }
 }

@@ -557,4 +557,16 @@ class NotificationService
 
         return $query->pluck('id')->toArray();
     }
+
+    public function getNotificationById($id)
+    {
+        $notification = Notification::with(['media', 'translations'])
+            ->find($id);
+
+        if (!$notification) {
+            return null;
+        }
+
+        return $this->formatNotification($notification);
+    }
 }
