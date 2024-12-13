@@ -435,7 +435,13 @@ const userServicePackages = computed(() => {
 });
 
 const completedPackages = computed(() => {
-    return safeUser.value.user_service_packages?.filter(p => p.status === 'completed') || [];
+    if (!safeUser.value?.user_service_packages) {
+        return [];
+    }
+    
+    return safeUser.value.user_service_packages
+        .filter(p => p.status === 'completed')
+        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 });
 
 const completedTreatments = computed(() => {
@@ -1613,6 +1619,102 @@ const handleUpdate = async (info) => {
                     <!-- Empty State -->
                     <div v-else class="p-6 text-center text-gray-600 dark:text-gray-400">
                         Chưa có liệu trình nào đang thực hiện
+                    </div>
+                </div>
+
+                <!-- Completed Treatments -->
+                <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md overflow-hidden mt-6">
+                    <div class="p-4 border-b dark:border-slate-700">
+                        <h3 class="text-lg font-medium leading-6 dark:text-white">Liệu trình đã hoàn thành</h3>
+                    </div>
+
+                    <div v-if="completedPackages.length" class="divide-y dark:divide-slate-700 p-4">
+                        <div v-for="servicePackage in completedPackages" :key="servicePackage.id" 
+                             class="py-4 first:pt-0 last:pb-0">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-medium dark:text-white">{{ servicePackage.service_name }}</h4>
+                                        <span :class="{
+                                            'px-2 py-0.5 text-xs font-medium rounded-full': true,
+                                            [`bg-${servicePackage.package_type.color}-100 text-${servicePackage.package_type.color}-800`]: true,
+                                            [`dark:bg-${servicePackage.package_type.color}-900 dark:text-${servicePackage.package_type.color}-200`]: true
+                                        }">
+                                            {{ servicePackage.package_type.name }}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        Hoàn thành: {{ formatDate(servicePackage.updated_at) }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mb-4">
+                                <div class="bg-green-600 h-2.5 rounded-full w-full"></div>
+                            </div>
+
+                            <!-- Sessions Info -->
+                            <div class="grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                    <p class="text-gray-600 dark:text-gray-400">Tổng số buổi</p>
+                                    <p class="font-medium dark:text-white">{{ servicePackage.total_sessions }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600 dark:text-gray-400">Đã sử dụng</p>
+                                    <p class="font-medium dark:text-white">{{ servicePackage.used_sessions }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-600 dark:text-gray-400">Trạng thái</p>
+                                    <p class="font-medium text-green-600 dark:text-green-400">Hoàn thành</p>
+                                </div>
+                            </div>
+
+                            <!-- Treatment History -->
+                            <div v-if="servicePackage.treatment_sessions?.length" class="mt-4">
+                                <div class="border-t dark:border-slate-700 pt-4">
+                                    <h5 class="font-medium text-gray-900 dark:text-white mb-3">
+                                        Lịch sử dịch vụ
+                                    </h5>
+                                    <div class="space-y-3">
+                                        <div v-for="session in servicePackage.treatment_sessions" 
+                                             :key="session.id"
+                                             class="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <div class="text-sm text-gray-900 dark:text-white">
+                                                        Buổi #{{ servicePackage.total_sessions - servicePackage.treatment_sessions.indexOf(session) }}
+                                                    </div>
+                                                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                        <div class="flex items-center space-x-2">
+                                                            <BaseIcon :path="mdiCalendar" class="w-4 h-4" />
+                                                            <span>{{ formatDateTime(session.start_time) }}</span>
+                                                        </div>
+                                                        <div class="flex items-center space-x-2 mt-1">
+                                                            <BaseIcon :path="mdiAccount" class="w-4 h-4" />
+                                                            <span>Thực hiện: {{ session.staff?.full_name || 'N/A' }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div v-if="session.result" 
+                                                     class="text-sm text-gray-600 dark:text-gray-400 text-right">
+                                                    <span class="font-medium">Kết quả:</span> {{ session.result }}
+                                                </div>
+                                            </div>
+                                            <div v-if="session.notes" 
+                                                 class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                                <span class="font-medium">Ghi chú:</span> {{ session.notes }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div v-else class="p-6 text-center text-gray-600 dark:text-gray-400">
+                        Chưa có liệu trình nào hoàn thành
                     </div>
                 </div>
             </div>
