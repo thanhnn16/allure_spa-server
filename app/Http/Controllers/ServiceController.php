@@ -6,6 +6,7 @@ use App\Services\ServiceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Service;
+use App\Services\MediaService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -18,10 +19,12 @@ use Illuminate\Support\Facades\DB;
 class ServiceController extends BaseController
 {
     protected $serviceService;
+    protected $mediaService;
 
-    public function __construct(ServiceService $serviceService)
+    public function __construct(ServiceService $serviceService, MediaService $mediaService)
     {
         $this->serviceService = $serviceService;
+        $this->mediaService = $mediaService;
     }
 
     /**
@@ -512,7 +515,6 @@ class ServiceController extends BaseController
 
             return redirect()->route('services.index')
                 ->with('success', 'Dịch vụ đã được tạo thành công.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Service creation failed:', [
