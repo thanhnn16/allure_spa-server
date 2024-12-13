@@ -55,65 +55,70 @@ class AuthController extends BaseController
      */
     public function login(Request $request)
     {
-        // Handle API login
-        if ($request->expectsJson()) {
+        // Handle Web login (Inertia request)
+        if (!$request->expectsJson()) {
             try {
-                $credentials = $request->validate([
-                    'phone_number' => 'required|string',
-                    'password' => 'required|string',
+                $loginRequest = LoginRequest::createFrom($request);
+                $loginRequest->authenticate();
+
+                $user = $request->user();
+                Log::info('User authenticated', [
+                    'user_id' => $user->id,
+                    'role' => $user->role,
+                    'email' => $user->email,
                 ]);
 
-                $result = $this->authService->login($credentials);
+                if ($user->role !== 'admin') {
+                    Log::warning('Non-admin user attempted to log in', [
+                        'user_id' => $user->id,
+                        'role' => $user->role,
+                    ]);
+                    Auth::logout();
+                    
+                    return back()->withErrors([
+                        'phone_number' => __('Bạn không có quyền truy cập hệ thống.'),
+                    ]);
+                }
 
-                return $this->respondWithJson($result, 'Đăng nhập thành công');
-            } catch (\Exception $e) {
-                return $this->respondWithError($e->getMessage());
+                $request->session()->regenerate();
+                
+                // Tạo CSRF token mới
+                $token = csrf_token();
+                $request->session()->put('_token', $token);
+                
+                // Thêm flag reload vào session
+                session()->put('should_reload', true);
+                
+                // Redirect với Inertia và thêm header để trigger reload
+                return redirect()
+                    ->intended(route('dashboard'))
+                    ->with([
+                        'auth_check' => true,
+                        'message' => 'Đăng nhập thành công',
+                        'reload_page' => true // Thêm flag này để client biết cần reload
+                    ]);
+            } catch (ValidationException $e) {
+                Log::error('Login validation failed', [
+                    'errors' => $e->errors(),
+                ]);
+                
+                return back()->withErrors([
+                    'phone_number' => $this->getDetailedErrorMessage($e),
+                ]);
             }
         }
 
-        // Handle Web login
+        // Handle API login
         try {
-            $loginRequest = LoginRequest::createFrom($request);
-            $loginRequest->authenticate();
-
-            $user = $request->user();
-            Log::info('User authenticated', [
-                'user_id' => $user->id,
-                'role' => $user->role,
-                'email' => $user->email,
+            $credentials = $request->validate([
+                'phone_number' => 'required|string',
+                'password' => 'required|string',
             ]);
 
-            if ($user->role !== 'admin') {
-                Log::warning('Non-admin user attempted to log in', [
-                    'user_id' => $user->id,
-                    'role' => $user->role,
-                ]);
-                Auth::logout();
-                throw ValidationException::withMessages([
-                    'phone_number' => __('Bạn không có quyền truy cập hệ thống.'),
-                ]);
-            }
-
-            $request->session()->regenerate();
-            
-            // Tạo CSRF token mới và lưu vào session
-            $token = csrf_token();
-            $request->session()->put('_token', $token);
-            
-            $response = redirect()
-                ->intended(route('dashboard'))
-                ->with('auth_check', true)
-                ->withCookie(cookie()->forever(config('session.cookie'), session()->getId()))
-                ->withCookie(cookie('XSRF-TOKEN', $token, null, null, null, null, false));
-
-            return $response;
-        } catch (ValidationException $e) {
-            Log::error('Login validation failed', [
-                'errors' => $e->errors(),
-            ]);
-            return redirect()->back()->withErrors([
-                'phone_number' => $this->getDetailedErrorMessage($e),
-            ]);
+            $result = $this->authService->login($credentials);
+            return $this->respondWithJson($result, 'Đăng nhập thành công');
+        } catch (\Exception $e) {
+            return $this->respondWithError($e->getMessage());
         }
     }
 

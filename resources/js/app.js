@@ -20,12 +20,36 @@ let token = document.head.querySelector('meta[name="csrf-token"]');
 
 if (token) {
     axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+    axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 } else {
     console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
 }
 
+axios.interceptors.request.use(config => {
+    const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('XSRF-TOKEN='));
+        
+    if (token) {
+        config.headers['X-XSRF-TOKEN'] = decodeURIComponent(token.split('=')[1]);
+    }
+    return config;
+}, error => {
+    return Promise.reject(error);
+});
+
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.withCredentials = true;
+
+axios.interceptors.response.use(
+    response => response,
+    error => {
+        if (error.response && error.response.status === 419) {
+            window.location.reload();
+        }
+        return Promise.reject(error);
+    }
+);
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,

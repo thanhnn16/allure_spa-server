@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import menuAside from '@/menuAside.js'
 import menuNavBar from '@/menuNavBar.js'
 import { useLayoutStore } from '@/Stores/layoutStore'
@@ -9,7 +9,7 @@ import NavBar from '@/Components/NavBar.vue'
 import NavBarItemPlain from '@/Components/NavBarItemPlain.vue'
 import AsideMenu from '@/Components/AsideMenu.vue'
 import FooterBar from '@/Components/FooterBar.vue'
-import { router } from '@inertiajs/vue3'
+import { router, usePage } from '@inertiajs/vue3'
 import {
     mdiMenu,
     mdiClose,
@@ -66,6 +66,15 @@ const markAllAsRead = async () => {
         console.error('Error marking all notifications as read:', error)
     }
 }
+
+// Thêm logic kiểm tra và reload trang
+onMounted(() => {
+    const page = usePage()
+    if (page.props.flash.reload_page) {
+        // Xóa session flag
+        window.location.reload()
+    }
+})
 </script>
 
 <template>

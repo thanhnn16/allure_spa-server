@@ -22,7 +22,7 @@ const form = useForm({
 })
 
 const submit = () => {
-    form.post(route('login'), {
+    form.post(route('login.store'), {
         onFinish: () => form.reset('password'),
     })
 }
@@ -30,6 +30,7 @@ const submit = () => {
 
 <template>
     <LayoutGuest>
+
         <Head title="Đăng nhập" />
         <SectionFullScreen v-slot="{ cardClass }" bgImg="/bg.jpg">
             <CardBox :class="cardClass" is-form @submit.prevent="submit" class="p-6">
@@ -57,7 +58,7 @@ const submit = () => {
 
                 <template #footer>
                     <BaseButtons>
-                        <BaseButton type="submit" color="info" label="Đăng nhập" class="text-black" 
+                        <BaseButton type="submit" color="info" label="Đăng nhập" class="text-black"
                             :class="{ 'opacity-25': form.processing }" :disabled="form.processing" />
                     </BaseButtons>
                 </template>
