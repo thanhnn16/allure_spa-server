@@ -344,11 +344,6 @@ class PayOSController extends Controller
     public function createPaymentLinkForInvoice(Request $request, $invoiceId)
     {
         try {
-            // 1. Kiểm tra cấu hình PayOS
-            if (!config('payos.client_id') || !config('payos.api_key') || !config('payos.checksum_key')) {
-                throw new \Exception('Thiếu cấu hình PayOS');
-            }
-
             $invoice = Invoice::with(['order.orderItems.product', 'order.orderItems.service', 'user'])
                 ->findOrFail($invoiceId);
 
