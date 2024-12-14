@@ -1,14 +1,7 @@
 <template>
-  <CardBoxModal
-    :model-value="modelValue"
-    @update:model-value="updateModal"
-    :title="isEditing ? 'Chỉnh sửa dịch vụ' : 'Thêm dịch vụ mới'"
-    button="primary"
-    :button-label="isEditing ? 'Cập nhật' : 'Thêm mới'"
-    has-cancel
-    @confirm="handleSubmit"
-    @cancel="closeModal"
-  >
+  <CardBoxModal :model-value="modelValue" @update:model-value="updateModal"
+    :title="isEditing ? 'Chỉnh sửa dịch vụ' : 'Thêm dịch vụ mới'" button="primary"
+    :button-label="isEditing ? 'Cập nhật' : 'Thêm mới'" has-cancel @confirm="handleSubmit" @cancel="closeModal">
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Tên dịch vụ -->
@@ -25,7 +18,7 @@
           <label class="form-label required">Danh mục</label>
           <select v-model="form.category_id" class="form-select" required>
             <option value="">Chọn danh mục</option>
-            <option v-for="category in categories" :key="category.id" :value="category.id">
+            <option v-for="category in props.categories" :key="category.id" :value="category.id">
               {{ category.service_category_name }}
             </option>
           </select>
@@ -81,7 +74,7 @@
       </div>
 
       <!-- Product Images -->
-      <div class="py-2">
+      <div v-if="!isEditing" class="py-2">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Hình ảnh dịch vụ</label>
         <div class="flex flex-wrap gap-4 mb-4">
           <div v-for="(preview, index) in previews" :key="index"
@@ -92,19 +85,11 @@
               <BaseIcon :path="mdiClose" size="16" />
             </button>
           </div>
-          <div 
+          <div
             class="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-500"
-            @click="triggerFileInput"
-          >
+            @click="triggerFileInput">
             <BaseIcon :path="mdiPlus" size="24" class="text-gray-400" />
-            <input 
-              type="file" 
-              ref="fileInput" 
-              class="hidden" 
-              multiple 
-              @change="handleImageUpload"
-              accept="image/*"
-            >
+            <input type="file" ref="fileInput" class="hidden" multiple @change="handleImageUpload" accept="image/*">
           </div>
         </div>
         <p class="text-xs text-gray-500">PNG, JPG, GIF tối đa 2MB</p>
@@ -142,13 +127,15 @@ const props = defineProps({
     type: Object,
     default: null
   },
+  categories: {
+    type: Array,
+    default: () => []
+  }
 })
 
 const emit = defineEmits(['update:modelValue', 'close', 'service-saved'])
 
 const isEditing = computed(() => !!props.service)
-
-const categories = ref([])
 
 const form = useForm({
   service_name: '',
@@ -201,28 +188,23 @@ const removeImage = (index) => {
 }
 
 onMounted(async () => {
-  try {
-    const response = await fetch('/api/services/categories')
-    const data = await response.json()
-    categories.value = data.data
-  } catch (error) {
-    toast.error('Lỗi khi tải danh mục dịch vụ')
-  }
-
   if (props.service) {
     form.service_name = props.service.service_name
     form.description = props.service.description
     form.duration = props.service.duration
     form.category_id = props.service.category_id
     form.single_price = props.service.single_price
-    form.combo_5_price = props.service.combo_5_price
-    form.combo_10_price = props.service.combo_10_price
-    form.validity_period = props.service.validity_period
+    form.combo_5_price = props.service.combo_5_price || 0
+    form.combo_10_price = props.service.combo_10_price || 0
+    form.validity_period = props.service.validity_period || 0
 
-    // Load existing images if any
-    if (props.service.media) {
+    if (props.service.media && props.service.media.length > 0) {
+      previews.value = []
       props.service.media.forEach(media => {
-        previews.value.push(media.url)
+        const url = media.file_path.startsWith('http')
+          ? media.file_path
+          : `/storage/${media.file_path.replace(/^\/+/, '')}`
+        previews.value.push(url)
       })
     }
   }
@@ -233,31 +215,30 @@ const updateModal = (value) => {
 }
 
 const closeModal = () => {
-  form.reset()
-  previews.value = []
-  imageFiles.value = []
   emit('close')
 }
 
 const handleSubmit = () => {
   const formData = new FormData()
-  
+
   // Append all form fields
   Object.keys(form).forEach(key => {
-    if (key !== 'images') {
+    if (key !== 'images' || !isEditing.value) {
       formData.append(key, form[key])
     }
   })
 
-  // Append images
-  imageFiles.value.forEach((file, index) => {
-    formData.append(`images[${index}]`, file)
-  })
+  // Append images only if not editing
+  if (!isEditing.value) {
+    imageFiles.value.forEach((file, index) => {
+      formData.append(`images[${index}]`, file)
+    })
+  }
 
-  const url = isEditing.value 
+  const url = isEditing.value
     ? route('services.update', props.service.id)
     : route('services.store')
-    
+
   const method = isEditing.value ? 'put' : 'post'
 
   form[method](url, {
@@ -295,4 +276,4 @@ const handleSubmit = () => {
 .form-error {
   @apply mt-1 text-sm text-red-600 dark:text-red-400;
 }
-</style> 
+</style>

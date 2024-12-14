@@ -1,5 +1,6 @@
 <template>
   <LayoutAuthenticated>
+
     <Head :title="'Chi tiết dịch vụ: ' + service.service_name" />
     <SectionMain :breadcrumbs="[
       { label: 'Danh sách dịch vụ', href: route('services.index') },
@@ -20,12 +21,12 @@
                 class="w-full h-auto rounded-lg shadow">
             </div>
             <div class="flex flex-wrap gap-2">
-              <BaseButton :icon="mdiImage" label="Quản lý ảnh" color="success"
-                class="flex-grow md:flex-grow-0" @click="showManageImagesModal = true" />
-              <BaseButton :icon="mdiPencil" label="Chỉnh sửa" color="info"
-                class="flex-grow md:flex-grow-0" @click="showEditModal = true" />
-              <BaseButton :icon="mdiTranslate" label="Quản lý bản dịch" color="warning"
-                class="flex-grow md:flex-grow-0" @click="showTranslationsModal = true" />
+              <BaseButton :icon="mdiImage" label="Quản lý ảnh" color="success" class="flex-grow md:flex-grow-0"
+                @click="showManageImagesModal = true" />
+              <BaseButton :icon="mdiPencil" label="Chỉnh sửa" color="info" class="flex-grow md:flex-grow-0"
+                @click="showEditModal = true" />
+              <BaseButton :icon="mdiTranslate" label="Quản lý bản dịch" color="warning" class="flex-grow md:flex-grow-0"
+                @click="showTranslationsModal = true" />
               <BaseButton :icon="mdiDelete" label="Xóa" color="danger" class="flex-grow md:flex-grow-0"
                 @click="showDeleteModal = true" />
             </div>
@@ -96,11 +97,11 @@
     </SectionMain>
 
     <!-- Modals -->
-    <EditServiceModal v-model="showEditModal" :service="service" @close="showEditModal = false"
+    <EditServiceModal v-model="showEditModal" :service="service" :categories="categories" @close="showEditModal = false"
       @service-updated="handleServiceUpdated" />
 
-    <DeleteConfirmModal v-if="showDeleteModal" v-model="showDeleteModal" :service="service" @close="showDeleteModal = false"
-      @service-deleted="handleServiceDeleted" />
+    <DeleteConfirmModal v-if="showDeleteModal" v-model="showDeleteModal" :service="service"
+      @close="showDeleteModal = false" @service-deleted="handleServiceDeleted" />
 
     <ManageImagesModal v-model="showManageImagesModal" :service="service" @close="showManageImagesModal = false"
       @updated="handleImagesUpdated" />
@@ -129,6 +130,7 @@ import TranslationsModal from './Components/TranslationsModal.vue'
 
 const props = defineProps({
   service: Object,
+  categories: Array,
 })
 
 const showEditModal = ref(false)
@@ -148,8 +150,8 @@ const formatPrice = (price) => {
 const processedMedia = computed(() => {
   return props.service.media?.map(item => ({
     ...item,
-    file_path: item.file_path.startsWith('http') 
-      ? item.file_path 
+    file_path: item.file_path.startsWith('http')
+      ? item.file_path
       : `/storage/${item.file_path.replace(/^\/+/, '')}`
   })) ?? []
 })

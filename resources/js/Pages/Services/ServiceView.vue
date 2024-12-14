@@ -122,6 +122,7 @@
         <ServiceFormModal
             v-model="showServiceModal"
             :service="selectedService"
+            :categories="categories"
             @close="closeServiceModal"
             @service-saved="handleServiceSaved"
         />

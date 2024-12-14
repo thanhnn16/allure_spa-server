@@ -6,6 +6,7 @@ use App\Services\ServiceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Service;
+use App\Models\ServiceCategory;
 use App\Services\MediaService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -341,8 +342,11 @@ class ServiceController extends BaseController
             return $this->respondWithJson($service, 'Service retrieved successfully');
         }
 
+        $categories = ServiceCategory::all();
+
         return $this->respondWithInertia('Services/Show', [
-            'service' => $service->toArray()
+            'service' => $service->toArray(),
+            'categories' => $categories
         ]);
     }
 
