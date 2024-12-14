@@ -87,7 +87,7 @@ class InvoiceController extends BaseController
             $invoice = $this->invoiceService->createInvoice($validatedData);
 
             if ($request->expectsJson()) {
-                return $this->respondWithJson($invoice->load(['user', 'order.items']), 'Invoice created successfully', 201);
+                return $this->respondWithJson($invoice->load(['user', 'order.orderItems']), 'Invoice created successfully', 201);
             }
 
             return redirect()->route('invoices.show', $invoice->id)
@@ -224,14 +224,14 @@ class InvoiceController extends BaseController
     public function payWithPayOS(Request $request, Invoice $invoice)
     {
         try {
-            // Validate invoice status
+            // Kiểm tra trạng thái invoice
             if (!in_array($invoice->status, ['pending', 'partial'])) {
                 throw new \Exception('Hóa đơn không hợp lệ để thanh toán');
             }
 
             $remainingAmount = $invoice->total_amount - $invoice->paid_amount;
 
-            // Prepare payment data
+            // Chuẩn bị data thanh toán
             $paymentData = [
                 'orderCode' => 'INV' . $invoice->id . '_' . time(),
                 'amount' => $remainingAmount,
@@ -240,12 +240,12 @@ class InvoiceController extends BaseController
                 'cancelUrl' => config('app.url') . '/payment/test?invoice_id=' . $invoice->id . '&status=cancel',
             ];
 
-            // Call PayOS service
+            // Gọi PayOS service
             $payOS = app(PayOS::class);
             $response = $payOS->createPaymentLink($paymentData);
 
             if ($response && isset($response['checkoutUrl'])) {
-                // Save payment attempt to history
+                // Lưu lịch sử thanh toán
                 PaymentHistory::create([
                     'invoice_id' => $invoice->id,
                     'old_payment_status' => $invoice->status,
@@ -268,12 +268,6 @@ class InvoiceController extends BaseController
 
             throw new \Exception('Không thể tạo link thanh toán');
         } catch (\Exception $e) {
-            Log::error('PayOS Payment Error:', [
-                'invoice_id' => $invoice->id,
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()

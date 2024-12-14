@@ -133,8 +133,10 @@ class OrderService
 
             DB::commit();
 
-            // Tạo hóa đơn sau khi tạo đơn hàng thành công
-            $this->createInvoice($order);
+            // Chỉ tự động tạo hóa đơn nếu KHÔNG phải thanh toán qua PayOS
+            if ($data['payment_method_id'] != 3) {
+                $this->createInvoice($order);
+            }
 
             return $order->load(['orderItems', 'user', 'shippingAddress', 'paymentMethod', 'voucher']);
         } catch (\Exception $e) {

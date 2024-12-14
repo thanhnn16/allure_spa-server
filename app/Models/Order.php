@@ -63,6 +63,7 @@ class Order extends Model
     const STATUS_SHIPPING = 'shipping';   // Đang giao hàng
     const STATUS_COMPLETED = 'completed'; // Hoàn thành
     const STATUS_CANCELLED = 'cancelled'; // Đã hủy
+    const PAYMENT_METHOD_PAYOS = 3; // Thêm constant này
 
     public function orderItems()
     {

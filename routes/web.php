@@ -232,4 +232,11 @@ Route::get('/firebase-messaging-sw.js', function () {
         ->header('Content-Type', 'application/javascript');
 });
 
+Route::get('/payment/callback', function () {
+    return Inertia::render('Payment/PaymentCallback', [
+        'orderCode' => request('orderCode'),
+        'invoice_id' => request('invoice_id')
+    ]);
+})->name('payment.callback');
+
 require __DIR__ . '/auth.php';

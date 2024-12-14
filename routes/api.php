@@ -150,12 +150,17 @@ Route::middleware('throttle:api')->group(function () {
         Route::patch('/ratings/{id}/status', [RatingController::class, 'updateStatus']);
 
         // Invoice routes
-        Route::get('/invoices', [InvoiceController::class, 'index']);
-        Route::post('/invoices', [InvoiceController::class, 'store']);
-        Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
-        Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
-        Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy']);
-
+        Route::prefix('invoices')->group(function () {
+            Route::get('/', [InvoiceController::class, 'index']);
+            Route::post('/', [InvoiceController::class, 'store']);
+            Route::get('/{invoice}', [InvoiceController::class, 'show']);
+            Route::put('/{invoice}', [InvoiceController::class, 'update']);
+            Route::delete('/{invoice}', [InvoiceController::class, 'destroy']);
+            
+            // Thêm route cho PayOS
+            Route::post('/{invoice}/pay-with-payos', [PayOSController::class, 'createPaymentLinkForInvoice']);
+            Route::get('/{invoice}/payment', [InvoiceController::class, 'getPaymentDetails']);
+        });
 
         // Chat routes
         Route::get('/chats', [ChatController::class, 'index']);
