@@ -28,6 +28,8 @@ class StockMovementController extends BaseController
         $movements = StockMovement::with(['product'])
             ->when($request->product_id, fn($q) => $q->where('product_id', $request->product_id))
             ->when($request->type, fn($q) => $q->where('type', $request->type))
+            ->when($request->start_date, fn($q) => $q->whereDate('created_at', '>=', $request->start_date))
+            ->when($request->end_date, fn($q) => $q->whereDate('created_at', '<=', $request->end_date))
             ->latest()
             ->paginate(15);
 
@@ -42,7 +44,7 @@ class StockMovementController extends BaseController
         return $this->respondWithInertia('StockMovements/StockMovementView', [
             'stockMovements' => $movements,
             'products' => $products,
-            'filters' => $request->only(['product_id', 'type'])
+            'filters' => $request->only(['product_id', 'type', 'start_date', 'end_date'])
         ]);
     }
 
@@ -52,20 +54,17 @@ class StockMovementController extends BaseController
     public function store(Request $request)
     {
         try {
-            // Validate request
             $validated = $request->validate([
                 'product_id' => 'required|exists:products,id',
                 'quantity' => 'required|numeric|min:1',
-                'type' => 'required|in:in,out',
+                'type' => 'required|in:' . StockMovement::TYPE_IN . ',' . StockMovement::TYPE_OUT,
                 'reason' => 'nullable|string',
                 'reference_number' => 'nullable|string',
                 'note' => 'nullable|string'
             ]);
 
-            // Process stock movement
             $stockMovement = DB::transaction(function () use ($validated) {
                 $product = Product::findOrFail($validated['product_id']);
-
                 $structuredNote = $this->prepareStructuredNote($validated);
 
                 return $this->stockMovementService->createMovement(
@@ -76,9 +75,7 @@ class StockMovementController extends BaseController
                 );
             });
 
-            // Check if request is from web or api
             if ($request->wantsJson()) {
-                // API Response
                 return response()->json([
                     'message' => 'Stock movement created successfully',
                     'status_code' => 201,
@@ -87,7 +84,6 @@ class StockMovementController extends BaseController
                 ], 201);
             }
 
-            // Web Response (Inertia)
             return redirect()->back()->with('success', 'Tạo phiếu kho thành công');
 
         } catch (\Exception $e) {

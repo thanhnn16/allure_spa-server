@@ -87,12 +87,19 @@ class StockMovementService
         int $newQuantity,
         ?string $note
     ): Model {
+        $noteData = $note ? $note : json_encode([
+            'user' => 'System',
+            'reason' => null,
+            'reference' => null,
+            'comment' => null
+        ]);
+
         return StockMovement::create([
             'product_id' => $product->id,
             'quantity' => $quantity,
             'type' => $type,
             'stock_after_movement' => $newQuantity,
-            'note' => $note
+            'note' => $noteData
         ]);
     }
 
@@ -117,5 +124,23 @@ class StockMovementService
             $product->quantity = $lastValidMovement->stock_after_movement;
             $product->save();
         }
+    }
+
+    public function createInitialMovement(Product $product)
+    {
+        $note = [
+            'user' => 'System',
+            'reason' => 'initial_stock',
+            'reference' => null,
+            'comment' => 'Số lượng ban đầu khi tạo sản phẩm'
+        ];
+
+        return StockMovement::create([
+            'product_id' => $product->id,
+            'quantity' => $product->quantity,
+            'type' => StockMovement::TYPE_IN,
+            'stock_after_movement' => $product->quantity,
+            'note' => json_encode($note)
+        ]);
     }
 }

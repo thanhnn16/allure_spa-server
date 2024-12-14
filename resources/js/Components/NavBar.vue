@@ -34,12 +34,11 @@ const menuClick = (event, item) => {
 
         <!-- Brand/Logo -->
         <div class="flex items-center">
-          <h1 class="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 
-                     bg-clip-text text-transparent dark:from-primary-400 dark:to-primary-300">
+          <img src="/images/icon-192x192.png" alt="Allure Spa" class="w-10 h-10">
+          <h1 class="text-xl font-bold text-primary-600 dark:text-primary-400">
             Allure Spa
           </h1>
         </div>
-
         <slot name="left" />
       </div>
 

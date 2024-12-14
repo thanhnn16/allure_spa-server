@@ -11,10 +11,15 @@ class UserGroup extends Model
 {
     protected $fillable = [
         'name',
-        'description'
+        'description',
+        'is_active'
     ];
 
-    protected $appends = ['users_count'];
+    protected $appends = ['users_count', 'last_sync_at'];
+    protected $casts = [
+        'is_active' => 'boolean',
+        'last_sync_at' => 'datetime'
+    ];
 
     /**
      * Điều kiện của nhóm
@@ -130,6 +135,17 @@ class UserGroup extends Model
     {
         $users = $this->getFilteredUsers();
         $this->users()->sync($users->pluck('id'));
+        $this->touch();
         return $users->count();
+    }
+
+    public function getLastSyncAtAttribute()
+    {
+        return $this->updated_at;
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 } 

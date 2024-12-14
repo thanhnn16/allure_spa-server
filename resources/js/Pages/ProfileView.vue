@@ -162,6 +162,7 @@ const handleAvatarUpload = async (event) => {
       toast.success('Tải ảnh đại diện thành công')
       // Cập nhật lại thông tin user từ mainStore
       mainStore.fetchUserInfo()
+      router.reload()
     },
     onError: (errors) => {
       toast.error(errors.avatar || 'Không thể tải lên ảnh đại diện')

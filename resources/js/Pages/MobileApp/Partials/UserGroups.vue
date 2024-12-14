@@ -7,6 +7,10 @@ import FormControl from '@/Components/FormControl.vue'
 import CardBox from '@/Components/CardBox.vue'
 import axios from 'axios'
 import { useToast } from 'vue-toastification'
+import PieChart from '@/Components/Charts/PieChart.vue'
+import BarChart from '@/Components/Charts/BarChart.vue'
+import StatCard from '@/Components/Charts/StatCard.vue'
+import CardBoxModal from '@/Components/CardBoxModal.vue'
 
 const toast = useToast()
 const groups = ref([])
@@ -16,6 +20,9 @@ const loading = ref(false)
 const showStats = ref(false)
 const selectedGroupStats = ref(null)
 const syncingGroups = ref(false)
+const search = ref('')
+const filter = ref('all')
+const syncingGroup = ref(null)
 
 const form = ref({
     name: '',
@@ -54,8 +61,7 @@ const operators = {
         { value: 'never', label: 'Chưa từng ghé thăm' }
     ],
     gender: [
-        { value: '=', label: 'Là' },
-        { value: '!=', label: 'Không phải là' }
+        { value: '=', label: 'Là' }
     ],
     age: [
         { value: '>=', label: 'Lớn hơn hoặc bằng' },
@@ -83,69 +89,95 @@ const operators = {
     ]
 }
 
-const isFormValid = computed(() => {
-    return form.value.name &&
-        form.value.conditions.every(c => 
-            c.field && 
-            c.operator && 
-            validateConditionValue(c)
-        )
-})
+const getDefaultValueForField = (field, operator) => {
+    switch (field) {
+        case 'loyalty_points':
+        case 'purchase_count':
+            return operator === 'between' ? '0,100' : '0'
+
+        case 'last_visit':
+            return operator === 'never' ? 'true' : '30'
+
+        case 'gender':
+            return 'male'
+
+        case 'age':
+            return operator === 'between' ? '18,60' : '18'
+
+        case 'skin_condition':
+            return ''
+
+        case 'total_spent':
+            return operator === 'between' ? '0,10000000' : '1000000'
+
+        case 'membership_duration':
+            return operator === 'between' ? '1,12' : '1'
+
+        case 'favorite_services':
+            return ''
+
+        default:
+            return ''
+    }
+}
 
 const watchFieldChanges = (condition) => {
     watch(() => condition.field, (newField) => {
-        condition.operator = ''
-        condition.value = ''
+        const actualField = typeof newField === 'object' ? newField.value : newField
         
-        switch (newField) {
-            case 'gender':
-                condition.operator = '='
-                condition.value = 'male'
-                break
-                
-            case 'last_visit':
-                condition.operator = 'within'
-                condition.value = '30'
-                break
-                
-            case 'loyalty_points':
-            case 'purchase_count':
-                condition.operator = '>='
-                condition.value = '0'
-                break
-                
-            case 'age':
-                condition.operator = '>='
-                condition.value = '18'
-                break
-                
-            case 'skin_condition':
-                condition.operator = 'contains'
-                condition.value = ''
-                break
-                
-            case 'total_spent':
-                condition.operator = '>='
-                condition.value = '1000000'
-                break
-                
-            case 'membership_duration':
-                condition.operator = '>='
-                condition.value = '1'
-                break
-                
-            case 'favorite_services':
-                condition.operator = 'includes'
-                condition.value = ''
-                break
+        console.log('Field changed:', {
+            actualField,
+            currentOperator: condition.operator,
+            currentValue: condition.value
+        })
+        
+        if (actualField) {
+            const availableOperators = operators[actualField] || []
+            condition.operator = availableOperators.length > 0 ? availableOperators[0].value : ''
+            condition.value = getDefaultValueForField(actualField, condition.operator)
+            
+            console.log('After field change:', {
+                field: actualField,
+                newOperator: condition.operator,
+                newValue: condition.value
+            })
+        } else {
+            condition.operator = ''
+            condition.value = ''
         }
     })
 
-    watch(() => condition.operator, (newOperator) => {
-        if (condition.field === 'last_visit' && newOperator === 'never') {
-            condition.value = 'true'
-        } else if (newOperator === 'between') {
-            condition.value = '0,100'
+    watch(() => condition.operator, (newOperator, oldOperator) => {
+        const actualField = typeof condition.field === 'object' ? condition.field.value : condition.field
+        const actualNewOperator = typeof newOperator === 'object' ? newOperator.value : newOperator
+        const actualOldOperator = typeof oldOperator === 'object' ? oldOperator.value : oldOperator
+        
+        console.log('Operator changed:', {
+            field: actualField,
+            oldOperator: actualOldOperator,
+            newOperator: actualNewOperator,
+            currentValue: condition.value
+        })
+
+        const isValid = validateConditionValue({
+            field: actualField,
+            operator: actualNewOperator,
+            value: condition.value
+        })
+
+        console.log('Validation result:', {
+            isValid,
+            currentValue: condition.value
+        })
+
+        if (actualNewOperator !== actualOldOperator || !isValid) {
+            const defaultValue = getDefaultValueForField(actualField, actualNewOperator)
+            console.log('Setting default value:', {
+                from: condition.value,
+                to: defaultValue,
+                reason: actualNewOperator !== actualOldOperator ? 'operator changed' : 'invalid value'
+            })
+            condition.value = defaultValue
         }
     })
 }
@@ -253,51 +285,242 @@ const resetForm = () => {
 }
 
 const validateConditionValue = (condition) => {
-    const { field, operator, value } = condition
+    const field = typeof condition.field === 'object' ? condition.field.value : condition.field
+    const operator = typeof condition.operator === 'object' ? condition.operator.value : condition.operator
+    const value = condition.value
     
-    if (!value) return false
+    console.log('Validating condition:', { field, operator, value })
+    
+    if (!value && value !== false) {
+        console.log('Validation failed: empty value')
+        return false
+    }
+
+    let isValid = false
     
     switch (field) {
         case 'loyalty_points':
         case 'purchase_count':
-        case 'age':
-            if (operator === 'between') {
-                const [min, max] = value.split(',')
-                return !isNaN(min) && !isNaN(max) && Number(min) <= Number(max)
-            }
-            return !isNaN(value)
-            
-        case 'last_visit':
-            if (operator === 'never') return true
-            return !isNaN(value) && value > 0
-            
-        case 'gender':
-            return ['male', 'female', 'other'].includes(value)
-            
-        case 'skin_condition':
-            return value.length > 0
-            
         case 'total_spent':
             if (operator === 'between') {
-                const [min, max] = value.split(',')
-                return !isNaN(min) && !isNaN(max) && Number(min) <= Number(max)
+                const [min, max] = value.split(',').map(Number)
+                isValid = !isNaN(min) && !isNaN(max) && min <= max
+            } else {
+                isValid = !isNaN(value) && Number(value) >= 0
             }
-            return !isNaN(value) && Number(value) >= 0
+            break;
             
+        case 'last_visit':
+            if (operator === 'never') {
+                isValid = true
+            } else {
+                isValid = !isNaN(value) && Number(value) > 0
+            }
+            break;
+
+        case 'gender':
+            isValid = ['male', 'female', 'other'].includes(value)
+            break;
+
+        case 'skin_condition':
+            isValid = value.length > 0
+            break;
+
         case 'membership_duration':
-            return !isNaN(value) && Number(value) > 0
-            
+            if (operator === 'between') {
+                const [min, max] = value.split(',').map(Number)
+                isValid = !isNaN(min) && !isNaN(max) && min <= max && min > 0
+            }
+            isValid = !isNaN(value) && Number(value) > 0
+            break;
+
         case 'favorite_services':
-            return value.length > 0
-            
+            isValid = value.length > 0
+            break;
+
         default:
-            return true
+            isValid = true
+    }
+    
+    console.log('Validation result:', { isValid, field, operator, value })
+    return isValid
+}
+
+const isFormValid = computed(() => {
+    return form.value.name &&
+        form.value.conditions.every(c =>
+            c.field &&
+            c.operator &&
+            validateConditionValue(c)
+        )
+})
+
+const getOperatorsForField = computed(() => (field) => {
+    const fieldValue = typeof field === 'object' ? field.value : field
+    return operators[fieldValue] || []
+})
+
+const filteredGroups = computed(() => {
+    let result = groups.value
+
+    if (search.value) {
+        result = result.filter(group =>
+            group.name.toLowerCase().includes(search.value.toLowerCase()) ||
+            group.description?.toLowerCase().includes(search.value.toLowerCase())
+        )
+    }
+
+    if (filter.value !== 'all') {
+        result = result.filter(group =>
+            filter.value === 'active' ? group.is_active : !group.is_active
+        )
+    }
+
+    return result
+})
+
+const syncGroup = async (groupId) => {
+    try {
+        syncingGroup.value = groupId
+        await axios.post(`/api/user-groups/${groupId}/sync`)
+        await fetchGroups()
+        toast.success('Đồng bộ nhóm thành công')
+    } catch (error) {
+        toast.error('Lỗi khi đồng bộ nhóm: ' + error.message)
+    } finally {
+        syncingGroup.value = null
     }
 }
 
-const getOperatorsForField = computed(() => (field) => {
-    return operators[field] || []
+const formatCondition = (condition) => {
+    const field = availableFields.find(f => f.value === condition.field)?.label
+    const operator = operators[condition.field]?.find(o => o.value === condition.operator)?.label
+    return `${field} ${operator} ${condition.value}`
+}
+
+const statsChartData = computed(() => {
+    if (!selectedGroupStats.value) return {
+        gender: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: []
+            }]
+        },
+        age: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: []
+            }]
+        }
+    }
+
+    return {
+        gender: {
+            labels: ['Nam', 'Nữ', 'Khác'],
+            datasets: [{
+                data: [
+                    selectedGroupStats.value.gender_stats?.male || 0,
+                    selectedGroupStats.value.gender_stats?.female || 0,
+                    selectedGroupStats.value.gender_stats?.other || 0
+                ],
+                backgroundColor: ['#4CAF50', '#2196F3', '#9C27B0']
+            }]
+        },
+        age: {
+            labels: ['18-25', '26-35', '36-45', '46-55', '55+'],
+            datasets: [{
+                data: [
+                    selectedGroupStats.value.age_stats?.['18-25'] || 0,
+                    selectedGroupStats.value.age_stats?.['26-35'] || 0,
+                    selectedGroupStats.value.age_stats?.['36-45'] || 0,
+                    selectedGroupStats.value.age_stats?.['46-55'] || 0,
+                    selectedGroupStats.value.age_stats?.['55+'] || 0
+                ],
+                backgroundColor: '#4CAF50'
+            }]
+        }
+    }
 })
+
+const getInputType = (field, operator) => {
+    if (!field || !operator) return 'text'
+    
+    if (operator === 'between') {
+        return 'text'
+    }
+
+    switch (field) {
+        case 'gender':
+            return 'select'
+        case 'loyalty_points':
+        case 'purchase_count':
+        case 'age':
+        case 'total_spent':
+        case 'membership_duration':
+            return 'number'
+        case 'last_visit':
+            return operator === 'never' ? 'checkbox' : 'number'
+        default:
+            return 'text'
+    }
+}
+
+const getPlaceholder = (field, operator) => {
+    if (operator === 'between') {
+        switch (field) {
+            case 'age':
+                return 'Ví dụ: 18,60'
+            case 'loyalty_points':
+                return 'Ví dụ: 0,1000'
+            case 'total_spent':
+                return 'Ví dụ: 0,10000000'
+            default:
+                return 'Ví dụ: min,max'
+        }
+    }
+
+    switch (field) {
+        case 'loyalty_points':
+            return 'Nhập số điểm'
+        case 'purchase_count':
+            return 'Nhập số lần mua'
+        case 'last_visit':
+            return operator === 'never' ? '' : 'Nhập số ngày'
+        case 'age':
+            return 'Nhập tuổi'
+        case 'total_spent':
+            return 'Nhập số tiền'
+        case 'membership_duration':
+            return 'Nhập số tháng'
+        case 'skin_condition':
+        case 'favorite_services':
+            return 'Nhập giá trị'
+        default:
+            return ''
+    }
+}
+
+const getOptionsForField = (field, operator) => {
+    switch (field) {
+        case 'gender':
+            return [
+                { value: 'male', label: 'Nam' },
+                { value: 'female', label: 'Nữ' },
+                { value: 'other', label: 'Khác' }
+            ]
+        case 'skin_condition':
+            return [
+                { value: 'dry', label: 'Da khô' },
+                { value: 'oily', label: 'Da dầu' },
+                { value: 'combination', label: 'Da hỗn hợp' },
+                { value: 'sensitive', label: 'Da nhạy cảm' }
+            ]
+        default:
+            return []
+    }
+}
 
 onMounted(() => {
     fetchGroups()
@@ -309,146 +532,168 @@ onMounted(() => {
 
 <template>
     <div class="space-y-6">
-        <!-- Header với nút actions -->
-        <div class="flex justify-between items-center">
+        <!-- Thêm nút tạo nhóm mới -->
+        <div class="mb-6 flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <BaseButton v-if="!showCreateForm" color="info" :icon="mdiPlus" label="Tạo nhóm mới"
-                    @click="showCreateForm = true" />
-                <BaseButton color="success" :icon="mdiSync" :loading="syncingGroups" label="Đồng bộ tất cả"
-                    @click="syncAllGroups" />
+                <FormControl v-model="search" type="search" placeholder="Tìm kiếm nhóm..." class="max-w-xs" />
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Hiển thị:</span>
+                    <FormControl v-model="filter" type="select" :options="[
+                        { value: 'all', label: 'Tất cả' },
+                        { value: 'active', label: 'Đang hoạt động' },
+                        { value: 'inactive', label: 'Không hoạt động' }
+                    ]" class="w-40" />
+                </div>
             </div>
+            <BaseButton color="info" :icon="mdiPlus" @click="showCreateForm = true">
+                Tạo nhóm mới
+            </BaseButton>
         </div>
 
         <!-- Form tạo/chỉnh sửa nhóm -->
-        <CardBox v-if="showCreateForm" class="mb-6 relative">
-            <div class="absolute top-4 right-4">
-                <BaseButton color="light" :icon="mdiClose" small @click="resetForm" />
-            </div>
+        <CardBoxModal v-model="showCreateForm" :title="editingGroup ? 'Chỉnh sửa nhóm' : 'Tạo nhóm mới'"
+            @submit="saveGroup" :button="editingGroup ? 'warning' : 'info'" :has-cancel="true">
+            <div class="space-y-4">
+                <!-- Tên nhóm -->
+                <FormField label="Tên nhóm">
+                    <FormControl v-model="form.name" type="text" placeholder="Nhập tên nhóm" required />
+                </FormField>
 
-            <h3 class="text-xl font-semibold mb-6">
-                {{ editingGroup ? 'Chỉnh sửa nhóm' : 'Tạo nhóm mới' }}
-            </h3>
+                <!-- Mô tả -->
+                <FormField label="Mô tả">
+                    <FormControl v-model="form.description" type="textarea" placeholder="Nhập mô tả nhóm" />
+                </FormField>
 
-            <form @submit.prevent="saveGroup" class="space-y-6">
-                <div class="grid md:grid-cols-2 gap-6">
-                    <FormField label="Tên nhóm">
-                        <FormControl v-model="form.name" type="text" required placeholder="Nhập tên nhóm" />
-                    </FormField>
-
-                    <FormField label="Mô tả">
-                        <FormControl v-model="form.description" type="textarea" placeholder="Mô tả về nhóm" />
-                    </FormField>
-                </div>
-
+                <!-- Điều kiện -->
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h4 class="font-semibold">Điều kiện</h4>
-                        <BaseButton color="info" :icon="mdiPlus" small @click="addCondition" label="Thêm điều kiện" />
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-medium">Điều kiện</h4>
+                        <BaseButton color="info" :icon="mdiPlus" small @click="addCondition">
+                            Thêm điều kiện
+                        </BaseButton>
                     </div>
 
-                    <TransitionGroup name="list" tag="div" class="space-y-4">
-                        <div v-for="(condition, index) in form.conditions" :key="index"
-                            class="flex gap-4 items-start p-4 rounded-lg border dark:border-dark-border bg-white dark:bg-dark-surface transition-colors duration-150">
-                            <div class="flex-1">
-                                <FormField label="Trường">
-                                    <FormControl v-model="condition.field" :options="availableFields" type="select"
-                                        required />
-                                </FormField>
-                            </div>
+                    <div v-for="(condition, index) in form.conditions" :key="index" class="flex gap-4">
+                        <!-- Trường -->
+                        <FormControl v-model="condition.field" type="select" :options="availableFields"
+                            class="flex-1" />
 
-                            <div class="flex-1">
-                                <FormField label="Điều kiện">
-                                    <FormControl 
-                                        v-model="condition.operator"
-                                        :options="getOperatorsForField(condition.field)" 
-                                        type="select" 
-                                        required 
-                                    />
-                                </FormField>
-                            </div>
+                        <!-- Toán tử -->
+                        <FormControl v-model="condition.operator" type="select"
+                            :options="getOperatorsForField(condition.field)" class="flex-1" />
 
-                            <div class="flex-1">
-                                <FormField label="Giá trị">
-                                    <FormControl v-model="condition.value"
-                                        :type="condition.field === 'gender' ? 'select' : 'text'" :options="condition.field === 'gender' ? [
-                                            { value: 'male', label: 'Nam' },
-                                            { value: 'female', label: 'Nữ' },
-                                            { value: 'other', label: 'Khác' }
-                                        ] : undefined" required />
-                                </FormField>
-                            </div>
-
-                            <BaseButton v-if="form.conditions.length > 1" color="danger" :icon="mdiDelete" small
+                        <!-- Giá trị -->
+                        <div class="flex gap-2 flex-1">
+                            <template v-if="condition.operator === 'between'">
+                                <FormControl v-model="condition.value" type="text" placeholder="Ví dụ: 0,100"
+                                    class="flex-1" />
+                            </template>
+                            <template v-else-if="getInputType(condition.field, condition.operator) === 'select'">
+                                <FormControl v-model="condition.value" type="select"
+                                    :options="getOptionsForField(condition.field)" class="flex-1" />
+                            </template>
+                            <template v-else-if="condition.field === 'last_visit' && condition.operator === 'never'">
+                                <FormControl v-model="condition.value" type="checkbox" class="flex-1" />
+                            </template>
+                            <template v-else>
+                                <FormControl
+                                    v-model="condition.value"
+                                    :type="getInputType(condition.field, condition.operator)"
+                                    :placeholder="getPlaceholder(condition.field, condition.operator)"
+                                    class="flex-1"
+                                />
+                            </template>
+                            <BaseButton v-if="form.conditions.length > 1" color="danger" :icon="mdiClose" small
                                 @click="removeCondition(index)" />
                         </div>
-                    </TransitionGroup>
+                    </div>
                 </div>
-
-                <div class="flex justify-end gap-4">
-                    <BaseButton type="button" color="light" label="Hủy" @click="resetForm" />
-                    <BaseButton type="submit" color="info" :loading="loading" :disabled="!isFormValid"
-                        :label="editingGroup ? 'Cập nhật' : 'Tạo nhóm'" />
-                </div>
-            </form>
-        </CardBox>
-
-        <!-- Danh sách nhóm -->
+            </div>
+        </CardBoxModal>
         <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            <CardBox v-for="group in groups" :key="group.id"
-                class="relative hover:shadow-lg transition-shadow duration-200" :class="{ 'opacity-75': loading }">
-                <div class="absolute top-4 right-4 flex gap-2">
-                    <BaseButton color="info" :icon="mdiChartBox" small @click="showGroupStats(group.id)"
-                        title="Xem thống kê" />
-                    <BaseButton color="success" :icon="mdiPencil" small @click="editGroup(group)" title="Chỉnh sửa" />
-                    <BaseButton color="danger" :icon="mdiDelete" small @click="deleteGroup(group.id)" title="Xóa" />
-                </div>
-
-                <h3 class="text-lg font-semibold mb-2">{{ group.name }}</h3>
-                <p class="text-gray-600 dark:text-gray-400 mb-4">{{ group.description }}</p>
-
-                <div class="space-y-2">
-                    <div v-for="(condition, index) in group.conditions" :key="index"
-                        class="text-sm text-gray-600 dark:text-gray-400 p-2 rounded-md bg-gray-50 dark:bg-dark-surface-hover">
-                        <span class="font-medium">{{ availableFields.find(f => f.value === condition.field)?.label
-                            }}</span>
-                        <span class="mx-1">{{ operators[condition.field]?.find(o => o.value ===
-                            condition.operator)?.label }}</span>
-                        <span class="font-medium">{{ condition.value }}</span>
+            <CardBox v-for="group in filteredGroups" :key="group.id"
+                class="relative hover:shadow-lg transition-shadow duration-200"
+                :class="{ 'opacity-75': !group.is_active }">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-1">{{ group.name }}</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            {{ group.description }}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span :class="[
+                            'px-2 py-1 text-xs font-medium rounded-full',
+                            group.is_active
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100'
+                        ]">
+                            {{ group.is_active ? 'Đang hoạt động' : 'Không hoạt động' }}
+                        </span>
                     </div>
                 </div>
 
-                <div class="mt-4 flex items-center gap-2">
-                    <span
-                        class="px-3 py-1 text-sm font-medium rounded-full bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-100">
-                        {{ group.user_count }} thành viên
-                    </span>
+                <!-- Thống kê và điều kiện -->
+                <div class="mt-4 grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <div class="text-sm font-medium">Điều kiện:</div>
+                        <div v-for="condition in group.conditions" :key="condition.id"
+                            class="text-sm p-2 rounded-md bg-gray-50 dark:bg-dark-surface-hover">
+                            {{ formatCondition(condition) }}
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-sm font-medium">Thông tin:</div>
+                        <div class="text-sm">
+                            <span class="text-gray-600 dark:text-gray-400">Số thành viên:</span>
+                            <span class="font-medium ml-1">{{ group.user_count }}</span>
+                        </div>
+                        <div class="text-sm">
+                            <span class="text-gray-600 dark:text-gray-400">Đồng bộ lần cuối:</span>
+                            <span class="font-medium ml-1">{{ group.last_sync_at }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="mt-4 flex justify-end gap-2">
+                    <BaseButton color="info" :icon="mdiChartBox" small @click="showGroupStats(group.id)"
+                        title="Xem thống kê" />
+                    <BaseButton color="success" :icon="mdiSync" small @click="syncGroup(group.id)"
+                        :loading="syncingGroup === group.id" title="Đồng bộ nhóm" />
+                    <BaseButton color="warning" :icon="mdiPencil" small @click="editGroup(group)" title="Chỉnh sửa" />
+                    <BaseButton color="danger" :icon="mdiDelete" small @click="deleteGroup(group.id)" title="Xóa" />
                 </div>
             </CardBox>
         </div>
 
         <!-- Modal thống kê -->
-        <CardBox v-if="showStats && selectedGroupStats"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-            @click.self="showStats = false">
-            <div class="bg-white dark:bg-dark-surface p-6 rounded-lg w-full max-w-2xl mx-4">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-semibold">Thống kê nhóm</h3>
-                    <BaseButton color="light" :icon="mdiClose" small @click="showStats = false" />
+        <CardBoxModal v-model="showStats" title="Thống kê nhóm" button="info" :has-cancel="true">
+            <div v-if="selectedGroupStats" class="grid grid-cols-2 gap-6">
+                <!-- Biểu đồ phân bố giới tính -->
+                <div class="col-span-1">
+                    <PieChart :data="statsChartData.gender" title="Phân bố giới tính" />
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="p-4 rounded-lg bg-gray-50 dark:bg-dark-surface-hover">
-                        <div class="text-sm text-gray-600 dark:text-gray-400">Tổng số thành viên</div>
-                        <div class="text-2xl font-bold">{{ selectedGroupStats.total_users }}</div>
-                    </div>
+                <!-- Biểu đồ phân bố độ tuổi -->
+                <div class="col-span-1">
+                    <BarChart :data="statsChartData.age" title="Phân bố độ tuổi" />
+                </div>
 
-                    <div class="p-4 rounded-lg bg-gray-50 dark:bg-dark-surface-hover">
-                        <div class="text-sm text-gray-600 dark:text-gray-400">Điểm trung bình</div>
-                        <div class="text-2xl font-bold">{{ Math.round(selectedGroupStats.loyalty_points_avg) }}</div>
-                    </div>
+                <!-- Thông tin chi tiết -->
+                <div class="col-span-2 grid grid-cols-3 gap-4">
+                    <StatCard title="Tổng thành viên" :value="selectedGroupStats?.total_users || 0"
+                        icon="mdiAccountGroup" />
+                    <StatCard title="Điểm trung bình" :value="selectedGroupStats?.loyalty_points_avg || 0"
+                        icon="mdiStar" />
+                    <StatCard title="Lượt mua trung bình" :value="selectedGroupStats?.purchase_count_avg || 0"
+                        icon="mdiCart" />
                 </div>
             </div>
-        </CardBox>
+            <div v-else class="flex justify-center items-center p-4">
+                <span class="text-gray-500">Đang tải dữ liệu...</span>
+            </div>
+        </CardBoxModal>
     </div>
 </template>
 

@@ -80,17 +80,65 @@ class ProductService
 
     public function createProduct(array $data)
     {
-        $product = Product::create($data);
+        try {
+            DB::beginTransaction();
 
-        if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
-            $this->mediaService->create($product, $data['image'], 'image');
+            // Tạo sản phẩm
+            $product = Product::create($data);
+            Log::info('Đã tạo sản phẩm thành công:', [
+                'product_id' => $product->id,
+                'product_data' => $product->toArray()
+            ]);
+
+            // Tạo bản ghi stock movement ban đầu
+            try {
+                $stockMovement = $this->stockMovementService->createInitialMovement($product);
+                Log::info('Đã tạo stock movement ban đầu:', [
+                    'stock_movement_id' => $stockMovement->id,
+                    'stock_movement_data' => $stockMovement->toArray()
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Lỗi khi tạo stock movement:', [
+                    'product_id' => $product->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
+            }
+
+            // Xử lý hình ảnh nếu có
+            if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+                Log::info('Bắt đầu xử lý hình ảnh đơn:', [
+                    'product_id' => $product->id
+                ]);
+                $this->mediaService->create($product, $data['image'], 'image');
+            }
+
+            if (isset($data['images']) && is_array($data['images'])) {
+                Log::info('Bắt đầu xử lý nhiều hình ảnh:', [
+                    'product_id' => $product->id,
+                    'image_count' => count($data['images'])
+                ]);
+                $this->mediaService->createMultiple($product, $data['images'], 'image');
+            }
+
+            DB::commit();
+            Log::info('Hoàn thành tạo sản phẩm và các dữ liệu liên quan:', [
+                'product_id' => $product->id
+            ]);
+
+            return $product;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Lỗi khi tạo sản phẩm:', [
+                'error_message' => $e->getMessage(),
+                'error_code' => $e->getCode(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
         }
-
-        if (isset($data['images']) && is_array($data['images'])) {
-            $this->mediaService->createMultiple($product, $data['images'], 'image');
-        }
-
-        return $product;
     }
 
     public function getProductById($id, $userId = null)

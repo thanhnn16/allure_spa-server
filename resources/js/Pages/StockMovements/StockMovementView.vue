@@ -32,15 +32,17 @@ const props = defineProps({
     }
 })
 
-const form = ref({
+// Định nghĩa hàm helper trước khi sử dụng
+const getDefaultFormState = (type) => ({
     product_id: '',
     quantity: '',
-    type: { value: 'in', label: 'Nhập kho' },
+    type: { value: type, label: type === 'in' ? 'Nhập kho' : 'Xuất kho' },
     reason: '',
     reference_number: '',
     note: ''
 })
 
+// Khởi tạo các ref
 const filterForm = ref({
     start_date: '',
     end_date: '',
@@ -51,6 +53,11 @@ const filterForm = ref({
 const showFilters = ref(false)
 const errors = ref({})
 const isLoading = ref(false)
+const searchQuery = ref('')
+const showInForm = ref(true)
+const showOutForm = ref(true)
+const inForm = ref(getDefaultFormState('in'))
+const outForm = ref(getDefaultFormState('out'))
 
 const toast = useToast();
 
@@ -71,6 +78,20 @@ const formatPrice = (price) => {
     }).format(price)
 }
 
+const formatNote = (noteJson) => {
+    try {
+        const note = JSON.parse(noteJson)
+        return [
+            note.reason && `Lý do: ${note.reason}`,
+            note.reference && `Tham chiếu: ${note.reference}`,
+            note.comment && `Ghi chú: ${note.comment}`,
+            note.user && `Người tạo: ${note.user}`
+        ].filter(Boolean).join(' | ')
+    } catch (e) {
+        return noteJson || ''
+    }
+}
+
 const submitForm = async (formType) => {
     isLoading.value = true
     try {
@@ -89,23 +110,9 @@ const submitForm = async (formType) => {
                 toast.success('Tạo phiếu kho thành công');
                 // Reset form
                 if (formType === 'in') {
-                    inForm.value = {
-                        product_id: '',
-                        quantity: '',
-                        type: { value: 'in', label: 'Nhập kho' },
-                        reason: '',
-                        reference_number: '',
-                        note: ''
-                    };
+                    inForm.value = getDefaultFormState('in');
                 } else {
-                    outForm.value = {
-                        product_id: '',
-                        quantity: '',
-                        type: { value: 'out', label: 'Xuất kho' },
-                        reason: '',
-                        reference_number: '',
-                        note: ''
-                    };
+                    outForm.value = getDefaultFormState('out');
                 }
                 // Tải lại trang
                 router.visit(route('stock-movements.index'), {
@@ -154,18 +161,6 @@ const formattedDate = (date) => {
     return new Date(date).toLocaleString('vi-VN')
 }
 
-const formatNote = (noteJson) => {
-    try {
-        const note = JSON.parse(noteJson)
-        return `${note.reason || ''} ${note.comment || ''}`
-    } catch (e) {
-        return noteJson
-    }
-}
-
-// Thêm state cho search
-const searchQuery = ref('')
-
 // Thêm computed cho filtered data
 const filteredMovements = computed(() => {
     if (!props.stockMovements.data) return []
@@ -176,29 +171,6 @@ const filteredMovements = computed(() => {
             movement.note?.toLowerCase().includes(searchLower) ||
             movement.reference_number?.toLowerCase().includes(searchLower)
     })
-})
-
-// Thêm ref cho việc hiển thị form
-const showInForm = ref(true)
-const showOutForm = ref(true)
-
-// Tách form thành 2 form riêng biệt
-const inForm = ref({
-    product_id: '',
-    quantity: '',
-    type: { value: 'in', label: 'Nhập kho' },
-    reason: '',
-    reference_number: '',
-    note: ''
-})
-
-const outForm = ref({
-    product_id: '',
-    quantity: '',
-    type: { value: 'out', label: 'Xuất kho' },
-    reason: '',
-    reference_number: '',
-    note: ''
 })
 </script>
 
@@ -369,7 +341,7 @@ const outForm = ref({
                                 <th class="text-left">Loại</th>
                                 <th class="text-right">Số lượng</th>
                                 <th class="text-right">Tồn kho</th>
-                                <th class="text-left">Ghi chú</th>
+                                <th class="text-left">Chi tiết</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -388,7 +360,9 @@ const outForm = ref({
                                     </td>
                                     <td class="text-right">{{ movement.quantity }}</td>
                                     <td class="text-right">{{ movement.stock_after_movement }}</td>
-                                    <td class="text-sm text-gray-600">{{ formatNote(movement.note) }}</td>
+                                    <td class="text-sm text-gray-600 max-w-md truncate">
+                                        {{ formatNote(movement.note) }}
+                                    </td>
                                 </tr>
                             </template>
                             <tr v-else>

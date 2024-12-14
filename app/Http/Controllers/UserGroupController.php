@@ -25,7 +25,9 @@ class UserGroupController extends BaseController
                         'name' => $group->name,
                         'description' => $group->description,
                         'conditions' => $group->conditions,
-                        'user_count' => $group->users_count
+                        'user_count' => $group->users_count,
+                        'is_active' => $group->is_active,
+                        'last_sync_at' => $group->last_sync_at?->diffForHumans()
                     ];
                 });
 
@@ -157,7 +159,7 @@ class UserGroupController extends BaseController
             return $this->respondWithJson([], 'Đồng bộ thành viên nhóm thành công');
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->respondWithError('Lỗi khi đồng bộ th��nh viên nhóm: ' . $e->getMessage());
+            return $this->respondWithError('Lỗi khi đồng bộ thành viên nhóm: ' . $e->getMessage());
         }
     }
 
@@ -203,8 +205,15 @@ class UserGroupController extends BaseController
                     if ($age < 50) return '30-49';
                     return '50+';
                 })->map->count(),
-                'loyalty_points_avg' => $users->avg('loyalty_points'),
-                'purchase_count_avg' => $users->avg('purchase_count')
+                'loyalty_points_avg' => round($users->avg('loyalty_points')),
+                'purchase_count_avg' => round($users->avg('purchase_count')),
+                'last_sync_at' => $group->last_sync_at?->diffForHumans(),
+                'top_services' => $users->load('favorites.service')
+                    ->pluck('favorites.*.service.name')
+                    ->flatten()
+                    ->countBy()
+                    ->sortDesc()
+                    ->take(5)
             ];
             
             return $this->respondWithJson($stats);

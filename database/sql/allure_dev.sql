@@ -831,6 +831,7 @@ CREATE TABLE user_groups (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255),
     description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL
