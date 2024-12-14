@@ -139,7 +139,8 @@ const props = defineProps({
   },
   categories: {
     type: Array,
-    required: true
+    required: true,
+    default: () => []
   }
 })
 
@@ -288,13 +289,24 @@ watch(() => form.category_id, (value) => validateField('category_id', value))
 watch(() => form.price, (value) => validateField('price', value))
 watch(() => form.quantity, (value) => validateField('quantity', value))
 
+// Thêm watch để debug
+watch(() => props.categories, (newVal) => {
+    console.log('Categories changed:', newVal)
+}, { immediate: true })
+
 onMounted(() => {
+  console.log('Modal mounted, categories:', props.categories)
   // Initialize form with product data
   Object.keys(form).forEach(key => {
     if (props.product[key] !== undefined) {
       form[key] = props.product[key]
     }
   })
+
+  // Ensure category_id is set correctly
+  if (props.product.category_id) {
+    form.category_id = props.product.category_id
+  }
 
   // Initialize display price
   if (props.product?.price) {

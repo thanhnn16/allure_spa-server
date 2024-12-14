@@ -176,7 +176,11 @@ import { mdiPackageVariantClosed, mdiArrowLeft, mdiPencil, mdiDelete, mdiImage, 
 
 const props = defineProps({
     product: Object,
-    categories: Array,
+    categories: {
+        type: Array,
+        required: true,
+        default: () => []
+    },
 })
 
 const showEditModal = ref(false)

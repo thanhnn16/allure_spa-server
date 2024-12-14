@@ -247,6 +247,9 @@ class ProductController extends BaseController
         $userId = $request->query('user_id');
         $product = $this->productService->getProductById($product->id, $userId);
         $product->load(['category', 'media', 'priceHistory', 'attributes']);
+        
+        // Lấy tất cả danh mục
+        $categories = $this->productService->getAllCategories();
 
         if (request()->expectsJson()) {
             return $this->respondWithJson($product, 'Product retrieved successfully');
@@ -254,6 +257,7 @@ class ProductController extends BaseController
 
         return $this->respondWithInertia('Products/Show', [
             'product' => $product,
+            'categories' => $categories,
         ]);
     }
 
