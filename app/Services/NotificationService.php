@@ -164,6 +164,22 @@ class NotificationService
                     'content' => '{staff_name}による{service}の施術が完了しました。残りセッションは{remaining}回です。'
                 ]
             ]
+        ],
+        'payment' => [
+            'success' => [
+                'en' => [
+                    'title' => 'Payment Successful',
+                    'content' => 'Your payment of {amount} has been received'
+                ],
+                'vi' => [
+                    'title' => 'Thanh toán thành công',
+                    'content' => 'Bạn đã thanh toán thành công số tiền {amount}'
+                ],
+                'ja' => [
+                    'title' => '支払い完了',
+                    'content' => '{amount}の支払いが完了しました'
+                ]
+            ]
         ]
     ];
 

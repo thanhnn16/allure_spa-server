@@ -227,73 +227,73 @@ class PayOSController extends Controller
                 $paymentStatus = $response['status'];
                 $amount = isset($response['amount']) ? $response['amount'] : 0;
 
-                // Extract invoice ID from orderCode (format: INV{id}_timestamp)
-                preg_match('/INV(\d+)_/', $orderCode, $matches);
-                $invoiceId = $matches[1] ?? null;
+                // Tìm payment history dựa vào orderCode
+                $paymentHistory = PaymentHistory::where('transaction_code', $orderCode)
+                    ->with(['invoice.user.fcmTokens'])
+                    ->first();
 
-                if ($paymentStatus === 'PAID' && $invoiceId) {
+                if ($paymentStatus === 'PAID' && $paymentHistory) {
                     DB::beginTransaction();
                     try {
-                        // Find invoice and related payment history
-                        $invoice = Invoice::with(['user', 'user.fcmTokens'])->findOrFail($invoiceId);
-
-                        // Update invoice status and paid amount
+                        $invoice = $paymentHistory->invoice;
                         $oldStatus = $invoice->status;
                         $newPaidAmount = $invoice->paid_amount + $amount;
 
+                        // Cập nhật trạng thái invoice
+                        $newStatus = $newPaidAmount >= $invoice->total_amount ? 
+                            Invoice::STATUS_PAID : 
+                            Invoice::STATUS_PARTIALLY_PAID;
+
                         $invoice->update([
-                            'status' => 'paid',
+                            'status' => $newStatus,
                             'paid_amount' => $newPaidAmount
                         ]);
 
-                        // Update order status if exists
-                        if ($invoice->order) {
+                        // Cập nhật trạng thái đơn hàng nếu có
+                        if ($invoice->order && $newStatus === Invoice::STATUS_PAID) {
                             $invoice->order->update([
-                                'status' => 'completed'
+                                'status' => Order::STATUS_COMPLETED
                             ]);
                         }
 
-                        // Create payment history record
-                        PaymentHistory::create([
-                            'invoice_id' => $invoice->id,
+                        // Cập nhật payment history
+                        $paymentHistory->update([
                             'old_payment_status' => $oldStatus,
-                            'new_payment_status' => 'paid',
+                            'new_payment_status' => $newStatus,
                             'payment_amount' => $amount,
-                            'payment_method' => 'payos',
-                            'payment_details' => json_encode($response),
-                            'note' => 'Thanh toán thành công qua PayOS'
+                            'payment_details' => json_encode($response)
                         ]);
 
-                        // Send notifications
+                        // Gửi thông báo
                         try {
-                            $firebaseService = app(FirebaseService::class);
+                            $notificationService = app(NotificationService::class);
                             $formattedAmount = number_format($amount, 0, ',', '.') . ' VNĐ';
 
-                            // Notification data
-                            $notificationData = [
-                                'type' => 'payment_success',
-                                'invoice_id' => $invoice->id,
-                                'amount' => $formattedAmount
-                            ];
-
-                            // Send to admin
-                            $firebaseService->sendNotificationToAdmin(
-                                'Thanh toán thành công',
-                                "Khách hàng {$invoice->user->full_name} đã thanh toán {$formattedAmount} qua PayOS",
-                                $notificationData
-                            );
-
-                            // Send to user
-                            if ($invoice->user && $invoice->user->fcmTokens) {
-                                foreach ($invoice->user->fcmTokens as $fcmToken) {
-                                    $firebaseService->sendMessage(
-                                        $fcmToken->token,
-                                        'Thanh toán thành công',
-                                        "Bạn đã thanh toán thành công số tiền {$formattedAmount}",
-                                        array_merge($notificationData, ['user_id' => $invoice->user_id])
-                                    );
-                                }
+                            // Thông báo cho người dùng
+                            if ($invoice->user) {
+                                $notificationService->createNotification([
+                                    'user_id' => $invoice->user_id,
+                                    'type' => 'payment_success',
+                                    'data' => [
+                                        'invoice_id' => $invoice->id,
+                                        'amount' => $formattedAmount,
+                                        'order_id' => $invoice->order_id
+                                    ],
+                                    'send_fcm' => true
+                                ]);
                             }
+
+                            // Thông báo cho admin
+                            $notificationService->notifyAdmins(
+                                'Thanh toán thành công',
+                                "Khách hàng {$invoice->user->full_name} đã thanh toán {$formattedAmount}",
+                                'payment_success',
+                                [
+                                    'invoice_id' => $invoice->id,
+                                    'amount' => $formattedAmount,
+                                    'user_id' => $invoice->user_id
+                                ]
+                            );
                         } catch (\Exception $e) {
                             Log::error('Failed to send payment notifications:', [
                                 'message' => $e->getMessage(),
