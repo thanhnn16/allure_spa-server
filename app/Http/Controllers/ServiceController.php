@@ -533,4 +533,42 @@ class ServiceController extends BaseController
             return back()->withErrors(['error' => 'Không thể tạo dịch vụ'])->withInput();
         }
     }
+
+    public function uploadImages(Request $request, Service $service)
+    {
+        try {
+            Log::channel('service_debug')->info('Image upload started for service:', [
+                'service_id' => $service->id,
+                'has_files' => $request->hasFile('images'),
+                'files_count' => $request->hasFile('images') ? count($request->file('images')) : 0
+            ]);
+
+            if (!$request->hasFile('images')) {
+                return $this->respondWithError('Không có ảnh được tải lên', 400);
+            }
+
+            $mediaItems = $this->mediaService->createMultiple($service, $request->file('images'), 'image');
+
+            Log::channel('service_debug')->info('Images uploaded successfully:', [
+                'media_items_count' => count($mediaItems),
+                'media_items' => collect($mediaItems)->map(fn($item) => [
+                    'id' => $item->id,
+                    'path' => $item->file_path,
+                    'full_url' => $item->getFullUrlAttribute()
+                ])
+            ]);
+
+            return $this->respondWithJson([
+                'media' => $mediaItems,
+                'message' => 'Tải ảnh lên thành công'
+            ]);
+        } catch (\Exception $e) {
+            Log::channel('service_debug')->error('Image upload failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this->respondWithError('Không thể tải ảnh lên: ' . $e->getMessage(), 500);
+        }
+    }
 }

@@ -206,6 +206,10 @@ Route::middleware('auth')->group(function () {
     // Thêm route mới
     Route::get('/user-groups', [UserGroupController::class, 'index'])
         ->name('user-groups.index');
+
+    // Thêm routes cho quản lý ảnh service
+    Route::post('/services/{service}/upload-images', [ServiceController::class, 'uploadImages'])
+        ->name('services.upload-images');
 });
 
 Route::get('/firebase-messaging-sw.js', function () {

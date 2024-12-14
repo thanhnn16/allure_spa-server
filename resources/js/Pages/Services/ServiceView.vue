@@ -4,7 +4,8 @@
         <Head title="Quản lý liệu trình" />
         <SectionMain>
             <SectionTitleLineWithButton :icon="mdiPackageVariantClosed" title="Danh sách liệu trình" main>
-                <BaseButton :icon="mdiPlus" label="Tạo liệu trình" color="info" rounded-full small @click="openCreateModal" />
+                <BaseButton :icon="mdiPlus" label="Tạo liệu trình" color="info" rounded-full small
+                    @click="openCreateModal" />
                 <BaseButton :icon="mdiTableBorder" label="Nhập từ Excel" color="success" rounded-full small />
             </SectionTitleLineWithButton>
 
@@ -19,7 +20,7 @@
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block mb-2 text-gray-700 dark:text-gray-300">Danh mục</label>
-                            <select v-model="form.category" 
+                            <select v-model="form.category"
                                 class="w-full px-4 py-2 border rounded-md bg-white dark:bg-dark-surface dark:border-dark-border dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-500">
                                 <option value="" class="dark:bg-dark-surface">Tất cả danh mục</option>
                                 <option v-for="category in categories" :key="category.id" :value="category.id"
@@ -41,13 +42,14 @@
                         <option :value="50" class="dark:bg-dark-surface">Xem 50 mỗi trang</option>
                     </select>
                 </div>
-                <div v-if="!services.data || services.data.length === 0" 
+                <div v-if="!services.data || services.data.length === 0"
                     class="text-center py-4 text-gray-500 dark:text-gray-400">
                     Không có dữ liệu liệu trình
                 </div>
                 <div v-else class="overflow-x-auto">
                     <table class="w-full text-sm text-gray-500 dark:text-gray-300">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-dark-surface/50 dark:text-gray-300">
+                        <thead
+                            class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-dark-surface/50 dark:text-gray-300">
                             <tr>
                                 <th scope="col" class="px-6 py-3 w-24">Ảnh</th>
                                 <th @click="sort('service_name')" scope="col" class="px-6 py-3 cursor-pointer">
@@ -85,7 +87,7 @@
                             <tr v-for="service in services.data" :key="service.id"
                                 class="bg-white border-b hover:bg-gray-50 dark:bg-dark-surface dark:border-dark-border dark:hover:bg-dark-surface/70">
                                 <td class="px-6 py-4">
-                                    <img :src="service.image?.url || 'https://via.placeholder.com/150'" :alt="service.service_name"
+                                    <img :src="getServiceImage(service)" :alt="service.service_name"
                                         class="w-16 h-16 object-cover rounded-md">
                                 </td>
                                 <td class="px-6 py-4 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
@@ -101,12 +103,8 @@
                                     {{ formatPrice(service.single_price) }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <BaseButton 
-                                        label="Xem chi tiết" 
-                                        color="info" 
-                                        small 
-                                        @click="viewServiceDetails(service.id)"
-                                    />
+                                    <BaseButton label="Xem chi tiết" color="info" small
+                                        @click="viewServiceDetails(service.id)" />
                                 </td>
                             </tr>
                         </tbody>
@@ -119,13 +117,8 @@
             </div>
         </SectionMain>
 
-        <ServiceFormModal
-            v-model="showServiceModal"
-            :service="selectedService"
-            :categories="categories"
-            @close="closeServiceModal"
-            @service-saved="handleServiceSaved"
-        />
+        <ServiceFormModal v-model="showServiceModal" :service="selectedService" :categories="categories"
+            @close="closeServiceModal" @service-saved="handleServiceSaved" />
     </LayoutAuthenticated>
 </template>
 
@@ -209,10 +202,10 @@ const formatPrice = (price) => {
 
 const formatDuration = (duration) => {
     if (duration === null || duration === undefined) return 'Chưa cập nhật';
-    
+
     const hours = Math.floor(duration / 60);
     const minutes = duration % 60;
-    
+
     let result = '';
     if (hours > 0) {
         result += `${hours}h `;
@@ -248,6 +241,13 @@ const handleServiceSaved = () => {
 const openEditModal = (service) => {
     selectedService.value = service
     showServiceModal.value = true
+}
+
+const getServiceImage = (service) => {
+    if (service.media && service.media.length > 0) {
+        return service.media[0].full_url;
+    }
+    return 'https://via.placeholder.com/150';
 }
 </script>
 
