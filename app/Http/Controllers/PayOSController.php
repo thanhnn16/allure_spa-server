@@ -102,13 +102,16 @@ class PayOSController extends Controller
 
             $order = Order::with(['user', 'invoice'])->findOrFail($orderId);
             
-            // Tạo mã đơn hàng unique
-            $orderCode = 'PAY' . time() . rand(1000, 9999);
+            // Tạo mã đơn hàng là số nguyên dương
+            $orderCode = (int) substr(time() . rand(1000, 9999), 0, 15); // Đảm bảo không vượt quá 9007199254740991
+            
+            // Xử lý số tiền thanh toán (đảm bảo không vượt quá 10 tỷ VND)
+            $amount = min((int)$order->total_amount, 10000000000);
             
             // Chuẩn bị dữ liệu thanh toán theo đúng format của PayOS
             $paymentData = [
                 'orderCode' => $orderCode,
-                'amount' => (int)$order->total_amount,
+                'amount' => $amount,
                 'description' => "Thanh toán đơn hàng #{$order->id}",
                 'returnUrl' => $request->returnUrl,
                 'cancelUrl' => $request->cancelUrl,
@@ -120,14 +123,22 @@ class PayOSController extends Controller
                     [
                         'name' => "Đơn hàng #{$order->id}",
                         'quantity' => 1,
-                        'price' => (int)$order->total_amount
+                        'price' => min((int)$order->total_amount, 10000000000) // Đảm bảo giá không vượt quá 10 tỷ
                     ]
                 ]
             ];
 
             // Nếu có danh sách sản phẩm chi tiết
             if ($order->orderItems->count() > 0) {
-                $paymentData['items'] = $this->formatOrderItems($order->orderItems);
+                $paymentData['items'] = $order->orderItems->map(function ($item) {
+                    return [
+                        'name' => $item->item_type === 'product' ? 
+                            ($item->product->name ?? 'Sản phẩm') : 
+                            ($item->service->name ?? 'Dịch vụ'),
+                        'quantity' => (int)$item->quantity,
+                        'price' => min((int)$item->price, 10000000000) // Đảm bảo giá không vượt quá 10 tỷ
+                    ];
+                })->toArray();
             }
 
             try {
@@ -142,9 +153,9 @@ class PayOSController extends Controller
                 PaymentHistory::create([
                     'order_id' => $order->id,
                     'invoice_id' => $order->invoice->id,
-                    'payment_amount' => $order->total_amount,
+                    'payment_amount' => $amount,
                     'payment_method' => 'payos',
-                    'transaction_code' => $orderCode,
+                    'transaction_code' => (string)$orderCode, // Lưu dưới dạng string trong DB
                     'old_payment_status' => 'pending',
                     'new_payment_status' => 'pending',
                     'payment_details' => json_encode([
@@ -158,8 +169,8 @@ class PayOSController extends Controller
                     'data' => [
                         'checkoutUrl' => $response['checkoutUrl'],
                         'qrCode' => $response['qrCode'] ?? null,
-                        'orderCode' => $orderCode,
-                        'amount' => $order->total_amount
+                        'orderCode' => (string)$orderCode, // Trả về dưới dạng string
+                        'amount' => $amount
                     ]
                 ]);
 
