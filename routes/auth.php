@@ -19,8 +19,6 @@ Route::middleware('auth')->group(function () {
         ->name('logout');
 });
 
-Route::prefix('auth')->group(function () {
-    Route::post('zalo/callback', [ZaloAuthController::class, 'handleZaloCallback']);
-    Route::get('zalo/profile', [ZaloAuthController::class, 'getZaloUserInfo'])
-        ->middleware('auth:sanctum');
-});
+Route::post('zalo/callback', [ZaloAuthController::class, 'handleZaloCallback']);
+Route::get('zalo/profile', [ZaloAuthController::class, 'getZaloUserInfo'])
+    ->middleware('auth:sanctum');
