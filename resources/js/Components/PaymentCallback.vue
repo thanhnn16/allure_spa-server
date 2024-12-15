@@ -42,7 +42,7 @@
 
 <script>
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { router } from '@inertiajs/vue3'
 import axios from 'axios'
 
 export default {
@@ -53,7 +53,6 @@ export default {
   },
 
   setup(props) {
-    const router = useRouter()
     const loading = ref(true)
     const success = ref(false)
     const error = ref(null)
@@ -91,14 +90,14 @@ export default {
 
     const goToOrder = () => {
       if (orderId.value) {
-        router.push(`/orders/${orderId.value}`)
+        router.visit(`/orders/${orderId.value}`)
       } else {
-        router.push('/orders')
+        router.visit('/orders')
       }
     }
 
     const retryPayment = () => {
-      router.back()
+      router.visit('/orders')
     }
 
     onMounted(() => {
