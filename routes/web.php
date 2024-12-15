@@ -235,7 +235,8 @@ Route::get('/firebase-messaging-sw.js', function () {
 Route::get('/payment/callback', function () {
     return Inertia::render('Payment/PaymentCallback', [
         'orderCode' => request('orderCode'),
-        'invoice_id' => request('invoice_id')
+        'invoice_id' => request('invoice_id'),
+        'status' => request('status')
     ]);
 })->name('payment.callback');
 

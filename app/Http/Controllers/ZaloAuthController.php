@@ -20,7 +20,7 @@ class ZaloAuthController extends Controller
             return redirect("allurespa://zalo-oauth?code={$code}&state={$state}");
         }
 
-        return Inertia::render('Payments/ProgressView');
+        return Inertia::render('ZaloAuth/ProgressView');
     }
 
     // Thêm method để tạo code verifier
