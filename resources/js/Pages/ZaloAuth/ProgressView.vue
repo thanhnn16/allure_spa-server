@@ -22,8 +22,12 @@ onMounted(async () => {
   
   if (code && state) {
     try {
-      // Sửa lại URL scheme để khớp với route zalo-oauth
-      window.location.href = `allurespa://zalo-oauth?code=${code}&state=${state}`;
+      // Thử mở app
+      const result = await openApp(code, state);
+      if (!result) {
+        // Nếu không mở được app, xử lý trên web
+        handleWebAuth(code, state);
+      }
     } catch (err) {
       message.value = 'Có lỗi xảy ra khi đăng nhập';
       error.value = err.message;
@@ -32,4 +36,19 @@ onMounted(async () => {
     error.value = 'Không tìm thấy thông tin xác thực';
   }
 });
+
+const openApp = async (code, state) => {
+  try {
+    window.location.href = `allurespa://zalo-oauth?code=${code}&state=${state}`;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const handleWebAuth = (code, state) => {
+  // Xử lý auth trên web
+  message.value = 'Đang xử lý xác thực qua web...';
+  // Thêm logic xử lý auth qua web ở đây
+};
 </script>

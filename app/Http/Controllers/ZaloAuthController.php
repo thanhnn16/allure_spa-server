@@ -17,10 +17,21 @@ class ZaloAuthController extends Controller
         $state = $request->query('state');
 
         if ($code && $state) {
-            return redirect("allurespa://zalo-oauth?code={$code}&state={$state}");
+            // Thử redirect về app
+            try {
+                return redirect("allurespa://zalo-oauth?code={$code}&state={$state}");
+            } catch (\Exception $e) {
+                // Nếu không redirect được, render view với thông tin
+                return Inertia::render('ZaloAuth/ProgressView', [
+                    'code' => $code,
+                    'state' => $state
+                ]);
+            }
         }
 
-        return Inertia::render('ZaloAuth/ProgressView');
+        return Inertia::render('ZaloAuth/ProgressView', [
+            'error' => 'Không tìm thấy thông tin xác thực'
+        ]);
     }
 
     // Thêm method để tạo code verifier
