@@ -35,10 +35,13 @@ class PayOSController extends Controller
             // Tạo mã đơn hàng unique
             $orderCode = 'PAY' . time() . rand(1000, 9999);
 
+            // Tính toán số tiền cần thanh toán (sau khi áp dụng giảm giá)
+            $finalAmount = $order->total_amount - ($order->discount_amount ?? 0);
+
             // Chuẩn bị dữ liệu thanh toán
             $paymentData = [
                 'orderCode' => $orderCode,
-                'amount' => (int)$order->total_amount,
+                'amount' => (int)$finalAmount, // Sử dụng số tiền sau giảm giá
                 'description' => "Thanh toán đơn hàng #{$order->id}",
                 'returnUrl' => $request->returnUrl,
                 'cancelUrl' => $request->cancelUrl,
@@ -47,7 +50,9 @@ class PayOSController extends Controller
                 'buyerPhone' => $order->user->phone_number ?? '',
                 'orderInfo' => json_encode([
                     'order_id' => $order->id,
-                    'invoice_id' => $order->invoice->id ?? null
+                    'invoice_id' => $order->invoice->id ?? null,
+                    'original_amount' => $order->total_amount,
+                    'discount_amount' => $order->discount_amount ?? 0
                 ])
             ];
 
@@ -62,7 +67,7 @@ class PayOSController extends Controller
             PaymentHistory::create([
                 'order_id' => $order->id,
                 'invoice_id' => $order->invoice->id,
-                'payment_amount' => $order->total_amount,
+                'payment_amount' => $finalAmount, // Lưu số tiền sau giảm giá
                 'payment_method' => 'payos',
                 'transaction_code' => $orderCode,
                 'old_payment_status' => 'pending',
@@ -75,7 +80,7 @@ class PayOSController extends Controller
                     'checkoutUrl' => $response['checkoutUrl'],
                     'qrCode' => $response['qrCode'] ?? null,
                     'orderCode' => $orderCode,
-                    'amount' => $order->total_amount
+                    'amount' => $finalAmount // Trả về số tiền sau giảm giá
                 ]
             ]);
 
@@ -105,8 +110,11 @@ class PayOSController extends Controller
             // Tạo mã đơn hàng là số nguyên dương
             $orderCode = (int) substr(time() . rand(1000, 9999), 0, 15);
             
+            // Tính toán số tiền sau giảm giá
+            $finalAmount = $order->total_amount - ($order->discount_amount ?? 0);
+            
             // Xử lý số tiền thanh toán (đảm bảo không vượt quá 10 tỷ VND)
-            $amount = min((int)$order->total_amount, 10000000000);
+            $amount = min((int)$finalAmount, 10000000000);
             
             // Tạo invoice nếu chưa có
             if (!$order->invoice) {
