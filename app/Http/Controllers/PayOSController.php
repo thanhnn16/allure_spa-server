@@ -13,6 +13,7 @@ use App\Models\FcmToken;
 use App\Models\Order;
 use App\Services\FirebaseService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class PayOSController extends Controller
 {
@@ -104,31 +105,29 @@ class PayOSController extends Controller
             // Tạo mã đơn hàng unique
             $orderCode = 'PAY' . time() . rand(1000, 9999);
             
-            // Chuẩn bị dữ liệu thanh toán
+            // Chuẩn bị dữ liệu thanh toán theo đúng format của PayOS
             $paymentData = [
                 'orderCode' => $orderCode,
                 'amount' => (int)$order->total_amount,
                 'description' => "Thanh toán đơn hàng #{$order->id}",
                 'returnUrl' => $request->returnUrl,
                 'cancelUrl' => $request->cancelUrl,
-                'signature' => '', // Sẽ được tạo bên dưới
-                'items' => [[
-                    'name' => "Đơn hàng #{$order->id}",
-                    'quantity' => 1,
-                    'price' => (int)$order->total_amount
-                ]],
+                'expiredAt' => time() + 3600, // Hết hạn sau 1 giờ
+                'clientId' => config('services.payos.client_id'),
             ];
 
-            // Thêm thông tin người mua
+            // Thêm thông tin người mua nếu có
             if ($order->user) {
-                $paymentData['buyerName'] = $order->user->full_name ?? '';
-                $paymentData['buyerEmail'] = $order->user->email ?? '';
-                $paymentData['buyerPhone'] = $order->user->phone_number ?? '';
-                $paymentData['buyerAddress'] = '';
+                $paymentData = array_merge($paymentData, [
+                    'buyerName' => $order->user->full_name ?? '',
+                    'buyerEmail' => $order->user->email ?? '',
+                    'buyerPhone' => $order->user->phone_number ?? '',
+                    'buyerAddress' => $order->user->address ?? ''
+                ]);
             }
 
-            // Tạo chữ ký
-            $dataStr = implode('|', [
+            // Tạo chữ ký theo đúng format của PayOS
+            $dataToSign = implode('|', [
                 $paymentData['orderCode'],
                 $paymentData['amount'],
                 $paymentData['description'],
@@ -136,16 +135,24 @@ class PayOSController extends Controller
                 $paymentData['returnUrl']
             ]);
             
-            $paymentData['signature'] = hash_hmac('sha256', $dataStr, config('services.payos.checksum_key'));
+            $paymentData['signature'] = hash_hmac('sha256', $dataToSign, config('services.payos.checksum_key'));
 
             Log::info('Dữ liệu thanh toán PayOS:', ['data' => $paymentData]);
 
-            // Gọi API PayOS
-            $payos = app('payos');
-            $response = $payos->createPaymentLink($paymentData);
+            // Gọi API PayOS với header xác thực
+            $response = Http::withHeaders([
+                'x-client-id' => config('services.payos.client_id'),
+                'x-api-key' => config('services.payos.api_key')
+            ])->post('https://api-merchant.payos.vn/v2/payment-requests', $paymentData);
 
-            if (!$response || !isset($response['checkoutUrl'])) {
-                throw new \Exception('Không thể tạo link thanh toán: ' . json_encode($response));
+            if (!$response->successful()) {
+                throw new \Exception('PayOS API error: ' . $response->body());
+            }
+
+            $responseData = $response->json();
+
+            if (!isset($responseData['data']['checkoutUrl'])) {
+                throw new \Exception('Không thể tạo link thanh toán: ' . json_encode($responseData));
             }
 
             // Lưu lịch sử thanh toán
@@ -156,14 +163,15 @@ class PayOSController extends Controller
                 'payment_method' => 'payos',
                 'transaction_code' => $orderCode,
                 'old_payment_status' => 'pending',
-                'new_payment_status' => 'pending'
+                'new_payment_status' => 'pending',
+                'payment_details' => json_encode($responseData)
             ]);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'checkoutUrl' => $response['checkoutUrl'],
-                    'qrCode' => $response['qrCode'] ?? null,
+                    'checkoutUrl' => $responseData['data']['checkoutUrl'],
+                    'qrCode' => $responseData['data']['qrCode'] ?? null,
                     'orderCode' => $orderCode,
                     'amount' => $order->total_amount
                 ]

@@ -437,46 +437,21 @@ export default {
 
         const handlePayOSPayment = async (order) => {
             try {
-                console.log('Bắt đầu xử lý thanh toán PayOS:', {
-                    orderId: order.id,
-                    totalAmount: order.total_amount
-                });
-
-                // Hiển thị thông báo đang xử lý
-                toast.info('Đang xử lý thanh toán...');
-
-                // Chuẩn bị URL callback
                 const returnUrl = `${window.location.origin}/payment/callback`;
                 const cancelUrl = `${window.location.origin}/payment/callback?status=cancel`;
 
-                console.log('URLs callback:', { returnUrl, cancelUrl });
-
-                // Gọi API tạo payment link
-                const paymentResponse = await axios.post(
-                    `/api/orders/${order.id}/payment-link`,
-                    {
-                        returnUrl: returnUrl,
-                        cancelUrl: cancelUrl
-                    }
-                );
-
-                if (!paymentResponse?.data?.success) {
-                    throw new Error(paymentResponse?.data?.message || 'Không thể tạo link thanh toán');
-                }
-
-                // Chuyển hướng đến trang thanh toán PayOS
-                const { checkoutUrl } = paymentResponse.data.data;
-                window.location.href = checkoutUrl;
-
-            } catch (error) {
-                console.error('Chi tiết lỗi thanh toán:', {
-                    message: error.message,
-                    response: error.response?.data,
-                    request: error.request
+                const response = await axios.post(`/api/orders/${order.id}/payment-link`, {
+                    returnUrl,
+                    cancelUrl
                 });
-                toast.error(error.response?.data?.message || 'Lỗi xử lý thanh toán');
 
-                // Chuyển về trang chi tiết đơn hàng nếu có lỗi
+                if (response.data.success && response.data.data.checkoutUrl) {
+                    window.location.href = response.data.data.checkoutUrl;
+                } else {
+                    throw new Error(response.data.message || 'Không thể tạo link thanh toán');
+                }
+            } catch (error) {
+                toast.error('Lỗi xử lý thanh toán: ' + (error.response?.data?.message || error.message));
                 router.visit(`/orders/${order.id}`);
             }
         };

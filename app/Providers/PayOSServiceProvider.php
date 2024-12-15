@@ -12,7 +12,7 @@ class PayOSServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(PayOS::class, function ($app) {
+        $this->app->singleton('payos', function ($app) {
             return new PayOS(
                 config('services.payos.client_id'),
                 config('services.payos.api_key'),

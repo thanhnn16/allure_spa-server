@@ -287,11 +287,6 @@ class UserController extends BaseController
 
     public function searchUsers(Request $request)
     {
-        Log::info('Search Users Request', [
-            'query' => $request->get('query'),
-            'all_parameters' => $request->all()
-        ]);
-
         $query = $request->get('query');
 
         try {
@@ -303,11 +298,6 @@ class UserController extends BaseController
                 ->where('role', 'user')
                 ->take(10)
                 ->get(['id', 'full_name', 'phone_number', 'email']);
-
-            Log::info('Search Users Result', [
-                'count' => $users->count(),
-                'users' => $users->toArray()
-            ]);
 
             return response()->json([
                 'status_code' => 200,

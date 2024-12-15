@@ -155,11 +155,6 @@ class Service extends Model
 
     public function getIsFavoriteAttribute()
     {
-        if (!$this->current_user_id) {
-            Log::info('No user_id provided for service, is_favorite = false');
-            return false;
-        }
-
         return Favorite::where('user_id', $this->current_user_id)
             ->where('item_id', $this->id)
             ->where('favorite_type', 'service')
