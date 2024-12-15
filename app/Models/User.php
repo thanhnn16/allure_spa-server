@@ -56,12 +56,19 @@ class User extends Authenticatable
         'loyalty_points',
         'skin_condition', 
         'note',
-        'purchase_count'
+        'purchase_count',
+        'zalo_id',
+        'zalo_access_token',
+        'zalo_token_expires_at',
+        'provider',
+        'refresh_token_expires_at'
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'zalo_access_token',
+        'zalo_refresh_token'
     ];
 
     protected $casts = [
@@ -70,7 +77,9 @@ class User extends Authenticatable
         'date_of_birth' => 'datetime',
         'loyalty_points' => 'integer',
         'purchase_count' => 'integer',
-        'gender' => 'string'
+        'gender' => 'string',
+        'zalo_token_expires_at' => 'datetime',
+        'refresh_token_expires_at' => 'datetime'
     ];
 
     protected $appends = ['avatar_url'];

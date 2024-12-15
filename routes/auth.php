@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\ZaloAuthController;
 
 Route::middleware(['guest', 'web'])->group(function () {
     Route::get('login', function () {
@@ -16,4 +17,11 @@ Route::middleware(['guest', 'web'])->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])
         ->name('logout');
+});
+
+Route::prefix('auth')->group(function () {
+    Route::get('zalo/callback', [ZaloAuthController::class, 'handleZaloCallback']);
+    Route::post('zalo/login', [ZaloAuthController::class, 'loginWithZalo']);
+    Route::get('zalo/profile', [ZaloAuthController::class, 'getZaloProfile'])
+        ->middleware('auth:sanctum');
 });

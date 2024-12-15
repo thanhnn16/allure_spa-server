@@ -13,6 +13,9 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Log;
 use App\Models\LoginHistory;
 use Torann\GeoIP\Facades\GeoIP;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 
 class AuthService
 {
@@ -352,5 +355,133 @@ class AuthService
             Log::error('Error getting location from IP: ' . $e->getMessage());
             return 'Unknown';
         }
+    }
+
+    public function loginWithZalo(array $zaloData)
+    {
+        try {
+            // Lấy thông tin user từ Zalo API
+            $zaloProfile = $this->getZaloUserProfile($zaloData['access_token']);
+
+            // Tìm user theo zalo_id
+            $user = User::where('zalo_id', $zaloProfile['id'])->first();
+
+            if (!$user) {
+                DB::beginTransaction();
+                try {
+                    // Tạo user mới nếu chưa tồn tại
+                    $user = User::create([
+                        'id' => Str::uuid(),
+                        'full_name' => $zaloProfile['name'],
+                        'zalo_id' => $zaloProfile['id'],
+                        'provider' => 'zalo',
+                        'zalo_access_token' => $zaloData['access_token'],
+                        'zalo_refresh_token' => $zaloData['refresh_token'],
+                        'zalo_token_expires_at' => now()->addSeconds($zaloData['expires_in']),
+                        'refresh_token_expires_at' => now()->addSeconds($zaloData['refresh_token_expires_in']),
+                        'gender' => $zaloProfile['gender'] ?? null,
+                        'date_of_birth' => isset($zaloProfile['birthday']) ?
+                            Carbon::createFromFormat('d/m/Y', $zaloProfile['birthday']) : null
+                    ]);
+
+                    // Xử lý lưu avatar nếu có
+                    if (isset($zaloProfile['picture']['data']['url'])) {
+                        $avatarUrl = $zaloProfile['picture']['data']['url'];
+                        $this->saveZaloAvatar($user, $avatarUrl);
+                    }
+
+                    DB::commit();
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    throw $e;
+                }
+            } else {
+                // Cập nhật thông tin token và avatar nếu user đã tồn tại
+                $user->update([
+                    'zalo_access_token' => $zaloData['access_token'],
+                    'zalo_refresh_token' => $zaloData['refresh_token'],
+                    'zalo_token_expires_at' => now()->addSeconds($zaloData['expires_in']),
+                    'refresh_token_expires_at' => now()->addSeconds($zaloData['refresh_token_expires_in'])
+                ]);
+
+                // Cập nhật avatar nếu có
+                if (isset($zaloProfile['picture']['data']['url'])) {
+                    $avatarUrl = $zaloProfile['picture']['data']['url'];
+                    $this->saveZaloAvatar($user, $avatarUrl);
+                }
+            }
+
+            // Tạo token xác thực
+            $token = $user->createToken('zalo_auth')->plainTextToken;
+
+            // Ghi lại lịch sử đăng nhập thành công
+            $this->logLoginAttempt([
+                'user_id' => $user->id,
+                'status' => 'success',
+                'provider' => 'zalo'
+            ]);
+
+            return [
+                'user' => $user->fresh(['media']), // Load relationship media
+                'token' => $token
+            ];
+        } catch (\Exception $e) {
+            Log::error('Zalo login error: ' . $e->getMessage());
+            throw new \Exception(AuthErrorCode::ZALO_LOGIN_FAILED->value);
+        }
+    }
+
+    private function saveZaloAvatar(User $user, string $avatarUrl)
+    {
+        try {
+            // Tải ảnh từ URL
+            $imageContent = file_get_contents($avatarUrl);
+            if (!$imageContent) {
+                throw new \Exception('Không thể tải ảnh từ Zalo');
+            }
+
+            // Tạo file tạm thời
+            $tempFile = tempnam(sys_get_temp_dir(), 'zalo_avatar_');
+            file_put_contents($tempFile, $imageContent);
+
+            // Tạo UploadedFile từ file tạm
+            $uploadedFile = new \Illuminate\Http\UploadedFile(
+                $tempFile,
+                'zalo_avatar.jpg',
+                'image/jpeg',
+                null,
+                true
+            );
+
+            // Xóa avatar cũ nếu có
+            if ($user->media) {
+                app(MediaService::class)->delete($user->media);
+            }
+
+            // Upload avatar mới
+            $media = app(MediaService::class)->create($user, $uploadedFile, 'image');
+
+            // Cập nhật media_id cho user
+            $user->update(['media_id' => $media->id]);
+
+            // Xóa file tạm
+            @unlink($tempFile);
+        } catch (\Exception $e) {
+            Log::error('Error saving Zalo avatar: ' . $e->getMessage());
+        }
+    }
+
+    private function getZaloUserProfile($accessToken)
+    {
+        $response = Http::get('https://graph.zalo.me/v2.0/me', [
+            'access_token' => $accessToken,
+            'fields' => 'id,name,picture,birthday,gender'
+        ]);
+
+        if (!$response->successful()) {
+            throw new \Exception('Failed to get Zalo user profile');
+        }
+
+        return $response->json();
     }
 }

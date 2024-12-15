@@ -5,11 +5,18 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use App\Services\AuthService;
+use Illuminate\Support\Facades\Log;
 
 class ZaloAuthController extends Controller
 {
+    protected $authService;
+
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
 
     public function index(Request $request)
     {
@@ -74,6 +81,49 @@ class ZaloAuthController extends Controller
             return response()->json([
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function handleZaloCallback(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'access_token' => 'required|string',
+                'refresh_token' => 'required|string',
+                'expires_in' => 'required|integer',
+                'refresh_token_expires_in' => 'required|integer'
+            ]);
+
+            $result = $this->authService->loginWithZalo($validated);
+
+            return response()->json([
+                'user' => $result['user'],
+                'token' => $result['token']
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Zalo auth error: ' . $e->getMessage());
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function getZaloUserInfo($accessToken)
+    {
+        try {
+            $response = Http::get('https://graph.zalo.me/v2.0/me', [
+                'access_token' => $accessToken,
+                'fields' => 'id,name,picture,birthday,gender'
+            ]);
+
+            if (!$response->successful()) {
+                throw new \Exception('Không thể kết nối với Zalo API');
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Zalo API error: ' . $e->getMessage());
+            throw new \Exception('Lỗi khi lấy thông tin người dùng Zalo');
         }
     }
 }

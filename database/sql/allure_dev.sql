@@ -45,12 +45,17 @@ CREATE TABLE users (
     skin_condition TEXT,
     note TEXT,
     purchase_count INT UNSIGNED DEFAULT 0 COMMENT 'Tổng số lần mua hàng (bao gồm cả sản phẩm và liệu trình)',
+    zalo_id VARCHAR(255) NULL UNIQUE,
+    zalo_access_token VARCHAR(255) NULL,
+    zalo_token_expires_at TIMESTAMP NULL DEFAULT NULL,
+    provider VARCHAR(255) NULL DEFAULT 'phone_number',
+    refresh_token_expires_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (media_id) REFERENCES media (id),
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
-
+    
 -- 3. Bảng product_categories
 CREATE TABLE product_categories (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
