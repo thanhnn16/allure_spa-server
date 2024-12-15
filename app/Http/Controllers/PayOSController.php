@@ -18,9 +18,9 @@ class PayOSController extends Controller
 {
     protected $payOS;
 
-    public function __construct(PayOS $payOS)
+    public function __construct()
     {
-        $this->payOS = $payOS;
+        $this->payOS = app('payos');
     }
 
     public function createPaymentLink(Request $request, Order $order)
