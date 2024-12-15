@@ -47,9 +47,18 @@ import axios from 'axios'
 
 export default {
   props: {
-    orderCode: String,
-    invoice_id: String,
-    status: String
+    orderCode: {
+      type: String,
+      required: true
+    },
+    invoice_id: {
+      type: String,
+      required: true  
+    },
+    status: {
+      type: String,
+      default: ''
+    }
   },
 
   setup(props) {
@@ -61,7 +70,11 @@ export default {
 
     const verifyPayment = async () => {
       try {
-        const orderCode = props.orderCode
+        console.log('Props received:', props);
+        if (!props.orderCode) {
+          throw new Error('Không tìm thấy mã đơn hàng');
+        }
+
         const invoiceId = props.invoice_id
 
         if (props.status === 'CANCELLED') {
@@ -72,7 +85,7 @@ export default {
         while (retries > 0) {
           try {
             const response = await axios.post('/api/payos/verify', {
-              orderCode,
+              orderCode: props.orderCode,
               invoice_id: invoiceId
             });
             if (response.data.success) {
