@@ -360,16 +360,24 @@ class AuthService
     public function loginWithZalo(array $zaloData)
     {
         try {
+            Log::info('Starting Zalo login process', ['data' => $zaloData]);
+            
             // Lấy thông tin user từ Zalo API
             $zaloProfile = $this->getZaloUserProfile($zaloData['access_token']);
+            Log::info('Retrieved Zalo profile', ['profile' => $zaloProfile]);
+
+            if (!isset($zaloProfile['id'])) {
+                throw new \Exception('Không thể lấy thông tin người dùng từ Zalo');
+            }
 
             // Tìm user theo zalo_id
             $user = User::where('zalo_id', $zaloProfile['id'])->first();
 
-            if (!$user) {
-                DB::beginTransaction();
-                try {
-                    // Tạo user mới nếu chưa tồn tại
+            DB::beginTransaction();
+            try {
+                if (!$user) {
+                    Log::info('Creating new user for Zalo profile', ['zalo_id' => $zaloProfile['id']]);
+                    // Tạo user mới
                     $user = User::create([
                         'id' => Str::uuid(),
                         'full_name' => $zaloProfile['name'],
@@ -380,41 +388,36 @@ class AuthService
                         'zalo_token_expires_at' => now()->addSeconds($zaloData['expires_in']),
                         'refresh_token_expires_at' => now()->addSeconds($zaloData['refresh_token_expires_in']),
                         'gender' => $zaloProfile['gender'] ?? null,
-                        'date_of_birth' => isset($zaloProfile['birthday']) ?
+                        'date_of_birth' => isset($zaloProfile['birthday']) ? 
                             Carbon::createFromFormat('d/m/Y', $zaloProfile['birthday']) : null
                     ]);
-
-                    // Xử lý lưu avatar nếu có
-                    if (isset($zaloProfile['picture']['data']['url'])) {
-                        $avatarUrl = $zaloProfile['picture']['data']['url'];
-                        $this->saveZaloAvatar($user, $avatarUrl);
-                    }
-
-                    DB::commit();
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    throw $e;
+                } else {
+                    Log::info('Updating existing user', ['user_id' => $user->id]);
+                    // Cập nhật thông tin token
+                    $user->update([
+                        'zalo_access_token' => $zaloData['access_token'],
+                        'zalo_refresh_token' => $zaloData['refresh_token'],
+                        'zalo_token_expires_at' => now()->addSeconds($zaloData['expires_in']),
+                        'refresh_token_expires_at' => now()->addSeconds($zaloData['refresh_token_expires_in'])
+                    ]);
                 }
-            } else {
-                // Cập nhật thông tin token và avatar nếu user đã tồn tại
-                $user->update([
-                    'zalo_access_token' => $zaloData['access_token'],
-                    'zalo_refresh_token' => $zaloData['refresh_token'],
-                    'zalo_token_expires_at' => now()->addSeconds($zaloData['expires_in']),
-                    'refresh_token_expires_at' => now()->addSeconds($zaloData['refresh_token_expires_in'])
-                ]);
 
-                // Cập nhật avatar nếu có
+                // Xử lý avatar nếu có
                 if (isset($zaloProfile['picture']['data']['url'])) {
-                    $avatarUrl = $zaloProfile['picture']['data']['url'];
-                    $this->saveZaloAvatar($user, $avatarUrl);
+                    $this->saveZaloAvatar($user, $zaloProfile['picture']['data']['url']);
                 }
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Database transaction failed', ['error' => $e->getMessage()]);
+                throw new \Exception('Lỗi khi lưu thông tin người dùng');
             }
 
             // Tạo token xác thực
             $token = $user->createToken('zalo_auth')->plainTextToken;
 
-            // Ghi lại lịch sử đăng nhập thành công
+            // Ghi log đăng nhập thành công
             $this->logLoginAttempt([
                 'user_id' => $user->id,
                 'status' => 'success',
@@ -422,12 +425,15 @@ class AuthService
             ]);
 
             return [
-                'user' => $user->fresh(['media']), // Load relationship media
+                'user' => $user->fresh(['media']),
                 'token' => $token
             ];
         } catch (\Exception $e) {
-            Log::error('Zalo login error: ' . $e->getMessage());
-            throw new \Exception(AuthErrorCode::ZALO_LOGIN_FAILED->value);
+            Log::error('Zalo login failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw new \Exception('Đăng nhập bằng Zalo thất bại: ' . $e->getMessage());
         }
     }
 

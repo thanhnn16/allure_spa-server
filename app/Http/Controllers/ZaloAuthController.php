@@ -108,7 +108,7 @@ class ZaloAuthController extends Controller
         }
     }
 
-    private function getZaloUserInfo($accessToken)
+    public function getZaloUserInfo($accessToken)
     {
         try {
             $response = Http::get('https://graph.zalo.me/v2.0/me', [
