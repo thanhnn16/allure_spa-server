@@ -156,9 +156,7 @@ Route::middleware('throttle:api')->group(function () {
             Route::get('/{invoice}', [InvoiceController::class, 'show']);
             Route::put('/{invoice}', [InvoiceController::class, 'update']);
             Route::delete('/{invoice}', [InvoiceController::class, 'destroy']);
-            
-            // Thêm route cho PayOS
-            Route::post('/{invoice}/pay-with-payos', [PayOSController::class, 'createPaymentLinkForInvoice']);
+            Route::post('/{invoice}/pay', [PayOSController::class, 'processPayment']);
             Route::get('/{invoice}/payment', [InvoiceController::class, 'getPaymentDetails']);
         });
 
@@ -191,13 +189,6 @@ Route::middleware('throttle:api')->group(function () {
             Route::post('/process', [PayOSController::class, 'processPayment']);
         });
 
-        // Invoice routes
-        Route::prefix('invoices')->group(function () {
-            Route::get('/{invoice}/payment', [InvoiceController::class, 'getPaymentDetails']);
-            Route::post('/{invoice}/pay', [PayOSController::class, 'processPayment']);
-            Route::post('/{invoice}/payos', [PayOSController::class, 'createPaymentLinkForInvoice']);
-            Route::post('/{invoiceId}/payos', [PayOSController::class, 'createPaymentLinkForInvoice']);
-        });
 
         // Favorite routes
         Route::post('/favorites/toggle', [FavoriteController::class, 'toggle']);

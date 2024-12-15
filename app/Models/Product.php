@@ -147,7 +147,6 @@ class Product extends Model
     public function getIsFavoriteAttribute()
     {
         if (!$this->current_user_id) {
-            Log::info('No user_id provided, is_favorite = false');
             return false;
         }
 

@@ -339,6 +339,8 @@ export default {
         // Form submission
         const submitForm = async () => {
             try {
+                console.log('Bắt đầu submit form với dữ liệu:', form.value);
+
                 // Validate form
                 if (!form.value.user_id) {
                     toast.error('Vui lòng chọn khách hàng');
@@ -350,51 +352,37 @@ export default {
                     return;
                 }
 
-                // Kiểm tra từng item đã đầy đủ thông tin
-                for (const item of form.value.order_items) {
-                    if (!item.item_id || !item.selectedItem) {
-                        toast.error('Vui lòng chọn đầy đủ thông tin cho tất cả sản phẩm/dịch vụ');
-                        return;
-                    }
-                }
-
-                // Cập nhật tổng tiền trước khi gửi
+                // Cập nhật tổng tiền
                 form.value.total_amount = calculateTotal();
                 form.value.discount_amount = calculateDiscount();
 
+                console.log('Tổng tiền đã tính:', {
+                    total: form.value.total_amount,
+                    discount: form.value.discount_amount
+                });
+
                 // Tạo đơn hàng
+                console.log('Gọi API tạo đơn hàng');
                 const response = await axios.post('/api/orders', form.value);
+                console.log('Response tạo đơn hàng:', response.data);
+
                 const order = response.data.data;
 
+                // Xử lý thanh toán qua PayOS nếu được chọn
                 if (form.value.payment_method_id === 3) {
-                    try {
-                        // Tạo hóa đơn
-                        const invoiceResponse = await axios.post(`/api/orders/${order.id}/create-invoice`);
-                        const invoice = invoiceResponse.data.data;
-
-                        // Tạo link thanh toán PayOS
-                        const paymentResponse = await axios.post(`/api/invoices/${invoice.id}/pay-with-payos`, {
-                            returnUrl: `${window.location.origin}/payment/callback`,
-                            cancelUrl: `${window.location.origin}/payment/callback?status=cancel`
-                        });
-
-                        if (paymentResponse.data.success) {
-                            // Chuyển hướng đến trang thanh toán PayOS
-                            window.location.href = paymentResponse.data.checkoutUrl;
-                        } else {
-                            toast.error('Có lỗi xảy ra khi tạo link thanh toán');
-                        }
-                    } catch (error) {
-                        console.error('Error creating payment link:', error);
-                        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xử lý thanh toán');
-                    }
+                    console.log('Phương thức thanh toán PayOS được chọn');
+                    await handlePayOSPayment(order);
                 } else {
-                    // Chuyển hướng đến trang chi tiết đơn hàng
+                    console.log('Chuyển hướng đến trang chi tiết đơn hàng');
                     router.visit(`/orders/${order.id}`);
                 }
 
             } catch (error) {
-                console.error('Error creating order:', error);
+                console.error('Chi tiết lỗi tạo đơn hàng:', {
+                    message: error.message,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
                 toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn hàng');
             }
         }
@@ -447,6 +435,81 @@ export default {
             });
         }, { deep: true });
 
+        const handlePayOSPayment = async (order) => {
+            try {
+                console.log('Bắt đầu xử lý thanh toán PayOS:', {
+                    orderId: order.id,
+                    totalAmount: order.total_amount
+                });
+
+                // Hiển thị thông báo đang xử lý
+                toast.info('Đang xử lý thanh toán...');
+
+                // Chuẩn bị URL callback
+                const returnUrl = `${window.location.origin}/payment/callback`;
+                const cancelUrl = `${window.location.origin}/payment/callback?status=cancel`;
+
+                console.log('URLs callback:', { returnUrl, cancelUrl });
+
+                // Gọi API tạo payment link
+                const paymentResponse = await axios.post(
+                    `/api/orders/${order.id}/payment-link`,
+                    {
+                        returnUrl: returnUrl,
+                        cancelUrl: cancelUrl
+                    }
+                );
+
+                if (!paymentResponse?.data?.success) {
+                    throw new Error(paymentResponse?.data?.message || 'Không thể tạo link thanh toán');
+                }
+
+                // Chuyển hướng đến trang thanh toán PayOS
+                const { checkoutUrl } = paymentResponse.data.data;
+                window.location.href = checkoutUrl;
+
+            } catch (error) {
+                console.error('Chi tiết lỗi thanh toán:', {
+                    message: error.message,
+                    response: error.response?.data,
+                    request: error.request
+                });
+                toast.error(error.response?.data?.message || 'Lỗi xử lý thanh toán');
+
+                // Chuyển về trang chi tiết đơn hàng nếu có lỗi
+                router.visit(`/orders/${order.id}`);
+            }
+        };
+
+        const handlePaymentCallback = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderCode = urlParams.get('orderCode');
+
+            if (!orderCode) {
+                toast.error('Thiếu thông tin đơn hàng');
+                return;
+            }
+
+            try {
+                // Verify payment với PayOS
+                const response = await axios.post('/api/payment/verify', {
+                    orderCode
+                });
+
+                if (response.data.success) {
+                    toast.success('Thanh toán thành công');
+                    // Chuyển về trang chi tiết đơn hàng
+                    router.visit(`/orders/${response.data.data.order_id}`);
+                } else {
+                    toast.error('Thanh toán thất bại');
+                    router.visit('/orders');
+                }
+            } catch (error) {
+                console.error('Payment verification error:', error);
+                toast.error('Lỗi xác thực thanh toán');
+            }
+        };
+
         return {
             form,
             userSearch,
@@ -465,6 +528,8 @@ export default {
             submitForm,
             canUpdateStatus,
             updateServicePrice,
+            handlePayOSPayment,
+            handlePaymentCallback,
         }
     }
 }

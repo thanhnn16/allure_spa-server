@@ -23,171 +23,154 @@ class PayOSController extends Controller
         $this->payOS = $payOS;
     }
 
-    public function createPaymentLink(array $paymentData)
+    public function createPaymentLink(Request $request, Order $order)
     {
         try {
-            // Validate payment data
-            if (!is_array($paymentData)) {
-                throw new \Exception('Invalid payment data format');
+            // Validate order status
+            if ($order->status !== 'pending') {
+                throw new \Exception('Đơn hàng không ở trạng thái cho phép thanh toán');
             }
 
-            // Ensure required fields exist
-            $requiredFields = ['orderCode', 'amount', 'description'];
-            foreach ($requiredFields as $field) {
-                if (!isset($paymentData[$field])) {
-                    throw new \Exception("Missing required field: {$field}");
-                }
-            }
+            // Tạo mã đơn hàng unique
+            $orderCode = 'PAY' . time() . rand(1000, 9999);
 
-            Log::info('PayOS Request:', $paymentData);
-
-            $response = $this->payOS->createPaymentLink($paymentData);
-            Log::info('PayOS Response:', $response);
-
-            if (isset($response['checkoutUrl'])) {
-                return [
-                    'success' => true,
-                    'checkoutUrl' => $response['checkoutUrl'],
-                    'orderCode' => $paymentData['orderCode'],
-                    'qrCode' => $response['qrCode'] ?? null,
-                ];
-            }
-
-            return [
-                'success' => false,
-                'message' => 'Không thể tạo link thanh toán',
-                'error' => $response['desc'] ?? null
-            ];
-        } catch (\Exception $e) {
-            Log::error('PayOS Error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'paymentData' => $paymentData
-            ]);
-
-            return [
-                'success' => false,
-                'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    public function testPayment(Request $request)
-    {
-        $orderCode = intval(substr(time() . rand(10, 99), -8));
-        $amount = intval($request->amount ?? 2000);
-
-        $paymentData = [
-            'orderCode' => $orderCode,
-            'amount' => $amount,
-            'description' => "Thanh toán cho Allure Spa",
-            'returnUrl' => $request->returnUrl,
-            'cancelUrl' => $request->cancelUrl,
-        ];
-
-        // Add optional buyer info if provided
-        if ($request->buyerName) {
-            $paymentData['buyerName'] = substr($request->buyerName, 0, 255);
-        }
-        if ($request->buyerEmail) {
-            $paymentData['buyerEmail'] = substr($request->buyerEmail, 0, 255);
-        }
-        if ($request->buyerPhone) {
-            $paymentData['buyerPhone'] = substr($request->buyerPhone, 0, 20);
-        }
-        if ($request->buyerAddress) {
-            $paymentData['buyerAddress'] = substr($request->buyerAddress, 0, 255);
-        }
-
-        $result = $this->createPaymentLink($paymentData);
-        return response()->json($result, $result['success'] ? 200 : 400);
-    }
-
-    public function processPayment(Request $request, $orderId)
-    {
-        try {
-            // Validate request
-            $request->validate([
-                'returnUrl' => 'required|string',
-                'cancelUrl' => 'required|string'
-            ]);
-
-            $order = Order::with(['user', 'shippingAddress', 'invoice'])
-                ->findOrFail($orderId);
-
-            // Kiểm tra hoặc tạo invoice nếu chưa có
-            if (!$order->invoice) {
-                $invoice = new Invoice([
-                    'user_id' => $order->user_id,
-                    'order_id' => $order->id,
-                    'total_amount' => $order->total_amount,
-                    'paid_amount' => 0,
-                    'status' => 'pending',
-                    'payment_method' => 'payos'
-                ]);
-                $order->invoice()->save($invoice);
-                $order->refresh();
-            }
-
-            // Generate order code
-            $orderCode = intval(substr(time() . rand(10, 99), -8));
-
-            // Prepare payment data as array
+            // Chuẩn bị dữ liệu thanh toán
             $paymentData = [
                 'orderCode' => $orderCode,
                 'amount' => (int)$order->total_amount,
                 'description' => "Thanh toán đơn hàng #{$order->id}",
                 'returnUrl' => $request->returnUrl,
                 'cancelUrl' => $request->cancelUrl,
+                'buyerName' => $order->user->full_name ?? '',
+                'buyerEmail' => $order->user->email ?? '',
+                'buyerPhone' => $order->user->phone_number ?? '',
+                'orderInfo' => json_encode([
+                    'order_id' => $order->id,
+                    'invoice_id' => $order->invoice->id ?? null
+                ])
             ];
 
-            // Add buyer info if available
-            if ($order->user) {
-                if ($order->user->full_name) {
-                    $paymentData['buyerName'] = substr($order->user->full_name, 0, 255);
-                }
-                if ($order->user->email) {
-                    $paymentData['buyerEmail'] = substr($order->user->email, 0, 255);
-                }
-                if ($order->user->phone) {
-                    $paymentData['buyerPhone'] = substr($order->user->phone, 0, 20);
-                }
+            // Tạo payment link từ PayOS
+            $response = $this->payOS->createPaymentLink($paymentData);
+
+            if (!isset($response['checkoutUrl'])) {
+                throw new \Exception('Không thể tạo link thanh toán');
             }
 
-            if ($order->shippingAddress) {
-                $paymentData['buyerAddress'] = substr($order->shippingAddress->full_address ?? '', 0, 255);
-            }
-
-            // Gọi PayOS API để tạo payment link
-            $result = $this->payOS->createPaymentLink($paymentData);
-
-            if (!isset($result['checkoutUrl'])) {
-                throw new \Exception($result['desc'] ?? 'Không thể tạo link thanh toán');
-            }
-
-            // Create payment history với invoice_id
+            // Lưu lịch sử thanh toán
             PaymentHistory::create([
                 'order_id' => $order->id,
                 'invoice_id' => $order->invoice->id,
                 'payment_amount' => $order->total_amount,
                 'payment_method' => 'payos',
-                'old_payment_status' => 'pending',
-                'new_payment_status' => 'pending',
                 'transaction_code' => $orderCode,
+                'old_payment_status' => 'pending',
+                'new_payment_status' => 'pending'
             ]);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'checkoutUrl' => $result['checkoutUrl'],
-                    'qrCode' => $result['qrCode'] ?? null,
+                    'checkoutUrl' => $response['checkoutUrl'],
+                    'qrCode' => $response['qrCode'] ?? null,
                     'orderCode' => $orderCode,
-                    'amount' => $order->total_amount,
-                    'payment_method' => 'payos'
+                    'amount' => $order->total_amount
                 ]
             ]);
+
         } catch (\Exception $e) {
-            Log::error('PayOS Process Payment Error:', [
+            Log::error('PayOS payment error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function processPayment(Request $request, $orderId)
+    {
+        try {
+            Log::info('Bắt đầu xử lý thanh toán PayOS:', [
+                'order_id' => $orderId,
+                'request_data' => $request->all()
+            ]);
+
+            $order = Order::with(['user', 'invoice'])->findOrFail($orderId);
+            
+            // Tạo mã đơn hàng unique
+            $orderCode = 'PAY' . time() . rand(1000, 9999);
+            
+            // Chuẩn bị dữ liệu thanh toán
+            $paymentData = [
+                'orderCode' => $orderCode,
+                'amount' => (int)$order->total_amount,
+                'description' => "Thanh toán đơn hàng #{$order->id}",
+                'returnUrl' => $request->returnUrl,
+                'cancelUrl' => $request->cancelUrl,
+                'signature' => '', // Sẽ được tạo bên dưới
+                'items' => [[
+                    'name' => "Đơn hàng #{$order->id}",
+                    'quantity' => 1,
+                    'price' => (int)$order->total_amount
+                ]],
+            ];
+
+            // Thêm thông tin người mua
+            if ($order->user) {
+                $paymentData['buyerName'] = $order->user->full_name ?? '';
+                $paymentData['buyerEmail'] = $order->user->email ?? '';
+                $paymentData['buyerPhone'] = $order->user->phone_number ?? '';
+                $paymentData['buyerAddress'] = '';
+            }
+
+            // Tạo chữ ký
+            $dataStr = implode('|', [
+                $paymentData['orderCode'],
+                $paymentData['amount'],
+                $paymentData['description'],
+                $paymentData['cancelUrl'],
+                $paymentData['returnUrl']
+            ]);
+            
+            $paymentData['signature'] = hash_hmac('sha256', $dataStr, config('services.payos.checksum_key'));
+
+            Log::info('Dữ liệu thanh toán PayOS:', ['data' => $paymentData]);
+
+            // Gọi API PayOS
+            $payos = app('payos');
+            $response = $payos->createPaymentLink($paymentData);
+
+            if (!$response || !isset($response['checkoutUrl'])) {
+                throw new \Exception('Không thể tạo link thanh toán: ' . json_encode($response));
+            }
+
+            // Lưu lịch sử thanh toán
+            PaymentHistory::create([
+                'order_id' => $order->id,
+                'invoice_id' => $order->invoice->id,
+                'payment_amount' => $order->total_amount,
+                'payment_method' => 'payos',
+                'transaction_code' => $orderCode,
+                'old_payment_status' => 'pending',
+                'new_payment_status' => 'pending'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'checkoutUrl' => $response['checkoutUrl'],
+                    'qrCode' => $response['qrCode'] ?? null,
+                    'orderCode' => $orderCode,
+                    'amount' => $order->total_amount
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Lỗi xử lý thanh toán PayOS:', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -337,85 +320,6 @@ class PayOSController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function createPaymentLinkForInvoice(Request $request, $invoiceId)
-    {
-        try {
-            $invoice = Invoice::with(['order.orderItems.product', 'order.orderItems.service', 'user'])
-                ->findOrFail($invoiceId);
-
-            // Kiểm tra số tiền còn lại phải thanh toán
-            $remainingAmount = $invoice->remaining_amount;
-            if ($remainingAmount <= 0) {
-                throw new \Exception('Hóa đơn này đã được thanh toán đầy đủ');
-            }
-
-            // 2. Validate dữ liệu đầu vào
-            $paymentData = [
-                'orderCode' => intval(substr(time() . rand(10, 99), -8)),
-                'amount' => (int)$remainingAmount,
-                'description' => "Thanh toán cho Allure Spa",
-                'returnUrl' => $request->returnUrl ?? config('app.url') . '/payment/callback',
-                'cancelUrl' => $request->cancelUrl ?? config('app.url') . '/payment/callback?status=cancel',
-            ];
-
-            // 3. Log request data
-            Log::info('PayOS Request Data:', $paymentData);
-
-            // 4. Gọi API với try-catch riêng
-            try {
-                $response = $this->payOS->createPaymentLink($paymentData);
-                
-                if (!$response) {
-                    throw new \Exception('Không nhận được phản hồi từ PayOS');
-                }
-
-                Log::info('PayOS Response:', $response);
-
-                if (!isset($response['checkoutUrl'])) {
-                    throw new \Exception('Response không hợp lệ từ PayOS');
-                }
-
-                // 5. Tạo payment history
-                PaymentHistory::create([
-                    'invoice_id' => $invoice->id,
-                    'payment_amount' => $remainingAmount,
-                    'payment_method' => 'payos',
-                    'old_payment_status' => 'pending',
-                    'new_payment_status' => 'pending',
-                    'transaction_code' => $paymentData['orderCode'],
-                    'note' => 'Khởi tạo thanh toán qua PayOS'
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'checkoutUrl' => $response['checkoutUrl'],
-                        'qrCode' => $response['qrCode'] ?? null,
-                        'orderCode' => $paymentData['orderCode']
-                    ]
-                ]);
-
-            } catch (\Exception $e) {
-                Log::error('PayOS API Error:', [
-                    'message' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                throw new \Exception('Lỗi khi gọi API PayOS: ' . $e->getMessage());
-            }
-
-        } catch (\Exception $e) {
-            Log::error('PayOS Create Payment Link Error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Không thể tạo link thanh toán: ' . $e->getMessage()
             ], 500);
         }
     }
