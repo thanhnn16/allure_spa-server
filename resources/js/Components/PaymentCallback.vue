@@ -32,7 +32,7 @@
           </h3>
           <p class="text-gray-600 dark:text-gray-400 mb-4">{{ error }}</p>
           <button @click="retryPayment" class="btn bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
-            Thử lại
+            Quay lại trang hoá đơn
           </button>
         </div>
       </div>
@@ -115,7 +115,7 @@ export default {
     }
 
     const retryPayment = () => {
-      router.visit('/orders')
+      router.visit('/invoices')
     }
 
     onMounted(() => {
