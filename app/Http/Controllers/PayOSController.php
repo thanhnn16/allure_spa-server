@@ -112,70 +112,64 @@ class PayOSController extends Controller
                 'description' => "Thanh toán đơn hàng #{$order->id}",
                 'returnUrl' => $request->returnUrl,
                 'cancelUrl' => $request->cancelUrl,
-                'expiredAt' => time() + 3600, // Hết hạn sau 1 giờ
-                'clientId' => config('services.payos.client_id'),
+                'buyerName' => $order->user->full_name ?? '',
+                'buyerEmail' => $order->user->email ?? '',
+                'buyerPhone' => $order->user->phone_number ?? '',
+                'buyerAddress' => $order->user->address ?? '',
+                'items' => [
+                    [
+                        'name' => "Đơn hàng #{$order->id}",
+                        'quantity' => 1,
+                        'price' => (int)$order->total_amount
+                    ]
+                ]
             ];
 
-            // Thêm thông tin người mua nếu có
-            if ($order->user) {
-                $paymentData = array_merge($paymentData, [
-                    'buyerName' => $order->user->full_name ?? '',
-                    'buyerEmail' => $order->user->email ?? '',
-                    'buyerPhone' => $order->user->phone_number ?? '',
-                    'buyerAddress' => $order->user->address ?? ''
+            // Nếu có danh sách sản phẩm chi tiết
+            if ($order->orderItems->count() > 0) {
+                $paymentData['items'] = $this->formatOrderItems($order->orderItems);
+            }
+
+            try {
+                // Tạo payment link từ PayOS
+                $response = $this->payOS->createPaymentLink($paymentData);
+
+                if (!isset($response['checkoutUrl'])) {
+                    throw new \Exception('Không thể tạo link thanh toán: ' . json_encode($response));
+                }
+
+                // Lưu lịch sử thanh toán
+                PaymentHistory::create([
+                    'order_id' => $order->id,
+                    'invoice_id' => $order->invoice->id,
+                    'payment_amount' => $order->total_amount,
+                    'payment_method' => 'payos',
+                    'transaction_code' => $orderCode,
+                    'old_payment_status' => 'pending',
+                    'new_payment_status' => 'pending',
+                    'payment_details' => json_encode([
+                        'request' => $paymentData,
+                        'response' => $response
+                    ])
                 ]);
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'checkoutUrl' => $response['checkoutUrl'],
+                        'qrCode' => $response['qrCode'] ?? null,
+                        'orderCode' => $orderCode,
+                        'amount' => $order->total_amount
+                    ]
+                ]);
+
+            } catch (\Exception $e) {
+                Log::error('Lỗi khi tạo payment link PayOS:', [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
             }
-
-            // Tạo chữ ký theo đúng format của PayOS
-            $dataToSign = implode('|', [
-                $paymentData['orderCode'],
-                $paymentData['amount'],
-                $paymentData['description'],
-                $paymentData['cancelUrl'],
-                $paymentData['returnUrl']
-            ]);
-            
-            $paymentData['signature'] = hash_hmac('sha256', $dataToSign, config('services.payos.checksum_key'));
-
-            Log::info('Dữ liệu thanh toán PayOS:', ['data' => $paymentData]);
-
-            // Gọi API PayOS với header xác thực
-            $response = Http::withHeaders([
-                'x-client-id' => config('services.payos.client_id'),
-                'x-api-key' => config('services.payos.api_key')
-            ])->post('https://api-merchant.payos.vn/v2/payment-requests', $paymentData);
-
-            if (!$response->successful()) {
-                throw new \Exception('PayOS API error: ' . $response->body());
-            }
-
-            $responseData = $response->json();
-
-            if (!isset($responseData['data']['checkoutUrl'])) {
-                throw new \Exception('Không thể tạo link thanh toán: ' . json_encode($responseData));
-            }
-
-            // Lưu lịch sử thanh toán
-            PaymentHistory::create([
-                'order_id' => $order->id,
-                'invoice_id' => $order->invoice->id,
-                'payment_amount' => $order->total_amount,
-                'payment_method' => 'payos',
-                'transaction_code' => $orderCode,
-                'old_payment_status' => 'pending',
-                'new_payment_status' => 'pending',
-                'payment_details' => json_encode($responseData)
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'checkoutUrl' => $responseData['data']['checkoutUrl'],
-                    'qrCode' => $responseData['data']['qrCode'] ?? null,
-                    'orderCode' => $orderCode,
-                    'amount' => $order->total_amount
-                ]
-            ]);
 
         } catch (\Exception $e) {
             Log::error('Lỗi xử lý thanh toán PayOS:', [
@@ -273,7 +267,6 @@ class PayOSController extends Controller
                                     'send_fcm' => true
                                 ]);
                             }
-
                             // Thông báo cho admin
                             $notificationService->notifyAdmins(
                                 'Thanh toán thành công',

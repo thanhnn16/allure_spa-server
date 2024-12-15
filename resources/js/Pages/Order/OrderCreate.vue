@@ -485,6 +485,37 @@ export default {
             }
         };
 
+        // Thêm computed property để tính toán số tiền sau giảm giá
+        const finalAmount = computed(() => {
+            return form.value.total_amount - form.value.discount_amount;
+        });
+
+        // Cập nhật hàm tính toán khi áp dụng voucher
+        const applyVoucher = async (voucherId) => {
+            try {
+                form.value.voucher_id = voucherId;
+                
+                // Tính toán lại giá trị giảm giá dựa trên voucher
+                if (voucherId) {
+                    const voucher = props.vouchers.find(v => v.id === voucherId);
+                    if (voucher) {
+                        if (voucher.discount_type === 'percentage') {
+                            form.value.discount_amount = (form.value.total_amount * voucher.discount_value) / 100;
+                        } else {
+                            form.value.discount_amount = voucher.discount_value;
+                        }
+                    }
+                } else {
+                    form.value.discount_amount = 0;
+                }
+
+                // Cập nhật tổng tiền và số tiền giảm giá
+                updateTotals();
+            } catch (error) {
+                toast.error('Lỗi khi áp dụng voucher: ' + error.message);
+            }
+        };
+
         return {
             form,
             userSearch,
@@ -505,6 +536,9 @@ export default {
             updateServicePrice,
             handlePayOSPayment,
             handlePaymentCallback,
+            finalAmount,
+            applyVoucher,
+            updateTotals,
         }
     }
 }
