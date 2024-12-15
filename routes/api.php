@@ -48,6 +48,11 @@ Route::middleware('throttle:api')->group(function () {
 
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
         Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+        // Zalo auth routes
+        Route::post('zalo/callback', [ZaloAuthController::class, 'handleZaloCallback']);
+        Route::get('zalo/profile', [ZaloAuthController::class, 'getZaloUserInfo'])
+            ->middleware('auth:sanctum');
     });
 
     // Search routes
