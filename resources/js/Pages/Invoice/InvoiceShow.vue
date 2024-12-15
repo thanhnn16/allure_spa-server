@@ -619,7 +619,7 @@ export default {
         // Computed property để theo dõi thay đổi của invoice
         const subtotalAmount = computed(() => {
             if (props.invoice?.order?.total_amount && props.invoice?.order?.discount_amount) {
-                return Number(props.invoice.order.total_amount) + Number(props.invoice.order.discount_amount);
+                return Number(props.invoice.order.total_amount)
             }
 
             // Nếu không có thông tin giảm giá, tính từ items
