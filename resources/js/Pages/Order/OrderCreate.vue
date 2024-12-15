@@ -494,7 +494,7 @@ export default {
         const applyVoucher = async (voucherId) => {
             try {
                 form.value.voucher_id = voucherId;
-                
+
                 // Tính toán lại giá trị giảm giá dựa trên voucher
                 if (voucherId) {
                     const voucher = props.vouchers.find(v => v.id === voucherId);

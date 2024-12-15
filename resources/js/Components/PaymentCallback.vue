@@ -68,17 +68,22 @@ export default {
           throw new Error('Giao dịch đã bị hủy')
         }
 
-        const response = await axios.post('/api/payos/verify', {
-          orderCode,
-          invoice_id: invoiceId
-        })
-
-        if (response.data.success) {
-          success.value = true
-          transactionId.value = orderCode
-          orderId.value = response.data.data.order_id
-        } else {
-          throw new Error(response.data.message)
+        let retries = 3;
+        while (retries > 0) {
+          try {
+            const response = await axios.post('/api/payos/verify', {
+              orderCode,
+              invoice_id: invoiceId
+            });
+            if (response.data.success) {
+              success.value = true;
+              break;
+            }
+            retries--;
+          } catch (err) {
+            if (retries === 0) throw err;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
         }
       } catch (err) {
         error.value = err.message || 'Có lỗi xảy ra khi xác thực thanh toán'

@@ -243,6 +243,7 @@ class PayOSController extends Controller
     public function verifyPayment(Request $request)
     {
         try {
+            Log::info('Verify payment request:', $request->all());
             $orderCode = $request->orderCode;
             if (!$orderCode) {
                 throw new \Exception('Thiếu mã đơn hàng');
@@ -356,9 +357,10 @@ class PayOSController extends Controller
                 'message' => 'Không thể xác thực thanh toán'
             ], 400);
         } catch (\Exception $e) {
-            Log::error('PayOS Verification Error:', [
+            Log::error('Verify payment error:', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
             ]);
 
             return response()->json([
