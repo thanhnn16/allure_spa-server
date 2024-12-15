@@ -46,10 +46,14 @@ import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 
 export default {
-  setup() {
-    const route = useRoute()
-    const router = useRouter()
+  props: {
+    orderCode: String,
+    invoice_id: String,
+    status: String
+  },
 
+  setup(props) {
+    const router = useRouter()
     const loading = ref(true)
     const success = ref(false)
     const error = ref(null)
@@ -58,8 +62,12 @@ export default {
 
     const verifyPayment = async () => {
       try {
-        const orderCode = route.query.orderCode
-        const invoiceId = route.query.invoice_id
+        const orderCode = props.orderCode
+        const invoiceId = props.invoice_id
+
+        if (props.status === 'CANCELLED') {
+          throw new Error('Giao dịch đã bị hủy')
+        }
 
         const response = await axios.post('/api/payos/verify', {
           orderCode,
