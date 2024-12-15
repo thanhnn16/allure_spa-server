@@ -101,7 +101,7 @@ class ZaloAuthController extends Controller
                 'token' => $result['token']
             ]);
         } catch (\Exception $e) {
-            Log::error('Zalo auth error: ' . $e->getMessage());
+            Log::error('Lỗi xác thực Zalo: ' . $e->getMessage());
             return response()->json([
                 'error' => $e->getMessage()
             ], 500);

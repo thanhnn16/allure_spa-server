@@ -20,8 +20,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::prefix('auth')->group(function () {
-    Route::get('zalo/callback', [ZaloAuthController::class, 'handleZaloCallback']);
-    Route::post('zalo/login', [ZaloAuthController::class, 'loginWithZalo']);
-    Route::get('zalo/profile', [ZaloAuthController::class, 'getZaloProfile'])
+    Route::post('zalo/callback', [ZaloAuthController::class, 'handleZaloCallback']);
+    Route::get('zalo/profile', [ZaloAuthController::class, 'getZaloUserInfo'])
         ->middleware('auth:sanctum');
 });
