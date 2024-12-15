@@ -664,7 +664,7 @@ class AuthController extends BaseController
             $request->session()->regenerateToken();
         }
 
-        return redirect()->route('password.reset.web', [
+        return redirect()->route('password.reset', [
             'token' => $request->token,
             'email' => $request->email
         ]);
