@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Services\SearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Models\ProductCategory;
+use App\Models\ServiceCategory;
 
 /**
  * @OA\Tag(
@@ -148,32 +150,36 @@ class SearchController extends BaseController
             'sort_by' => 'nullable|in:name_asc,name_desc,price_asc,price_desc,rating',
             'min_price' => 'nullable|numeric|min:0',
             'max_price' => 'nullable|numeric|min:0',
-            'category_id' => 'nullable|integer|exists:service_categories,id,deleted_at,NULL'
+            'category_id' => 'nullable|integer'
         ]);
 
         if ($validator->fails()) {
             return $this->respondWithError($validator->errors(), 422);
         }
 
-        if ($request->has(['query', 'type', 'limit']) && !$request->has(['sort_by', 'min_price', 'max_price', 'category_id'])) {
-            return $this->searchService->search(
-                $request->get('query', ''),
-                $request->get('type', 'all'),
-                $request->get('limit', 10)
-            );
+        $categories = [];
+        $type = $request->get('type', 'all');
+        
+        if ($type === 'products' || $type === 'all') {
+            $categories['product_categories'] = ProductCategory::select('id', 'name')->get();
+        }
+        
+        if ($type === 'services' || $type === 'all') {
+            $categories['service_categories'] = ServiceCategory::select('id', 'name')->get();
         }
 
-        $params = [
-            'type' => $request->get('type', 'all'),
+        $results = $this->searchService->search($request->get('query', ''), [
+            'type' => $type,
             'limit' => $request->get('limit', 10),
             'sort_by' => $request->get('sort_by'),
             'min_price' => $request->get('min_price'),
             'max_price' => $request->get('max_price'),
             'category_id' => $request->get('category_id')
-        ];
+        ]);
 
-        $results = $this->searchService->search($request->get('query', ''), $params);
-
-        return $this->respondWithJson($results);
+        return $this->respondWithJson([
+            'results' => $results,
+            'categories' => $categories
+        ]);
     }
 }

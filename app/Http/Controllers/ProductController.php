@@ -24,7 +24,7 @@ class ProductController extends BaseController
     /**
      * @OA\Get(
      *     path="/api/products",
-     *     summary="Lấy danh sách sản phẩm",
+     *     summary="Lấy danh sách sản phẩm có phân trang",
      *     tags={"Products"},
      *     @OA\Parameter(
      *         name="search",
@@ -75,29 +75,18 @@ class ProductController extends BaseController
      *                 @OA\Property(
      *                     property="data",
      *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="name", type="string", example="Sample Product"),
-     *                         @OA\Property(property="price", type="number", example=99.99),
-     *                         @OA\Property(
-     *                             property="media",
-     *                             type="array",
-     *                             @OA\Items(
-     *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=1),
-     *                                 @OA\Property(property="type", type="string", example="image"),
-     *                                 @OA\Property(property="file_path", type="string", example="products/sample.jpg"),
-     *                                 @OA\Property(property="full_url", type="string", example="http://example.com/storage/products/sample.jpg")
-     *                             )
-     *                         )
-     *                     )
+     *                     @OA\Items(ref="#/components/schemas/Product")
      *                 ),
-     *                 @OA\Property(property="first_page_url", type="string", example="http://example.com/api/products?page=1"),
-     *                 @OA\Property(property="from", type="integer", example=1),
-     *                 @OA\Property(property="last_page", type="integer", example=5),
-     *                 @OA\Property(property="per_page", type="integer", example=15),
-     *                 @OA\Property(property="total", type="integer", example=50)
+     *                 @OA\Property(property="first_page_url", type="string"),
+     *                 @OA\Property(property="from", type="integer"),
+     *                 @OA\Property(property="last_page", type="integer"),
+     *                 @OA\Property(property="last_page_url", type="string"),
+     *                 @OA\Property(property="next_page_url", type="string", nullable=true),
+     *                 @OA\Property(property="path", type="string"),
+     *                 @OA\Property(property="per_page", type="integer"),
+     *                 @OA\Property(property="prev_page_url", type="string", nullable=true),
+     *                 @OA\Property(property="to", type="integer"),
+     *                 @OA\Property(property="total", type="integer")
      *             )
      *         )
      *     )
@@ -109,7 +98,6 @@ class ProductController extends BaseController
         $products = $this->productService->getProducts($request)->paginate($perPage);
 
         $categories = $this->productService->getAllCategories();
-
         $filters = $request->only(['search', 'category', 'per_page', 'sort', 'direction']);
 
         // Log product data
