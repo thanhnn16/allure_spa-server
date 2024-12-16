@@ -57,14 +57,16 @@ class AiFunctionController extends Controller
                 ->pluck('name')
                 ->toArray();
 
-            // Validate request
             $validated = $request->validate([
                 'function' => ['required', 'string', Rule::in($availableFunctions)],
-                'args' => 'required|array'
+                'args' => 'array' // Bỏ required
             ]);
 
+            // Đảm bảo args luôn là array
+            $args = $validated['args'] ?? [];
+
             // Validate function-specific arguments
-            $this->validateFunctionArgs($validated['function'], $validated['args']);
+            $this->validateFunctionArgs($validated['function'], $args);
 
             // Handle function call
             $result = $this->functionCallingService->handleFunctionCall(
