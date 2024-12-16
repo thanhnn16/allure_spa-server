@@ -135,7 +135,7 @@ Sử dụng ngôn ngữ tự nhiên, không máy móc.
       'language' => 'vi',
       'model_type' => 'gemini-2.0-flash-exp',
       'temperature' => 0.6,
-      'max_tokens' => 4096,
+      'max_tokens' => 2048,
       'top_p' => 0.90,
       'top_k' => 30,
       'is_active' => true,
