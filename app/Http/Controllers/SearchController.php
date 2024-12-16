@@ -159,13 +159,13 @@ class SearchController extends BaseController
 
         $categories = [];
         $type = $request->get('type', 'all');
-        
+
         if ($type === 'products' || $type === 'all') {
-            $categories['product_categories'] = ProductCategory::select('id', 'name')->get();
+            $categories['product_categories'] = ProductCategory::select('id', 'category_name as name')->get();
         }
-        
+
         if ($type === 'services' || $type === 'all') {
-            $categories['service_categories'] = ServiceCategory::select('id', 'name')->get();
+            $categories['service_categories'] = ServiceCategory::select('id', 'service_category_name as name')->get();
         }
 
         $results = $this->searchService->search($request->get('query', ''), [
