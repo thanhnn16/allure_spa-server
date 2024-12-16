@@ -203,6 +203,7 @@ class AiChatConfig extends Model
     const MODEL_TYPES = [
         'gemini-1.5-pro' => 'Gemini 1.5 Pro',
         'gemini-1.5-flash' => 'Gemini 1.5 Flash',
+        'gemini-2.0-flash-exp' => 'Gemini 2.0 Flash Experimental',
     ];
 
     // Config types with descriptions
@@ -226,117 +227,12 @@ class AiChatConfig extends Model
 
     const FUNCTION_DECLARATIONS = [
         [
-            'name' => 'search',
-            'description' => 'Search for products, services or all items',
-            'parameters' => [
-                'type' => 'object',
-                'properties' => [
-                    'query' => [
-                        'type' => 'string',
-                        'description' => 'Search query'
-                    ],
-                    'type' => [
-                        'type' => 'string',
-                        'enum' => ['all', 'products', 'services'],
-                        'description' => 'Type of items to search for'
-                    ],
-                    'limit' => [
-                        'type' => 'integer',
-                        'description' => 'Maximum number of results'
-                    ]
-                ],
-                'required' => ['query', 'type']
-            ]
+            'name' => 'getAllProducts',
+            'description' => 'Get all available products'
         ],
         [
-            'name' => 'getProductRecommendations',
-            'description' => 'Get product recommendations based on skin concerns and conditions',
-            'parameters' => [
-                'type' => 'object',
-                'properties' => [
-                    'skin_type' => [
-                        'type' => 'string',
-                        'enum' => ['oily', 'dry', 'combination', 'sensitive'],
-                        'description' => 'Customer skin type'
-                    ],
-                    'concerns' => [
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'string',
-                            'enum' => [
-                                'acne',
-                                'aging',
-                                'pigmentation',
-                                'dryness',
-                                'sensitivity',
-                                'dullness',
-                                'pores',
-                                'wrinkles'
-                            ]
-                        ],
-                        'description' => 'List of skin concerns'
-                    ],
-                    'price_range' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'min' => ['type' => 'number'],
-                            'max' => ['type' => 'number']
-                        ],
-                        'description' => 'Price range for products'
-                    ],
-                    'category_id' => [
-                        'type' => 'integer',
-                        'description' => 'Specific product category ID'
-                    ]
-                ],
-                'required' => ['skin_type']
-            ]
-        ],
-        [
-            'name' => 'getServiceRecommendations',
-            'description' => 'Get spa service recommendations based on customer needs',
-            'parameters' => [
-                'type' => 'object',
-                'properties' => [
-                    'treatment_type' => [
-                        'type' => 'string',
-                        'enum' => ['facial', 'massage', 'body', 'specialized'],
-                        'description' => 'Type of treatment needed'
-                    ],
-                    'concerns' => [
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'string',
-                            'enum' => [
-                                'relaxation',
-                                'skin_improvement',
-                                'anti_aging',
-                                'pain_relief',
-                                'detox',
-                                'slimming'
-                            ]
-                        ],
-                        'description' => 'Customer concerns and goals'
-                    ],
-                    'duration_preference' => [
-                        'type' => 'integer',
-                        'description' => 'Preferred treatment duration in minutes'
-                    ],
-                    'price_range' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'min' => ['type' => 'number'],
-                            'max' => ['type' => 'number']
-                        ],
-                        'description' => 'Budget range for services'
-                    ],
-                    'category_id' => [
-                        'type' => 'integer',
-                        'description' => 'Specific service category ID'
-                    ]
-                ],
-                'required' => ['treatment_type']
-            ]
+            'name' => 'getAllServices',
+            'description' => 'Get all available services'
         ],
         [
             'name' => 'getProductDetails',

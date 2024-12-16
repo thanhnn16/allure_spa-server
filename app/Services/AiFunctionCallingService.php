@@ -35,16 +35,14 @@ class AiFunctionCallingService
     {
         try {
             switch ($functionName) {
-                case 'search':
-                    return $this->handleSearch($args);
+                case 'getAllProducts':
+                    return $this->handleGetAllProducts();
+                case 'getAllServices':
+                    return $this->handleGetAllServices();
                 case 'getAvailableTimeSlots':
                     return $this->handleGetTimeSlots($args);
                 case 'createAppointment':
                     return $this->handleCreateAppointment($args);
-                case 'getProductRecommendations':
-                    return $this->handleProductRecommendations($args);
-                case 'getServiceRecommendations':
-                    return $this->handleServiceRecommendations($args);
                 case 'getProductDetails':
                     return $this->handleProductDetails($args);
                 case 'getServiceDetails':
@@ -64,31 +62,79 @@ class AiFunctionCallingService
         }
     }
 
-    protected function handleSearch($args)
+    protected function handleGetAllProducts()
     {
         try {
-            // Validate required arguments
-            if (!isset($args['query']) || !isset($args['type'])) {
-                throw new \InvalidArgumentException("Missing required arguments: query and type");
-            }
+            $products = Product::with(['category', 'media', 'attributes', 'ratings'])->get();
 
-            // Validate type
-            if (!in_array($args['type'], ['all', 'products', 'services'])) {
-                throw new \InvalidArgumentException("Invalid type. Must be one of: all, products, services");
-            }
-
-            $results = $this->searchService->search(
-                $args['query'],
-                $args['type'],
-                $args['limit'] ?? 10
-            );
+            $formattedData = $products->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'category' => $product->category->name,
+                    'brand_description' => $product->brand_description,
+                    'usage' => $product->usage,
+                    'benefits' => $product->benefits,
+                    'key_ingredients' => $product->key_ingredients,
+                    'ingredients' => $product->ingredients,
+                    'directions' => $product->directions,
+                    'storage_instructions' => $product->storage_instructions,
+                    'product_notes' => $product->product_notes,
+                    'images' => $product->media->pluck('url'),
+                    'attributes' => $product->attributes->pluck('attribute_value', 'name'),
+                    'rating' => [
+                        'average' => round($product->ratings()->avg('rating'), 1),
+                        'count' => $product->ratings()->count()
+                    ]
+                ];
+            });
 
             return [
                 'success' => true,
-                'data' => $results
+                'data' => $formattedData
             ];
         } catch (\Exception $e) {
-            Log::error("Search error: {$e->getMessage()}");
+            Log::error("Get all products error: {$e->getMessage()}");
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    protected function handleGetAllServices()
+    {
+        try {
+            $services = Service::with(['category', 'media', 'ratings'])->get();
+
+            $formattedData = $services->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'name' => $service->service_name,
+                    'description' => $service->description,
+                    'duration' => $service->duration,
+                    'prices' => [
+                        'single' => $service->single_price,
+                        'combo_5' => $service->combo_5_price,
+                        'combo_10' => $service->combo_10_price
+                    ],
+                    'validity_period' => $service->validity_period,
+                    'category' => $service->category->name,
+                    'images' => $service->media->pluck('url'),
+                    'rating' => [
+                        'average' => round($service->ratings()->avg('rating'), 1),
+                        'count' => $service->ratings()->count()
+                    ]
+                ];
+            });
+
+            return [
+                'success' => true,
+                'data' => $formattedData
+            ];
+        } catch (\Exception $e) {
+            Log::error("Get all services error: {$e->getMessage()}");
             return [
                 'success' => false,
                 'error' => $e->getMessage()
@@ -152,145 +198,6 @@ class AiFunctionCallingService
         }
     }
 
-    protected function handleProductRecommendations($args)
-    {
-        try {
-            $query = Product::query()
-                ->with(['category', 'media', 'attributes']);
-
-            // Lọc theo loại da
-            if (isset($args['skin_type'])) {
-                $query->whereHas('attributes', function (Builder $query) use ($args) {
-                    $query->where('name', 'skin_type')
-                        ->where('attribute_value', $args['skin_type']);
-                });
-            }
-
-            // Lọc theo vấn đề về da
-            if (!empty($args['concerns'])) {
-                $query->where(function ($q) use ($args) {
-                    foreach ($args['concerns'] as $concern) {
-                        $q->orWhere('benefits', 'LIKE', "%{$concern}%")
-                            ->orWhere('key_ingredients', 'LIKE', "%{$concern}%");
-                    }
-                });
-            }
-
-            // Lọc theo khoảng giá
-            if (isset($args['price_range'])) {
-                if (isset($args['price_range']['min'])) {
-                    $query->where('price', '>=', $args['price_range']['min']);
-                }
-                if (isset($args['price_range']['max'])) {
-                    $query->where('price', '<=', $args['price_range']['max']);
-                }
-            }
-
-            // Lọc theo danh mục
-            if (isset($args['category_id'])) {
-                $query->where('category_id', $args['category_id']);
-            }
-
-            $products = $query->get()->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'price' => $product->price,
-                    'category' => $product->category->name,
-                    'benefits' => $product->benefits,
-                    'key_ingredients' => $product->key_ingredients,
-                    'usage' => $product->usage,
-                    'images' => $product->media->pluck('url'),
-                    'attributes' => $product->attributes->pluck('attribute_value', 'name')
-                ];
-            });
-
-            return [
-                'success' => true,
-                'data' => $products,
-                'count' => $products->count()
-            ];
-        } catch (\Exception $e) {
-            Log::error("Product recommendations error: {$e->getMessage()}");
-            return [
-                'success' => false,
-                'error' => $e->getMessage()
-            ];
-        }
-    }
-
-    protected function handleServiceRecommendations($args)
-    {
-        try {
-            $query = Service::query()
-                ->with(['category', 'media']);
-
-            // Lọc theo loại điều trị
-            if (isset($args['treatment_type'])) {
-                $query->whereHas('category', function ($q) use ($args) {
-                    $q->where('name', 'LIKE', "%{$args['treatment_type']}%");
-                });
-            }
-
-            // Lọc theo mục tiêu điều trị
-            if (!empty($args['concerns'])) {
-                $query->where(function ($q) use ($args) {
-                    foreach ($args['concerns'] as $concern) {
-                        $q->orWhere('description', 'LIKE', "%{$concern}%");
-                    }
-                });
-            }
-
-            // Lọc theo thời gian
-            if (isset($args['duration_preference'])) {
-                $query->where('duration', '<=', $args['duration_preference']);
-            }
-
-            // Lọc theo khoảng giá
-            if (isset($args['price_range'])) {
-                if (isset($args['price_range']['min'])) {
-                    $query->where('single_price', '>=', $args['price_range']['min']);
-                }
-                if (isset($args['price_range']['max'])) {
-                    $query->where('single_price', '<=', $args['price_range']['max']);
-                }
-            }
-
-            // Lọc theo danh mục
-            if (isset($args['category_id'])) {
-                $query->where('category_id', $args['category_id']);
-            }
-
-            $services = $query->get()->map(function ($service) {
-                return [
-                    'id' => $service->id,
-                    'name' => $service->service_name,
-                    'description' => $service->description,
-                    'duration' => $service->duration,
-                    'single_price' => $service->single_price,
-                    'combo_prices' => [
-                        '5_sessions' => $service->combo_5_price,
-                        '10_sessions' => $service->combo_10_price
-                    ],
-                    'category' => $service->category->name,
-                    'images' => $service->media->pluck('url'),
-                    'rating' => $service->ratings()->avg('rating')
-                ];
-            });
-
-            return [
-                'success' => true,
-                'data' => $services,
-                'count' => $services->count()
-            ];
-        } catch (\Exception $e) {
-            Log::error("Service recommendations error: {$e->getMessage()}");
-            return [
-                'success' => false,
-                'error' => $e->getMessage()
-            ];
-        }
-    }
 
     protected function handleProductDetails($args)
     {
