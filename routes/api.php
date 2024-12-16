@@ -211,12 +211,6 @@ Route::middleware('throttle:api')->group(function () {
             Route::get('/global-api-key', [AiConfigController::class, 'getGlobalApiKey']);
         });
 
-        // AI Function routes
-        Route::prefix('ai')->group(function () {
-            Route::post('/function-call', [AiFunctionController::class, 'handleFunctionCall']);
-            Route::get('/available-functions', [AiFunctionController::class, 'getAvailableFunctions']);
-        });
-
         // Order routes
         Route::prefix('orders')->middleware('auth:sanctum')->group(function () {
             // Basic CRUD operations
@@ -315,4 +309,10 @@ Route::middleware('throttle:api')->group(function () {
 Route::prefix('payos')->group(function () {
     Route::post('/test', [PayOSController::class, 'testPayment']);
     Route::post('/verify', [PayOSController::class, 'verifyPayment']);
+});
+
+// AI Function routes
+Route::prefix('ai')->group(function () {
+    Route::post('/function-call', [AiFunctionController::class, 'handleFunctionCall']);
+    Route::get('/available-functions', [AiFunctionController::class, 'getAvailableFunctions']);
 });
