@@ -59,8 +59,6 @@ class AiConfigController extends BaseController
                 ]
             ];
 
-            Log::info('AI Config data being sent to frontend:', $data);
-
             if ($request->wantsJson()) {
                 return $this->respondWithJson($data);
             }

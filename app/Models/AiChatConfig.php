@@ -228,21 +228,31 @@ class AiChatConfig extends Model
     const FUNCTION_DECLARATIONS = [
         [
             'name' => 'getAllProducts',
-            'description' => 'Get all available products'
+            'description' => 'Lấy tất cả sản phẩm',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [],
+                'required' => []
+            ]
         ],
         [
             'name' => 'getAllServices',
-            'description' => 'Get all available services'
+            'description' => 'Lấy tất cả dịch vụ',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [],
+                'required' => []
+            ]
         ],
         [
             'name' => 'getProductDetails',
-            'description' => 'Get detailed information about specific products',
+            'description' => 'Lấy chi tiết thông tin sản phẩm',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
                     'product_id' => [
                         'type' => 'integer',
-                        'description' => 'ID of the product'
+                        'description' => 'ID của sản phẩm'
                     ]
                 ],
                 'required' => ['product_id']
@@ -250,13 +260,13 @@ class AiChatConfig extends Model
         ],
         [
             'name' => 'getServiceDetails',
-            'description' => 'Get detailed information about specific services',
+            'description' => 'Lấy chi tiết thông tin dịch vụ',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
                     'service_id' => [
                         'type' => 'integer',
-                        'description' => 'ID of the service'
+                        'description' => 'ID của dịch vụ'
                     ]
                 ],
                 'required' => ['service_id']
@@ -264,13 +274,13 @@ class AiChatConfig extends Model
         ],
         [
             'name' => 'getAvailableTimeSlots',
-            'description' => 'Get available time slots for a specific date',
+            'description' => 'Lấy các khung giờ còn trống',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
                     'date' => [
                         'type' => 'string',
-                        'description' => 'Date to check availability (YYYY-MM-DD format)'
+                        'description' => 'Ngày cần kiểm tra (định dạng YYYY-MM-DD)'
                     ]
                 ],
                 'required' => ['date']
@@ -278,29 +288,30 @@ class AiChatConfig extends Model
         ],
         [
             'name' => 'createAppointment',
-            'description' => 'Create a new appointment',
+            'description' => 'Tạo lịch hẹn mới',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
                     'service_id' => [
                         'type' => 'integer',
-                        'description' => 'ID of the service'
+                        'description' => 'ID của dịch vụ'
                     ],
                     'appointment_date' => [
                         'type' => 'string',
-                        'description' => 'Date of appointment (YYYY-MM-DD format)'
+                        'description' => 'Ngày hẹn (định dạng YYYY-MM-DD)'
                     ],
                     'time_slot_id' => [
                         'type' => 'integer',
-                        'description' => 'ID of the selected time slot'
+                        'description' => 'ID của khung giờ'
                     ],
                     'appointment_type' => [
                         'type' => 'string',
-                        'enum' => ['consultation', 'treatment', 'follow_up']
+                        'enum' => ['consultation', 'treatment', 'follow_up'],
+                        'description' => 'Loại cuộc hẹn'
                     ],
                     'note' => [
                         'type' => 'string',
-                        'description' => 'Additional notes for the appointment'
+                        'description' => 'Ghi chú cho cuộc hẹn'
                     ]
                 ],
                 'required' => ['service_id', 'appointment_date', 'time_slot_id', 'appointment_type']
@@ -308,50 +319,52 @@ class AiChatConfig extends Model
         ],
         [
             'name' => 'getUserVouchers',
-            'description' => 'Get all vouchers of current user',
+            'description' => 'Lấy danh sách voucher của người dùng',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
                     'status' => [
                         'type' => 'string',
                         'enum' => ['active', 'expired', 'all'],
-                        'description' => 'Filter vouchers by status'
+                        'description' => 'Trạng thái voucher cần lấy'
                     ]
-                ]
+                ],
+                'required' => []
             ]
         ],
         [
             'name' => 'getUserInvoices',
-            'description' => 'Get all invoices of current user',
+            'description' => 'Lấy danh sách hóa đơn của người dùng',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
                     'status' => [
                         'type' => 'string',
                         'enum' => ['pending', 'paid', 'cancelled', 'all'],
-                        'description' => 'Filter invoices by status'
+                        'description' => 'Trạng thái hóa đơn cần lấy'
                     ],
                     'from_date' => [
                         'type' => 'string',
-                        'description' => 'Start date (YYYY-MM-DD)'
+                        'description' => 'Ngày bắt đầu (YYYY-MM-DD)'
                     ],
                     'to_date' => [
                         'type' => 'string',
-                        'description' => 'End date (YYYY-MM-DD)'
+                        'description' => 'Ngày kết thúc (YYYY-MM-DD)'
                     ]
-                ]
+                ],
+                'required' => []
             ]
         ],
         [
             'name' => 'getUserFavorites',
-            'description' => 'Get all favorites of current user',
+            'description' => 'Lấy danh sách yêu thích của người dùng',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
                     'type' => [
                         'type' => 'string',
                         'enum' => ['products', 'services', 'all'],
-                        'description' => 'Type of favorites to get'
+                        'description' => 'Loại mục yêu thích cần lấy'
                     ]
                 ],
                 'required' => ['type']
