@@ -83,7 +83,6 @@ class PayOSController extends Controller
                     'amount' => $finalAmount // Trả về số tiền sau giảm giá
                 ]
             ]);
-
         } catch (\Exception $e) {
             Log::error('PayOS payment error:', [
                 'message' => $e->getMessage(),
@@ -106,16 +105,16 @@ class PayOSController extends Controller
             ]);
 
             $order = Order::with(['user', 'invoice'])->findOrFail($orderId);
-            
+
             // Tạo mã đơn hàng là số nguyên dương
             $orderCode = (int) substr(time() . rand(1000, 9999), 0, 15);
-            
+
             // Tính toán số tiền sau giảm giá
             $finalAmount = $order->total_amount - ($order->discount_amount ?? 0);
-            
+
             // Xử lý số tiền thanh toán (đảm bảo không vượt quá 10 tỷ VND)
             $amount = min((int)$finalAmount, 10000000000);
-            
+
             // Tạo invoice nếu chưa có
             if (!$order->invoice) {
                 DB::beginTransaction();
@@ -139,7 +138,7 @@ class PayOSController extends Controller
 
             // Refresh order để lấy invoice mới tạo
             $order->refresh();
-            
+
             // Chuẩn bị dữ liệu thanh toán theo đúng format của PayOS
             $paymentData = [
                 'orderCode' => $orderCode,
@@ -164,9 +163,8 @@ class PayOSController extends Controller
             if ($order->orderItems->count() > 0) {
                 $paymentData['items'] = $order->orderItems->map(function ($item) {
                     return [
-                        'name' => $item->item_type === 'product' ? 
-                            ($item->product->name ?? 'Sản phẩm') : 
-                            ($item->service->name ?? 'Dịch vụ'),
+                        'name' => $item->item_type === 'product' ?
+                            ($item->product->name ?? 'Sản phẩm') : ($item->service->name ?? 'Dịch vụ'),
                         'quantity' => (int)$item->quantity,
                         'price' => min((int)$item->price, 10000000000)
                     ];
@@ -205,7 +203,6 @@ class PayOSController extends Controller
                         'amount' => $amount
                     ]
                 ]);
-
             } catch (\Exception $e) {
                 Log::error('Lỗi khi tạo payment link PayOS:', [
                     'message' => $e->getMessage(),
@@ -213,7 +210,6 @@ class PayOSController extends Controller
                 ]);
                 throw $e;
             }
-
         } catch (\Exception $e) {
             Log::error('Lỗi xử lý thanh toán PayOS:', [
                 'message' => $e->getMessage(),
@@ -225,19 +221,6 @@ class PayOSController extends Controller
                 'message' => 'Lỗi xử lý thanh toán: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    private function formatOrderItems($orderItems)
-    {
-        return $orderItems->map(function ($item) {
-            return [
-                'name' => $item->item_type === 'product' ?
-                    $item->product->name :
-                    $item->service->name,
-                'quantity' => $item->quantity,
-                'price' => $item->price
-            ];
-        })->toArray();
     }
 
     public function verifyPayment(Request $request)
@@ -367,6 +350,48 @@ class PayOSController extends Controller
                 'success' => false,
                 'message' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function mobileCallback(Request $request)
+    {
+        try {
+            $orderId = $request->query('order_id');
+            $status = $request->query('status');
+
+            // Tạo deep link URL để mở app
+            $scheme = "allurespa://invoice/";
+
+            if ($status === 'success') {
+                // Lấy thông tin thanh toán
+                $order = Order::with('invoice')->find($orderId);
+
+                return view('payment.redirect', [
+                    'redirectUrl' => $scheme . "success?" . http_build_query([
+                        'order_id' => $orderId,
+                        'amount' => $order->total_amount,
+                        'payment_time' => now()->toISOString(),
+                        'payment_method' => 'bank_transfer'
+                    ])
+                ]);
+            } else {
+                return view('payment.redirect', [
+                    'redirectUrl' => $scheme . "failed?" . http_build_query([
+                        'order_id' => $orderId,
+                        'type' => 'failed',
+                        'reason' => 'Payment failed'
+                    ])
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Payment callback error:', [
+                'message' => $e->getMessage(),
+                'data' => $request->all()
+            ]);
+
+            return view('payment.redirect', [
+                'redirectUrl' => $scheme . "failed?reason=system_error"
+            ]);
         }
     }
 }

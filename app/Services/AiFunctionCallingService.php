@@ -34,31 +34,64 @@ class AiFunctionCallingService
     public function handleFunctionCall($functionName, $args)
     {
         try {
+            // Kiểm tra xem $args có tồn tại và là array không
+            if (!is_array($args)) {
+                $args = [];
+            }
+            
             switch ($functionName) {
                 case 'getAllProducts':
                     return $this->handleGetAllProducts();
-                case 'getAllServices':
+                case 'getAllServices': 
                     return $this->handleGetAllServices();
                 case 'getAvailableTimeSlots':
+                    // Kiểm tra tham số trước khi gọi
+                    if (!isset($args['date'])) {
+                        throw new \InvalidArgumentException("Thiếu tham số bắt buộc: date");
+                    }
                     return $this->handleGetTimeSlots($args);
                 case 'createAppointment':
+                    // Kiểm tra các tham số bắt buộc
+                    $requiredFields = ['service_id', 'appointment_date', 'time_slot_id', 'appointment_type'];
+                    foreach ($requiredFields as $field) {
+                        if (!isset($args[$field])) {
+                            throw new \InvalidArgumentException("Thiếu tham số bắt buộc: {$field}");
+                        }
+                    }
                     return $this->handleCreateAppointment($args);
                 case 'getProductDetails':
+                    if (!isset($args['product_id'])) {
+                        throw new \InvalidArgumentException("Thiếu tham số bắt buộc: product_id");
+                    }
                     return $this->handleProductDetails($args);
                 case 'getServiceDetails':
+                    if (!isset($args['service_id'])) {
+                        throw new \InvalidArgumentException("Thiếu tham số bắt buộc: service_id"); 
+                    }
                     return $this->handleServiceDetails($args);
                 case 'getUserVouchers':
                     return $this->handleGetUserVouchers($args);
                 case 'getUserInvoices':
                     return $this->handleGetUserInvoices($args);
                 case 'getUserFavorites':
+                    if (!isset($args['type'])) {
+                        throw new \InvalidArgumentException("Thiếu tham số bắt buộc: type");
+                    }
                     return $this->handleGetUserFavorites($args);
                 default:
-                    throw new \Exception("Unknown function: {$functionName}");
+                    throw new \Exception("Không tìm thấy hàm: {$functionName}");
             }
         } catch (\Exception $e) {
-            Log::error("Function calling error: {$e->getMessage()}");
-            throw $e;
+            Log::error("Lỗi gọi hàm: {$e->getMessage()}", [
+                'function' => $functionName,
+                'arguments' => $args,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
         }
     }
 
@@ -72,7 +105,7 @@ class AiFunctionCallingService
                     'id' => $product->id,
                     'name' => $product->name,
                     'price' => $product->price,
-                    'category' => $product->category->name,
+                    'category' => $product->category ? $product->category->name : null,
                     'brand_description' => $product->brand_description,
                     'usage' => $product->usage,
                     'benefits' => $product->benefits,
@@ -81,11 +114,11 @@ class AiFunctionCallingService
                     'directions' => $product->directions,
                     'storage_instructions' => $product->storage_instructions,
                     'product_notes' => $product->product_notes,
-                    'images' => $product->media->pluck('url'),
-                    'attributes' => $product->attributes->pluck('attribute_value', 'name'),
+                    'images' => $product->media ? $product->media->pluck('url') : [],
+                    'attributes' => $product->attributes ? $product->attributes->pluck('attribute_value', 'name') : [],
                     'rating' => [
-                        'average' => round($product->ratings()->avg('rating'), 1),
-                        'count' => $product->ratings()->count()
+                        'average' => $product->ratings ? round($product->ratings()->avg('rating'), 1) : 0,
+                        'count' => $product->ratings ? $product->ratings()->count() : 0
                     ]
                 ];
             });
@@ -95,7 +128,11 @@ class AiFunctionCallingService
                 'data' => $formattedData
             ];
         } catch (\Exception $e) {
-            Log::error("Get all products error: {$e->getMessage()}");
+            Log::error("Get all products error: " . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return [
                 'success' => false,
                 'error' => $e->getMessage()

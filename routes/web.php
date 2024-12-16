@@ -240,4 +240,6 @@ Route::get('/payment/callback', function () {
     ]);
 })->name('payment.callback');
 
+Route::get('/payment/mobile-callback', [PayOSController::class, 'mobileCallback']);
+
 require __DIR__ . '/auth.php';
