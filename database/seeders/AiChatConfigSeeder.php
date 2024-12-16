@@ -11,7 +11,7 @@ class AiChatConfigSeeder extends Seeder
   {
     AiChatConfig::create([
       'ai_name' => 'Hana Assistant',
-      'type' => 'system_prompt',
+      'type' => 'general_assistant',
       'context' => '
 Đừng ngại thêm chút hài hước để cuộc trò chuyện thêm phần thú vị!
 Tên: Hana
@@ -132,7 +132,7 @@ Sử dụng ngôn ngữ tự nhiên, không máy móc.
 Đừng ngại thêm chút hài hước để cuộc trò chuyện thêm phần thú vị!
 ',
       'language' => 'vi',
-      'model_type' => 'gemini-2.0-flash-exp',
+      'model_type' => 'gemini-1.5-flash',
       'temperature' => 0.6,
       'max_tokens' => 2048,
       'top_p' => 0.90,
