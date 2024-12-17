@@ -229,20 +229,12 @@ class AiChatConfig extends Model
         [
             'name' => 'getAllProducts',
             'description' => 'Lấy tất cả sản phẩm',
-            'parameters' => [
-                'type' => 'object',
-                'properties' => [],
-                'required' => []
-            ]
+            'parameters' => []
         ],
         [
             'name' => 'getAllServices',
             'description' => 'Lấy tất cả dịch vụ',
-            'parameters' => [
-                'type' => 'object',
-                'properties' => [],
-                'required' => []
-            ]
+            'parameters' => []
         ],
         [
             'name' => 'getProductDetails',
