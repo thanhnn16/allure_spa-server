@@ -236,7 +236,7 @@ class AiChatConfig extends Model
             ]
         ],
         [
-            'name' => 'getAllServices', 
+            'name' => 'getAllServices',
             'description' => 'Lấy tất cả dịch vụ',
             'parameters' => [
                 'type' => 'object',
@@ -260,7 +260,7 @@ class AiChatConfig extends Model
         ],
         [
             'name' => 'getServiceDetails',
-            'description' => 'Lấy chi tiết thông tin dịch vụ', 
+            'description' => 'Lấy chi tiết thông tin dịch vụ',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
@@ -450,10 +450,14 @@ class AiChatConfig extends Model
     public function getGeminiConfig()
     {
         $functionDeclarations = $this->function_declarations ?? self::FUNCTION_DECLARATIONS;
-        
-        // Convert properties arrays to objects
-        $functionDeclarations = array_map(function($func) {
-            $func['parameters']['properties'] = (object)($func['parameters']['properties'] ?? []);
+
+        // Convert empty array properties to empty objects
+        $functionDeclarations = array_map(function ($func) {
+            if (empty($func['parameters']['properties'])) {
+                $func['parameters']['properties'] = new \stdClass();
+            } else {
+                $func['parameters']['properties'] = (object)$func['parameters']['properties'];
+            }
             return $func;
         }, $functionDeclarations);
 
