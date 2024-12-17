@@ -230,26 +230,28 @@ class AiChatConfig extends Model
             'name' => 'getAllProducts',
             'description' => 'Lấy tất cả sản phẩm',
             'parameters' => [
-                'type' => 'OBJECT',
-                'properties' => []
+                'type' => 'object',
+                'properties' => [],
+                'required' => []
             ]
         ],
         [
             'name' => 'getAllServices', 
             'description' => 'Lấy tất cả dịch vụ',
             'parameters' => [
-                'type' => 'OBJECT',
-                'properties' => []
+                'type' => 'object',
+                'properties' => [],
+                'required' => []
             ]
         ],
         [
             'name' => 'getProductDetails',
             'description' => 'Lấy chi tiết thông tin sản phẩm',
             'parameters' => [
-                'type' => 'OBJECT',
+                'type' => 'object',
                 'properties' => [
                     'product_id' => [
-                        'type' => 'NUMBER',
+                        'type' => 'number',
                         'description' => 'ID của sản phẩm'
                     ]
                 ],
@@ -260,10 +262,10 @@ class AiChatConfig extends Model
             'name' => 'getServiceDetails',
             'description' => 'Lấy chi tiết thông tin dịch vụ', 
             'parameters' => [
-                'type' => 'OBJECT',
+                'type' => 'object',
                 'properties' => [
                     'service_id' => [
-                        'type' => 'NUMBER',
+                        'type' => 'number',
                         'description' => 'ID của dịch vụ'
                     ]
                 ],
@@ -274,10 +276,10 @@ class AiChatConfig extends Model
             'name' => 'getAvailableTimeSlots',
             'description' => 'Lấy các khung giờ còn trống',
             'parameters' => [
-                'type' => 'OBJECT',
+                'type' => 'object',
                 'properties' => [
                     'date' => [
-                        'type' => 'STRING',
+                        'type' => 'string',
                         'description' => 'Ngày cần kiểm tra (định dạng YYYY-MM-DD)'
                     ]
                 ],
@@ -288,26 +290,26 @@ class AiChatConfig extends Model
             'name' => 'createAppointment',
             'description' => 'Tạo lịch hẹn mới',
             'parameters' => [
-                'type' => 'OBJECT',
+                'type' => 'object',
                 'properties' => [
                     'service_id' => [
-                        'type' => 'NUMBER',
+                        'type' => 'number',
                         'description' => 'ID của dịch vụ'
                     ],
                     'appointment_date' => [
-                        'type' => 'STRING',
+                        'type' => 'string',
                         'description' => 'Ngày hẹn (định dạng YYYY-MM-DD)'
                     ],
                     'time_slot_id' => [
-                        'type' => 'NUMBER',
+                        'type' => 'number',
                         'description' => 'ID của khung giờ'
                     ],
                     'appointment_type' => [
-                        'type' => 'STRING',
+                        'type' => 'string',
                         'description' => 'Loại cuộc hẹn (consultation, treatment, follow_up)'
                     ],
                     'note' => [
-                        'type' => 'STRING',
+                        'type' => 'string',
                         'description' => 'Ghi chú cho cuộc hẹn'
                     ]
                 ],
@@ -447,6 +449,14 @@ class AiChatConfig extends Model
     // Get formatted settings for Gemini
     public function getGeminiConfig()
     {
+        $functionDeclarations = $this->function_declarations ?? self::FUNCTION_DECLARATIONS;
+        
+        // Convert properties arrays to objects
+        $functionDeclarations = array_map(function($func) {
+            $func['parameters']['properties'] = (object)($func['parameters']['properties'] ?? []);
+            return $func;
+        }, $functionDeclarations);
+
         return [
             'model' => $this->model_type,
             'generationConfig' => [
@@ -459,7 +469,7 @@ class AiChatConfig extends Model
             'safetySettings' => $this->safety_settings ?? self::SAFETY_SETTINGS,
             'tools' => [
                 [
-                    'functionDeclarations' => $this->function_declarations ?? self::FUNCTION_DECLARATIONS
+                    'functionDeclarations' => $functionDeclarations
                 ]
             ],
             'toolConfig' => $this->tool_config ?? self::DEFAULT_TOOL_CONFIG,
