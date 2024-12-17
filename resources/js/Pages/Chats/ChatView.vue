@@ -35,6 +35,8 @@ const isUploading = ref(false)
 const previewUrl = ref(null)
 const showEmojiPicker = ref(false)
 const emojiPickerContainer = ref(null)
+const searchContainer = ref(null)
+const showSearchResults = ref(false)
 
 // Format thời gian tin nhắn
 const formatTime = (timestamp) => {
@@ -53,6 +55,7 @@ const formatTime = (timestamp) => {
 const searchUsers = debounce(async () => {
     if (!searchQuery.value) {
         suggestedUsers.value = []
+        showSearchResults.value = false
         return
     }
 
@@ -60,6 +63,7 @@ const searchUsers = debounce(async () => {
         isLoading.value = true
         const response = await axios.get(`/api/users/search?q=${searchQuery.value}`)
         suggestedUsers.value = response.data.data.filter(u => u.id !== user.value.id)
+        showSearchResults.value = true
     } catch (error) {
         console.error('Error searching users:', error)
     } finally {
@@ -196,9 +200,9 @@ onMounted(() => {
         subscribeToChat(selectedChat.value.id)
     }
 
-    // Sử dụng handler function đã tách riêng
     window.addEventListener('refresh-chat-messages', handleRefreshMessages)
     document.addEventListener('click', handleClickOutside)
+    document.addEventListener('click', handleSearchClickOutside)
 })
 
 // Cleanup event listener
@@ -216,6 +220,7 @@ const cleanup = () => {
     // Remove event listeners
     window.removeEventListener('refresh-chat-messages', handleRefreshMessages)
     document.removeEventListener('click', handleClickOutside)
+    document.removeEventListener('click', handleSearchClickOutside)
     
     // Reset all state to initial values
     searchQuery.value = ''
@@ -242,6 +247,10 @@ const cleanup = () => {
     if (fileInput.value) {
         fileInput.value.value = ''
     }
+    
+    // Thêm cleanup cho search click outside
+    document.removeEventListener('click', handleSearchClickOutside)
+    showSearchResults.value = false
 }
 
 // Update the watch for selectedChat
@@ -388,6 +397,36 @@ const handleClickOutside = (event) => {
         showEmojiPicker.value = false
     }
 }
+
+// Thêm hàm createNewChat
+const createNewChat = async (userId) => {
+    try {
+        const response = await axios.post('/chats/', {
+            user_id: userId
+        })
+        
+        // Thêm chat mới vào đầu danh sách
+        props.chats.unshift(response.data.data)
+        
+        // Chọn chat mới tạo
+        await selectChat(response.data.data)
+        
+        // Xóa kết quả tìm kiếm
+        searchQuery.value = ''
+        suggestedUsers.value = []
+    } catch (error) {
+        console.error('Error creating chat:', error)
+    }
+}
+
+// Thêm hàm xử lý click outside cho search
+const handleSearchClickOutside = (event) => {
+    if (searchContainer.value && !searchContainer.value.contains(event.target)) {
+        showSearchResults.value = false
+        searchQuery.value = ''
+        suggestedUsers.value = []
+    }
+}
 </script>
 <template>
     <LayoutAuthenticated>
@@ -397,8 +436,11 @@ const handleClickOutside = (event) => {
             <div class="flex h-[calc(100vh-6rem)] bg-white dark:bg-dark-surface rounded-lg shadow-lg mx-4">
                 <div class="w-1/3 min-w-[300px] max-w-[400px] border-r dark:border-dark-border flex flex-col">
                     <div class="p-4 border-b dark:border-dark-border bg-gray-50 dark:bg-dark-surface">
-                        <div class="relative">
-                            <input v-model="searchQuery" type="text" placeholder="Tìm kiếm người dùng..."
+                        <div class="relative" ref="searchContainer">
+                            <input v-model="searchQuery" 
+                                type="text" 
+                                placeholder="Tìm kiếm người dùng..."
+                                @focus="showSearchResults = true"
                                 class="w-full px-4 py-3 pl-10 rounded-full border bg-white dark:bg-dark-modal dark:border-dark-border dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,6 +448,28 @@ const handleClickOutside = (event) => {
                                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </span>
+                            
+                            <!-- Cập nhật điều kiện hiển thị kết quả tìm kiếm -->
+                            <div v-if="showSearchResults && suggestedUsers.length > 0" 
+                                class="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-dark-modal rounded-xl shadow-xl border dark:border-dark-border max-h-[300px] overflow-y-auto">
+                                <div v-for="user in suggestedUsers" 
+                                    :key="user.id"
+                                    @click="createNewChat(user.id)"
+                                    class="p-3 flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-dark-hover cursor-pointer first:rounded-t-xl last:rounded-b-xl border-b last:border-0 dark:border-dark-border transition-colors duration-200">
+                                    <img :src="user.avatar_url" 
+                                        :alt="user.full_name"
+                                        class="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-dark-border">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium dark:text-dark-text truncate">{{ user.full_name }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ user.phone_number }}</div>
+                                    </div>
+                                    <div class="text-gray-400 dark:text-gray-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
