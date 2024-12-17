@@ -264,7 +264,7 @@ class AiFunctionCallingService
                 'images' => $product->media->pluck('url'),
                 'attributes' => $product->attributes->pluck('attribute_value', 'name'),
                 'rating' => [
-                    'average' => round($product->ratings()->avg('rating'), 1),
+                    'average' => round($product->ratings()->avg('stars'), 1),
                     'count' => $product->ratings()->count()
                 ]
             ];
@@ -308,7 +308,7 @@ class AiFunctionCallingService
                 'category' => $service->category->name,
                 'images' => $service->media->pluck('url'),
                 'rating' => [
-                    'average' => round($service->ratings()->avg('rating'), 1),
+                    'average' => round($service->ratings()->avg('stars'), 1),
                     'count' => $service->ratings()->count()
                 ]
             ];

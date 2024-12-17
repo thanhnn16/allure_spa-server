@@ -301,9 +301,6 @@ Route::middleware('throttle:api')->group(function () {
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);
-
-    // Add new route for checking available slots
-    Route::get('/time-slots/available', [TimeSlotController::class, 'getAvailableSlots']);
 });
 
 Route::prefix('payos')->group(function () {
