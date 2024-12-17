@@ -229,21 +229,27 @@ class AiChatConfig extends Model
         [
             'name' => 'getAllProducts',
             'description' => 'Lấy tất cả sản phẩm',
-            'parameters' => []
+            'parameters' => [
+                'type' => 'OBJECT',
+                'properties' => []
+            ]
         ],
         [
-            'name' => 'getAllServices',
+            'name' => 'getAllServices', 
             'description' => 'Lấy tất cả dịch vụ',
-            'parameters' => []
+            'parameters' => [
+                'type' => 'OBJECT',
+                'properties' => []
+            ]
         ],
         [
             'name' => 'getProductDetails',
             'description' => 'Lấy chi tiết thông tin sản phẩm',
             'parameters' => [
-                'type' => 'object',
+                'type' => 'OBJECT',
                 'properties' => [
                     'product_id' => [
-                        'type' => 'integer',
+                        'type' => 'NUMBER',
                         'description' => 'ID của sản phẩm'
                     ]
                 ],
@@ -252,12 +258,12 @@ class AiChatConfig extends Model
         ],
         [
             'name' => 'getServiceDetails',
-            'description' => 'Lấy chi tiết thông tin dịch vụ',
+            'description' => 'Lấy chi tiết thông tin dịch vụ', 
             'parameters' => [
-                'type' => 'object',
+                'type' => 'OBJECT',
                 'properties' => [
                     'service_id' => [
-                        'type' => 'integer',
+                        'type' => 'NUMBER',
                         'description' => 'ID của dịch vụ'
                     ]
                 ],
@@ -268,10 +274,10 @@ class AiChatConfig extends Model
             'name' => 'getAvailableTimeSlots',
             'description' => 'Lấy các khung giờ còn trống',
             'parameters' => [
-                'type' => 'object',
+                'type' => 'OBJECT',
                 'properties' => [
                     'date' => [
-                        'type' => 'string',
+                        'type' => 'STRING',
                         'description' => 'Ngày cần kiểm tra (định dạng YYYY-MM-DD)'
                     ]
                 ],
@@ -282,27 +288,26 @@ class AiChatConfig extends Model
             'name' => 'createAppointment',
             'description' => 'Tạo lịch hẹn mới',
             'parameters' => [
-                'type' => 'object',
+                'type' => 'OBJECT',
                 'properties' => [
                     'service_id' => [
-                        'type' => 'integer',
+                        'type' => 'NUMBER',
                         'description' => 'ID của dịch vụ'
                     ],
                     'appointment_date' => [
-                        'type' => 'string',
+                        'type' => 'STRING',
                         'description' => 'Ngày hẹn (định dạng YYYY-MM-DD)'
                     ],
                     'time_slot_id' => [
-                        'type' => 'integer',
+                        'type' => 'NUMBER',
                         'description' => 'ID của khung giờ'
                     ],
                     'appointment_type' => [
-                        'type' => 'string',
-                        'enum' => ['consultation', 'treatment', 'follow_up'],
-                        'description' => 'Loại cuộc hẹn'
+                        'type' => 'STRING',
+                        'description' => 'Loại cuộc hẹn (consultation, treatment, follow_up)'
                     ],
                     'note' => [
-                        'type' => 'string',
+                        'type' => 'STRING',
                         'description' => 'Ghi chú cho cuộc hẹn'
                     ]
                 ],
