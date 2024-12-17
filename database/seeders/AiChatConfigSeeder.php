@@ -9,6 +9,14 @@ class AiChatConfigSeeder extends Seeder
 {
   public function run()
   {
+    // Đảm bảo properties là object khi encode JSON
+    $functionDeclarations = array_map(function ($func) {
+      if (empty($func['parameters']['properties'])) {
+        $func['parameters']['properties'] = new \stdClass();
+      }
+      return $func;
+    }, AiChatConfig::FUNCTION_DECLARATIONS);
+
     AiChatConfig::create([
       'ai_name' => 'Hana Assistant',
       'type' => 'general_assistant',
@@ -139,7 +147,7 @@ Sử dụng ngôn ngữ tự nhiên, không máy móc.
       'top_k' => 30,
       'is_active' => true,
       'priority' => 1,
-      'function_declarations' => json_encode(AiChatConfig::FUNCTION_DECLARATIONS),
+      'function_declarations' => json_encode($functionDeclarations),
       'tool_config' => json_encode(AiChatConfig::DEFAULT_TOOL_CONFIG),
       'safety_settings' => json_encode(AiChatConfig::SAFETY_SETTINGS),
       'response_format' => 'text/plain'
