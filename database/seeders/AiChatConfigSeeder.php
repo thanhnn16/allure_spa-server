@@ -9,13 +9,7 @@ class AiChatConfigSeeder extends Seeder
 {
   public function run()
   {
-    // Đảm bảo properties là object khi encode JSON
-    $functionDeclarations = array_map(function ($func) {
-      if (empty($func['parameters']['properties'])) {
-        $func['parameters']['properties'] = new \stdClass();
-      }
-      return $func;
-    }, AiChatConfig::FUNCTION_DECLARATIONS);
+    $functionDeclarations = AiChatConfig::FUNCTION_DECLARATIONS;
 
     AiChatConfig::create([
       'ai_name' => 'Hana Assistant',
