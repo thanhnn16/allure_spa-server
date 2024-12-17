@@ -231,7 +231,12 @@ class AiChatConfig extends Model
             'description' => 'Lấy tất cả sản phẩm',
             'parameters' => [
                 'type' => 'object',
-                'properties' => [],
+                'properties' => [
+                    'type' => [
+                        'type' => 'string',
+                        'description' => 'Lấy toàn bộ sản phẩm',
+                    ],
+                ],
                 'required' => []
             ]
         ],
@@ -240,7 +245,12 @@ class AiChatConfig extends Model
             'description' => 'Lấy tất cả dịch vụ',
             'parameters' => [
                 'type' => 'object',
-                'properties' => [],
+                'properties' => [
+                    'type' => [
+                        'type' => 'string',
+                        'description' => 'Lấy toàn bộ dịch vụ',
+                    ],
+                ],
                 'required' => []
             ]
         ],
