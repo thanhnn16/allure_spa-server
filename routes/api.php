@@ -147,8 +147,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/services/{serviceId}/ratings', [RatingController::class, 'getServiceRatings']);
         Route::post('/ratings', [RatingController::class, 'store']);
 
-        Route::get('/products/{productId}/approved-ratings', [RatingController::class, 'getApprovedProductRatings']);
-        Route::get('/services/{serviceId}/approved-ratings', [RatingController::class, 'getApprovedServiceRatings']);
+
         Route::post('/ratings/from-order', [RatingController::class, 'storeFromOrder']);
         Route::put('/ratings/{id}', [RatingController::class, 'update']);
 
@@ -313,3 +312,6 @@ Route::prefix('ai')->group(function () {
     Route::post('/function-call', [AiFunctionController::class, 'handleFunctionCall']);
     Route::get('/available-functions', [AiFunctionController::class, 'getAvailableFunctions']);
 });
+
+Route::get('/products/{productId}/approved-ratings', [RatingController::class, 'getApprovedProductRatings']);
+Route::get('/services/{serviceId}/approved-ratings', [RatingController::class, 'getApprovedServiceRatings']);
