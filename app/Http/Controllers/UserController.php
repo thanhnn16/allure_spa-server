@@ -677,6 +677,10 @@ class UserController extends BaseController
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->respondWithJson(null, $e->errors(), 422);
         } catch (\Exception $e) {
+            Log::error('Update user error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return $this->respondWithJson(null, 'Có lỗi xảy ra khi cập nhật thông tin', 500);
         }
     }
