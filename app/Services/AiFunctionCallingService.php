@@ -38,11 +38,11 @@ class AiFunctionCallingService
             if (!is_array($args)) {
                 $args = [];
             }
-            
+
             switch ($functionName) {
                 case 'getAllProducts':
                     return $this->handleGetAllProducts();
-                case 'getAllServices': 
+                case 'getAllServices':
                     return $this->handleGetAllServices();
                 case 'getAvailableTimeSlots':
                     // Kiểm tra tham số trước khi gọi
@@ -66,7 +66,7 @@ class AiFunctionCallingService
                     return $this->handleProductDetails($args);
                 case 'getServiceDetails':
                     if (!isset($args['service_id'])) {
-                        throw new \InvalidArgumentException("Thiếu tham số bắt buộc: service_id"); 
+                        throw new \InvalidArgumentException("Thiếu tham số bắt buộc: service_id");
                     }
                     return $this->handleServiceDetails($args);
                 case 'getUserVouchers':
@@ -87,7 +87,7 @@ class AiFunctionCallingService
                 'arguments' => $args,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return [
                 'success' => false,
                 'error' => $e->getMessage()
@@ -117,7 +117,7 @@ class AiFunctionCallingService
                     'images' => $product->media ? $product->media->pluck('url') : [],
                     'attributes' => $product->attributes ? $product->attributes->pluck('attribute_value', 'name') : [],
                     'rating' => [
-                        'average' => $product->ratings ? round($product->ratings()->avg('rating'), 1) : 0,
+                        'average' => $product->ratings ? round($product->ratings()->avg('stars'), 1) : 0,
                         'count' => $product->ratings ? $product->ratings()->count() : 0
                     ]
                 ];
@@ -160,7 +160,7 @@ class AiFunctionCallingService
                     'category' => $service->category->name,
                     'images' => $service->media->pluck('url'),
                     'rating' => [
-                        'average' => round($service->ratings()->avg('rating'), 1),
+                        'average' => round($service->ratings()->avg('stars'), 1),
                         'count' => $service->ratings()->count()
                     ]
                 ];
