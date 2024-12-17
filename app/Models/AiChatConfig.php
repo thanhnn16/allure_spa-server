@@ -230,14 +230,18 @@ class AiChatConfig extends Model
             'name' => 'getAllProducts',
             'description' => 'Lấy tất cả sản phẩm',
             'parameters' => [
-                'type' => 'null'
+                'type' => 'object',
+                'properties' => [],
+                'required' => []
             ]
         ],
         [
             'name' => 'getAllServices',
             'description' => 'Lấy tất cả dịch vụ',
             'parameters' => [
-                'type' => 'null'
+                'type' => 'object',
+                'properties' => [],
+                'required' => []
             ]
         ],
         [
@@ -447,17 +451,10 @@ class AiChatConfig extends Model
     {
         $functionDeclarations = $this->function_declarations ?? self::FUNCTION_DECLARATIONS;
 
-        // Convert empty array properties to empty objects
+        // Chuyển đổi properties rỗng thành object rỗng
         $functionDeclarations = array_map(function ($func) {
-            if (isset($func['parameters']['properties']) && is_array($func['parameters']['properties'])) {
-                // Nếu properties là array rỗng, chuyển thành object rỗng
-                if (empty($func['parameters']['properties'])) {
-                    $func['parameters']['properties'] = (object)[];
-                }
-                // Nếu properties có dữ liệu, giữ nguyên cấu trúc và chuyển thành object
-                else {
-                    $func['parameters']['properties'] = (object)$func['parameters']['properties'];
-                }
+            if (isset($func['parameters']['properties']) && empty($func['parameters']['properties'])) {
+                $func['parameters']['properties'] = new \stdClass();
             }
             return $func;
         }, $functionDeclarations);

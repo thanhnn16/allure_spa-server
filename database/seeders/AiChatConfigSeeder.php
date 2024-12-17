@@ -9,7 +9,12 @@ class AiChatConfigSeeder extends Seeder
 {
   public function run()
   {
-    $functionDeclarations = AiChatConfig::FUNCTION_DECLARATIONS;
+    $functionDeclarations = array_map(function ($func) {
+      if (isset($func['parameters']['properties']) && empty($func['parameters']['properties'])) {
+        $func['parameters']['properties'] = new \stdClass();
+      }
+      return $func;
+    }, AiChatConfig::FUNCTION_DECLARATIONS);
 
     AiChatConfig::create([
       'ai_name' => 'Hana Assistant',
