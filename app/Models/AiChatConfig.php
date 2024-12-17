@@ -378,6 +378,62 @@ class AiChatConfig extends Model
                 ],
                 'required' => ['type']
             ]
+        ],
+        [
+            'name' => 'addToCart',
+            'description' => 'Thêm sản phẩm vào giỏ hàng',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'product_id' => [
+                        'type' => 'number',
+                        'description' => 'ID của sản phẩm muốn thêm vào giỏ hàng'
+                    ]
+                ],
+                'required' => ['product_id']
+            ]
+        ],
+        [
+            'name' => 'seeCart',
+            'description' => 'Xem giỏ hàng',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'product_id' => [
+                        'type' => 'string',
+                        'description' => 'ID của sản phẩm muốn xem chi tiết'
+                    ]
+                ],
+                'required' => []
+            ]
+        ],
+        [
+            'name' => 'seeProductDetail',
+            'description' => 'Xem chi tiết sản phẩm',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'product_id' => [
+                        'type' => 'string',
+                        'description' => 'ID của sản phẩm muốn xem chi tiết'
+                    ]
+                ],
+                'required' => ['product_id']
+            ]
+        ],
+        [
+            'name' => 'seeServiceDetail',
+            'description' => 'Xem chi tiết dịch vụ',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'service_id' => [
+                        'type' => 'string',
+                        'description' => 'ID của dịch vụ muốn xem chi tiết'
+                    ]
+                ],
+                'required' => ['service_id']
+            ]
         ]
     ];
 
