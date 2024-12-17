@@ -601,13 +601,13 @@ class AppointmentService
         try {
             $query = Appointment::with([
                 'service',
-                'staff',
+                'staff', 
                 'timeSlot',
                 'cancelledBy'
             ])
                 ->where('user_id', $userId)
-                ->orderBy('appointment_date', 'desc')
-                ->orderBy('time_slot_id', 'asc');
+                ->orderBy('appointment_date', 'asc') // Sắp xếp ngày tăng dần
+                ->orderBy('time_slot_id', 'asc'); // Sắp xếp giờ tăng dần
 
             // Add filters
             if (!empty($filters['status'])) {
@@ -648,7 +648,7 @@ class AppointmentService
 
             return [
                 'status' => 500,
-                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
+                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn', 
                 'data' => []
             ];
         }
