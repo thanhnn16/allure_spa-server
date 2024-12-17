@@ -184,7 +184,11 @@ class UserService
         try {
             $user = User::findOrFail($id);
 
-            // Log để debug
+            // Xử lý date_of_birth trước khi cập nhật
+            if (isset($data['date_of_birth'])) {
+                $data['date_of_birth'] = date('Y-m-d', strtotime($data['date_of_birth']));
+            }
+
             Log::info('Updating user', [
                 'user_id' => $id,
                 'data' => $data,
@@ -194,7 +198,6 @@ class UserService
             $user->fill($data);
             $user->save();
 
-            // Log sau khi update
             Log::info('User updated', [
                 'after_update' => $user->fresh()->toArray()
             ]);
