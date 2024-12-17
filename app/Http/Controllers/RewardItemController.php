@@ -114,7 +114,7 @@ class RewardItemController extends Controller
                 $request->user(),
                 $rewardItem
             );
-            
+
             return response()->json([
                 'message' => 'Reward redeemed successfully',
                 'redemption' => $redemption

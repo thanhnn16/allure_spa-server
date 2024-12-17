@@ -28,6 +28,8 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\UserGroupController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\RewardItemController;
+use App\Http\Controllers\RewardManagementController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -210,6 +212,14 @@ Route::middleware('auth')->group(function () {
     // Thêm routes cho quản lý ảnh service
     Route::post('/services/{service}/upload-images', [ServiceController::class, 'uploadImages'])
         ->name('services.upload-images');
+
+
+    // Reward routes
+    Route::get('/rewards', [RewardManagementController::class, 'index'])->name('rewards.index');
+    Route::post('/rewards', [RewardItemController::class, 'store'])->name('rewards.store');
+    Route::get('/rewards/list', [RewardItemController::class, 'index']);
+    Route::get('/rewards/history', [RewardManagementController::class, 'getRedemptionHistory']);
+    Route::get('/rewards/user-points/{userId}', [RewardManagementController::class, 'getUserPoints']);
 });
 
 Route::get('/firebase-messaging-sw.js', function () {

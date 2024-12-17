@@ -26,13 +26,12 @@ class RewardItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 
-        'description', 
+        'name',
+        'description',
         'item_type',
         'item_id',
         'points_required',
         'quantity_available',
-        'is_active',
         'start_date',
         'end_date'
     ];
@@ -51,13 +50,17 @@ class RewardItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class, 'item_id')
-            ->where('item_type', 'product');
+            ->when($this->item_type === 'product', function ($query) {
+                return $query;
+            });
     }
 
     public function service()
     {
         return $this->belongsTo(Service::class, 'item_id')
-            ->where('item_type', 'service');
+            ->when($this->item_type === 'service', function ($query) {
+                return $query;
+            });
     }
 
     public function redemptions()
@@ -67,13 +70,30 @@ class RewardItem extends Model
 
     public function isAvailable()
     {
-        if (!$this->is_active) return false;
-        
         $now = now();
-        if ($this->start_date && $now < $this->start_date) return false;
-        if ($this->end_date && $now > $this->end_date) return false;
-        if ($this->quantity_available !== null && $this->quantity_available <= 0) return false;
+        
+        // Kiểm tra ngày bắt đầu
+        if ($this->start_date && $now < $this->start_date) {
+            return false;
+        }
+        
+        // Kiểm tra ngày kết thúc
+        if ($this->end_date && $now > $this->end_date) {
+            return false;
+        }
+        
+        // Kiểm tra số lượng còn lại
+        if ($this->quantity_available !== null && $this->quantity_available <= 0) {
+            return false;
+        }
         
         return true;
+    }
+
+    public function getItemAttribute()
+    {
+        return $this->item_type === 'product' 
+            ? $this->product 
+            : $this->service;
     }
 }

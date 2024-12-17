@@ -21,20 +21,11 @@ class RewardItemService
 
     public function listAvailableRewards()
     {
-        return RewardItem::where('is_active', true)
-            ->where(function ($query) {
-                $query->whereNull('start_date')
-                    ->orWhere('start_date', '<=', now());
-            })
-            ->where(function ($query) {
-                $query->whereNull('end_date')
-                    ->orWhere('end_date', '>=', now());
-            })
-            ->where(function ($query) {
-                $query->whereNull('quantity_available')
-                    ->orWhere('quantity_available', '>', 0);
-            })
-            ->with(['product', 'service'])
+        return RewardItem::with(['product' => function ($query) {
+            $query->whereNull('deleted_at');
+        }, 'service' => function ($query) {
+            $query->whereNull('deleted_at');
+        }])
             ->get();
     }
 
