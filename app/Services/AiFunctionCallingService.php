@@ -209,25 +209,49 @@ class AiFunctionCallingService
     {
         try {
             // Validate required arguments
-            $requiredFields = ['service_id', 'appointment_date', 'time_slot_id', 'appointment_type'];
+            $requiredFields = [
+                'service_id', 
+                'appointment_date', 
+                'time_slot_id', 
+                'appointment_type'
+            ];
+            
             foreach ($requiredFields as $field) {
                 if (!isset($args[$field])) {
-                    throw new \InvalidArgumentException("Missing required argument: {$field}");
+                    throw new \InvalidArgumentException("Thiếu tham số bắt buộc: {$field}");
                 }
             }
 
-            // Add current user ID from context
-            $args['user_id'] = Auth::user()->id;
+            // Chuẩn bị dữ liệu cho appointment
+            $appointmentData = [
+                'user_id' => Auth::id(),
+                'service_id' => $args['service_id'],
+                'appointment_date' => $args['appointment_date'],
+                'time_slot_id' => $args['time_slot_id'],
+                'appointment_type' => $args['appointment_type'],
+                'status' => 'pending',
+                'slots' => $args['slots'] ?? 1,
+                'note' => $args['note'] ?? null
+            ];
 
-            $result = $this->appointmentService->createAppointment($args);
+            // Xử lý user_service_package_id nếu có
+            if (isset($args['user_service_package_id'])) {
+                $appointmentData['user_service_package_id'] = $args['user_service_package_id'];
+            }
+
+            $result = $this->appointmentService->createAppointment($appointmentData);
 
             return [
                 'success' => $result['success'] ?? ($result['status'] === 200),
-                'data' => $result['data'],
-                'message' => $result['message']
+                'data' => $result['data'] ?? null,
+                'message' => $result['message'] ?? 'Đặt lịch hẹn thành công'
             ];
         } catch (\Exception $e) {
-            Log::error("Create appointment error: {$e->getMessage()}");
+            Log::error("Lỗi tạo lịch hẹn: {$e->getMessage()}", [
+                'arguments' => $args,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return [
                 'success' => false,
                 'error' => $e->getMessage()
