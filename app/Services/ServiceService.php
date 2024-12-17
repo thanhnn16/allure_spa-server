@@ -49,11 +49,6 @@ class ServiceService
 
     public function getServiceById($id, $userId = null)
     {
-        Log::info('Getting service by ID:', [
-            'service_id' => $id,
-            'user_id' => $userId,
-            'is_authenticated' => Auth::check()
-        ]);
 
         $query = Service::with([
             'category',

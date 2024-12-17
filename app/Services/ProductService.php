@@ -143,12 +143,6 @@ class ProductService
 
     public function getProductById($id, $userId = null)
     {
-        Log::info('Getting product by ID:', [
-            'product_id' => $id,
-            'user_id' => $userId,
-            'is_authenticated' => Auth::check()
-        ]);
-
         $query = Product::with([
             'category',
             'media',
