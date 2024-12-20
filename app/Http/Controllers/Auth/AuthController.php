@@ -75,21 +75,21 @@ class AuthController extends BaseController
                         'role' => $user->role,
                     ]);
                     Auth::logout();
-                    
+
                     return back()->withErrors([
                         'phone_number' => __('Bạn không có quyền truy cập hệ thống.'),
                     ]);
                 }
 
                 $request->session()->regenerate();
-                
+
                 // Tạo CSRF token mới
                 $token = csrf_token();
                 $request->session()->put('_token', $token);
-                
+
                 // Thêm flag reload vào session
                 session()->put('should_reload', true);
-                
+
                 // Redirect với Inertia và thêm header để trigger reload
                 return redirect()
                     ->intended(route('dashboard'))
@@ -102,7 +102,7 @@ class AuthController extends BaseController
                 Log::error('Login validation failed', [
                     'errors' => $e->errors(),
                 ]);
-                
+
                 return back()->withErrors([
                     'phone_number' => $this->getDetailedErrorMessage($e),
                 ]);
@@ -188,11 +188,11 @@ class AuthController extends BaseController
             }
 
             Auth::guard('web')->logout();
-            
+
             // Tạo CSRF token mới và lưu vào session trước khi invalidate
             $token = csrf_token();
             $request->session()->put('_token', $token);
-            
+
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 

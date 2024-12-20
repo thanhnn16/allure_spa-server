@@ -35,6 +35,10 @@ Route::middleware('throttle:api')->group(function () {
     Route::get('/hello-world', function () {
         return 'Hello World';
     });
+
+    // Thêm route mới để kiểm tra số điện thoại nhân viên
+    Route::post('/auth/check-staff-phone', [AuthController::class, 'checkStaffPhone']);
+
     // Auth routes
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
@@ -297,9 +301,6 @@ Route::middleware('throttle:api')->group(function () {
             Route::delete('/{id}', [NotificationController::class, 'deleteNotification']);
             Route::post('/send', [NotificationController::class, 'sendNotification']);
         });
-
-        // Thêm route mới để kiểm tra số điện thoại nhân viên
-        Route::post('/auth/check-staff-phone', [AuthController::class, 'checkStaffPhone']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);
