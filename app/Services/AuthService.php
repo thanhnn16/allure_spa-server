@@ -490,4 +490,33 @@ class AuthService
 
         return $response->json();
     }
+
+    /**
+     * Kiểm tra số điện thoại có phải là của nhân viên hay không
+     *
+     * @param string $phoneNumber
+     * @return array
+     */
+    public function checkStaffPhone(string $phoneNumber): array
+    {
+        try {
+            $user = User::where('phone_number', $phoneNumber)
+                        ->whereIn('role', ['staff', 'admin'])
+                        ->first();
+
+            return [
+                'is_staff' => !is_null($user),
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'full_name' => $user->full_name,
+                    'role' => $user->role
+                ] : null
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error checking staff phone: ' . $e->getMessage(), [
+                'phone_number' => $phoneNumber
+            ]);
+            throw new \Exception('SERVER_ERROR');
+        }
+    }
 }

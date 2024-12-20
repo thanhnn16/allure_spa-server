@@ -297,6 +297,9 @@ Route::middleware('throttle:api')->group(function () {
             Route::delete('/{id}', [NotificationController::class, 'deleteNotification']);
             Route::post('/send', [NotificationController::class, 'sendNotification']);
         });
+
+        // Thêm route mới để kiểm tra số điện thoại nhân viên
+        Route::post('/auth/check-staff-phone', [AuthController::class, 'checkStaffPhone']);
     });
 
     Route::post('firebase/webhook', [FirebaseWebhookController::class, 'handleMessage']);

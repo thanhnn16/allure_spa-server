@@ -211,4 +211,53 @@ class UserService
             throw $e;
         }
     }
+
+    public function getFilteredStaff(Request $request): Builder 
+    {
+        $query = User::where('role', 'staff');
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('full_name', 'like', '%' . $request->search . '%')
+                    ->orWhere('phone_number', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->gender);
+        }
+
+        if ($request->boolean('show_deleted')) {
+            $query->withTrashed();
+        }
+
+        $query->with(['media', 'staffDetail']);
+
+        return $query;
+    }
+
+    public function createStaff(array $data): User
+    {
+        try {
+            $user = User::create([
+                'full_name' => $data['full_name'],
+                'phone_number' => $data['phone_number'] ?? null,
+                'email' => $data['email'] ?? null,
+                'gender' => $data['gender'] ?? 'other',
+                'date_of_birth' => $data['date_of_birth'] ?? null,
+                'password' => $data['password'],
+                'role' => 'staff',
+            ]);
+
+            // Tạo staff detail nếu có
+            if (isset($data['staff_detail'])) {
+                $user->staffDetail()->create($data['staff_detail']);
+            }
+
+            return $user;
+        } catch (\Exception $e) {
+            Log::error('Lỗi khi tạo nhân viên: ' . $e->getMessage());
+            throw $e;
+        }
+    }
 }

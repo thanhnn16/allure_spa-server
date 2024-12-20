@@ -81,11 +81,7 @@ export default [
     {
         label: 'Quản lý nhân viên',
         icon: mdiAccountMultiple,
-        menu: [
-            {
-                label: 'Đang xây dựng...',
-            },
-        ]
+        route: 'staff.index',
     },
     {
         label: 'Mobile App',

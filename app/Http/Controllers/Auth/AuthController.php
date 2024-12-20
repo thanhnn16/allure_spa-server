@@ -15,6 +15,7 @@ use App\Services\PasswordResetService;
 use App\Services\EmailVerificationService;
 use Illuminate\Support\Facades\Password;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends BaseController
 {
@@ -668,5 +669,43 @@ class AuthController extends BaseController
             'token' => $request->token,
             'email' => $request->email
         ]);
+    }
+
+    /**
+     * Kiểm tra số điện thoại có phải là của nhân viên hay không
+     * 
+     * @OA\Post(
+     *     path="/api/auth/check-staff-phone",
+     *     summary="Kiểm tra số điện thoại nhân viên",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"phone_number"},
+     *             @OA\Property(property="phone_number", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Kết quả kiểm tra số điện thoại"
+     *     )
+     * )
+     */
+    public function checkStaffPhone(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'phone_number' => 'required|string|regex:/^[0-9]{10}$/'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->respondWithError('INVALID_PHONE_FORMAT');
+            }
+
+            $result = $this->authService->checkStaffPhone($request->phone_number);
+            return $this->respondWithJson($result);
+        } catch (\Exception $e) {
+            return $this->respondWithError($e->getMessage());
+        }
     }
 }

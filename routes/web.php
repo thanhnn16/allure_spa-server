@@ -30,6 +30,7 @@ use App\Http\Controllers\UserGroupController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\RewardItemController;
 use App\Http\Controllers\RewardManagementController;
+use App\Http\Controllers\StaffController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -220,6 +221,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/rewards/list', [RewardItemController::class, 'index']);
     Route::get('/rewards/history', [RewardManagementController::class, 'getRedemptionHistory']);
     Route::get('/rewards/user-points/{userId}', [RewardManagementController::class, 'getUserPoints']);
+
+    Route::resource('staff', StaffController::class);
 });
 
 Route::get('/firebase-messaging-sw.js', function () {
