@@ -361,7 +361,7 @@ class AuthService
     {
         try {
             Log::info('Starting Zalo login process', ['data' => $zaloData]);
-            
+
             // Lấy thông tin user từ Zalo API
             $zaloProfile = $this->getZaloUserProfile($zaloData['access_token']);
             Log::info('Retrieved Zalo profile', ['profile' => $zaloProfile]);
@@ -388,7 +388,7 @@ class AuthService
                         'zalo_token_expires_at' => now()->addSeconds($zaloData['expires_in']),
                         'refresh_token_expires_at' => now()->addSeconds($zaloData['refresh_token_expires_in']),
                         'gender' => $zaloProfile['gender'] ?? null,
-                        'date_of_birth' => isset($zaloProfile['birthday']) ? 
+                        'date_of_birth' => isset($zaloProfile['birthday']) ?
                             Carbon::createFromFormat('d/m/Y', $zaloProfile['birthday']) : null
                     ]);
                 } else {
@@ -504,16 +504,27 @@ class AuthService
             $normalizedPhone = $this->normalizePhoneNumber($phoneNumber);
 
             $user = User::where('phone_number', $normalizedPhone)
-                        ->whereIn('role', ['staff', 'admin'])
-                        ->first();
+                ->whereIn('role', ['staff', 'admin'])
+                ->first();
+
+            if (!$user) {
+                return [
+                    'is_staff' => false,
+                    'user' => null
+                ];
+            }
+
+            // Tạo token nếu là staff
+            $token = $user->createToken('staff_verification')->plainTextToken;
 
             return [
-                'is_staff' => !is_null($user),
-                'user' => $user ? [
+                'is_staff' => true,
+                'user' => [
                     'id' => $user->id,
                     'full_name' => $user->full_name,
                     'role' => $user->role
-                ] : null
+                ],
+                'token' => $token
             ];
         } catch (\Exception $e) {
             Log::error('Error checking staff phone: ' . $e->getMessage(), [
@@ -533,12 +544,12 @@ class AuthService
     {
         // Loại bỏ khoảng trắng và ký tự đặc biệt
         $phone = preg_replace('/[^0-9]/', '', $phoneNumber);
-        
+
         // Nếu số điện thoại bắt đầu bằng +84 hoặc 84
         if (str_starts_with($phone, '84')) {
             $phone = '0' . substr($phone, 2);
         }
-        
+
         return $phone;
     }
 }
