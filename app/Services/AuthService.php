@@ -500,7 +500,10 @@ class AuthService
     public function checkStaffPhone(string $phoneNumber): array
     {
         try {
-            $user = User::where('phone_number', $phoneNumber)
+            // Chuẩn hóa số điện thoại
+            $normalizedPhone = $this->normalizePhoneNumber($phoneNumber);
+
+            $user = User::where('phone_number', $normalizedPhone)
                         ->whereIn('role', ['staff', 'admin'])
                         ->first();
 
@@ -518,5 +521,24 @@ class AuthService
             ]);
             throw new \Exception('SERVER_ERROR');
         }
+    }
+
+    /**
+     * Chuẩn hóa số điện thoại về định dạng bắt đầu bằng số 0
+     *
+     * @param string $phoneNumber
+     * @return string
+     */
+    private function normalizePhoneNumber(string $phoneNumber): string
+    {
+        // Loại bỏ khoảng trắng và ký tự đặc biệt
+        $phone = preg_replace('/[^0-9]/', '', $phoneNumber);
+        
+        // Nếu số điện thoại bắt đầu bằng +84 hoặc 84
+        if (str_starts_with($phone, '84')) {
+            $phone = '0' . substr($phone, 2);
+        }
+        
+        return $phone;
     }
 }

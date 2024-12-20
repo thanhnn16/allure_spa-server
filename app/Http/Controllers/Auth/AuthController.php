@@ -672,7 +672,7 @@ class AuthController extends BaseController
     }
 
     /**
-     * Kiểm tra số điện thoại có phải là của nhân viên hay không
+     * Kiểm tra số điện thoại nhân viên
      * 
      * @OA\Post(
      *     path="/api/auth/check-staff-phone",
@@ -682,7 +682,12 @@ class AuthController extends BaseController
      *         required=true,
      *         @OA\JsonContent(
      *             required={"phone_number"},
-     *             @OA\Property(property="phone_number", type="string")
+     *             @OA\Property(
+     *                 property="phone_number", 
+     *                 type="string",
+     *                 description="Số điện thoại (chấp nhận định dạng 0xxx, 84xxx, +84xxx)",
+     *                 example="0912345678"
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -695,7 +700,19 @@ class AuthController extends BaseController
     {
         try {
             $validator = Validator::make($request->all(), [
-                'phone_number' => 'required|string|regex:/^[0-9]{10}$/'
+                'phone_number' => [
+                    'required',
+                    'string',
+                    function ($attribute, $value, $fail) {
+                        // Loại bỏ khoảng trắng và ký tự đặc biệt
+                        $phone = preg_replace('/[^0-9+]/', '', $value);
+                        
+                        // Kiểm tra các định dạng hợp lệ
+                        if (!preg_match('/^(\+84|84|0)[0-9]{9}$/', $phone)) {
+                            $fail('Số điện thoại không hợp lệ.');
+                        }
+                    }
+                ]
             ]);
 
             if ($validator->fails()) {
