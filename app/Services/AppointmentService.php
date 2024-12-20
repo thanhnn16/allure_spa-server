@@ -601,7 +601,7 @@ class AppointmentService
         try {
             $query = Appointment::with([
                 'service',
-                'staff', 
+                'staff',
                 'timeSlot',
                 'cancelledBy'
             ])
@@ -648,7 +648,7 @@ class AppointmentService
 
             return [
                 'status' => 500,
-                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn', 
+                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
                 'data' => []
             ];
         }
@@ -658,5 +658,48 @@ class AppointmentService
     public function getAppointmentTypes()
     {
         return self::APPOINTMENT_TYPES;
+    }
+
+    public function getUpcomingAppointments()
+    {
+        try {
+            $today = Carbon::now('Asia/Ho_Chi_Minh')->startOfDay();
+            $endOfDay = Carbon::now('Asia/Ho_Chi_Minh')->endOfDay();
+
+            $appointments = Appointment::with(['user', 'service', 'timeSlot'])
+                ->where('appointment_date', $today->format('Y-m-d'))
+                ->where('status', '!=', 'cancelled')
+                ->orderBy('appointment_date')
+                ->orderBy('time_slot_id')
+                ->get()
+                ->map(function ($appointment) {
+                    $startTime = Carbon::parse($appointment->appointment_date)
+                        ->setTimeFromTimeString($appointment->timeSlot->start_time);
+
+                    return [
+                        'id' => $appointment->id,
+                        'customer_name' => $appointment->user->full_name,
+                        'customer_phone' => $appointment->user->phone_number,
+                        'service_name' => $appointment->service->service_name,
+                        'time' => $appointment->timeSlot->start_time,
+                        'status' => $appointment->status,
+                        'is_upcoming' => $startTime->isFuture(),
+                        'note' => $appointment->note
+                    ];
+                });
+
+            return [
+                'status' => 200,
+                'message' => 'Lấy danh sách lịch hẹn thành công',
+                'data' => $appointments
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error getting upcoming appointments: ' . $e->getMessage());
+            return [
+                'status' => 500,
+                'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
+                'data' => null
+            ];
+        }
     }
 }

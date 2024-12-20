@@ -65,7 +65,6 @@ Route::middleware('throttle:api')->group(function () {
 
     Route::get('/search', [SearchController::class, 'search']);
 
-
     // Service routes
     Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/services/appointment', [ServiceController::class, 'getServicesForAppointment']);
@@ -108,6 +107,9 @@ Route::middleware('throttle:api')->group(function () {
         // Thêm các route mới cho cập nhật và hủy cuộc hẹn
         Route::put('/appointments/{appointment}/update', [AppointmentController::class, 'update']);
         Route::put('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel']);
+
+        Route::get('/appointments/upcoming', [AppointmentController::class, 'getUpcomingAppointments']);
+
 
         // User routes
         Route::get('/users/search', [UserController::class, 'searchUsers']);

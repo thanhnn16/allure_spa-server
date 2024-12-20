@@ -631,4 +631,68 @@ class AppointmentController extends BaseController
             );
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/appointments/upcoming",
+     *     summary="Lấy danh sách lịch hẹn trong ngày",
+     *     tags={"Appointments"},
+     *     security={{ "bearerAuth": {} }},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Thành công",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Lấy danh sách lịch hẹn thành công"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="customer_name", type="string"),
+     *                     @OA\Property(property="customer_phone", type="string"),
+     *                     @OA\Property(property="service_name", type="string"),
+     *                     @OA\Property(property="time", type="string"),
+     *                     @OA\Property(property="status", type="string"),
+     *                     @OA\Property(property="is_upcoming", type="boolean"),
+     *                     @OA\Property(property="note", type="string", nullable=true)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Không có quyền truy cập"
+     *     )
+     * )
+     */
+    public function getUpcomingAppointments()
+    {
+        try {
+            // Kiểm tra quyền truy cập
+            if (Auth::user()->role != 'admin' && Auth::user()->role != 'staff') {
+                return $this->respondWithJson(
+                    null,
+                    'Bạn không có quyền truy cập chức năng này',
+                    403
+                );
+            }
+
+            $result = $this->appointmentService->getUpcomingAppointments();
+
+            return $this->respondWithJson(
+                $result['data'],
+                $result['message'],
+                $result['status']
+            );
+        } catch (\Exception $e) {
+            Log::error('Error in getUpcomingAppointments: ' . $e->getMessage());
+            return $this->respondWithJson(
+                null,
+                'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
+                500
+            );
+        }
+    }
 }
