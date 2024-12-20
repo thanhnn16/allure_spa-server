@@ -367,7 +367,7 @@ class AuthController extends BaseController
                     'content' => [
                         'en' => 'Your account has been successfully verified. Welcome to Allure Spa!',
                         'vi' => 'Tài khoản của bạn đã được xác thực thành công. Chào mừng bạn đến với Allure Spa!',
-                        'ja' => 'アカウントの認証が完了しました。Allure Spaへようこそ！'
+                        'ja' => 'アカウントの認証が完了しました。Allure Spa��ようこそ！'
                     ],
                     'data' => [
                         'type' => 'account_verification'
@@ -704,12 +704,15 @@ class AuthController extends BaseController
                     'required',
                     'string',
                     function ($attribute, $value, $fail) {
-                        // Loại bỏ khoảng trắng và ký tự đặc biệt
+                        // Loại bỏ tất cả ký tự không phải số và dấu +
                         $phone = preg_replace('/[^0-9+]/', '', $value);
                         
                         // Kiểm tra các định dạng hợp lệ
-                        if (!preg_match('/^(\+84|84|0)[0-9]{9}$/', $phone)) {
-                            $fail('Số điện thoại không hợp lệ.');
+                        // 1. Bắt đầu bằng 0 và có 10 số
+                        // 2. Bắt đầu bằng 84 và có 11 số
+                        // 3. Bắt đầu bằng +84 và có 12 số
+                        if (!preg_match('/^(0\d{9}|84\d{9}|\+84\d{9})$/', $phone)) {
+                            $fail('INVALID_PHONE_FORMAT');
                         }
                     }
                 ]
