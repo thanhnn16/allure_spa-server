@@ -39,10 +39,6 @@ class AppointmentService
 
     public function getAppointments($request)
     {
-        if (Auth::user()->role !== 'admin') {
-            throw new \Exception('Unauthorized access');
-        }
-
         $query = Appointment::with([
             'user',
             'service',
