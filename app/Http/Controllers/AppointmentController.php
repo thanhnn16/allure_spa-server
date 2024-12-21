@@ -670,7 +670,7 @@ class AppointmentController extends BaseController
             // Kiểm tra quyền truy cập
             if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'staff') {
                 return $this->respondWithJson(
-                    [],  // Trả về mảng rỗng thay vì null
+                    [],
                     'Bạn không có quyền truy cập chức năng này',
                     403
                 );
@@ -678,23 +678,21 @@ class AppointmentController extends BaseController
 
             $result = $this->appointmentService->getUpcomingAppointments();
 
-            // Kiểm tra và đảm bảo data luôn là array
-            $data = $result['data'] ?? [];
-            $message = $result['message'] ?? 'Lấy danh sách lịch hẹn thành công';
-            $status = $result['status'] ?? 200;
-
+            // Đảm bảo status là integer
+            $status = is_numeric($result['status']) ? (int)$result['status'] : 200;
+            
             return $this->respondWithJson(
-                $data,
-                $message,
+                $result['data'] ?? [],
+                $result['message'] ?? 'Lấy danh sách lịch hẹn thành công',
                 $status
             );
         } catch (\Exception $e) {
             Log::error('Error in getUpcomingAppointments: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
-
+            
             return $this->respondWithJson(
-                [],  // Trả về mảng rỗng thay vì null
+                [],
                 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage(),
                 500
             );
