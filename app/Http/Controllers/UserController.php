@@ -287,6 +287,13 @@ class UserController extends BaseController
 
     public function searchUsers(Request $request)
     {
+
+        $isAuth = request()->user()->role === 'staff' || request()->user()->role === 'admin';
+
+        if (!$isAuth) {
+            return $this->respondWithError(null, 'Bạn không có quyền truy cập', 403);
+        }
+
         $query = $request->get('query');
 
         try {

@@ -86,7 +86,7 @@ class AppointmentController extends BaseController
     {
         try {
             // Check if user is admin
-            if (Auth::user()->role !== 'admin') {
+            if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'staff') {
                 return response()->json([
                     'message' => 'Unauthorized access',
                     'status' => 403
@@ -671,7 +671,7 @@ class AppointmentController extends BaseController
     {
         try {
             // Kiểm tra quyền truy cập
-            if (Auth::user()->role != 'admin' && Auth::user()->role != 'staff') {
+            if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'staff') {
                 return $this->respondWithJson(
                     null,
                     'Bạn không có quyền truy cập chức năng này',
