@@ -693,7 +693,7 @@ class AppointmentService
                     'customer_name' => $appointment->user->full_name,
                     'customer_phone' => $appointment->user->phone_number,
                     'service_name' => $appointment->service->service_name,
-                    'time' => $appointment->timeSlot->start_time,
+                    'start_time' => $appointment->timeSlot->start_time,
                     'end_time' => $appointment->timeSlot->end_time,
                     'date' => $appointment->appointment_date,
                     'status' => $appointment->status,

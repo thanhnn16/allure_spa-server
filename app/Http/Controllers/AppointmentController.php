@@ -637,7 +637,7 @@ class AppointmentController extends BaseController
     /**
      * @OA\Get(
      *     path="/api/appointments/upcoming",
-     *     summary="Lấy danh sách lịch hẹn trong ngày",
+     *     summary="Lấy danh sách lịch hẹn trong 3 ngày từ hôm nay",
      *     tags={"Appointments"},
      *     security={{ "bearerAuth": {} }},
      *     @OA\Response(
@@ -655,7 +655,9 @@ class AppointmentController extends BaseController
      *                     @OA\Property(property="customer_name", type="string"),
      *                     @OA\Property(property="customer_phone", type="string"),
      *                     @OA\Property(property="service_name", type="string"),
-     *                     @OA\Property(property="time", type="string"),
+     *                     @OA\Property(property="start_time", type="string"),
+     *                     @OA\Property(property="end_time", type="string"),
+     *                     @OA\Property(property="date", type="string"),
      *                     @OA\Property(property="status", type="string"),
      *                     @OA\Property(property="is_upcoming", type="boolean"),
      *                     @OA\Property(property="note", type="string", nullable=true)
