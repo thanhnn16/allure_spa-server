@@ -86,7 +86,7 @@ class AppointmentController extends BaseController
     {
         try {
             // Check if user is admin or staff
-            if (Auth::user()->role !== 'admin' || Auth::user()->role !== 'staff') {
+            if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'staff') {
                 return $this->respondWithError('Bạn không có quyền truy cập', 403);
             }
 

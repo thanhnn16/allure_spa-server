@@ -99,6 +99,8 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/appointments', [AppointmentController::class, 'index']);
         Route::get('/appointments/my-appointments', [AppointmentController::class, 'getMyAppointments']);
         Route::post('/appointments', [AppointmentController::class, 'store']);
+        Route::get('/appointments/upcoming', [AppointmentController::class, 'getUpcomingAppointments']);
+
         Route::get('/appointments/{appointment}', [AppointmentController::class, 'show']);
         Route::put('/appointments/{appointment}', [AppointmentController::class, 'update']);
         Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
@@ -107,9 +109,6 @@ Route::middleware('throttle:api')->group(function () {
         // Thêm các route mới cho cập nhật và hủy cuộc hẹn
         Route::put('/appointments/{appointment}/update', [AppointmentController::class, 'update']);
         Route::put('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel']);
-
-        Route::get('/appointments/upcoming', [AppointmentController::class, 'getUpcomingAppointments']);
-
 
         // User routes
         Route::get('/users/search', [UserController::class, 'searchUsers']);
