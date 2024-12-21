@@ -85,12 +85,9 @@ class AppointmentController extends BaseController
     public function index(Request $request)
     {
         try {
-            // Check if user is admin
-            if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'staff') {
-                return response()->json([
-                    'message' => 'Unauthorized access',
-                    'status' => 403
-                ], 403);
+            // Check if user is admin or staff
+            if (Auth::user()->role !== 'admin' || Auth::user()->role !== 'staff') {
+                return $this->respondWithError(null, 'Bạn không có quyền truy cập', 403);
             }
 
             $appointments = $this->appointmentService->getAppointments($request);
@@ -673,7 +670,7 @@ class AppointmentController extends BaseController
             // Kiểm tra quyền truy cập
             if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'staff') {
                 return $this->respondWithJson(
-                    null,
+                    [],  // Trả về mảng rỗng thay vì null
                     'Bạn không có quyền truy cập chức năng này',
                     403
                 );
@@ -681,16 +678,24 @@ class AppointmentController extends BaseController
 
             $result = $this->appointmentService->getUpcomingAppointments();
 
+            // Kiểm tra và đảm bảo data luôn là array
+            $data = $result['data'] ?? [];
+            $message = $result['message'] ?? 'Lấy danh sách lịch hẹn thành công';
+            $status = $result['status'] ?? 200;
+
             return $this->respondWithJson(
-                $result['data'],
-                $result['message'],
-                $result['status']
+                $data,
+                $message,
+                $status
             );
         } catch (\Exception $e) {
-            Log::error('Error in getUpcomingAppointments: ' . $e->getMessage());
+            Log::error('Error in getUpcomingAppointments: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return $this->respondWithJson(
-                null,
-                'Đã xảy ra lỗi khi lấy danh sách lịch hẹn',
+                [],  // Trả về mảng rỗng thay vì null
+                'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage(),
                 500
             );
         }
