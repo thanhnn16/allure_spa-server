@@ -87,7 +87,7 @@ class AppointmentController extends BaseController
         try {
             // Check if user is admin or staff
             if (Auth::user()->role !== 'admin' || Auth::user()->role !== 'staff') {
-                return $this->respondWithError(null, 'Bạn không có quyền truy cập', 403);
+                return $this->respondWithError('Bạn không có quyền truy cập', 403);
             }
 
             $appointments = $this->appointmentService->getAppointments($request);
@@ -122,7 +122,12 @@ class AppointmentController extends BaseController
             });
 
             if ($request->expectsJson()) {
-                return $this->respondWithJson($formattedAppointments, 'Lấy danh sách cuộc hẹn thành công');
+                // Đảm bảo status là integer
+                return $this->respondWithJson(
+                    $formattedAppointments, 
+                    'Lấy danh sách cuộc hẹn thành công',
+                    200  // Chỉ định rõ là integer
+                );
             }
 
             // Get time slots for calendar

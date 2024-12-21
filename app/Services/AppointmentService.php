@@ -664,10 +664,12 @@ class AppointmentService
     {
         try {
             $today = Carbon::now('Asia/Ho_Chi_Minh')->startOfDay();
-            
-            // Lấy tất cả các cuộc hẹn trong ngày
+            $threeDaysLater = $today->copy()->addDays(3);
+
+            // Lấy tất cả các cuộc hẹn trong 3 ngày từ hôm nay
             $appointments = Appointment::with(['user', 'service', 'timeSlot'])
-                ->where('appointment_date', $today->format('Y-m-d'))
+                ->where('appointment_date', '>=', $today->format('Y-m-d'))
+                ->where('appointment_date', '<=', $threeDaysLater->format('Y-m-d'))
                 ->where('status', '!=', 'cancelled')
                 ->orderBy('appointment_date')
                 ->orderBy('time_slot_id')
@@ -707,7 +709,7 @@ class AppointmentService
             Log::error('Error getting upcoming appointments: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()  // Thêm stack trace để debug
             ]);
-            
+
             return [
                 'status' => 500,
                 'message' => 'Đã xảy ra lỗi khi lấy danh sách lịch hẹn: ' . $e->getMessage(),
