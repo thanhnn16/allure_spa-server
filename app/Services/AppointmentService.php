@@ -365,7 +365,7 @@ class AppointmentService
         try {
             $appointment = Appointment::with([
                 'user',
-                'service',
+                'service.media',
                 'staff',
                 'timeSlot',
                 'cancelledBy'
@@ -379,24 +379,51 @@ class AppointmentService
                 'user' => [
                     'id' => $appointment->user->id,
                     'full_name' => $appointment->user->full_name,
+                    'phone_number' => $appointment->user->phone_number
                 ],
                 'cancelled_by_user' => $appointment->cancelled_by ? [
                     'id' => $appointment->cancelledBy->id,
                     'full_name' => $appointment->cancelledBy->full_name
-                ] : null
+                ] : null,
+                'service' => [
+                    'id' => $appointment->service->id,
+                    'name' => $appointment->service->name,
+                    'duration' => $appointment->service->duration,
+                    'price' => $appointment->service->price,
+                    'media' => $appointment->service->media->map(function ($media) {
+                        return [
+                            'id' => $media->id,
+                            'type' => $media->type,
+                            'file_path' => $media->file_path,
+                            'full_url' => $media->full_url,
+                            'position' => $media->position
+                        ];
+                    })
+                ],
+                'staff' => [
+                    'id' => $appointment->staff->id,
+                    'full_name' => $appointment->staff->full_name
+                ],
+                'time_slot' => [
+                    'id' => $appointment->timeSlot->id,
+                    'start_time' => $appointment->timeSlot->start_time,
+                    'end_time' => $appointment->timeSlot->end_time
+                ]
             ]);
 
             return [
                 'status' => 200,
                 'message' => 'Lấy thông tin cuộc hẹn thành công',
-                'data' => $formattedAppointment
+                'data' => $formattedAppointment,
+                'success' => true
             ];
         } catch (\Exception $e) {
             Log::error('Lỗi khi lấy thông tin cuộc hẹn: ' . $e->getMessage());
             return [
                 'status' => 500,
                 'message' => 'Đã xảy ra lỗi khi lấy thông tin cuộc hẹn',
-                'data' => null
+                'data' => null,
+                'success' => false
             ];
         }
     }
@@ -662,7 +689,6 @@ class AppointmentService
             $today = Carbon::now('Asia/Ho_Chi_Minh')->startOfDay();
             $threeDaysLater = $today->copy()->addDays(3);
 
-            // Lấy tất cả các cuộc hẹn trong 3 ngày từ hôm nay
             $appointments = Appointment::with(['user', 'service', 'timeSlot'])
                 ->where('appointment_date', '>=', $today->format('Y-m-d'))
                 ->where('appointment_date', '<=', $threeDaysLater->format('Y-m-d'))
