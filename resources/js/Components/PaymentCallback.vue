@@ -53,7 +53,7 @@ export default {
     },
     invoice_id: {
       type: String,
-      required: true  
+      required: true
     },
     status: {
       type: String,
@@ -70,35 +70,54 @@ export default {
 
     const verifyPayment = async () => {
       try {
-        console.log('Props received:', props);
+        console.log('Bắt đầu xác thực thanh toán với dữ liệu:', {
+          orderCode: props.orderCode,
+          invoice_id: props.invoice_id,
+          status: props.status
+        });
+
         if (!props.orderCode) {
           throw new Error('Không tìm thấy mã đơn hàng');
         }
 
         const invoiceId = props.invoice_id
+        console.log('Invoice ID:', invoiceId);
 
         if (props.status === 'CANCELLED') {
+          console.log('Giao dịch bị hủy với status:', props.status);
           throw new Error('Giao dịch đã bị hủy')
         }
 
         let retries = 3;
         while (retries > 0) {
           try {
+            console.log(`Thử xác thực lần ${4 - retries}`);
             const response = await axios.post('/api/payos/verify', {
               orderCode: props.orderCode,
               invoice_id: invoiceId
             });
+            console.log('Kết quả xác thực:', response.data);
+            
             if (response.data.success) {
+              console.log('Xác thực thành công');
               success.value = true;
+              // Lưu transaction ID nếu có
+              if (response.data.transactionId) {
+                transactionId.value = response.data.transactionId;
+              }
               break;
             }
             retries--;
+            console.log(`Còn lại ${retries} lần thử`);
           } catch (err) {
+            console.error('Lỗi trong quá trình xác thực:', err);
             if (retries === 0) throw err;
+            console.log('Đợi 2 giây trước khi thử lại...');
             await new Promise(resolve => setTimeout(resolve, 2000));
           }
         }
       } catch (err) {
+        console.error('Lỗi cuối cùng:', err);
         error.value = err.message || 'Có lỗi xảy ra khi xác thực thanh toán'
         success.value = false
       } finally {
