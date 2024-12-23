@@ -133,7 +133,7 @@ class InvoiceService
                 'old_payment_status' => $oldStatus,
                 'new_payment_status' => $newStatus,
                 'payment_amount' => $data['payment_amount'],
-                'payment_method' => $data['payment_method'],
+                'payment_method' => $data['payment_method_id'],
                 'payment_proof' => $data['payment_proof'] ?? null,
                 'created_by_user_id' => Auth::id(),
                 'note' => $data['note'] ?? null,

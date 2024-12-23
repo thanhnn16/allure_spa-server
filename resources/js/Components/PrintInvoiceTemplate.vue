@@ -1,98 +1,102 @@
 <template>
-  <div class="print-template w-[76mm] mx-auto bg-white p-4 font-sans">
-    <!-- Header - Modernized -->
-    <div class="text-center mb-8">
-      <img src="/images/icon-192x192.png" alt="Allure Spa Logo" class="w-16 h-16 mx-auto mb-4 object-contain" />
-      <h1 class="text-2xl font-bold tracking-wider mb-2 text-gray-800">ALLURE SPA</h1>
-      <p class="text-sm leading-relaxed text-gray-600">
-        720A Điện Biên Phủ, P. 22, Bình Thạnh, HCM<br>
-        ĐT: (84) 986 910 920
-      </p>
-    </div>
-
-    <!-- Invoice Info - Refined -->
-    <div class="text-center mb-8 border-y-2 border-gray-200 py-4">
-      <h2 class="text-xl font-bold mb-3 tracking-wide text-gray-800">HÓA ĐƠN THANH TOÁN</h2>
-      <div class="text-sm space-y-1.5 text-gray-600">
-        <p class="font-medium">#{{ invoice.id }}</p>
-        <p>{{ formatDateTime(invoice.created_at) }}</p>
+  <div class="print-template w-[210mm] mx-auto bg-white p-8 font-sans">
+    <!-- Header - Cải thiện layout -->
+    <div class="flex items-center justify-between mb-8 border-b pb-6">
+      <div class="flex items-center gap-4">
+        <img src="/images/icon-192x192.png" alt="Allure Spa Logo" class="w-20 h-20 object-contain" />
+        <div>
+          <h1 class="text-3xl font-bold tracking-wider text-gray-800">ALLURE SPA</h1>
+          <p class="text-base leading-relaxed text-gray-600 mt-2">
+            720A Điện Biên Phủ, P. 22, Bình Thạnh, HCM<br>
+            ĐT: (84) 986 910 920
+          </p>
+        </div>
+      </div>
+      <div class="text-right">
+        <h2 class="text-2xl font-bold mb-3 tracking-wide text-gray-800">HÓA ĐƠN THANH TOÁN</h2>
+        <p class="text-base font-medium">#{{ invoice.id }}</p>
+        <p class="text-gray-600">{{ formatDateTime(invoice.created_at) }}</p>
       </div>
     </div>
 
-    <!-- Customer Info - Simplified -->
-    <div class="mb-6 text-sm">
-      <div class="grid grid-cols-1 gap-2">
-        <div class="flex justify-between items-center">
-          <span class="font-medium">Khách hàng:</span>
-          <span>{{ invoice.user?.full_name }}</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="font-medium">Số điện thoại:</span>
-          <span>{{ invoice.user?.phone_number }}</span>
+    <!-- Thông tin khách hàng - Layout mới -->
+    <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+      <div class="grid grid-cols-2 gap-4 text-base">
+        <div class="space-y-2">
+          <div class="flex gap-4">
+            <span class="font-medium w-32">Khách hàng:</span>
+            <span>{{ invoice.user?.full_name }}</span>
+          </div>
+          <div class="flex gap-4">
+            <span class="font-medium w-32">Số điện thoại:</span>
+            <span>{{ invoice.user?.phone_number }}</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Items Table - Compact version -->
-    <div class="mb-6">
-      <table class="w-full text-[11px]">
+    <!-- Bảng sản phẩm/dịch vụ - Cải thiện layout -->
+    <div class="mb-8">
+      <table class="w-full text-base">
         <thead>
-          <tr class="border-b border-gray-300">
-            <th class="py-2 text-left font-bold">SP/DV</th>
-            <th class="py-2 text-right font-bold">SL</th>
-            <th class="py-2 text-right font-bold">Đơn giá</th>
-            <th class="py-2 text-right font-bold">T.Tiền</th>
+          <tr class="bg-gray-50">
+            <th class="py-3 px-4 text-left font-bold border-b">SP/DV</th>
+            <th class="py-3 px-4 text-center font-bold border-b w-20">SL</th>
+            <th class="py-3 px-4 text-right font-bold border-b w-32">Đơn giá</th>
+            <th class="py-3 px-4 text-right font-bold border-b w-32">T.Tiền</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in invoice.order?.order_items" :key="item.id" class="border-b border-gray-100">
-            <td class="py-1.5">
+          <tr v-for="item in invoice.order?.order_items" :key="item.id" class="border-b">
+            <td class="py-3 px-4">
               <div class="font-medium">{{ getItemName(item) }}</div>
-              <div class="text-[9px] text-gray-600">{{ getItemCode(item) }}</div>
-              <div v-if="item.service_type" class="text-[9px] font-medium text-gray-600">
+              <div class="text-sm text-gray-600">{{ getItemCode(item) }}</div>
+              <div v-if="item.service_type" class="text-sm font-medium text-gray-600">
                 {{ formatServiceType(item.service_type) }}
               </div>
             </td>
-            <td class="py-1.5 text-right">{{ item.quantity }}</td>
-            <td class="py-1.5 text-right">{{ formatCurrency(item.price) }}</td>
-            <td class="py-1.5 text-right font-medium">{{ formatCurrency(item.price * item.quantity) }}</td>
+            <td class="py-3 px-4 text-center">{{ item.quantity }}</td>
+            <td class="py-3 px-4 text-right">{{ formatCurrency(item.price) }}</td>
+            <td class="py-3 px-4 text-right font-medium">{{ formatCurrency(item.price * item.quantity) }}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Summary - Simplified -->
-    <div class="text-sm space-y-2 mb-6">
-      <div class="flex justify-between">
-        <span>Tổng tiền hàng:</span>
-        <span>{{ formatCurrency(subtotalAmount) }}</span>
-      </div>
+    <!-- Tổng kết - Layout mới -->
+    <div class="flex justify-end mb-8">
+      <div class="w-80 space-y-3 text-base">
+        <div class="flex justify-between py-2">
+          <span>Tổng tiền hàng:</span>
+          <span class="font-medium">{{ formatCurrency(subtotalAmount) }}</span>
+        </div>
 
-      <div v-if="invoice.order?.discount_amount" class="flex justify-between">
-        <span>Giảm giá:</span>
-        <span>-{{ formatCurrency(invoice.order.discount_amount) }}</span>
-      </div>
+        <div v-if="invoice.order?.discount_amount" class="flex justify-between py-2">
+          <span>Giảm giá:</span>
+          <span class="font-medium text-red-600">-{{ formatCurrency(invoice.order.discount_amount) }}</span>
+        </div>
 
-      <div class="flex justify-between font-bold border-t border-gray-200 pt-2">
-        <span>Tổng thanh toán:</span>
-        <span>{{ formatCurrency(invoice.total_amount) }}</span>
-      </div>
+        <div class="flex justify-between py-3 border-t border-b border-gray-200 font-bold">
+          <span>Tổng thanh toán:</span>
+          <span>{{ formatCurrency(invoice.total_amount) }}</span>
+        </div>
 
-      <div class="flex justify-between">
-        <span>Đã thanh toán:</span>
-        <span>{{ formatCurrency(invoice.paid_amount) }}</span>
-      </div>
+        <div class="flex justify-between py-2">
+          <span>Đã thanh toán:</span>
+          <span class="font-medium">{{ formatCurrency(invoice.paid_amount) }}</span>
+        </div>
 
-      <div class="flex justify-between font-medium">
-        <span>Còn lại:</span>
-        <span>{{ formatCurrency(invoice.remaining_amount) }}</span>
+        <div class="flex justify-between py-2 text-lg font-bold">
+          <span>Còn lại:</span>
+          <span>{{ formatCurrency(invoice.remaining_amount) }}</span>
+        </div>
       </div>
     </div>
 
-    <!-- Footer - Enhanced -->
-    <div class="mt-10 text-center space-y-3 border-t-2 border-gray-200 pt-6">
-      <p class="font-medium text-gray-800 text-base">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
-      <div class="text-sm text-gray-600 space-y-1.5">
+    <!-- Footer - Cải thiện layout -->
+    <div class="mt-12 text-center space-y-4 border-t pt-8">
+      <p class="font-medium text-gray-800 text-lg">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
+      <div class="text-base text-gray-600 space-y-2">
         <p class="font-medium">Hotline: (84) 986 910 920</p>
         <p class="font-medium">Website: www.allurespa.com.vn</p>
       </div>
@@ -176,10 +180,15 @@ export default {
 <style scoped>
 @media print {
   .print-template {
-    width: 76mm;
-    padding: 12px;
+    width: 210mm;
+    padding: 20mm;
     margin: 0 auto;
     background-color: white !important;
+  }
+
+  @page {
+    margin: 0;
+    size: A4;
   }
 
   /* Sử dụng font system tốt cho tiếng Việt */

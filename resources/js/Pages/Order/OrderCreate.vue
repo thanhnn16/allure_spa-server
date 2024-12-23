@@ -171,8 +171,20 @@
                     <!-- Submit Button -->
                     <div class="flex justify-between items-center">
                         <button type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Tạo đơn hàng và hóa đơn
+                            :disabled="isProcessing"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white 
+                            bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+                            disabled:opacity-50 disabled:cursor-not-allowed transition-opacity duration-200">
+                            <template v-if="isProcessing">
+                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                {{ form.payment_method_id === 3 ? 'Đang tạo link thanh toán...' : 'Đang xử lý...' }}
+                            </template>
+                            <template v-else>
+                                {{ form.payment_method_id === 3 ? 'Tạo đơn và thanh toán PayOS' : 'Tạo đơn hàng và hóa đơn' }}
+                            </template>
                         </button>
                         <div class="text-right">
                             <p class="text-sm text-gray-600 dark:text-gray-400">Tổng tiền: {{
@@ -186,6 +198,23 @@
                 </form>
             </div>
         </SectionMain>
+
+        <!-- Thêm overlay loading khi đang xử lý -->
+        <div v-if="isProcessing" 
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white dark:bg-dark-surface p-6 rounded-lg shadow-xl text-center">
+                <svg class="animate-spin h-10 w-10 text-indigo-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-gray-900 dark:text-dark-text font-medium">
+                    {{ form.payment_method_id === 3 ? 'Đang tạo link thanh toán...' : 'Đang xử lý đơn hàng...' }}
+                </p>
+                <p class="text-sm text-gray-500 dark:text-dark-text-muted mt-2">
+                    Vui lòng đợi trong giây lát
+                </p>
+            </div>
+        </div>
     </LayoutAuthenticated>
 </template>
 
@@ -337,8 +366,13 @@ export default {
         }
 
         // Form submission
+        const isProcessing = ref(false)
+
         const submitForm = async () => {
             try {
+                // Thêm flag xử lý
+                isProcessing.value = true
+
                 console.log('Bắt đầu submit form với dữ liệu:', form.value);
 
                 // Validate form
@@ -384,6 +418,8 @@ export default {
                     stack: error.stack
                 });
                 toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn hàng');
+            } finally {
+                isProcessing.value = false
             }
         }
 
@@ -539,6 +575,7 @@ export default {
             finalAmount,
             applyVoucher,
             updateTotals,
+            isProcessing,
         }
     }
 }

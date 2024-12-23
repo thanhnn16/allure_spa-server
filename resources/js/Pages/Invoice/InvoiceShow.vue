@@ -12,13 +12,35 @@
                         <h1 class="text-2xl font-semibold text-gray-900 dark:text-dark-text">Chi tiết hóa đơn #{{ invoice.id }}</h1>
                         <div class="flex space-x-4">
                             <button @click="printInvoice"
-                                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center">
-                                <i class="fas fa-print mr-2"></i> In hóa đơn
+                                :disabled="isPrintProcessing"
+                                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center
+                                disabled:opacity-50 disabled:cursor-not-allowed transition-opacity duration-200">
+                                <template v-if="isPrintProcessing">
+                                    <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Đang xử lý...
+                                </template>
+                                <template v-else>
+                                    <i class="fas fa-print mr-2"></i> In hóa đơn
+                                </template>
                             </button>
                             <!-- Thêm nút hủy hóa đơn -->
                             <button v-if="canCancel" @click="confirmCancelInvoice"
-                                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded flex items-center">
-                                <i class="fas fa-times mr-2"></i> Hủy hóa đơn
+                                :disabled="isProcessingCancel"
+                                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded flex items-center
+                                disabled:opacity-50 disabled:cursor-not-allowed transition-opacity duration-200">
+                                <template v-if="isProcessingCancel">
+                                    <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Đang xử lý...
+                                </template>
+                                <template v-else>
+                                    <i class="fas fa-times mr-2"></i> Hủy hóa đơn
+                                </template>
                             </button>
                         </div>
                     </div>
@@ -292,9 +314,19 @@
 
                             <!-- Submit Button -->
                             <button type="submit"
-                                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors dark:bg-green-600 dark:hover:bg-green-700"
-                                :disabled="processing">
-                                {{ processing ? 'Đang xử lý...' : 'Xác nhận thanh toán' }}
+                                :disabled="processing || isProcessingPayment"
+                                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors dark:bg-green-600 dark:hover:bg-green-700
+                                disabled:opacity-50 disabled:cursor-not-allowed">
+                                <template v-if="processing || isProcessingPayment">
+                                    <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    {{ paymentMethod === 3 ? 'Đang tạo link thanh toán...' : 'Đang xử lý...' }}
+                                </template>
+                                <template v-else>
+                                    {{ paymentMethod === 3 ? 'Thanh toán qua PayOS' : 'Xác nhận thanh toán' }}
+                                </template>
                             </button>
                         </form>
                     </div>
@@ -428,11 +460,26 @@
                 <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-text">Xác nhận hủy hóa đơn</h3>
                 <p class="mb-4 text-gray-600 dark:text-dark-text-muted">Bạn có chắc chắn muốn hủy hóa đơn này? Hành động này không thể hoàn tác.</p>
                 <div class="flex justify-end space-x-4">
-                    <button @click="showCancelModal = false" class="px-4 py-2 bg-gray-300 dark:bg-dark-surface hover:bg-gray-400 dark:hover:bg-dark-hover rounded">
+                    <button @click="showCancelModal = false" 
+                        :disabled="isProcessingCancel"
+                        class="px-4 py-2 bg-gray-300 dark:bg-dark-surface hover:bg-gray-400 dark:hover:bg-dark-hover rounded
+                        disabled:opacity-50 disabled:cursor-not-allowed">
                         Đóng
                     </button>
-                    <button @click="cancelInvoice" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded">
-                        Xác nhận hủy
+                    <button @click="cancelInvoice" 
+                        :disabled="isProcessingCancel"
+                        class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded
+                        disabled:opacity-50 disabled:cursor-not-allowed">
+                        <template v-if="isProcessingCancel">
+                            <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Đang xử lý...
+                        </template>
+                        <template v-else>
+                            Xác nhận hủy
+                        </template>
                     </button>
                 </div>
             </div>
@@ -522,18 +569,20 @@ export default {
                 tempContainer.appendChild(printTemplate.cloneNode(true))
                 document.body.appendChild(tempContainer)
 
+                // Cập nhật cấu hình cho khổ A4
                 const opt = {
-                    margin: 5,
+                    margin: [10, 10, 10, 10], // margins [top, left, bottom, right] tính bằng mm
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: {
                         scale: 2,
                         useCORS: true,
                         letterRendering: true,
-                        width: 302,
+                        // Đặt chiều rộng cố định cho A4 (210mm)
+                        width: 793, // 210mm converted to pixels at 96 DPI
                     },
                     jsPDF: {
                         unit: 'mm',
-                        format: [80, 297],
+                        format: 'a4',
                         orientation: 'portrait'
                     }
                 }
@@ -543,14 +592,14 @@ export default {
                     .outputPdf('blob')
 
                 const blobUrl = URL.createObjectURL(pdfBlob)
-                const printWindow = window.open(blobUrl, '_blank', 'width=800,height=600')
+                const printWindow = window.open(blobUrl, '_blank')
 
                 if (printWindow) {
                     printWindow.onload = () => {
                         printWindow.print()
                     }
 
-                    // Thêm xử lý khi người dùng hủy in
+                    // Xử lý khi người dùng đóng cửa sổ in
                     const checkPrintDialogClosed = setInterval(() => {
                         if (printWindow.closed) {
                             clearInterval(checkPrintDialogClosed)
@@ -558,11 +607,13 @@ export default {
                         }
                     }, 1000)
 
+                    // Xử lý sau khi in xong
                     printWindow.onafterprint = () => {
                         clearInterval(checkPrintDialogClosed)
                         cleanup()
                     }
 
+                    // Xử lý trước khi đóng cửa sổ
                     printWindow.onbeforeunload = () => {
                         clearInterval(checkPrintDialogClosed)
                         cleanup()
@@ -586,52 +637,6 @@ export default {
                 isPrinting.value = false
             }
         }
-
-        const printInvoice = async () => {
-            isPrinting.value = true
-            // Template sẽ tự động render và gọi handlePrintAfterRender
-            // thông qua event @rendered
-        }
-
-        const processPayment = async () => {
-            try {
-                processing.value = true;
-                
-                // Nếu là thanh toán qua PayOS (ID = 3 cho PayOS)
-                if (paymentMethod.value === 3) {
-                    await handlePayOSPayment();
-                    return;
-                }
-
-                // Xử lý thanh toán thông thường
-                const response = await axios.post(`/invoices/${props.invoice.id}/process-payment`, {
-                    payment_amount: paymentAmount.value,
-                    payment_method_id: paymentMethod.value,
-                    note: paymentNote.value,
-                });
-
-                // Hiển thị toast thành công
-                toast.success("Đã cập nhật thanh toán cho hóa đơn");
-
-                // Kiểm tra nếu đã thanh toán đủ
-                if (response.data.data.status === 'paid') {
-                    toast.success("Hóa đơn đã được thanh toán đầy đủ");
-                }
-
-                // Reload trang để cập nhật dữ liệu
-                router.reload({ only: ['invoice'] });
-
-                // Reset form
-                paymentAmount.value = 0;
-                paymentNote.value = '';
-
-            } catch (error) {
-                console.error('Payment processing error:', error);
-                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xử lý thanh toán');
-            } finally {
-                processing.value = false;
-            }
-        };
 
         const handlePayOSPayment = async () => {
             try {
@@ -826,24 +831,6 @@ export default {
             showCancelModal.value = true
         }
 
-        const cancelInvoice = async () => {
-            try {
-                const response = await axios.post(`/invoices/${props.invoice.id}/cancel`)
-
-                // Hiển thị thông báo thành công
-                toast.success("Hóa đơn đã được hủy thành công")
-
-                // Reload trang để cập nhật dữ liệu
-                router.reload({ only: ['invoice'] })
-
-                // Đóng modal
-                showCancelModal.value = false
-            } catch (error) {
-                console.error('Cancel invoice error:', error)
-                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy hóa đơn')
-            }
-        }
-
         const getOrderStatusClass = (status) => {
             const baseClasses = 'px-2 py-1 rounded-full text-sm font-medium';
             const statusClasses = {
@@ -904,6 +891,84 @@ export default {
             })
         })
 
+        const isProcessingPayment = ref(false)
+        const isProcessingCancel = ref(false)
+        const isPrintProcessing = ref(false)
+
+        const processPayment = async () => {
+            try {
+                isProcessingPayment.value = true;
+                
+                // Nếu là thanh toán qua PayOS (ID = 3 cho PayOS)
+                if (paymentMethod.value === 3) {
+                    await handlePayOSPayment();
+                    return;
+                }
+
+                // Xử lý thanh toán thông thường
+                const response = await axios.post(`/invoices/${props.invoice.id}/process-payment`, {
+                    payment_amount: paymentAmount.value,
+                    payment_method_id: paymentMethod.value,
+                    note: paymentNote.value,
+                });
+
+                // Hiển thị toast thành công
+                toast.success("Đã cập nhật thanh toán cho hóa đơn");
+
+                // Kiểm tra nếu đã thanh toán đủ
+                if (response.data.data.status === 'paid') {
+                    toast.success("Hóa đơn đã được thanh toán đầy đủ");
+                }
+
+                // Reload trang để cập nhật dữ liệu
+                router.reload({ only: ['invoice'] });
+
+                // Reset form
+                paymentAmount.value = 0;
+                paymentNote.value = '';
+
+            } catch (error) {
+                console.error('Payment processing error:', error);
+                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xử lý thanh toán');
+            } finally {
+                isProcessingPayment.value = false;
+            }
+        };
+
+        const cancelInvoice = async () => {
+            try {
+                isProcessingCancel.value = true
+                const response = await axios.post(`/invoices/${props.invoice.id}/cancel`)
+
+                // Hiển thị thông báo thành công
+                toast.success("Hóa đơn đã được hủy thành công")
+
+                // Reload trang để cập nhật dữ liệu
+                router.reload({ only: ['invoice'] })
+
+                // Đóng modal
+                showCancelModal.value = false
+            } catch (error) {
+                console.error('Cancel invoice error:', error)
+                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy hóa đơn')
+            } finally {
+                isProcessingCancel.value = false
+            }
+        }
+
+        const printInvoice = async () => {
+            try {
+                isPrintProcessing.value = true
+                isPrinting.value = true
+                // Template sẽ tự động render và gọi handlePrintAfterRender
+            } catch (error) {
+                console.error('Print error:', error)
+                toast.error('Có lỗi xảy ra khi in hóa đơn')
+            } finally {
+                isPrintProcessing.value = false
+            }
+        }
+
         return {
             paymentAmount,
             paymentMethod,
@@ -941,6 +1006,9 @@ export default {
             handlePrintAfterRender,
             handlePayOSPayment,
             paymentMethods: props.paymentMethods,
+            isProcessingPayment,
+            isProcessingCancel,
+            isPrintProcessing,
         }
     }
 }
@@ -992,6 +1060,43 @@ export default {
 }
 
 /* Thêm style cho print container */
+.print-container {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+}
+
+/* Thêm styles cho in ấn */
+@media print {
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .print-container {
+        width: 210mm;
+        min-height: 297mm;
+        padding: 20mm;
+        margin: 0 auto;
+    }
+
+    /* Đảm bảo nội dung không bị tràn */
+    table {
+        page-break-inside: avoid;
+    }
+
+    /* Ẩn các phần tử không cần thiết khi in */
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* Style cho container in ẩn */
 .print-container {
     position: absolute;
     left: -9999px;
