@@ -231,37 +231,45 @@ class PayOSController extends Controller
             // Validate request
             $validated = $request->validate([
                 'orderCode' => 'required|string',
-                'invoice_id' => 'required|string',
-                'status' => 'nullable|string'
+                'status' => 'required|string'
             ]);
 
             $orderCode = $validated['orderCode'];
-            $invoiceId = $validated['invoice_id'];
+            $status = $validated['status'];
 
-            // Tìm invoice và load relationships cần thiết
-            $invoice = Invoice::with(['user.fcmTokens', 'order'])
-                ->findOrFail($invoiceId);
+            // Kiểm tra trạng thái từ callback trước
+            if ($status !== 'PAID') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Trạng thái thanh toán không hợp lệ'
+                ], 400);
+            }
 
-            // Kiểm tra trạng thái từ PayOS
+            // Verify với PayOS
             $response = $this->payOS->getPaymentLinkInformation($orderCode);
             Log::info('PayOS Verification Response:', $response);
 
-            if (!$response || !isset($response['status'])) {
-                throw new \Exception('Không thể xác thực thanh toán');
-            }
+            if ($response && isset($response['status']) && $response['status'] === 'PAID') {
+                // Tìm payment history
+                $paymentHistory = PaymentHistory::where('transaction_code', $orderCode)
+                    ->with(['invoice.user.fcmTokens', 'invoice.order'])
+                    ->first();
 
-            $paymentStatus = $response['status'];
-            $amount = $response['amount'] ?? 0;
+                if (!$paymentHistory) {
+                    throw new \Exception('Không tìm thấy thông tin thanh toán');
+                }
 
-            if ($paymentStatus === 'PAID') {
                 DB::beginTransaction();
                 try {
+                    $invoice = $paymentHistory->invoice;
+                    $order = $invoice->order;
                     $oldStatus = $invoice->status;
+                    $amount = $response['amount'] ?? 0;
                     $newPaidAmount = $invoice->paid_amount + $amount;
 
-                    // Cập nhật trạng thái invoice
-                    $newStatus = $newPaidAmount >= $invoice->total_amount ?
-                        Invoice::STATUS_PAID :
+                    // Cập nhật invoice
+                    $newStatus = $newPaidAmount >= $invoice->total_amount ? 
+                        Invoice::STATUS_PAID : 
                         Invoice::STATUS_PARTIALLY_PAID;
 
                     $invoice->update([
@@ -269,40 +277,70 @@ class PayOSController extends Controller
                         'paid_amount' => $newPaidAmount
                     ]);
 
-                    // Cập nhật trạng thái đơn hàng
-                    if ($invoice->order && $newStatus === Invoice::STATUS_PAID) {
-                        $invoice->order->update([
-                            'status' => Order::STATUS_CONFIRMED
-                        ]);
+                    // Nếu đã thanh toán đủ, cập nhật trạng thái đơn hàng
+                    if ($newStatus === Invoice::STATUS_PAID && $order) {
+                        // Nếu đơn hàng đang ở trạng thái pending hoặc confirmed
+                        if (in_array($order->status, [Order::STATUS_PENDING, Order::STATUS_CONFIRMED])) {
+                            $order->update([
+                                'status' => Order::STATUS_CONFIRMED
+                            ]);
+                        }
+                        // Nếu đơn hàng đang shipping
+                        else if ($order->status === Order::STATUS_SHIPPING) {
+                            $order->update([
+                                'status' => Order::STATUS_COMPLETED
+                            ]);
+                        }
                     }
 
-                    // Tạo payment history
-                    PaymentHistory::create([
-                        'invoice_id' => $invoice->id,
-                        'order_id' => $invoice->order_id,
+                    // Cập nhật payment history
+                    $paymentHistory->update([
                         'old_payment_status' => $oldStatus,
                         'new_payment_status' => $newStatus,
                         'payment_amount' => $amount,
-                        'payment_method' => 'payos',
-                        'transaction_code' => $orderCode,
-                        'created_by_user_id' => $invoice->user_id,
-                        'payment_details' => json_encode($response),
-                        'note' => 'Thanh toán qua PayOS thành công'
+                        'payment_details' => json_encode($response)
                     ]);
 
                     // Gửi thông báo
-                    $this->sendPaymentNotifications($invoice, $amount);
+                    if ($invoice->user) {
+                        $notificationService = app(NotificationService::class);
+                        $formattedAmount = number_format($amount, 0, ',', '.') . ' VNĐ';
+                        
+                        // Thông báo thanh toán thành công
+                        $notificationService->createNotification([
+                            'user_id' => $invoice->user_id,
+                            'type' => 'payment_success',
+                            'data' => [
+                                'invoice_id' => $invoice->id,
+                                'amount' => $formattedAmount,
+                                'order_id' => $order->id
+                            ],
+                            'send_fcm' => true
+                        ]);
+
+                        // Thông báo đơn hàng đã hoàn thành (nếu có)
+                        if ($order && $order->status === Order::STATUS_COMPLETED) {
+                            $notificationService->createNotification([
+                                'user_id' => $invoice->user_id,
+                                'type' => 'order_completed',
+                                'data' => [
+                                    'order_id' => $order->id
+                                ],
+                                'send_fcm' => true
+                            ]);
+                        }
+                    }
 
                     DB::commit();
 
                     return response()->json([
                         'success' => true,
-                        'transactionId' => $orderCode,
                         'data' => [
-                            'status' => $paymentStatus,
+                            'status' => 'PAID',
                             'amount' => $amount,
                             'orderCode' => $orderCode,
-                            'order_id' => $invoice->order_id,
+                            'transactionId' => $response['transactionId'] ?? null,
+                            'orderId' => $order->id,
                             'paymentTime' => $response['createdAt'] ?? null,
                         ]
                     ]);
@@ -314,12 +352,13 @@ class PayOSController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Trạng thái thanh toán không hợp lệ'
+                'message' => 'Không thể xác thực thanh toán'
             ], 400);
 
         } catch (\Exception $e) {
             Log::error('Verify payment error:', [
-                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'request' => $request->all()
             ]);
 
@@ -327,45 +366,6 @@ class PayOSController extends Controller
                 'success' => false,
                 'message' => $e->getMessage()
             ], 500);
-        }
-    }
-
-    // Thêm method mới để xử lý gửi thông báo
-    private function sendPaymentNotifications($invoice, $amount)
-    {
-        try {
-            $notificationService = app(NotificationService::class);
-            $formattedAmount = number_format($amount, 0, ',', '.') . ' VNĐ';
-
-            // Thông báo cho người dùng
-            if ($invoice->user) {
-                $notificationService->createNotification([
-                    'user_id' => $invoice->user_id,
-                    'type' => 'payment_success',
-                    'data' => [
-                        'invoice_id' => $invoice->id,
-                        'amount' => $formattedAmount,
-                        'order_id' => $invoice->order_id
-                    ],
-                    'send_fcm' => true
-                ]);
-            }
-
-            // Thông báo cho admin
-            $notificationService->notifyAdmins(
-                'Thanh toán thành công',
-                "Khách hàng {$invoice->user->full_name} đã thanh toán {$formattedAmount}",
-                'payment_success',
-                [
-                    'invoice_id' => $invoice->id,
-                    'amount' => $formattedAmount,
-                    'user_id' => $invoice->user_id
-                ]
-            );
-        } catch (\Exception $e) {
-            Log::error('Failed to send payment notifications:', [
-                'error' => $e->getMessage()
-            ]);
         }
     }
 

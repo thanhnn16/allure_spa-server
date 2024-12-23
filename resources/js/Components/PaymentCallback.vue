@@ -53,7 +53,7 @@ export default {
     },
     invoice_id: {
       type: String,
-      required: true
+      required: false
     },
     status: {
       type: String,
@@ -72,7 +72,6 @@ export default {
       try {
         console.log('Bắt đầu xác thực thanh toán với dữ liệu:', {
           orderCode: props.orderCode,
-          invoice_id: props.invoice_id,
           status: props.status
         });
 
@@ -91,7 +90,6 @@ export default {
             console.log(`Thử xác thực lần ${4 - retries}`);
             const response = await axios.post('/api/payos/verify', {
               orderCode: props.orderCode,
-              invoice_id: props.invoice_id,
               status: props.status
             });
             
@@ -100,26 +98,21 @@ export default {
             if (response.data.success) {
               console.log('Xác thực thành công');
               success.value = true;
-              transactionId.value = response.data.transactionId;
-              orderId.value = response.data.data?.order_id;
+              transactionId.value = response.data.data?.transactionId;
+              orderId.value = response.data.data?.orderId;
               break;
             }
             retries--;
             console.log(`Còn lại ${retries} lần thử`);
-            
-            if (retries > 0) {
-              await new Promise(resolve => setTimeout(resolve, 2000));
-            }
           } catch (err) {
             console.error('Lỗi trong quá trình xác thực:', err);
-            if (retries === 1) throw err;
+            if (retries === 0) throw err;
             await new Promise(resolve => setTimeout(resolve, 2000));
-            retries--;
           }
         }
       } catch (err) {
         console.error('Lỗi cuối cùng:', err);
-        error.value = err.response?.data?.message || err.message || 'Có lỗi xảy ra khi xác thực thanh toán'
+        error.value = err.message || 'Có lỗi xảy ra khi xác thực thanh toán'
         success.value = false
       } finally {
         loading.value = false
@@ -147,6 +140,7 @@ export default {
       success,
       error,
       transactionId,
+      orderId,
       goToOrder,
       retryPayment
     }

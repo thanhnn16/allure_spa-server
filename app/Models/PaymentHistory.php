@@ -35,9 +35,7 @@ class PaymentHistory extends Model
         'payment_method',
         'payment_proof',
         'created_by_user_id',
-        'note',
-        'transaction_code',
-        'payment_details'
+        'note'
     ];
 
     protected $attributes = [
