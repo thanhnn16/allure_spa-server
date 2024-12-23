@@ -121,7 +121,8 @@ class InvoiceController extends BaseController
         Log::info('Invoice Data:', ['invoice' => $invoice->toArray()]);
 
         return $this->respondWithInertia('Invoice/InvoiceShow', [
-            'invoice' => $invoice
+            'invoice' => $invoice,
+            'paymentMethods' => PaymentMethod::all()
         ]);
     }
 
@@ -159,23 +160,18 @@ class InvoiceController extends BaseController
                     'min:0',
                     'max:' . ($invoice->total_amount - $invoice->paid_amount)
                 ],
-                'payment_method' => 'required|string|in:cash,transfer',
-                'payment_proof' => 'nullable|string',
-                'note' => 'nullable|string',  // Thêm validation cho note
+                'payment_method_id' => 'required|exists:payment_methods,id',
+                'note' => 'nullable|string',
             ]);
 
             $invoice = $this->invoiceService->processPayment($invoice, $validatedData);
 
-            if ($request->expectsJson()) {
-                return $this->respondWithJson($invoice->fresh(['paymentHistories']), 'Payment processed successfully');
-            }
-
-            return redirect()->back()->with('success', 'Thanh toán thành công');
+            return $this->respondWithJson(
+                $invoice->fresh(['paymentHistories']), 
+                'Payment processed successfully'
+            );
         } catch (\Exception $e) {
-            if ($request->expectsJson()) {
-                return $this->respondWithJson(null, $e->getMessage(), 500);
-            }
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return $this->respondWithJson(null, $e->getMessage(), 500);
         }
     }
 

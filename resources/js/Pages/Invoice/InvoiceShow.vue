@@ -227,22 +227,26 @@
                         <form @submit.prevent="processPayment" class="space-y-4">
                             <!-- Payment Type Selection -->
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted mb-2">Hình thức thanh toán</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted mb-2">
+                                    Hình thức thanh toán
+                                </label>
                                 <div class="flex space-x-4">
-                                    <button type="button" @click="selectPaymentType('full')" :class="[
-                                        'px-4 py-2 rounded-md',
-                                        paymentType === 'full'
-                                            ? 'bg-blue-500 text-white'
-                                            : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-dark-text-muted hover:bg-gray-200 dark:hover:bg-dark-hover'
-                                    ]">
+                                    <button type="button" @click="selectPaymentType('full')" 
+                                        :class="[
+                                            'px-4 py-2 rounded-md',
+                                            paymentType === 'full' 
+                                                ? 'bg-blue-500 text-white'
+                                                : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-dark-text-muted hover:bg-gray-200 dark:hover:bg-dark-hover'
+                                        ]">
                                         Thanh toán tất cả ({{ formatCurrency(invoice.remaining_amount) }})
                                     </button>
-                                    <button type="button" @click="selectPaymentType('partial')" :class="[
-                                        'px-4 py-2 rounded-md',
-                                        paymentType === 'partial'
-                                            ? 'bg-blue-500 text-white'
-                                            : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-dark-text-muted hover:bg-gray-200 dark:hover:bg-dark-hover'
-                                    ]">
+                                    <button type="button" @click="selectPaymentType('partial')"
+                                        :class="[
+                                            'px-4 py-2 rounded-md',
+                                            paymentType === 'partial'
+                                                ? 'bg-blue-500 text-white'
+                                                : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-dark-text-muted hover:bg-gray-200 dark:hover:bg-dark-hover'
+                                        ]">
                                         Thanh toán một phần
                                     </button>
                                 </div>
@@ -250,7 +254,9 @@
 
                             <!-- Amount Input -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">Số tiền thanh toán</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">
+                                    Số tiền thanh toán
+                                </label>
                                 <input type="text" v-model="formattedPaymentAmount"
                                     @input="updatePaymentAmount"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
@@ -259,22 +265,32 @@
                                     Số tiền còn lại cần thanh toán: {{ formatCurrency(invoice.remaining_amount) }}
                                 </p>
                             </div>
+
+                            <!-- Payment Method Selection -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">Phương thức thanh toán</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">
+                                    Phương thức thanh toán
+                                </label>
                                 <select v-model="paymentMethod"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
                                     required>
-                                    <option value="cash">Tiền mặt</option>
-                                    <option value="bank_transfer">Chuyển khoản</option>
-                                    <option value="card">Thẻ</option>
+                                    <option v-for="method in paymentMethods" :key="method.id" :value="method.id">
+                                        {{ method.method_name }}
+                                    </option>
                                 </select>
                             </div>
+
+                            <!-- Note -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">Ghi chú</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-dark-text-muted">
+                                    Ghi chú
+                                </label>
                                 <textarea v-model="paymentNote"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-dark-border shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
                                     rows="2"></textarea>
                             </div>
+
+                            <!-- Submit Button -->
                             <button type="submit"
                                 class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors dark:bg-green-600 dark:hover:bg-green-700"
                                 :disabled="processing">
@@ -447,12 +463,16 @@ export default {
         invoice: {
             type: Object,
             required: true
+        },
+        paymentMethods: {
+            type: Array,
+            required: true
         }
     },
 
     setup(props) {
         const paymentAmount = ref(0)
-        const paymentMethod = ref('cash')
+        const paymentMethod = ref(props.paymentMethods[0]?.id || null)
         const paymentNote = ref('')
         const processing = ref(false)
         const paymentType = ref('partial')
@@ -574,37 +594,67 @@ export default {
         }
 
         const processPayment = async () => {
-            processing.value = true
             try {
+                processing.value = true;
+                
+                // Nếu là thanh toán qua PayOS (ID = 3 cho PayOS)
+                if (paymentMethod.value === 3) {
+                    await handlePayOSPayment();
+                    return;
+                }
+
+                // Xử lý thanh toán thông thường
                 const response = await axios.post(`/invoices/${props.invoice.id}/process-payment`, {
                     payment_amount: paymentAmount.value,
-                    payment_method: paymentMethod.value,
+                    payment_method_id: paymentMethod.value,
                     note: paymentNote.value,
-                    payment_proof: null
-                })
+                });
 
                 // Hiển thị toast thành công
-                toast.success("Đã cập nhật thanh toán cho hóa đơn")
+                toast.success("Đã cập nhật thanh toán cho hóa đơn");
 
                 // Kiểm tra nếu đã thanh toán đủ
                 if (response.data.data.status === 'paid') {
-                    toast.success("Hóa đơn đã được thanh toán đầy đủ")
+                    toast.success("Hóa đơn đã được thanh toán đầy đủ");
                 }
 
-                // Sử dụng router của Inertia để reload trang
-                router.reload({ only: ['invoice'] })
+                // Reload trang để cập nhật dữ liệu
+                router.reload({ only: ['invoice'] });
 
                 // Reset form
-                paymentAmount.value = 0
-                paymentNote.value = ''
+                paymentAmount.value = 0;
+                paymentNote.value = '';
 
             } catch (error) {
-                console.error('Payment processing error:', error)
-                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xử lý thanh toán')
+                console.error('Payment processing error:', error);
+                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xử lý thanh toán');
             } finally {
-                processing.value = false
+                processing.value = false;
             }
-        }
+        };
+
+        const handlePayOSPayment = async () => {
+            try {
+                const returnUrl = `${window.location.origin}/payment/callback`;
+                const cancelUrl = `${window.location.origin}/payment/callback?status=cancel`;
+
+                const response = await axios.post(`/api/invoices/${props.invoice.id}/pay`, {
+                    payment_amount: paymentAmount.value,
+                    payment_method: paymentMethod.value,
+                    note: paymentNote.value,
+                    returnUrl,
+                    cancelUrl
+                });
+
+                if (response.data.success && response.data.data.checkoutUrl) {
+                    window.location.href = response.data.data.checkoutUrl;
+                } else {
+                    throw new Error(response.data.message || 'Không thể tạo link thanh toán');
+                }
+            } catch (error) {
+                toast.error('Lỗi xử lý thanh toán: ' + (error.response?.data?.message || error.message));
+            }
+        };
 
         const calculateSubtotal = () => {
             if (!props.invoice?.order?.orderItems?.length) return 0;
@@ -888,7 +938,9 @@ export default {
             formattedPaymentAmount,
             updatePaymentAmount,
             isPrinting,
-            handlePrintAfterRender
+            handlePrintAfterRender,
+            handlePayOSPayment,
+            paymentMethods: props.paymentMethods,
         }
     }
 }

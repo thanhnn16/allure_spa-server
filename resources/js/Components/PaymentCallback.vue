@@ -92,9 +92,9 @@ export default {
               orderCode: props.orderCode,
               status: props.status
             });
-            
+
             console.log('Kết quả xác thực:', response.data);
-            
+
             if (response.data.success) {
               console.log('Xác thực thành công');
               success.value = true;

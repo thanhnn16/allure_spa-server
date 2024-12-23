@@ -48,6 +48,7 @@ class PayOSController extends Controller
                 'buyerName' => $order->user->full_name ?? '',
                 'buyerEmail' => $order->user->email ?? '',
                 'buyerPhone' => $order->user->phone_number ?? '',
+                'expiredAt' => time() + (10 * 60),
                 'orderInfo' => json_encode([
                     'order_id' => $order->id,
                     'invoice_id' => $order->invoice->id ?? null,
@@ -150,6 +151,7 @@ class PayOSController extends Controller
                 'buyerEmail' => $order->user->email ?? '',
                 'buyerPhone' => $order->user->phone_number ?? '',
                 'buyerAddress' => $order->user->address ?? '',
+                'expiredAt' => time() + (10 * 60),
                 'items' => [
                     [
                         'name' => "Đơn hàng #{$order->id}",
