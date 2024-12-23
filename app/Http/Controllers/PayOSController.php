@@ -228,6 +228,8 @@ class PayOSController extends Controller
         try {
             Log::info('Verify payment request:', $request->all());
             $orderCode = $request->orderCode;
+            $invoiceId = $request->invoice_id;
+
             if (!$orderCode) {
                 throw new \Exception('Thiếu mã đơn hàng');
             }
@@ -239,15 +241,16 @@ class PayOSController extends Controller
                 $paymentStatus = $response['status'];
                 $amount = isset($response['amount']) ? $response['amount'] : 0;
 
-                // Tìm payment history dựa vào orderCode
-                $paymentHistory = PaymentHistory::where('transaction_code', $orderCode)
-                    ->with(['invoice.user.fcmTokens'])
-                    ->first();
+                // Tìm invoice dựa vào invoice_id từ request
+                $invoice = Invoice::with(['user.fcmTokens'])->find($invoiceId);
+                
+                if (!$invoice) {
+                    throw new \Exception('Không tìm thấy hóa đơn');
+                }
 
-                if ($paymentStatus === 'PAID' && $paymentHistory) {
+                if ($paymentStatus === 'PAID') {
                     DB::beginTransaction();
                     try {
-                        $invoice = $paymentHistory->invoice;
                         $oldStatus = $invoice->status;
                         $newPaidAmount = $invoice->paid_amount + $amount;
 
@@ -264,16 +267,22 @@ class PayOSController extends Controller
                         // Cập nhật trạng thái đơn hàng nếu có
                         if ($invoice->order && $newStatus === Invoice::STATUS_PAID) {
                             $invoice->order->update([
-                                'status' => Order::STATUS_COMPLETED
+                                'status' => Order::STATUS_CONFIRMED
                             ]);
                         }
 
-                        // Cập nhật payment history
-                        $paymentHistory->update([
+                        // Tạo payment history mới
+                        PaymentHistory::create([
+                            'invoice_id' => $invoice->id,
+                            'order_id' => $invoice->order_id,
                             'old_payment_status' => $oldStatus,
                             'new_payment_status' => $newStatus,
                             'payment_amount' => $amount,
-                            'payment_details' => json_encode($response)
+                            'payment_method' => 'payos',
+                            'transaction_code' => $orderCode,
+                            'created_by_user_id' => $invoice->user_id,
+                            'payment_details' => json_encode($response),
+                            'note' => 'Thanh toán qua PayOS thành công'
                         ]);
 
                         // Gửi thông báo
@@ -294,6 +303,7 @@ class PayOSController extends Controller
                                     'send_fcm' => true
                                 ]);
                             }
+
                             // Thông báo cho admin
                             $notificationService->notifyAdmins(
                                 'Thanh toán thành công',
@@ -307,8 +317,7 @@ class PayOSController extends Controller
                             );
                         } catch (\Exception $e) {
                             Log::error('Failed to send payment notifications:', [
-                                'message' => $e->getMessage(),
-                                'trace' => $e->getTraceAsString()
+                                'error' => $e->getMessage()
                             ]);
                         }
 
@@ -316,6 +325,7 @@ class PayOSController extends Controller
 
                         return response()->json([
                             'success' => true,
+                            'transactionId' => $orderCode,
                             'data' => [
                                 'status' => $paymentStatus,
                                 'amount' => $amount,
@@ -341,8 +351,7 @@ class PayOSController extends Controller
             ], 400);
         } catch (\Exception $e) {
             Log::error('Verify payment error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
                 'request' => $request->all()
             ]);
 

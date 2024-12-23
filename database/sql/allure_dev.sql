@@ -595,6 +595,8 @@ CREATE TABLE payment_histories (
     payment_proof TEXT NULL,
     created_by_user_id CHAR(36) NULL,
     note TEXT NULL,
+    transaction_code VARCHAR(255) NULL,
+    payment_details TEXT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (invoice_id) REFERENCES invoices (id) ON DELETE CASCADE,
